@@ -1,0 +1,103 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { ArrowLeft, ChevronRight } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { subscribeToTimer } from "@/lib/realtime";
+import { CountdownTimer } from "@/components/game/CountdownTimer";
+import type { TimerSession, RotationRound, Team } from "@/lib/supabase/types";
+
+export default function PlayerTimerPage() {
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const [timer, setTimer] = useState<TimerSession | null>(null);
+  const [teams, setTeams] = useState<Team[]>([]);
+
+  useEffect(() => {
+    async function load() {
+      const supabase = createClient();
+      const [{ data: timerData }, { data: teamsData }] = await Promise.all([
+        supabase.from("timer_sessions").select("*").eq("game_id", id).single(),
+        supabase.from("teams").select("*").eq("game_id", id).order("slot_number"),
+      ]);
+      if (timerData) setTimer(timerData as TimerSession);
+      setTeams((teamsData as Team[]) ?? []);
+    }
+    load();
+    const unsubscribe = subscribeToTimer(id, setTimer);
+    return () => { unsubscribe(); };
+  }, [id]);
+
+  const schedule = timer?.rotation_schedule as RotationRound[] | null;
+  const currentRound = timer?.current_round ?? 1;
+  const nextRound = schedule?.find((r) => r.round === currentRound + 1);
+  const teamA = teams.find((t) => t.id === timer?.current_team_a_id);
+  const teamB = teams.find((t) => t.id === timer?.current_team_b_id);
+
+  return (
+    <div className="min-h-[100dvh] bg-rondo-yellow flex flex-col">
+      {/* Header */}
+      <header className="px-4 py-3 flex items-center gap-3">
+        <button
+          onClick={() => router.back()}
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-rondo-black/60 hover:text-rondo-black transition-colors cursor-pointer active:scale-[0.98]"
+          aria-label="Back"
+        >
+          <ArrowLeft size={20} />
+        </button>
+        <span className="text-rondo-black font-black text-sm uppercase tracking-widest">Live Match</span>
+        <div className="ml-auto flex items-center gap-1.5">
+          <div className={`w-2 h-2 rounded-full ${timer?.status === "running" ? "bg-green-600 animate-pulse" : "bg-rondo-black/30"}`} />
+          <span className="text-rondo-black/60 text-xs font-semibold capitalize">{timer?.status ?? "waiting"}</span>
+        </div>
+      </header>
+
+      {/* Big timer */}
+      <div className="flex-1 flex flex-col items-center justify-center space-y-6 px-6">
+        <CountdownTimer
+          roundStartTime={timer?.round_start_time ?? null}
+          roundDurationMinutes={8}
+          status={timer?.status ?? "waiting"}
+          className="text-[96px] leading-none"
+        />
+
+        {/* Current matchup */}
+        {teamA && teamB && (
+          <div className="flex items-center gap-4 mt-2">
+            <div className="text-center">
+              <div className="w-5 h-5 rounded-full mx-auto mb-1" style={{ backgroundColor: teamA.color }} />
+              <span className="text-rondo-black font-black text-lg">{teamA.name}</span>
+            </div>
+            <span className="text-rondo-black/40 font-black text-2xl">VS</span>
+            <div className="text-center">
+              <div className="w-5 h-5 rounded-full mx-auto mb-1" style={{ backgroundColor: teamB.color }} />
+              <span className="text-rondo-black font-black text-lg">{teamB.name}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Round indicator */}
+        {schedule && schedule.length > 0 && (
+          <p className="text-rondo-black/50 text-sm font-semibold">
+            Round {currentRound} of {schedule.length}
+          </p>
+        )}
+      </div>
+
+      {/* Next up */}
+      {nextRound && (
+        <div className="px-6 pb-8">
+          <div className="bg-rondo-black/10 rounded-2xl p-4">
+            <p className="text-rondo-black/60 text-xs font-semibold uppercase tracking-wider mb-2">Next Up</p>
+            <div className="flex items-center gap-2 text-rondo-black font-bold">
+              <span>{nextRound.team_a_name}</span>
+              <ChevronRight size={16} className="text-rondo-black/40" />
+              <span>{nextRound.team_b_name}</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
