@@ -72,7 +72,7 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-1">
-          <Label className="text-muted-foreground text-xs uppercase tracking-wider">Phone Number</Label>
+          <Label className="text-muted-foreground text-xs uppercase tracking-wider">Email</Label>
           <Input
             {...register("email")}
             type="email"

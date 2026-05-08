@@ -74,7 +74,7 @@ function OTPForm() {
       <div className="space-y-2">
         <h1 className="text-white font-bold text-2xl tracking-widest uppercase">Enter OTP</h1>
         <p className="text-muted-foreground text-sm">
-          Enter the one time pin sent to your email or phone number
+          Enter the one time pin sent to your email
         </p>
       </div>
 

@@ -1,6 +1,25 @@
+"use client";
+
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 
 export default function HomePage() {
+  async function handleGoogleLogin() {
+    const supabase = createClient();
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+  }
+
+  async function handleFacebookLogin() {
+    const supabase = createClient();
+    await supabase.auth.signInWithOAuth({
+      provider: "facebook",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+  }
+
   return (
     <main className="min-h-screen bg-rondo-black flex flex-col items-center justify-center">
       <div className="text-center space-y-8">
@@ -31,10 +50,10 @@ export default function HomePage() {
         {/* Social auth */}
         <div className="text-muted-foreground text-sm">Or login using</div>
         <div className="flex gap-4 justify-center">
-          <button className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-white hover:border-rondo-yellow transition">
+          <button onClick={handleGoogleLogin} className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-white hover:border-rondo-yellow transition font-bold text-sm">
             G
           </button>
-          <button className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-white hover:border-rondo-yellow transition">
+          <button onClick={handleFacebookLogin} className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-white hover:border-rondo-yellow transition font-bold text-sm">
             f
           </button>
         </div>

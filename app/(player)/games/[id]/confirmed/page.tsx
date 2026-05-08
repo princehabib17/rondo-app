@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { CheckCircle2, Calendar, Share2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatGameDate } from "@/lib/utils/format";
@@ -10,35 +10,19 @@ import type { Game } from "@/lib/supabase/types";
 function ConfirmedContent() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [game, setGame] = useState<Game | null>(null);
 
   useEffect(() => {
-    // Handle payment webhook redirect — store player record
-    const teamId = searchParams.get("teamId");
-    const userId = searchParams.get("userId");
-
     async function load() {
       const supabase = createClient();
 
-      // If redirected from PayMongo success, join the game
-      if (teamId && userId) {
-        await supabase.from("game_players").upsert(
-          {
-            game_id: id,
-            user_id: userId,
-            team_id: teamId,
-            payment_status: "paid",
-          },
-          { onConflict: "game_id,user_id" }
-        );
-      }
-
+      // Payment status is confirmed by the PayMongo webhook (server-side).
+      // We only fetch the game here — no client-side paid upsert to prevent bypass.
       const { data } = await supabase.from("games").select("*").eq("id", id).single();
       if (data) setGame(data as Game);
     }
     load();
-  }, [id, searchParams]);
+  }, [id]);
 
   return (
     <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 text-center space-y-8">
@@ -83,9 +67,5 @@ function ConfirmedContent() {
 }
 
 export default function ConfirmedPage() {
-  return (
-    <Suspense>
-      <ConfirmedContent />
-    </Suspense>
-  );
+  return <ConfirmedContent />;
 }
