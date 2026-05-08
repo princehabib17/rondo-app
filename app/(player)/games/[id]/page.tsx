@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Calendar, MapPin, Users, Shield, ChevronRight, MessageCircle } from "lucide-react";
-import { APIProvider, Map, Marker } from "@vis.gl/react-google-maps";
 import { createClient } from "@/lib/supabase/client";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import { Badge } from "@/components/ui/badge";
@@ -124,10 +123,7 @@ export default function GameDetailPage() {
           </div>
           <div className="flex items-center gap-3">
             <MapPin size={15} className="text-muted-foreground shrink-0" />
-            <div>
-              <p className="text-white text-sm font-medium">{game.venue_name}</p>
-              <p className="text-muted-foreground text-xs">{game.venue_address}</p>
-            </div>
+            <span className="text-white text-sm">{game.venue_name}</span>
           </div>
           <div className="flex items-center gap-3">
             <Users size={15} className="text-muted-foreground shrink-0" />
@@ -157,20 +153,25 @@ export default function GameDetailPage() {
           </div>
         )}
 
-        {/* Map */}
-        {game.venue_lat && game.venue_lng && (
-          <div className="rounded-xl overflow-hidden border border-border h-40">
-            <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? ""}>
-              <Map
-                defaultCenter={{ lat: game.venue_lat, lng: game.venue_lng }}
-                defaultZoom={15}
-                colorScheme="DARK"
-                disableDefaultUI
-              >
-                <Marker position={{ lat: game.venue_lat, lng: game.venue_lng }} />
-              </Map>
-            </APIProvider>
-          </div>
+        {/* Open in Maps */}
+        {(game.venue_address || game.venue_name) && (
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+              [game.venue_name, game.venue_address].filter(Boolean).join(", ")
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 w-full border border-border rounded-xl px-4 py-3 hover:border-rondo-yellow/40 active:scale-[0.98] transition-all cursor-pointer group"
+          >
+            <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+              <MapPin size={16} className="text-rondo-yellow" />
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-white text-sm font-semibold truncate">{game.venue_name}</p>
+              <p className="text-muted-foreground text-xs truncate">{game.venue_address}</p>
+            </div>
+            <ChevronRight size={16} className="text-muted-foreground group-hover:text-rondo-yellow transition-colors shrink-0" />
+          </a>
         )}
 
         {/* Teams */}

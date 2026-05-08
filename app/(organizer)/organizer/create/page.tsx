@@ -34,9 +34,23 @@ const createGameSchema = z.object({
 });
 type CreateGameForm = z.infer<typeof createGameSchema>;
 
+async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1&countrycodes=ph`,
+      { headers: { "Accept-Language": "en" } }
+    );
+    const data = await res.json();
+    if (data[0]) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+  } catch {}
+  return null;
+}
+
 export default function CreateGamePage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [geocoding, setGeocoding] = useState(false);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<CreateGameForm>({
@@ -59,12 +73,20 @@ export default function CreateGamePage() {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) { router.push("/login"); return; }
 
+    // Geocode if we don't have coords yet
+    let finalCoords = coords;
+    if (!finalCoords) {
+      finalCoords = await geocodeAddress(`${data.venue_name}, ${data.venue_address}`);
+    }
+
     const { data: game, error: gameError } = await supabase.from("games").insert({
       organizer_id: userData.user.id,
       title: data.title,
       description: data.description ?? null,
       venue_name: data.venue_name,
       venue_address: data.venue_address,
+      venue_lat: finalCoords?.lat ?? null,
+      venue_lng: finalCoords?.lng ?? null,
       date_time: new Date(data.date_time).toISOString(),
       price_per_player: Math.round(data.price_per_player * 100),
       max_players: data.max_players,
@@ -118,8 +140,37 @@ export default function CreateGamePage() {
 
         <div className="space-y-1.5">
           <Label className={labelClass}>Full Address *</Label>
-          <Input {...register("venue_address")} placeholder="9th Ave, Bonifacio Global City, Taguig" className="bg-secondary border-border text-white" />
+          <div className="relative">
+            <Input
+              {...register("venue_address")}
+              placeholder="9th Ave, Bonifacio Global City, Taguig"
+              className="bg-secondary border-border text-white pr-10"
+              onBlur={async (e) => {
+                const address = e.target.value.trim();
+                if (!address || address.length < 5) return;
+                setGeocoding(true);
+                const result = await geocodeAddress(address);
+                setCoords(result);
+                setGeocoding(false);
+              }}
+            />
+            {/* Location status indicator */}
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              {geocoding && (
+                <div className="w-3 h-3 rounded-full border-2 border-rondo-yellow border-t-transparent animate-spin" />
+              )}
+              {!geocoding && coords && (
+                <div className="w-3 h-3 rounded-full bg-green-400" title="Location found" />
+              )}
+            </div>
+          </div>
           {errors.venue_address && <p className="text-destructive text-xs">{errors.venue_address.message}</p>}
+          {!geocoding && coords && (
+            <p className="text-green-400 text-xs">Location pinned on map</p>
+          )}
+          {!geocoding && !coords && (
+            <p className="text-muted-foreground text-xs">Leave the field to auto-detect location</p>
+          )}
         </div>
 
         <div className="space-y-1.5">
