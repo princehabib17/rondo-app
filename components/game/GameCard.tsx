@@ -21,24 +21,25 @@ export function GameCard({ game, index = 0 }: GameCardProps) {
       className="block cursor-pointer"
       style={{ animationDelay: `${index * 80}ms`, animationFillMode: "both" }}
     >
-      <article className="group bg-card border border-border rounded-xl overflow-hidden hover:border-rondo-yellow/40 transition-all duration-200 active:scale-[0.98]">
+      <article className="group bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/60 transition-all duration-200 active:scale-[0.98]">
         {/* Banner */}
-        <div className="relative h-28 w-full overflow-hidden">
+        <div className="relative h-32 w-full overflow-hidden bg-muted">
           {game.banner_url ? (
             <img
               src={game.banner_url}
               alt={game.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
               loading="lazy"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-green-950 via-green-900 to-rondo-black flex items-center justify-center">
-              <Trophy size={32} className="text-green-700" />
+            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border-b border-border">
+              <Trophy size={40} className="text-primary/40" />
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
+          {/* Price Badge */}
           <div className="absolute top-3 right-3">
-            <span className="bg-rondo-yellow text-rondo-black font-black text-sm px-2.5 py-1 rounded-lg">
+            <span className="bg-primary text-primary-foreground font-black text-xs px-3 py-1.5 rounded-lg shadow-lg">
               {formatPrice(game.price_per_player)}
             </span>
           </div>
@@ -46,32 +47,34 @@ export function GameCard({ game, index = 0 }: GameCardProps) {
 
         {/* Content */}
         <div className="p-4 space-y-3">
-          <h3 className="text-white font-bold text-base leading-tight">{game.title}</h3>
+          <h3 className="text-foreground font-black text-base leading-tight truncate">{game.title}</h3>
 
-          <div className="space-y-1.5">
+          {/* Game Details */}
+          <div className="space-y-2">
             <div className="flex items-center gap-2 text-muted-foreground text-xs">
-              <Calendar size={12} className="shrink-0" />
-              <span>{formatGameDate(game.date_time)}</span>
+              <Calendar size={14} className="shrink-0 text-primary" />
+              <span className="font-medium">{formatGameDate(game.date_time)}</span>
             </div>
             <div className="flex items-center gap-2 text-muted-foreground text-xs">
-              <MapPin size={12} className="shrink-0" />
-              <span className="truncate">{game.venue_name}</span>
+              <MapPin size={14} className="shrink-0 text-primary" />
+              <span className="truncate font-medium">{game.venue_name}</span>
             </div>
             <div className="flex items-center gap-2 text-xs">
-              <Users size={12} className="text-muted-foreground shrink-0" />
-              <span className="text-muted-foreground">{playerCount}/{game.max_players}</span>
+              <Users size={14} className="text-primary shrink-0" />
+              <span className="font-medium">{playerCount}/{game.max_players}</span>
               {!isFull && (
-                <span className="text-green-400 font-medium">{spotsLeft} spots left</span>
+                <span className="text-primary font-bold text-xs ml-auto">{spotsLeft} left</span>
               )}
-              {isFull && <span className="text-destructive font-medium">Full</span>}
+              {isFull && <span className="text-destructive font-bold text-xs ml-auto">Full</span>}
             </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="secondary" className="text-xs h-5">{game.format}</Badge>
-            <Badge variant="secondary" className="text-xs h-5">{game.round_duration_minutes}min rounds</Badge>
+          {/* Tags */}
+          <div className="flex items-center gap-2 flex-wrap pt-2">
+            <Badge variant="secondary" className="text-xs font-semibold">{game.format}</Badge>
+            <Badge variant="secondary" className="text-xs font-semibold">{game.round_duration_minutes}m</Badge>
             {game.payment_type === "online" && (
-              <Badge className="text-xs h-5 bg-rondo-yellow/20 text-rondo-yellow border-rondo-yellow/30">Online Pay</Badge>
+              <Badge className="text-xs font-semibold bg-primary/20 text-primary border-primary/30">Pay Online</Badge>
             )}
           </div>
         </div>

@@ -65,20 +65,23 @@ function OTPForm() {
 
   return (
     <div className="space-y-8">
+      {/* Logo */}
       <div className="flex justify-center">
-        <div className="w-16 h-16 rounded-full border-2 border-rondo-yellow flex items-center justify-center">
-          <span className="text-rondo-yellow font-bold text-xl">R</span>
+        <div className="w-20 h-20 rounded-2xl border-2 border-primary flex items-center justify-center bg-primary/5">
+          <span className="text-primary font-black text-3xl tracking-widest">R</span>
         </div>
       </div>
 
-      <div className="space-y-2">
-        <h1 className="text-white font-bold text-2xl tracking-widest uppercase">Enter OTP</h1>
-        <p className="text-muted-foreground text-sm">
-          Enter the one time pin sent to your email
+      {/* Header */}
+      <div className="space-y-3 text-center">
+        <h1 className="text-3xl font-black tracking-tight text-foreground">ENTER OTP</h1>
+        <p className="text-sm text-muted-foreground">
+          We sent a code to <span className="font-semibold text-foreground">{email}</span>
         </p>
       </div>
 
-      <div className="flex gap-3 justify-center">
+      {/* OTP Input Fields */}
+      <div className="flex gap-2 justify-center">
         {otp.map((digit, i) => (
           <input
             key={i}
@@ -91,31 +94,39 @@ function OTPForm() {
             value={digit}
             onChange={(e) => handleChange(i, e.target.value)}
             onKeyDown={(e) => handleKeyDown(i, e)}
-            className="w-12 h-14 text-center text-white text-xl font-bold bg-secondary border border-border rounded-lg focus:border-rondo-yellow focus:outline-none"
+            className="w-14 h-16 text-center text-foreground text-2xl font-bold bg-secondary border-2 border-border rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+            placeholder="0"
           />
         ))}
       </div>
 
-      {error && <p className="text-destructive text-sm text-center">{error}</p>}
+      {/* Error Message */}
+      {error && (
+        <p className="text-destructive text-sm font-medium text-center bg-destructive/10 rounded-lg p-3">
+          {error}
+        </p>
+      )}
 
+      {/* Submit Button */}
       <Button
         onClick={handleSubmit}
         disabled={loading}
-        className="w-full bg-rondo-yellow text-rondo-black font-bold uppercase tracking-wider hover:brightness-90"
+        className="w-full h-12 bg-primary text-primary-foreground font-black uppercase tracking-wider text-sm hover:brightness-110 disabled:opacity-50"
       >
         {loading ? "Verifying..." : "Continue"}
       </Button>
 
-      <p className="text-center text-muted-foreground text-sm">
-        Didn&apos;t receive code?{" "}
+      {/* Resend OTP */}
+      <div className="text-center space-y-1">
+        <p className="text-muted-foreground text-xs">Didn&apos;t receive code?</p>
         <button
           onClick={handleResend}
           disabled={resendCooldown > 0}
-          className="text-rondo-yellow hover:underline disabled:opacity-50"
+          className="text-sm font-semibold text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
           {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend OTP"}
         </button>
-      </p>
+      </div>
     </div>
   );
 }

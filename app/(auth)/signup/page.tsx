@@ -68,71 +68,120 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-center">
-        <div className="w-16 h-16 rounded-full border-2 border-rondo-yellow flex items-center justify-center">
-          <span className="text-rondo-yellow font-bold text-xl tracking-widest">R</span>
+    <div className="space-y-8">
+      {/* Logo & Branding */}
+      <div className="text-center space-y-3">
+        <div className="flex justify-center">
+          <div className="w-20 h-20 rounded-2xl border-2 border-primary flex items-center justify-center bg-primary/5">
+            <span className="text-primary font-black text-3xl tracking-widest">R</span>
+          </div>
         </div>
+        <h1 className="text-3xl font-black tracking-tight text-foreground">CREATE ACCOUNT</h1>
+        <p className="text-sm text-muted-foreground">Join the community. Start playing.</p>
       </div>
 
-      <h1 className="text-white font-bold text-2xl tracking-widest text-center uppercase">Create Account</h1>
-
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="space-y-1">
-          <Label className="text-muted-foreground text-xs uppercase tracking-wider">Full Name</Label>
-          <Input {...register("fullName")} placeholder="Juan dela Cruz" className="bg-secondary border-border text-white" />
-          {errors.fullName && <p className="text-destructive text-xs">{errors.fullName.message}</p>}
+        {/* Full Name Field */}
+        <div className="space-y-2">
+          <Label className="text-xs font-semibold uppercase tracking-wider text-foreground/70">Full Name</Label>
+          <Input 
+            {...register("fullName")} 
+            placeholder="Juan dela Cruz" 
+            className="h-12 bg-secondary border-border text-foreground placeholder:text-muted-foreground text-base"
+          />
+          {errors.fullName && <p className="text-destructive text-xs font-medium">{errors.fullName.message}</p>}
         </div>
 
-        <div className="space-y-1">
-          <Label className="text-muted-foreground text-xs uppercase tracking-wider">Email</Label>
-          <Input {...register("email")} type="email" placeholder="your@email.com" className="bg-secondary border-border text-white" />
-          {errors.email && <p className="text-destructive text-xs">{errors.email.message}</p>}
+        {/* Email Field */}
+        <div className="space-y-2">
+          <Label className="text-xs font-semibold uppercase tracking-wider text-foreground/70">Email Address</Label>
+          <Input 
+            {...register("email")} 
+            type="email" 
+            placeholder="you@example.com" 
+            className="h-12 bg-secondary border-border text-foreground placeholder:text-muted-foreground text-base"
+          />
+          {errors.email && <p className="text-destructive text-xs font-medium">{errors.email.message}</p>}
         </div>
 
-        <div className="space-y-1">
-          <Label className="text-muted-foreground text-xs uppercase tracking-wider">Password</Label>
+        {/* Password Field */}
+        <div className="space-y-2">
+          <Label className="text-xs font-semibold uppercase tracking-wider text-foreground/70">Password</Label>
           <div className="relative">
             <Input
               {...register("password")}
               type={showPassword ? "text" : "password"}
               placeholder="••••••••"
-              className="bg-secondary border-border text-white pr-10"
+              className="h-12 bg-secondary border-border text-foreground placeholder:text-muted-foreground pr-10 text-base"
             />
-            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white">
-              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            <button 
+              type="button" 
+              onClick={() => setShowPassword(!showPassword)} 
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-          {errors.password && <p className="text-destructive text-xs">{errors.password.message}</p>}
+          {errors.password && <p className="text-destructive text-xs font-medium">{errors.password.message}</p>}
         </div>
 
-        <div className="space-y-1">
-          <Label className="text-muted-foreground text-xs uppercase tracking-wider">Confirm Password</Label>
-          <Input {...register("confirmPassword")} type="password" placeholder="••••••••" className="bg-secondary border-border text-white" />
-          {errors.confirmPassword && <p className="text-destructive text-xs">{errors.confirmPassword.message}</p>}
+        {/* Confirm Password Field */}
+        <div className="space-y-2">
+          <Label className="text-xs font-semibold uppercase tracking-wider text-foreground/70">Confirm Password</Label>
+          <Input 
+            {...register("confirmPassword")} 
+            type="password" 
+            placeholder="••••••••" 
+            className="h-12 bg-secondary border-border text-foreground placeholder:text-muted-foreground text-base"
+          />
+          {errors.confirmPassword && <p className="text-destructive text-xs font-medium">{errors.confirmPassword.message}</p>}
         </div>
 
-        {error && <p className="text-destructive text-sm text-center">{error}</p>}
+        {/* Error Message */}
+        {error && <p className="text-destructive text-sm font-medium text-center bg-destructive/10 rounded-lg p-3">{error}</p>}
 
-        <Button type="submit" disabled={isSubmitting} className="w-full bg-rondo-yellow text-rondo-black font-bold uppercase tracking-wider hover:brightness-90">
+        {/* Submit Button */}
+        <Button 
+          type="submit" 
+          disabled={isSubmitting} 
+          className="w-full h-12 bg-primary text-primary-foreground font-black uppercase tracking-wider text-sm hover:brightness-110 disabled:opacity-50"
+        >
           {isSubmitting ? "Creating..." : "Create Account"}
         </Button>
       </form>
 
+      {/* Divider */}
       <div className="flex items-center gap-3">
         <div className="flex-1 h-px bg-border" />
-        <span className="text-muted-foreground text-xs">Or login using</span>
+        <span className="text-xs font-semibold text-muted-foreground uppercase">Or Continue With</span>
         <div className="flex-1 h-px bg-border" />
       </div>
 
-      <div className="flex justify-center gap-4">
-        <button onClick={handleGoogleSignup} className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-white hover:border-rondo-yellow transition font-bold text-sm">G</button>
-        <button onClick={handleFacebookSignup} className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-white hover:border-rondo-yellow transition font-bold text-sm">f</button>
+      {/* Social Login Buttons */}
+      <div className="flex gap-3 justify-center">
+        <button 
+          onClick={handleGoogleSignup} 
+          className="w-12 h-12 rounded-lg border-2 border-border flex items-center justify-center text-foreground hover:border-primary hover:bg-primary/5 transition-all font-bold"
+          aria-label="Continue with Google"
+        >
+          G
+        </button>
+        <button 
+          onClick={handleFacebookSignup} 
+          className="w-12 h-12 rounded-lg border-2 border-border flex items-center justify-center text-foreground hover:border-primary hover:bg-primary/5 transition-all font-bold"
+          aria-label="Continue with Facebook"
+        >
+          f
+        </button>
       </div>
 
-      <p className="text-center text-muted-foreground text-sm">
+      {/* Login Link */}
+      <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
-        <Link href="/login" className="text-rondo-yellow hover:underline">Log In</Link>
+        <Link href="/login" className="font-semibold text-primary hover:underline">
+          Log In
+        </Link>
       </p>
     </div>
   );
