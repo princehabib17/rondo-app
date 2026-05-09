@@ -80,75 +80,84 @@ export default function GameDetailPage() {
   return (
     <div className="min-h-[100dvh] pb-32">
       {/* Sticky header */}
-      <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-md border-b border-border px-4 py-3 flex items-center gap-3">
+      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border px-4 py-3 flex items-center gap-3">
         <button
           onClick={() => router.back()}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white hover:text-rondo-yellow transition-colors cursor-pointer active:scale-[0.95]"
+          className="w-10 h-10 flex items-center justify-center text-foreground hover:bg-secondary rounded-lg transition-colors cursor-pointer active:scale-[0.95]"
           aria-label="Go back"
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-white font-bold text-base flex-1 truncate">{game.title}</h1>
-        <span className="text-rondo-yellow font-black text-base">{formatPrice(game.price_per_player)}</span>
+        <h1 className="text-foreground font-black text-base flex-1 truncate">{game.title}</h1>
+        <span className="text-primary font-black text-base">{formatPrice(game.price_per_player)}</span>
       </header>
 
       {/* Banner */}
-      <div className="relative h-52">
+      <div className="relative h-56 bg-muted">
         {game.banner_url ? (
           <img src={game.banner_url} alt={game.title} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-green-950 via-green-900 to-rondo-black flex items-center justify-center">
+          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border-b border-border">
             <Shield size={48} className="text-green-700" />
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
       </div>
 
-      <div className="px-4 py-5 space-y-6 max-w-lg mx-auto">
-        {/* Badges */}
+      <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
+        {/* Tags/Badges */}
         <div className="flex flex-wrap gap-2">
-          <Badge variant="secondary">{game.format}</Badge>
-          <Badge variant="secondary">{game.round_duration_minutes} min rounds</Badge>
+          <Badge variant="secondary" className="font-semibold">{game.format}</Badge>
+          <Badge variant="secondary" className="font-semibold">{game.round_duration_minutes}m rounds</Badge>
           {game.payment_type === "online"
-            ? <Badge className="bg-rondo-yellow/20 text-rondo-yellow border-rondo-yellow/30">Online Pay</Badge>
-            : <Badge variant="secondary">Pay at Venue</Badge>}
-          {spotsLeft <= 0 && <Badge variant="destructive">Full</Badge>}
+            ? <Badge className="bg-primary/20 text-primary border-primary/30 font-semibold">Pay Online</Badge>
+            : <Badge variant="secondary" className="font-semibold">Pay at Venue</Badge>}
+          {spotsLeft <= 0 && <Badge variant="destructive" className="font-semibold">Full</Badge>}
         </div>
 
-        {/* Game info */}
-        <div className="space-y-2.5">
+        {/* Game Details */}
+        <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <Calendar size={15} className="text-muted-foreground shrink-0" />
-            <span className="text-white text-sm">{formatGameDate(game.date_time)}</span>
+            <Calendar size={16} className="text-primary shrink-0" />
+            <div>
+              <p className="text-xs text-muted-foreground">DATE & TIME</p>
+              <span className="text-foreground text-sm font-semibold">{formatGameDate(game.date_time)}</span>
+            </div>
           </div>
           <div className="flex items-center gap-3">
-            <MapPin size={15} className="text-muted-foreground shrink-0" />
-            <span className="text-white text-sm">{game.venue_name}</span>
+            <MapPin size={16} className="text-primary shrink-0" />
+            <div>
+              <p className="text-xs text-muted-foreground">VENUE</p>
+              <span className="text-foreground text-sm font-semibold">{game.venue_name}</span>
+            </div>
           </div>
           <div className="flex items-center gap-3">
-            <Users size={15} className="text-muted-foreground shrink-0" />
-            <span className="text-white text-sm">
-              {totalPlayers} / {game.max_players} players
-              {spotsLeft > 0 && <span className="text-green-400 ml-2 text-xs">({spotsLeft} spots left)</span>}
-            </span>
+            <Users size={16} className="text-primary shrink-0" />
+            <div>
+              <p className="text-xs text-muted-foreground">PLAYERS</p>
+              <span className="text-foreground text-sm font-semibold">
+                {totalPlayers} / {game.max_players}
+                {spotsLeft > 0 && <span className="text-primary font-bold ml-2">({spotsLeft} left)</span>}
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Organizer */}
         {game.organizer && (
-          <div className="flex items-center gap-3 py-3 border-t border-b border-border">
-            <div className="w-9 h-9 rounded-full bg-secondary border border-border overflow-hidden flex items-center justify-center shrink-0">
+          <div className="flex items-center gap-3 py-4 px-3 border border-border rounded-xl bg-card hover:border-primary/40 transition-colors">
+            <div className="w-10 h-10 rounded-lg bg-primary/20 border border-primary/40 overflow-hidden flex items-center justify-center shrink-0">
               {game.organizer.avatar_url ? (
                 <img src={game.organizer.avatar_url} alt="" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-white text-sm font-bold">
+                <span className="text-primary text-xs font-bold">
                   {(game.organizer.full_name ?? "O").slice(0, 1)}
                 </span>
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-muted-foreground">Organized by</p>
-              <p className="text-white text-sm font-semibold truncate">{game.organizer.full_name}</p>
+              <p className="text-xs text-muted-foreground font-semibold uppercase">Organized by</p>
+              <p className="text-foreground text-sm font-bold truncate">{game.organizer.full_name}</p>
             </div>
           </div>
         )}
@@ -161,38 +170,38 @@ export default function GameDetailPage() {
             )}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-3 w-full border border-border rounded-xl px-4 py-3 hover:border-rondo-yellow/40 active:scale-[0.98] transition-all cursor-pointer group"
+            className="flex items-center gap-3 w-full border-2 border-border rounded-xl px-4 py-3 hover:border-primary/60 bg-card active:scale-[0.98] transition-all cursor-pointer group"
           >
-            <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-              <MapPin size={16} className="text-rondo-yellow" />
+            <div className="w-10 h-10 rounded-lg bg-primary/20 border border-primary/40 flex items-center justify-center shrink-0">
+              <MapPin size={18} className="text-primary" />
             </div>
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-white text-sm font-semibold truncate">{game.venue_name}</p>
+              <p className="text-foreground text-sm font-bold truncate">{game.venue_name}</p>
               <p className="text-muted-foreground text-xs truncate">{game.venue_address}</p>
             </div>
-            <ChevronRight size={16} className="text-muted-foreground group-hover:text-rondo-yellow transition-colors shrink-0" />
+            <ChevronRight size={16} className="text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
           </a>
         )}
 
         {/* Teams */}
         {game.teams && game.teams.length > 0 && (
           <section>
-            <h2 className="text-white font-bold text-base mb-3">Choose Your Team</h2>
+            <h2 className="text-foreground font-black text-lg mb-4">Choose Your Team</h2>
             <div className="grid grid-cols-2 gap-3">
               {(game.teams as TeamWithPlayers[])
                 .sort((a, b) => a.slot_number - b.slot_number)
                 .map((team) => {
                   const teamPlayers = team.game_players;
                   return (
-                    <div key={team.id} className="bg-card border border-border rounded-xl p-3 space-y-3">
+                    <div key={team.id} className="bg-card border-2 border-border rounded-xl p-4 space-y-3 hover:border-primary/40 transition-colors">
                       <div className="flex items-center gap-2">
                         <div
-                          className="w-3 h-3 rounded-full shrink-0"
+                          className="w-4 h-4 rounded-full shrink-0 border-2 border-white"
                           style={{ backgroundColor: team.color }}
                         />
-                        <span className="text-white font-bold text-sm">{team.name}</span>
-                        <span className="text-muted-foreground text-xs ml-auto">
-                          {teamPlayers?.length ?? 0} players
+                        <span className="text-foreground font-black text-sm flex-1">{team.name}</span>
+                        <span className="text-primary font-bold text-xs bg-primary/10 px-2 py-1 rounded-lg">
+                          {teamPlayers?.length ?? 0}
                         </span>
                       </div>
                       <div className="flex flex-wrap gap-1.5">

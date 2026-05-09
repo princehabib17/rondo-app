@@ -8,20 +8,20 @@ import { Button } from "@/components/ui/button";
 const slides = [
   {
     icon: "🔒",
-    iconBg: "from-yellow-600 to-yellow-400",
+    iconBg: "bg-primary/20",
     title: "SECURE YOUR SPOT",
     subtitle: "Book your place in local games before they fill up",
   },
   {
     icon: "🗺️",
-    iconBg: "from-green-700 to-green-500",
+    iconBg: "bg-primary/20",
     title: "FIND GAMES NEAR YOU",
     subtitle: "Discover football games happening in your area",
   },
   {
     icon: "👥",
-    iconBg: "from-blue-700 to-blue-500",
-    title: "SEE WHO'S PLAYING",
+    iconBg: "bg-primary/20",
+    title: "SEE WHO&apos;S PLAYING",
     subtitle: "Browse team rosters and find your perfect squad",
   },
 ];
@@ -41,35 +41,35 @@ export default function OnboardingSlidesPage() {
   const slide = slides[current];
 
   return (
-    <div className="flex flex-col min-h-screen p-6">
-      {/* Skip */}
-      <div className="flex justify-end">
-        <Link href="/onboarding/role" className="text-muted-foreground text-sm hover:text-white">
-          Skip
+    <div className="flex flex-col min-h-screen p-6 max-w-lg mx-auto w-full">
+      {/* Skip Link */}
+      <div className="flex justify-end mb-4">
+        <Link href="/onboarding/role" className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
+          SKIP
         </Link>
       </div>
 
-      {/* Icon */}
+      {/* Icon Container */}
       <div className="flex-1 flex items-center justify-center">
-        <div className={`w-48 h-48 rounded-2xl bg-gradient-to-br ${slide.iconBg} flex items-center justify-center shadow-2xl`}>
-          <span className="text-7xl">{slide.icon}</span>
+        <div className={`w-56 h-56 rounded-3xl ${slide.iconBg} border-2 border-primary/40 flex items-center justify-center backdrop-blur-sm`}>
+          <span className="text-8xl drop-shadow-lg">{slide.icon}</span>
         </div>
       </div>
 
       {/* Content */}
-      <div className="space-y-6 pb-8">
-        <div className="space-y-3 text-center">
-          <h1 className="text-white font-bold text-3xl tracking-wider uppercase">{slide.title}</h1>
-          <p className="text-muted-foreground text-base">{slide.subtitle}</p>
+      <div className="space-y-8 pb-6">
+        <div className="space-y-4 text-center">
+          <h1 className="text-foreground font-black text-3xl tracking-tight leading-tight">{slide.title}</h1>
+          <p className="text-muted-foreground text-sm leading-relaxed">{slide.subtitle}</p>
         </div>
 
-        {/* Progress dots */}
+        {/* Progress Indicator */}
         <div className="flex justify-center gap-2">
           {slides.map((_, i) => (
             <div
               key={i}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                i === current ? "w-6 bg-rondo-yellow" : "w-1.5 bg-border"
+              className={`rounded-full transition-all duration-300 ${
+                i === current ? "w-8 h-2 bg-primary" : "w-2 h-2 bg-border"
               }`}
             />
           ))}
@@ -77,7 +77,7 @@ export default function OnboardingSlidesPage() {
 
         <Button
           onClick={handleNext}
-          className="w-full bg-rondo-yellow text-rondo-black font-bold uppercase tracking-wider text-base py-6 hover:brightness-90"
+          className="w-full h-12 bg-primary text-primary-foreground font-black uppercase tracking-wider text-sm hover:brightness-110"
         >
           {current === slides.length - 1 ? "Get Started" : "Next"}
         </Button>

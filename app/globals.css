@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
@@ -32,18 +33,19 @@
   --radius-xl: calc(var(--radius) * 1.4);
 
   /* Font */
-  --font-sans: var(--font-sans);
+  --font-sans: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: var(--font-geist-mono);
 
   /* RONDO brand colors */
-  --color-rondo-yellow: #F5E642;
+  --color-rondo-yellow: #FFD700;
   --color-rondo-black: #0A0A0A;
   --color-rondo-dark: #111111;
   --color-rondo-card: #1A1A1A;
-  --color-rondo-border: #262626;
-  --color-rondo-muted: #404040;
-  --color-rondo-red: #E53935;
-  --color-rondo-blue: #1E88E5;
+  --color-rondo-border: #2A2A2A;
+  --color-rondo-muted: #505050;
+  --color-rondo-red: #EF4444;
+  --color-rondo-blue: #3B82F6;
+  --color-rondo-gold: #D4A574;
 
   /* Sidebar */
   --color-sidebar: var(--sidebar);
@@ -58,80 +60,112 @@
 
 /* ========================================
    RONDO DARK THEME (default / :root)
-   Near-black background, yellow primary
+   Pure black background, bold gold yellow
    ======================================== */
 :root {
-  --background: oklch(0.07 0 0);          /* ~#0A0A0A near-black */
-  --foreground: oklch(0.97 0 0);          /* near-white */
-  --card: oklch(0.11 0 0);               /* ~#111 slightly lighter */
-  --card-foreground: oklch(0.97 0 0);
-  --popover: oklch(0.11 0 0);
-  --popover-foreground: oklch(0.97 0 0);
-  --primary: oklch(0.89 0.18 95);        /* RONDO yellow ~#F5E642 */
-  --primary-foreground: oklch(0.07 0 0); /* dark text on yellow */
-  --secondary: oklch(0.16 0 0);
-  --secondary-foreground: oklch(0.97 0 0);
-  --muted: oklch(0.16 0 0);
-  --muted-foreground: oklch(0.55 0 0);
-  --accent: oklch(0.89 0.18 95);         /* RONDO yellow */
-  --accent-foreground: oklch(0.07 0 0);
-  --destructive: oklch(0.62 0.22 27);    /* red */
-  --border: oklch(0.20 0 0);
-  --input: oklch(0.16 0 0);
-  --ring: oklch(0.89 0.18 95);           /* yellow ring */
-  --radius: 0.75rem;
+  --background: #0A0A0A;                  /* Pure black */
+  --foreground: #FFFFFF;                  /* White text */
+  --card: #161616;                        /* Deep dark gray */
+  --card-foreground: #FFFFFF;
+  --popover: #161616;
+  --popover-foreground: #FFFFFF;
+  --primary: #FFD700;                     /* Bold gold yellow */
+  --primary-foreground: #0A0A0A;          /* Black text on yellow */
+  --secondary: #1A1A1A;                   /* Dark gray */
+  --secondary-foreground: #FFFFFF;
+  --muted: #1A1A1A;
+  --muted-foreground: #808080;            /* Gray text */
+  --accent: #FFD700;                      /* Bold gold yellow */
+  --accent-foreground: #0A0A0A;
+  --destructive: #EF4444;                 /* Red */
+  --border: #2A2A2A;                      /* Subtle borders */
+  --input: #1A1A1A;                       /* Dark input bg */
+  --ring: #FFD700;                        /* Yellow ring */
+  --radius: 0.875rem;                     /* Rounded corners */
 
   /* Sidebar */
-  --sidebar: oklch(0.11 0 0);
-  --sidebar-foreground: oklch(0.97 0 0);
-  --sidebar-primary: oklch(0.89 0.18 95);
-  --sidebar-primary-foreground: oklch(0.07 0 0);
-  --sidebar-accent: oklch(0.16 0 0);
-  --sidebar-accent-foreground: oklch(0.97 0 0);
-  --sidebar-border: oklch(0.20 0 0);
-  --sidebar-ring: oklch(0.89 0.18 95);
+  --sidebar: #161616;
+  --sidebar-foreground: #FFFFFF;
+  --sidebar-primary: #FFD700;
+  --sidebar-primary-foreground: #0A0A0A;
+  --sidebar-accent: #1A1A1A;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #2A2A2A;
+  --sidebar-ring: #FFD700;
 }
 
 /* Dark class mirrors root (RONDO is always dark) */
 .dark {
-  --background: oklch(0.07 0 0);
-  --foreground: oklch(0.97 0 0);
-  --card: oklch(0.11 0 0);
-  --card-foreground: oklch(0.97 0 0);
-  --popover: oklch(0.11 0 0);
-  --popover-foreground: oklch(0.97 0 0);
-  --primary: oklch(0.89 0.18 95);
-  --primary-foreground: oklch(0.07 0 0);
-  --secondary: oklch(0.16 0 0);
-  --secondary-foreground: oklch(0.97 0 0);
-  --muted: oklch(0.16 0 0);
-  --muted-foreground: oklch(0.55 0 0);
-  --accent: oklch(0.89 0.18 95);
-  --accent-foreground: oklch(0.07 0 0);
-  --destructive: oklch(0.62 0.22 27);
-  --border: oklch(0.20 0 0);
-  --input: oklch(0.16 0 0);
-  --ring: oklch(0.89 0.18 95);
-  --sidebar: oklch(0.11 0 0);
-  --sidebar-foreground: oklch(0.97 0 0);
-  --sidebar-primary: oklch(0.89 0.18 95);
-  --sidebar-primary-foreground: oklch(0.07 0 0);
-  --sidebar-accent: oklch(0.16 0 0);
-  --sidebar-accent-foreground: oklch(0.97 0 0);
-  --sidebar-border: oklch(0.20 0 0);
-  --sidebar-ring: oklch(0.89 0.18 95);
+  --background: #0A0A0A;
+  --foreground: #FFFFFF;
+  --card: #161616;
+  --card-foreground: #FFFFFF;
+  --popover: #161616;
+  --popover-foreground: #FFFFFF;
+  --primary: #FFD700;
+  --primary-foreground: #0A0A0A;
+  --secondary: #1A1A1A;
+  --secondary-foreground: #FFFFFF;
+  --muted: #1A1A1A;
+  --muted-foreground: #808080;
+  --accent: #FFD700;
+  --accent-foreground: #0A0A0A;
+  --destructive: #EF4444;
+  --border: #2A2A2A;
+  --input: #1A1A1A;
+  --ring: #FFD700;
+  --sidebar: #161616;
+  --sidebar-foreground: #FFFFFF;
+  --sidebar-primary: #FFD700;
+  --sidebar-primary-foreground: #0A0A0A;
+  --sidebar-accent: #1A1A1A;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #2A2A2A;
+  --sidebar-ring: #FFD700;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
-  }
   html {
-    @apply font-sans;
+    @apply font-sans scroll-smooth;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Heading hierarchy - bold & confident */
+  h1 {
+    @apply text-4xl font-black leading-tight tracking-tight;
+  }
+  h2 {
+    @apply text-3xl font-bold leading-snug tracking-tight;
+  }
+  h3 {
+    @apply text-2xl font-bold leading-snug tracking-tight;
+  }
+  h4 {
+    @apply text-xl font-bold tracking-tight;
+  }
+  h5 {
+    @apply text-lg font-semibold tracking-tight;
+  }
+  h6 {
+    @apply text-base font-semibold tracking-tight;
+  }
+
+  /* Body text - readable & clean */
+  p {
+    @apply text-base leading-relaxed;
+  }
+
+  /* Button default styling */
+  button {
+    @apply transition-all duration-200 active:scale-95;
   }
 }
 
