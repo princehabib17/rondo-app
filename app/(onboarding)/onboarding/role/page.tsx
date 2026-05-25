@@ -2,10 +2,31 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { OnboardingHeader } from "@/components/onboarding/OnboardingHeader";
 
 type Role = "player" | "organizer";
+
+const roles: {
+  id: Role;
+  title: string;
+  subtitle: string;
+  image: string;
+}[] = [
+  {
+    id: "player",
+    title: "PLAYER",
+    subtitle: "JOIN GAMES • ADD FRIENDS • HAVE FUN",
+    image: "/roles/player.jpg",
+  },
+  {
+    id: "organizer",
+    title: "ORGANIZER",
+    subtitle: "BE A HOST • AVOID FLAKES • BUILD COMMUNITIES",
+    image: "/roles/organizer.jpg",
+  },
+];
 
 export default function RoleSelectionPage() {
   const [selected, setSelected] = useState<Role | null>(null);
@@ -13,77 +34,60 @@ export default function RoleSelectionPage() {
 
   function handleConfirm() {
     if (!selected) return;
-    // Store in sessionStorage to use during profile setup
     sessionStorage.setItem("selectedRole", selected);
     router.push("/onboarding/profile");
   }
 
   return (
-    <div className="flex flex-col min-h-screen p-6 space-y-6">
-      <h1 className="text-white font-bold text-2xl tracking-wider uppercase text-center pt-4">
+    <div className="min-h-screen bg-black flex flex-col px-6 py-8 max-w-lg mx-auto">
+      <OnboardingHeader />
+
+      <h1 className="font-heading text-white font-black italic text-3xl uppercase text-center mt-8 mb-6 leading-none">
         Choose Your Role
       </h1>
 
-      <div className="flex-1 flex flex-col gap-4 justify-center">
-        {/* Player Card */}
-        <button
-          onClick={() => setSelected("player")}
-          className={cn(
-            "relative rounded-xl overflow-hidden h-44 border-2 transition-all duration-200",
-            selected === "player" ? "border-rondo-yellow" : "border-border"
-          )}
-        >
-          {/* Background gradient simulating football pitch */}
-          <div className="absolute inset-0 bg-gradient-to-br from-green-900 via-green-800 to-black" />
-          {/* Overlay pattern */}
-          <div className="absolute inset-0 opacity-20" style={{
-            backgroundImage: "repeating-linear-gradient(90deg, rgba(255,255,255,0.1) 0px, transparent 1px, transparent 40px, rgba(255,255,255,0.1) 41px)",
-          }} />
-          <div className="relative h-full flex items-center px-6">
-            <div className="text-left">
-              <div className="text-5xl mb-2">⚽</div>
-              <h2 className="text-white font-black text-2xl tracking-widest uppercase">Player</h2>
-              <p className="text-green-300 text-sm mt-1">Find &amp; join local games</p>
-            </div>
-            {selected === "player" && (
-              <div className="ml-auto w-8 h-8 rounded-full bg-rondo-yellow flex items-center justify-center">
-                <span className="text-black font-bold text-lg">✓</span>
+      <div className="flex-1 flex flex-col gap-4">
+        {roles.map((role) => {
+          const isSelected = selected === role.id;
+          return (
+            <button
+              key={role.id}
+              type="button"
+              onClick={() => setSelected(role.id)}
+              className={cn(
+                "relative h-44 w-full overflow-hidden rounded-2xl border-2 text-left transition-all",
+                isSelected ? "border-rondo-accent" : "border-transparent"
+              )}
+            >
+              <Image
+                src={role.image}
+                alt=""
+                fill
+                className="object-cover"
+                sizes="400px"
+              />
+              <div className="absolute inset-0 bg-black/55" />
+              <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center">
+                <h2 className="font-heading text-white font-black italic text-4xl uppercase leading-none">
+                  {role.title}
+                </h2>
+                <p className="font-body text-white/90 text-[11px] tracking-wide mt-3 max-w-[260px]">
+                  {role.subtitle}
+                </p>
               </div>
-            )}
-          </div>
-        </button>
-
-        {/* Organizer Card */}
-        <button
-          onClick={() => setSelected("organizer")}
-          className={cn(
-            "relative rounded-xl overflow-hidden h-44 border-2 transition-all duration-200",
-            selected === "organizer" ? "border-rondo-yellow" : "border-border"
-          )}
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black" />
-          <div className="relative h-full flex items-center px-6">
-            <div className="text-left">
-              <div className="text-5xl mb-2">📋</div>
-              <h2 className="text-white font-black text-2xl tracking-widest uppercase">Organizer</h2>
-              <p className="text-gray-300 text-sm mt-1">Create &amp; manage games</p>
-            </div>
-            {selected === "organizer" && (
-              <div className="ml-auto w-8 h-8 rounded-full bg-rondo-yellow flex items-center justify-center">
-                <span className="text-black font-bold text-lg">✓</span>
-              </div>
-            )}
-          </div>
-        </button>
+            </button>
+          );
+        })}
       </div>
 
-      <Button
+      <button
+        type="button"
         onClick={handleConfirm}
         disabled={!selected}
-        className="w-full bg-rondo-yellow text-rondo-black font-bold uppercase tracking-wider text-base py-6 hover:brightness-90 disabled:opacity-40"
+        className="mt-6 w-full bg-rondo-accent text-black font-heading font-black uppercase tracking-widest text-sm py-4 rounded-xl disabled:opacity-40"
       >
         Confirm Selection
-      </Button>
+      </button>
     </div>
   );
 }

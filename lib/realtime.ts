@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import type { TimerSession } from "@/lib/supabase/types";
+import type { TimerSession, Message } from "@/lib/supabase/types";
 
 export function subscribeToTimer(
   gameId: string,
@@ -21,7 +21,7 @@ export function subscribeToTimer(
 
 export function subscribeToMessages(
   gameId: string,
-  onMessage: (msg: any) => void
+  onMessage: (msg: Message) => void
 ) {
   const supabase = createClient();
   const channel = supabase
@@ -30,7 +30,7 @@ export function subscribeToMessages(
       "postgres_changes",
       { event: "INSERT", schema: "public", table: "messages", filter: `game_id=eq.${gameId}` },
       (payload) => {
-        if (payload.new) onMessage(payload.new);
+        if (payload.new) onMessage(payload.new as Message);
       }
     )
     .subscribe();

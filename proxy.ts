@@ -1,6 +1,29 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const PUBLIC_ROUTES = [
+  "/",
+  "/login",
+  "/signup",
+  "/otp",
+  "/forgot-password",
+  "/auth/callback",
+];
+
+const PUBLIC_PREFIXES = [
+  "/api/payments/webhook",
+  "/api/auth/guest",
+];
+
+function isPublicRoute(pathname: string): boolean {
+  if (PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    return true;
+  }
+  return PUBLIC_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
+}
+
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -31,16 +54,17 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Public routes that don't need auth
-  const publicRoutes = ["/", "/login", "/signup", "/otp"];
-  const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
-
-  if (!user && !isPublicRoute) {
-    return NextResponse.redirect(new URL("/", request.url));
+  if (!user && !isPublicRoute(pathname)) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("next", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect logged-in users away from auth pages
-  if (user && (pathname === "/" || pathname === "/login" || pathname === "/signup")) {
+  if (
+    user &&
+    (pathname === "/" || pathname === "/login" || pathname === "/signup") &&
+    !user.is_anonymous
+  ) {
     return NextResponse.redirect(new URL("/feed", request.url));
   }
 

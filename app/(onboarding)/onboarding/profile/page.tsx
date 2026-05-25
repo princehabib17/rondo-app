@@ -1,28 +1,30 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Upload, User } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { OnboardingHeader } from "@/components/onboarding/OnboardingHeader";
 import { NATIONALITIES } from "@/lib/utils/format";
 
 const profileSchema = z.object({
   full_name: z.string().min(2, "Name required"),
-  bio: z.string().max(200).optional(),
-  nationality: z.string().optional(),
-  position: z.enum(["goalkeeper", "defender", "midfielder", "forward", "any"]).optional(),
-  preferred_foot: z.enum(["left", "right", "both"]).optional(),
+  age: z.string().min(1, "Age required"),
+  gender: z.string().min(1, "Gender required"),
+  phone: z.string().min(7, "Phone required"),
+  address: z.string().min(2, "Address required"),
+  nationality: z.string().min(1, "Nationality required"),
 });
 type ProfileForm = z.infer<typeof profileSchema>;
 
-export default function ProfileSetupPage() {
+const labelClass = "font-heading text-white text-xs uppercase tracking-wider";
+const inputClass =
+  "w-full bg-[#1c1c1c] border-0 text-white font-body text-sm px-4 py-3.5 rounded-xl placeholder:text-white/35 focus:outline-none focus:ring-2 focus:ring-rondo-accent/50";
+
+export default function PlayerSetupPage() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -33,11 +35,19 @@ export default function ProfileSetupPage() {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) setUserId(data.user.id);
+      else router.push("/");
     });
-  }, []);
+  }, [router]);
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<ProfileForm>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
+    defaultValues: {
+      nationality: "Philippines",
+    },
   });
 
   function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -53,11 +63,9 @@ export default function ProfileSetupPage() {
     const supabase = createClient();
 
     let avatar_url: string | undefined;
-
-    // Upload avatar if provided
     if (avatarFile) {
       const ext = avatarFile.name.split(".").pop();
-      const path = `avatars/${userId}.${ext}`;
+      const path = `${userId}/avatar.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(path, avatarFile, { upsert: true });
@@ -69,14 +77,20 @@ export default function ProfileSetupPage() {
 
     const role = (sessionStorage.getItem("selectedRole") ?? "player") as "player" | "organizer";
 
+    await supabase.auth.updateUser({
+      data: {
+        age: data.age,
+        gender: data.gender,
+        phone: data.phone,
+        address: data.address,
+      },
+    });
+
     const { error: updateError } = await supabase
       .from("profiles")
       .update({
         full_name: data.full_name,
-        bio: data.bio ?? null,
-        nationality: data.nationality ?? null,
-        position: data.position ?? null,
-        preferred_foot: data.preferred_foot ?? null,
+        nationality: data.nationality,
         role,
         ...(avatar_url ? { avatar_url } : {}),
       })
@@ -89,86 +103,88 @@ export default function ProfileSetupPage() {
 
     sessionStorage.removeItem("selectedRole");
     router.push("/feed");
+    router.refresh();
   }
 
   return (
-    <div className="flex flex-col min-h-screen p-6">
-      <h1 className="text-white font-bold text-2xl tracking-widest uppercase text-center pt-4 mb-6">
-        Your Profile
-      </h1>
+    <div className="min-h-screen bg-black flex flex-col px-6 py-8 max-w-lg mx-auto">
+      <OnboardingHeader />
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 flex-1">
-        {/* Avatar */}
-        <div className="flex justify-center mb-2">
-          <label className="cursor-pointer group">
-            <div className="w-20 h-20 rounded-full border-2 border-dashed border-border group-hover:border-rondo-yellow flex items-center justify-center overflow-hidden transition">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col mt-6">
+        <div className="flex justify-center mb-8">
+          <label className="relative cursor-pointer">
+            <div className="w-36 h-36 rounded-full bg-[#1c1c1c] flex items-center justify-center overflow-hidden border border-white/10">
               {avatarPreview ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+                <img src={avatarPreview} alt="" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-muted-foreground text-xs text-center px-2">Add Photo</span>
+                <Upload className="text-white/50 w-10 h-10" strokeWidth={1.5} />
               )}
             </div>
+            <span className="absolute bottom-1 right-1 w-9 h-9 rounded-full bg-rondo-accent flex items-center justify-center border-2 border-black">
+              <User className="w-4 h-4 text-black" strokeWidth={2.5} />
+            </span>
             <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
           </label>
         </div>
 
-        <div className="space-y-1">
-          <Label className="text-muted-foreground text-xs uppercase tracking-wider">Full Name *</Label>
-          <Input {...register("full_name")} placeholder="Juan dela Cruz" className="bg-secondary border-border text-white" />
-          {errors.full_name && <p className="text-destructive text-xs">{errors.full_name.message}</p>}
+        <div className="space-y-4 flex-1">
+          <div className="space-y-2">
+            <label className={labelClass}>Full name</label>
+            <input {...register("full_name")} placeholder="Miguel Santos" className={inputClass} />
+            {errors.full_name && <p className="text-red-400 text-xs font-body">{errors.full_name.message}</p>}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <label className={labelClass}>Age</label>
+              <input {...register("age")} placeholder="24" className={inputClass} />
+              {errors.age && <p className="text-red-400 text-xs font-body">{errors.age.message}</p>}
+            </div>
+            <div className="space-y-2">
+              <label className={labelClass}>Gender</label>
+              <input {...register("gender")} placeholder="Male" className={inputClass} />
+              {errors.gender && <p className="text-red-400 text-xs font-body">{errors.gender.message}</p>}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className={labelClass}>Phone number</label>
+            <input {...register("phone")} type="tel" placeholder="0917 123 4567" className={inputClass} />
+            {errors.phone && <p className="text-red-400 text-xs font-body">{errors.phone.message}</p>}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <label className={labelClass}>Address</label>
+              <input {...register("address")} placeholder="Taguig City" className={inputClass} />
+              {errors.address && <p className="text-red-400 text-xs font-body">{errors.address.message}</p>}
+            </div>
+            <div className="space-y-2">
+              <label className={labelClass}>Nationality</label>
+              <select {...register("nationality")} className={inputClass}>
+                {NATIONALITIES.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+              {errors.nationality && (
+                <p className="text-red-400 text-xs font-body">{errors.nationality.message}</p>
+              )}
+            </div>
+          </div>
+
+          {error && <p className="text-red-400 text-sm text-center font-body">{error}</p>}
         </div>
 
-        <div className="space-y-1">
-          <Label className="text-muted-foreground text-xs uppercase tracking-wider">Bio</Label>
-          <textarea
-            {...register("bio")}
-            placeholder="Tell others about yourself..."
-            className="w-full bg-secondary border border-border text-white rounded-lg p-3 text-sm resize-none h-20 focus:border-rondo-yellow focus:outline-none placeholder:text-muted-foreground"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <Label className="text-muted-foreground text-xs uppercase tracking-wider">Nationality</Label>
-          <select {...register("nationality")} className="w-full bg-secondary border border-border text-white rounded-lg p-3 text-sm focus:border-rondo-yellow focus:outline-none">
-            <option value="">Select nationality</option>
-            {NATIONALITIES.map((n) => (
-              <option key={n} value={n}>{n}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="space-y-1">
-          <Label className="text-muted-foreground text-xs uppercase tracking-wider">Position</Label>
-          <select {...register("position")} className="w-full bg-secondary border border-border text-white rounded-lg p-3 text-sm focus:border-rondo-yellow focus:outline-none">
-            <option value="">Select position</option>
-            <option value="goalkeeper">Goalkeeper</option>
-            <option value="defender">Defender</option>
-            <option value="midfielder">Midfielder</option>
-            <option value="forward">Forward</option>
-            <option value="any">Any</option>
-          </select>
-        </div>
-
-        <div className="space-y-1">
-          <Label className="text-muted-foreground text-xs uppercase tracking-wider">Preferred Foot</Label>
-          <select {...register("preferred_foot")} className="w-full bg-secondary border border-border text-white rounded-lg p-3 text-sm focus:border-rondo-yellow focus:outline-none">
-            <option value="">Select foot</option>
-            <option value="left">Left</option>
-            <option value="right">Right</option>
-            <option value="both">Both</option>
-          </select>
-        </div>
-
-        {error && <p className="text-destructive text-sm text-center">{error}</p>}
-
-        <Button
+        <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-rondo-yellow text-rondo-black font-bold uppercase tracking-wider text-base py-6 hover:brightness-90"
+          className="mt-8 w-full bg-rondo-accent text-black font-heading font-black uppercase tracking-widest text-sm py-4 rounded-xl disabled:opacity-50"
         >
-          {isSubmitting ? "Saving..." : "Continue"}
-        </Button>
+          {isSubmitting ? "Saving..." : "Next"}
+        </button>
       </form>
     </div>
   );

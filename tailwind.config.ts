@@ -16,7 +16,8 @@ const config: Config = {
     extend: {
       colors: {
         rondo: {
-          yellow: "#F5E642",
+          yellow: "#fffa98",
+          accent: "#fffa98",
           black: "#0A0A0A",
           dark: "#111111",
           card: "#1A1A1A",

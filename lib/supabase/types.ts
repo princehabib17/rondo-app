@@ -114,3 +114,10 @@ export interface RotationRound {
   team_a_name?: string;
   team_b_name?: string;
 }
+
+/** PayMongo webhook idempotency record (service role only). */
+export interface WebhookEvent {
+  id: string;
+  event_type: string;
+  processed_at: string;
+}

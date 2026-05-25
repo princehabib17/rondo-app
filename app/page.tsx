@@ -1,62 +1,70 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { signInAsGuest } from "@/lib/auth/guest";
 
 export default function HomePage() {
-  async function handleGoogleLogin() {
-    const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
-  }
+  const router = useRouter();
+  const [guestError, setGuestError] = useState<string | null>(null);
+  const [guestLoading, setGuestLoading] = useState(false);
 
-  async function handleFacebookLogin() {
-    const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
-      provider: "facebook",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
+  async function handleGuest() {
+    setGuestError(null);
+    setGuestLoading(true);
+    const result = await signInAsGuest();
+    setGuestLoading(false);
+    if (!result.ok) {
+      setGuestError(result.error ?? "Guest sign-in failed");
+      return;
+    }
+    router.push("/onboarding/slides");
+    router.refresh();
   }
 
   return (
-    <main className="min-h-screen bg-rondo-black flex flex-col items-center justify-center">
-      <div className="text-center space-y-8">
-        {/* RONDO Logo */}
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-20 h-20 rounded-full border-2 border-rondo-yellow flex items-center justify-center">
-            <span className="text-rondo-yellow font-bold text-2xl tracking-widest">R</span>
-          </div>
-          <h1 className="text-white font-bold text-4xl tracking-[0.2em]">RONDO</h1>
-        </div>
+    <main className="min-h-screen bg-black flex flex-col px-6 py-8 max-w-lg mx-auto">
+      <div className="pt-2">
+        <Image
+          src="/rondo-logo.png"
+          alt=""
+          width={48}
+          height={48}
+          priority
+          className="object-contain"
+        />
+      </div>
 
-        {/* CTA Buttons */}
-        <div className="flex flex-col gap-3 w-64">
-          <Link
-            href="/signup"
-            className="w-full bg-rondo-yellow text-rondo-black font-bold py-3 px-6 rounded-lg text-center uppercase tracking-wider hover:brightness-90 transition"
-          >
-            Create Account
-          </Link>
-          <Link
-            href="/login"
-            className="w-full border border-rondo-yellow text-rondo-yellow font-bold py-3 px-6 rounded-lg text-center uppercase tracking-wider hover:bg-rondo-yellow hover:text-rondo-black transition"
-          >
-            Log In
-          </Link>
-        </div>
+      <div className="flex-1" />
 
-        {/* Social auth */}
-        <div className="text-muted-foreground text-sm">Or login using</div>
-        <div className="flex gap-4 justify-center">
-          <button onClick={handleGoogleLogin} className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-white hover:border-rondo-yellow transition font-bold text-sm">
-            G
-          </button>
-          <button onClick={handleFacebookLogin} className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-white hover:border-rondo-yellow transition font-bold text-sm">
-            f
-          </button>
-        </div>
+      <div className="space-y-3 pb-8 w-full">
+        <Link
+          href="/signup"
+          className="block w-full bg-white text-black font-bold py-4 text-center uppercase tracking-widest text-sm"
+        >
+          Create Account
+        </Link>
+        <Link
+          href="/login"
+          className="block w-full bg-rondo-accent text-black font-heading font-bold py-4 text-center uppercase tracking-widest text-sm"
+        >
+          Log In
+        </Link>
+        <button
+          type="button"
+          onClick={handleGuest}
+          disabled={guestLoading}
+          className="w-full py-3 text-white/80 text-xs uppercase tracking-[0.2em] hover:text-white disabled:opacity-50"
+        >
+          {guestLoading ? "Please wait..." : "Continue as guest"}
+        </button>
+        {guestError && (
+          <p className="text-red-400 text-xs text-center leading-relaxed px-2">
+            {guestError}
+          </p>
+        )}
       </div>
     </main>
   );

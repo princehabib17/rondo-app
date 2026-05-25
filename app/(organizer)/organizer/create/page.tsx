@@ -58,7 +58,7 @@ export default function CreateGamePage() {
     defaultValues: {
       format: "5v5",
       round_duration_minutes: 8,
-      payment_type: "venue",
+      payment_type: "online",
       max_players: 10,
       num_teams: 2,
       price_per_player: 200,

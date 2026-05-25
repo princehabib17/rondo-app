@@ -1,5 +1,17 @@
 import type { Metadata, Viewport } from "next";
+import { Barlow_Condensed, Inter } from "next/font/google";
 import "./globals.css";
+
+const barlowCondensed = Barlow_Condensed({
+  subsets: ["latin"],
+  weight: ["600", "700", "800", "900"],
+  variable: "--font-barlow-condensed",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
 
 export const metadata: Metadata = {
   title: "RONDO — Find Your Game",
@@ -15,7 +27,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#0A0A0A",
+  themeColor: "#000000",
 };
 
 export default function RootLayout({
@@ -24,8 +36,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark bg-background">
-      <body className="bg-background text-foreground antialiased font-sans">
+    <html lang="en" className={`dark ${barlowCondensed.variable} ${inter.variable}`}>
+      <body className="font-body bg-background text-foreground antialiased">
         {children}
       </body>
     </html>

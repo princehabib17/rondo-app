@@ -1,3 +1,6 @@
+/**
+ * Browser-only query helpers. For server components use queries.server.ts.
+ */
 import { createClient } from "./client";
 import type { Game, Profile, GamePlayer } from "./types";
 

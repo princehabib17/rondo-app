@@ -101,13 +101,20 @@ export default function ChatPage() {
 
   async function sendMessage() {
     const body = input.trim();
-    if (!body || sending) return;
+    if (!body || sending || !currentUserId) return;
     setSending(true);
     setInput("");
     inputRef.current?.focus();
 
     const supabase = createClient();
-    await supabase.from("messages").insert({ game_id: id, body });
+    const { error } = await supabase.from("messages").insert({
+      game_id: id,
+      user_id: currentUserId,
+      body,
+    });
+    if (error) {
+      setInput(body);
+    }
     setSending(false);
   }
 
