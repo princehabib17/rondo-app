@@ -1,61 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
+import { ContinueAsGuest } from "@/components/auth/ContinueAsGuest";
+import { RondoMark } from "@/components/auth/RondoMark";
 
 export default function HomePage() {
-  async function handleGoogleLogin() {
-    const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
-  }
-
-  async function handleFacebookLogin() {
-    const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
-      provider: "facebook",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
-  }
-
   return (
-    <main className="min-h-screen bg-rondo-black flex flex-col items-center justify-center">
-      <div className="text-center space-y-8">
-        {/* RONDO Logo */}
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-20 h-20 rounded-full border-2 border-rondo-yellow flex items-center justify-center">
-            <span className="text-rondo-yellow font-bold text-2xl tracking-widest">R</span>
-          </div>
-          <h1 className="text-white font-bold text-4xl tracking-[0.2em]">RONDO</h1>
+    <main className="min-h-[100dvh] bg-black text-white">
+      <div className="mx-auto flex min-h-[100dvh] w-full max-w-[430px] flex-col px-10 py-14">
+        <div className="pt-1">
+          <RondoMark className="origin-top-left scale-[0.48] items-start" />
         </div>
 
-        {/* CTA Buttons */}
-        <div className="flex flex-col gap-3 w-64">
+        <div className="flex flex-1 items-center justify-center pb-28">
+          <RondoMark showWordmark />
+        </div>
+
+        <div className="mb-20 flex flex-col gap-5">
           <Link
             href="/signup"
-            className="w-full bg-rondo-yellow text-rondo-black font-bold py-3 px-6 rounded-lg text-center uppercase tracking-wider hover:brightness-90 transition"
+            className="w-full rounded-xl bg-white px-6 py-5 text-center text-xl font-black uppercase tracking-tight text-black transition hover:bg-zinc-100"
           >
             Create Account
           </Link>
           <Link
             href="/login"
-            className="w-full border border-rondo-yellow text-rondo-yellow font-bold py-3 px-6 rounded-lg text-center uppercase tracking-wider hover:bg-rondo-yellow hover:text-rondo-black transition"
+            className="w-full rounded-xl bg-[#fff98a] px-6 py-5 text-center text-xl font-black uppercase tracking-tight text-black transition hover:brightness-95"
           >
             Log In
           </Link>
-        </div>
-
-        {/* Social auth */}
-        <div className="text-muted-foreground text-sm">Or login using</div>
-        <div className="flex gap-4 justify-center">
-          <button onClick={handleGoogleLogin} className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-white hover:border-rondo-yellow transition font-bold text-sm">
-            G
-          </button>
-          <button onClick={handleFacebookLogin} className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-white hover:border-rondo-yellow transition font-bold text-sm">
-            f
-          </button>
+          <ContinueAsGuest className="w-full py-5 text-center text-xl font-black uppercase tracking-tight text-white transition hover:text-[#fff98a]" />
         </div>
       </div>
     </main>

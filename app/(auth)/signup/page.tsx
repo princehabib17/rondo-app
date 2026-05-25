@@ -7,11 +7,10 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Eye, EyeOff } from "lucide-react";
+import { Apple, Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { ContinueAsGuest } from "@/components/auth/ContinueAsGuest";
+import { RondoMark } from "@/components/auth/RondoMark";
 
 const signupSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
@@ -68,121 +67,100 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Logo & Branding */}
-      <div className="text-center space-y-3">
-        <div className="flex justify-center">
-          <div className="w-20 h-20 rounded-2xl border-2 border-primary flex items-center justify-center bg-primary/5">
-            <span className="text-primary font-black text-3xl tracking-widest">R</span>
-          </div>
-        </div>
-        <h1 className="text-3xl font-black tracking-tight text-foreground">CREATE ACCOUNT</h1>
-        <p className="text-sm text-muted-foreground">Join the community. Start playing.</p>
+    <div className="flex min-h-[calc(100dvh-6rem)] flex-col">
+      <div className="pt-2">
+        <RondoMark className="origin-top-left scale-[0.64] items-start" />
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Full Name Field */}
-        <div className="space-y-2">
-          <Label className="text-xs font-semibold uppercase tracking-wider text-foreground/70">Full Name</Label>
-          <Input 
-            {...register("fullName")} 
-            placeholder="Juan dela Cruz" 
-            className="h-12 bg-secondary border-border text-foreground placeholder:text-muted-foreground text-base"
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-auto space-y-6 pb-10">
+        <h1 className="font-black italic text-6xl leading-none tracking-[-0.06em] text-white">
+          CREATE
+          <br />
+          ACCOUNT
+        </h1>
+
+        <div className="space-y-3">
+          <label className="text-xl font-semibold text-white">Full Name</label>
+          <input
+            {...register("fullName")}
+            className="h-14 w-full rounded-2xl border-2 border-white/90 bg-transparent px-5 text-lg text-white outline-none transition focus:border-[#fff98a]"
           />
-          {errors.fullName && <p className="text-destructive text-xs font-medium">{errors.fullName.message}</p>}
+          {errors.fullName && <p className="text-sm font-medium text-red-400">{errors.fullName.message}</p>}
         </div>
 
-        {/* Email Field */}
-        <div className="space-y-2">
-          <Label className="text-xs font-semibold uppercase tracking-wider text-foreground/70">Email Address</Label>
-          <Input 
-            {...register("email")} 
-            type="email" 
-            placeholder="you@example.com" 
-            className="h-12 bg-secondary border-border text-foreground placeholder:text-muted-foreground text-base"
+        <div className="space-y-3">
+          <label className="text-xl font-semibold text-white">Email Address</label>
+          <input
+            {...register("email")}
+            type="email"
+            className="h-14 w-full rounded-2xl border-2 border-white/90 bg-transparent px-5 text-lg text-white outline-none transition focus:border-[#fff98a]"
           />
-          {errors.email && <p className="text-destructive text-xs font-medium">{errors.email.message}</p>}
+          {errors.email && <p className="text-sm font-medium text-red-400">{errors.email.message}</p>}
         </div>
 
-        {/* Password Field */}
-        <div className="space-y-2">
-          <Label className="text-xs font-semibold uppercase tracking-wider text-foreground/70">Password</Label>
+        <div className="space-y-3">
+          <label className="text-xl font-semibold text-white">Password</label>
           <div className="relative">
-            <Input
+            <input
               {...register("password")}
               type={showPassword ? "text" : "password"}
-              placeholder="••••••••"
-              className="h-12 bg-secondary border-border text-foreground placeholder:text-muted-foreground pr-10 text-base"
+              className="h-14 w-full rounded-2xl border-2 border-white/90 bg-transparent px-5 pr-12 text-lg text-white outline-none transition focus:border-[#fff98a]"
             />
-            <button 
-              type="button" 
-              onClick={() => setShowPassword(!showPassword)} 
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 transition hover:text-white"
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
           </div>
-          {errors.password && <p className="text-destructive text-xs font-medium">{errors.password.message}</p>}
+          {errors.password && <p className="text-sm font-medium text-red-400">{errors.password.message}</p>}
         </div>
 
-        {/* Confirm Password Field */}
-        <div className="space-y-2">
-          <Label className="text-xs font-semibold uppercase tracking-wider text-foreground/70">Confirm Password</Label>
-          <Input 
-            {...register("confirmPassword")} 
-            type="password" 
-            placeholder="••••••••" 
-            className="h-12 bg-secondary border-border text-foreground placeholder:text-muted-foreground text-base"
+        <div className="space-y-3">
+          <label className="text-xl font-semibold text-white">Confirm Password</label>
+          <input
+            {...register("confirmPassword")}
+            type="password"
+            className="h-14 w-full rounded-2xl border-2 border-white/90 bg-transparent px-5 text-lg text-white outline-none transition focus:border-[#fff98a]"
           />
-          {errors.confirmPassword && <p className="text-destructive text-xs font-medium">{errors.confirmPassword.message}</p>}
+          {errors.confirmPassword && <p className="text-sm font-medium text-red-400">{errors.confirmPassword.message}</p>}
         </div>
 
-        {/* Error Message */}
-        {error && <p className="text-destructive text-sm font-medium text-center bg-destructive/10 rounded-lg p-3">{error}</p>}
+        {error && <p className="rounded-lg bg-red-500/10 p-3 text-center text-sm font-medium text-red-400">{error}</p>}
 
-        {/* Submit Button */}
-        <Button 
-          type="submit" 
-          disabled={isSubmitting} 
-          className="w-full h-12 bg-primary text-primary-foreground font-black uppercase tracking-wider text-sm hover:brightness-110 disabled:opacity-50"
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="h-16 w-full rounded-xl bg-[#fff98a] text-xl font-black uppercase tracking-tight text-black transition hover:brightness-95 disabled:opacity-50"
         >
           {isSubmitting ? "Creating..." : "Create Account"}
-        </Button>
+        </button>
+
+        <p className="pt-3 text-center text-xl text-white">
+          Already have an account?{" "}
+          <Link href="/login" className="font-bold text-[#fff98a]">
+            Log In
+          </Link>
+        </p>
+
+        <p className="pt-4 text-center text-xl text-white">Or Sign Up Using</p>
+
+        <div className="flex justify-center gap-8 pt-5">
+          <button type="button" className="flex h-16 w-16 items-center justify-center rounded-md bg-white text-black transition hover:scale-105" aria-label="Continue with Apple">
+            <Apple size={38} fill="currentColor" />
+          </button>
+          <button type="button" onClick={handleGoogleSignup} className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-4xl font-black text-black transition hover:scale-105" aria-label="Continue with Google">
+            G
+          </button>
+          <button type="button" onClick={handleFacebookSignup} className="flex h-16 w-16 items-center justify-center rounded-full bg-[#4163a8] pb-1 text-5xl font-black text-white transition hover:scale-105" aria-label="Continue with Facebook">
+            f
+          </button>
+        </div>
+
+        <ContinueAsGuest className="w-full pt-3 text-center text-lg font-black uppercase tracking-tight text-white transition hover:text-[#fff98a]" />
       </form>
-
-      {/* Divider */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1 h-px bg-border" />
-        <span className="text-xs font-semibold text-muted-foreground uppercase">Or Continue With</span>
-        <div className="flex-1 h-px bg-border" />
-      </div>
-
-      {/* Social Login Buttons */}
-      <div className="flex gap-3 justify-center">
-        <button 
-          onClick={handleGoogleSignup} 
-          className="w-12 h-12 rounded-lg border-2 border-border flex items-center justify-center text-foreground hover:border-primary hover:bg-primary/5 transition-all font-bold"
-          aria-label="Continue with Google"
-        >
-          G
-        </button>
-        <button 
-          onClick={handleFacebookSignup} 
-          className="w-12 h-12 rounded-lg border-2 border-border flex items-center justify-center text-foreground hover:border-primary hover:bg-primary/5 transition-all font-bold"
-          aria-label="Continue with Facebook"
-        >
-          f
-        </button>
-      </div>
-
-      {/* Login Link */}
-      <p className="text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
-        <Link href="/login" className="font-semibold text-primary hover:underline">
-          Log In
-        </Link>
-      </p>
     </div>
   );
 }
