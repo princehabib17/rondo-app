@@ -15,7 +15,7 @@ export const DEFAULT_CAROUSEL_SLIDES: CarouselSlide[] = [
     tag: "PLAY LOCAL",
     title: "JOIN LOCAL GAMES",
     description: "Find and join soccer matches near you.",
-    image: "/feed/hero-soccer.jpg",
+    image: "/feed/hero-night-court.png",
     ctaLabel: "Find Matches",
     ctaHref: "#nearby-games",
   },

@@ -1,13 +1,13 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Trophy, ClipboardList, User } from "lucide-react";
+import { Home, Map, Users, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
   { href: "/feed", icon: Home, label: "Home" },
-  { href: "/my-games", icon: Trophy, label: "Matches" },
-  { href: "/organizer/dashboard", icon: ClipboardList, label: "Organize" },
+  { href: "/feed/map", icon: Map, label: "Map" },
+  { href: "/community", icon: Users, label: "Community" },
   { href: "/profile", icon: User, label: "Profile" },
 ];
 
@@ -17,7 +17,10 @@ export function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 bg-black border-t border-white/10 z-50">
       <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-2">
         {tabs.map(({ href, icon: Icon, label }) => {
-          const active = pathname === href || pathname.startsWith(`${href}/`);
+          const active =
+            href === "/feed"
+              ? pathname === "/feed"
+              : pathname === href || pathname.startsWith(`${href}/`);
           return (
             <Link
               key={href}

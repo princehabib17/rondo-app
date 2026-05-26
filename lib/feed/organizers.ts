@@ -7,11 +7,14 @@ export interface OrganizerGroup {
 
 /** Placeholder groups shown until real organizers exist in the database. */
 export const PLACEHOLDER_ORGANIZERS: OrganizerGroup[] = [
-  { id: "placeholder-1", full_name: "Football Amigos", verified: true },
-  { id: "placeholder-2", full_name: "Football Manila", verified: true },
-  { id: "placeholder-3", full_name: "7s League", verified: true },
-  { id: "placeholder-4", full_name: "Urban Football", verified: true },
-  { id: "placeholder-5", full_name: "Sunday League", verified: true },
+  { id: "placeholder-1", full_name: "Urban", avatar_url: "/organizers/urban.png", verified: true },
+  { id: "placeholder-2", full_name: "TSL", avatar_url: "/organizers/tsl.png", verified: true },
+  { id: "placeholder-3", full_name: "Liman Style", avatar_url: "/organizers/liman-style.png", verified: true },
+  { id: "placeholder-4", full_name: "East Football United", avatar_url: "/organizers/east-football-united.png", verified: true },
+  { id: "placeholder-5", full_name: "Golazo", avatar_url: "/organizers/golazo.png", verified: true },
+  { id: "placeholder-6", full_name: "Football Amigos", avatar_url: "/organizers/football-amigos.png", verified: true },
+  { id: "placeholder-7", full_name: "ElitePro", avatar_url: "/organizers/elitepro.png", verified: true },
+  { id: "placeholder-8", full_name: "Futsal MNL", avatar_url: "/organizers/futsal-mnl.png", verified: true },
 ];
 
 export function getOrganizerInitials(name: string | null | undefined): string {
