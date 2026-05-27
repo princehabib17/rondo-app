@@ -18,6 +18,7 @@ const PUBLIC_PREFIXES = [
 const GUEST_BLOCKED_PREFIXES = [
   "/my-games",
   "/profile",
+  "/wallet",
   "/community",
   "/organizer",
 ];
@@ -40,11 +41,31 @@ function isPublicRoute(pathname: string): boolean {
 }
 
 export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    if (isPublicRoute(pathname)) {
+      return NextResponse.next({ request });
+    }
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json(
+        { error: "Server misconfigured: set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel." },
+        { status: 503 }
+      );
+    }
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("next", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
@@ -66,8 +87,6 @@ export async function proxy(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  const { pathname } = request.nextUrl;
 
   if (!user && !isPublicRoute(pathname)) {
     const loginUrl = new URL("/login", request.url);
