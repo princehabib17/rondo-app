@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Megaphone, Timer, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -18,7 +18,7 @@ export default function ManageGamePage() {
   const [loading, setLoading] = useState(true);
   const [unassigned, setUnassigned] = useState<(GamePlayer & { profile: Profile | null })[]>([]);
 
-  async function loadGame() {
+  const loadGame = useCallback(async function loadGame() {
     const supabase = createClient();
     const { data } = await supabase
       .from("games")
@@ -37,9 +37,9 @@ export default function ManageGamePage() {
       setUnassigned((allGp as unknown as (GamePlayer & { profile: Profile | null })[]) ?? []);
     }
     setLoading(false);
-  }
+  }, [id]);
 
-  useEffect(() => { loadGame(); }, [id]);
+  useEffect(() => { loadGame(); }, [loadGame]);
 
   async function assignTeam(playerId: string, teamId: string) {
     const supabase = createClient();

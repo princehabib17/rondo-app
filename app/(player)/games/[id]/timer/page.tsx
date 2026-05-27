@@ -13,6 +13,7 @@ export default function PlayerTimerPage() {
   const router = useRouter();
   const [timer, setTimer] = useState<TimerSession | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [roundDuration, setRoundDuration] = useState(8);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [announcedRound, setAnnouncedRound] = useState<number | null>(null);
 
@@ -33,12 +34,14 @@ export default function PlayerTimerPage() {
   useEffect(() => {
     async function load() {
       const supabase = createClient();
-      const [{ data: timerData }, { data: teamsData }] = await Promise.all([
+      const [{ data: timerData }, { data: teamsData }, { data: gameData }] = await Promise.all([
         supabase.from("timer_sessions").select("*").eq("game_id", id).single(),
         supabase.from("teams").select("*").eq("game_id", id).order("slot_number"),
+        supabase.from("games").select("round_duration_minutes").eq("id", id).single(),
       ]);
       if (timerData) setTimer(timerData as TimerSession);
       setTeams((teamsData as Team[]) ?? []);
+      if (gameData?.round_duration_minutes) setRoundDuration(gameData.round_duration_minutes);
     }
     load();
     const unsubscribe = subscribeToTimer(id, setTimer);
@@ -89,7 +92,7 @@ export default function PlayerTimerPage() {
       <div className="flex-1 flex flex-col items-center justify-center space-y-6 px-6">
         <CountdownTimer
           roundStartTime={timer?.round_start_time ?? null}
-          roundDurationMinutes={8}
+          roundDurationMinutes={roundDuration}
           status={timer?.status ?? "waiting"}
           className="text-[96px] leading-none"
         />

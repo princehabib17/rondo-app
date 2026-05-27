@@ -65,7 +65,7 @@ export default function ChatPage() {
       // Fetch messages with profiles
       const { data: msgs } = await supabase
         .from("messages")
-        .select("*, profile:profiles!user_id(id, full_name, avatar_url, nationality, email, role, bio, position, preferred_foot, created_at, updated_at)")
+        .select("*, profile:profiles!user_id(id, full_name, avatar_url, nationality)")
         .eq("game_id", id)
         .order("created_at", { ascending: true });
 

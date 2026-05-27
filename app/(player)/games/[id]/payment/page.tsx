@@ -17,23 +17,22 @@ function PaymentForm() {
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
     async function load() {
       const supabase = createClient();
       const { data: userData } = await supabase.auth.getUser();
-      if (userData.user?.is_anonymous) {
+      if (!userData.user) { router.push("/login"); return; }
+      if (userData.user.is_anonymous) {
         router.push(`/signup?next=/games/${id}/payment`);
         return;
       }
-      setIsGuest(Boolean(userData.user?.is_anonymous));
       const { data } = await supabase.from("games").select("*").eq("id", id).single();
       if (data) setGame(data as Game);
       setLoading(false);
     }
     load();
-  }, [id]);
+  }, [id, router]);
 
   async function handlePayOnline() {
     if (!game) return;
@@ -128,7 +127,7 @@ function PaymentForm() {
 
           <button
             onClick={handlePayOnline}
-            disabled={paying || isGuest}
+            disabled={paying}
             className="w-full bg-card border border-border hover:border-rondo-yellow/40 rounded-xl p-4 text-left transition-all cursor-pointer active:scale-[0.98] disabled:opacity-50 min-h-[44px]"
           >
             <div className="flex items-center gap-3">

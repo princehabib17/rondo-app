@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle2, Calendar, Share2, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatGameDate } from "@/lib/utils/format";
@@ -20,6 +20,7 @@ type PaymentState =
 function ConfirmedContent() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [game, setGame] = useState<Game | null>(null);
   const [paymentState, setPaymentState] = useState<PaymentState>("loading");
 
@@ -61,10 +62,12 @@ function ConfirmedContent() {
         return;
       }
 
+      // PayMongo appends ?checkout_session_id=xxx to the success URL automatically.
+      const sessionId = searchParams.get("checkout_session_id") ?? undefined;
       const res = await fetch("/api/payments/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gameId: id }),
+        body: JSON.stringify({ gameId: id, sessionId }),
       });
 
       const json = await res.json().catch(() => ({}));
@@ -241,5 +244,9 @@ function ConfirmedContent() {
 }
 
 export default function ConfirmedPage() {
-  return <ConfirmedContent />;
+  return (
+    <Suspense>
+      <ConfirmedContent />
+    </Suspense>
+  );
 }
