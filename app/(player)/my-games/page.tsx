@@ -74,8 +74,13 @@ export default function MyGamesPage() {
   };
 
   function GameRow({ entry }: { entry: MyGame }) {
+    const needsWalletPay = ["reserved", "pending_payment", "pending"].includes(entry.payment_status);
+    const href = needsWalletPay
+      ? `/games/${entry.game.id}/payment`
+      : `/games/${entry.game.id}`;
+
     return (
-      <Link href={`/games/${entry.game.id}`} className="block cursor-pointer">
+      <Link href={href} className="block cursor-pointer">
         <div className="bg-card border border-border rounded-xl p-4 hover:border-rondo-yellow/40 active:scale-[0.98] transition-all space-y-2">
           <div className="flex items-start justify-between gap-3">
             <h3 className="text-white font-bold text-sm leading-tight flex-1">{entry.game.title}</h3>
@@ -94,7 +99,11 @@ export default function MyGamesPage() {
           <div className="flex items-center gap-2 flex-wrap">
             <Badge variant="secondary" className="text-xs h-5">{entry.game.format}</Badge>
             <span className={`text-xs font-semibold capitalize ${paymentColor[entry.payment_status] ?? "text-muted-foreground"}`}>
-              {entry.payment_status === "venue" ? "Pay at Venue" : entry.payment_status}
+              {entry.payment_status === "venue"
+                ? "Pay at Venue"
+                : needsWalletPay
+                  ? "Pay with wallet"
+                  : entry.payment_status}
             </span>
           </div>
         </div>

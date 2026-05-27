@@ -31,6 +31,7 @@ export default function PublicProfilePage() {
   const [loading, setLoading] = useState(true);
   const [followLoading, setFollowLoading] = useState(false);
   const [recentMatches, setRecentMatches] = useState<ProfileMatchEntry[]>([]);
+  const [walletBalanceCentavos, setWalletBalanceCentavos] = useState(0);
   const [walletSpentCentavos, setWalletSpentCentavos] = useState(0);
   const [walletPaidCount, setWalletPaidCount] = useState(0);
   const [isGuest, setIsGuest] = useState(false);
@@ -73,6 +74,15 @@ export default function PublicProfilePage() {
       setIsFollowing(!!followData);
       const entries = ((matchesData as ProfileMatchEntry[] | null) ?? []).filter((entry) => !!entry.game);
       setRecentMatches(entries);
+
+      if (isOwnProfile && uid) {
+        const balanceRes = await fetch("/api/wallet/balance");
+        if (balanceRes.ok) {
+          const balanceJson = await balanceRes.json();
+          setWalletBalanceCentavos(balanceJson.balanceCentavos ?? 0);
+        }
+      }
+
       const walletRows = (walletData as Array<{ amount: number; direction: "credit" | "debit"; source: string }> | null) ?? [];
       if (walletRows.length > 0) {
         const debits = walletRows.filter((row) => row.direction === "debit");
@@ -210,20 +220,28 @@ export default function PublicProfilePage() {
         {isOwnProfile && (
           <>
             <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Wallet size={16} className="text-rondo-accent" />
-                <h3 className="text-white font-bold text-base">Wallet</h3>
-              </div>
-              <div className="bg-card border border-border rounded-xl p-4 grid grid-cols-2 gap-3">
-                <div>
-                  <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Total Paid</p>
-                  <p className="text-rondo-accent font-black text-lg">{formatPrice(walletSpentCentavos)}</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Wallet size={16} className="text-rondo-accent" />
+                  <h3 className="text-white font-bold text-base">Rondo Wallet</h3>
                 </div>
-                <div>
-                  <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Paid Matches</p>
-                  <p className="text-white font-black text-lg">{walletPaidCount}</p>
-                </div>
+                <Link
+                  href="/wallet"
+                  className="text-rondo-accent text-xs font-semibold uppercase tracking-wide"
+                >
+                  Manage
+                </Link>
               </div>
+              <Link
+                href="/wallet"
+                className="block bg-card border border-rondo-accent/30 hover:border-rondo-accent/60 rounded-xl p-4 transition-colors"
+              >
+                <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Available balance</p>
+                <p className="text-rondo-accent font-black text-2xl">{formatPrice(walletBalanceCentavos)}</p>
+                <p className="text-muted-foreground text-xs mt-2">
+                  {walletPaidCount} paid match{walletPaidCount === 1 ? "" : "es"} · {formatPrice(walletSpentCentavos)} spent
+                </p>
+              </Link>
             </section>
 
             <section className="space-y-3">

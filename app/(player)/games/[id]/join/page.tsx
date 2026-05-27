@@ -205,7 +205,7 @@ export default function JoinGamePage() {
           {joining
             ? "Confirming..."
             : game.payment_type === "online"
-            ? "Continue to Payment"
+            ? "Pay with wallet"
             : "Confirm Team"}
         </button>
         {game.payment_type === "online" && (

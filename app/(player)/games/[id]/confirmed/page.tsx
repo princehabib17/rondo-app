@@ -44,6 +44,10 @@ function ConfirmedContent() {
         .eq("user_id", userData.user.id)
         .maybeSingle();
 
+      if (myEntry?.payment_status === "paid" || myEntry?.payment_status === "approved") {
+        setPaymentState("paid");
+        return;
+      }
       if (myEntry?.payment_status === "reserved") {
         setPaymentState("reserved");
         return;
@@ -98,7 +102,7 @@ function ConfirmedContent() {
     return (
       <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 text-center gap-4">
         <Loader2 size={40} className="text-rondo-yellow animate-spin" />
-        <p className="text-muted-foreground text-sm">Confirming your payment...</p>
+        <p className="text-muted-foreground text-sm">Confirming your spot...</p>
       </div>
     );
   }
