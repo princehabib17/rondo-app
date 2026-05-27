@@ -11,8 +11,8 @@ export function FeedHeader({ notificationCount = 0 }: FeedHeaderProps) {
     <header className="sticky top-0 z-40 bg-black/95 backdrop-blur-md border-b border-white/5">
       <div className="flex items-center justify-between px-4 py-3 max-w-lg mx-auto">
         <Image src="/rondo-logo.png" alt="RONDO" width={36} height={36} className="object-contain" priority />
-        <button
-          type="button"
+        <Link
+          href="/notifications"
           className="relative w-10 h-10 flex items-center justify-center text-white/80 hover:text-white transition-colors"
           aria-label="Notifications"
         >
@@ -22,7 +22,7 @@ export function FeedHeader({ notificationCount = 0 }: FeedHeaderProps) {
               {notificationCount > 9 ? "9+" : notificationCount}
             </span>
           )}
-        </button>
+        </Link>
       </div>
     </header>
   );

@@ -28,6 +28,12 @@ export async function POST(request: Request) {
     if (!userData.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (userData.user.is_anonymous) {
+      return NextResponse.json(
+        { error: "Please create an account before payment" },
+        { status: 403 }
+      );
+    }
 
     const { data: game, error: gameError } = await supabase
       .from("games")
@@ -144,7 +150,7 @@ export async function POST(request: Request) {
           game_id: gameId,
           user_id: userData.user.id,
           team_id: teamId ?? null,
-          payment_status: "pending",
+          payment_status: "pending_payment",
           paymongo_payment_id: checkoutSessionId,
         },
         { onConflict: "game_id,user_id" }

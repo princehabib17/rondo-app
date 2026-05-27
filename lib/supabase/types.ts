@@ -1,9 +1,22 @@
 export type UserRole = "player" | "organizer";
 export type Position = "goalkeeper" | "defender" | "midfielder" | "forward" | "any";
 export type PreferredFoot = "left" | "right" | "both";
+export type SkillLevel = "beginner" | "intermediate" | "advanced" | "pro";
 export type GameStatus = "open" | "full" | "in_progress" | "completed" | "cancelled";
 export type PaymentType = "online" | "venue";
-export type PaymentStatus = "pending" | "paid" | "venue" | "refunded";
+export type PaymentStatus =
+  | "pending"
+  | "pending_payment"
+  | "reserved"
+  | "pending_approval"
+  | "approved"
+  | "rejected"
+  | "paid"
+  | "venue"
+  | "refund_requested"
+  | "refunded"
+  | "cancelled"
+  | "no_show";
 export type TimerStatus = "waiting" | "running" | "paused" | "finished";
 
 export interface Profile {
@@ -16,6 +29,9 @@ export interface Profile {
   nationality: string | null;
   position: Position | null;
   preferred_foot: PreferredFoot | null;
+  skill_level?: SkillLevel | null;
+  preferred_areas?: string | null;
+  game_preference?: "football" | "futsal" | "both" | null;
   created_at: string;
   updated_at: string;
 }
@@ -37,6 +53,8 @@ export interface Game {
   round_duration_minutes: number;
   payment_type: PaymentType;
   status: GameStatus;
+  registration_open?: boolean;
+  is_private?: boolean;
   banner_url: string | null;
   created_at: string;
   updated_at: string;
@@ -120,4 +138,60 @@ export interface WebhookEvent {
   id: string;
   event_type: string;
   processed_at: string;
+}
+
+export interface SupportTicket {
+  id: string;
+  user_id: string;
+  game_id: string | null;
+  type:
+    | "payment_issue"
+    | "refund_request"
+    | "game_cancelled"
+    | "organizer_issue"
+    | "player_issue"
+    | "app_issue"
+    | "other";
+  description: string;
+  refund_requested: boolean;
+  status: "open" | "in_review" | "resolved" | "refund_pending" | "refunded" | "closed";
+  admin_note: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WalletTransaction {
+  id: string;
+  user_id: string;
+  organizer_id: string | null;
+  game_id: string | null;
+  amount: number;
+  direction: "credit" | "debit";
+  source: "payment" | "refund" | "payout" | "adjustment";
+  note: string | null;
+  created_at: string;
+}
+
+export interface PayoutRequest {
+  id: string;
+  organizer_id: string;
+  amount: number;
+  status: "pending" | "approved" | "rejected" | "paid";
+  bank_account_name: string | null;
+  bank_name: string | null;
+  bank_account_number: string | null;
+  note: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AppNotification {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  body: string;
+  link: string | null;
+  read_at: string | null;
+  created_at: string;
 }

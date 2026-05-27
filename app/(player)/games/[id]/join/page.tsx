@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import type { Game, Team } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
+import { pushInAppNotification } from "@/lib/notifications";
 
 export default function JoinGamePage() {
   const { id } = useParams<{ id: string }>();
@@ -38,6 +39,10 @@ export default function JoinGamePage() {
     const supabase = createClient();
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) { router.push("/login"); return; }
+    if (userData.user.is_anonymous) {
+      router.push(`/signup?next=/games/${id}/join`);
+      return;
+    }
 
     if (game.payment_type === "online") {
       router.push(`/games/${id}/payment?teamId=${selectedTeamId}`);
@@ -57,7 +62,51 @@ export default function JoinGamePage() {
       setJoining(false);
       return;
     }
+    await pushInAppNotification({
+      userId: userData.user.id,
+      type: "join_confirmed",
+      title: "Match joined",
+      body: `You joined ${game.title}.`,
+      link: `/games/${id}`,
+    });
     router.push(`/games/${id}/invite`);
+  }
+
+  async function handleReserveNow() {
+    if (!selectedTeamId || !game) return;
+    setJoining(true);
+    setError(null);
+    const supabase = createClient();
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) { router.push("/login"); return; }
+    if (userData.user.is_anonymous) {
+      router.push(`/signup?next=/games/${id}/join`);
+      return;
+    }
+
+    const { error: reserveError } = await supabase.from("game_players").upsert(
+      {
+        game_id: id,
+        user_id: userData.user.id,
+        team_id: selectedTeamId,
+        payment_status: "reserved",
+      },
+      { onConflict: "game_id,user_id" }
+    );
+
+    if (reserveError) {
+      setError(reserveError.message);
+      setJoining(false);
+      return;
+    }
+    await pushInAppNotification({
+      userId: userData.user.id,
+      type: "join_reserved",
+      title: "Spot reserved",
+      body: `Your slot is reserved for ${game.title}.`,
+      link: `/games/${id}/confirmed`,
+    });
+    router.push(`/games/${id}/confirmed`);
   }
 
   if (loading) {
@@ -159,6 +208,15 @@ export default function JoinGamePage() {
             ? "Continue to Payment"
             : "Confirm Team"}
         </button>
+        {game.payment_type === "online" && (
+          <button
+            onClick={handleReserveNow}
+            disabled={!selectedTeamId || joining}
+            className="w-full mt-3 border border-border text-white font-black uppercase tracking-widest text-sm py-4 rounded-xl active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer min-h-[52px]"
+          >
+            Reserve & Pay Later
+          </button>
+        )}
       </div>
     </div>
   );

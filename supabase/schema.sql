@@ -14,6 +14,9 @@ create table public.profiles (
   nationality text,
   position text check (position in ('goalkeeper', 'defender', 'midfielder', 'forward', 'any')),
   preferred_foot text check (preferred_foot in ('left', 'right', 'both')),
+  skill_level text check (skill_level in ('beginner', 'intermediate', 'advanced', 'pro')),
+  preferred_areas text,
+  game_preference text check (game_preference in ('football', 'futsal', 'both')),
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -38,6 +41,8 @@ create table public.games (
   round_duration_minutes integer not null default 8,
   payment_type text not null default 'venue' check (payment_type in ('online', 'venue')),
   status text not null default 'open' check (status in ('open', 'full', 'in_progress', 'completed', 'cancelled')),
+  registration_open boolean not null default true,
+  is_private boolean not null default false,
   banner_url text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
@@ -63,7 +68,7 @@ create table public.game_players (
   game_id uuid references public.games(id) on delete cascade not null,
   user_id uuid references public.profiles(id) on delete cascade not null,
   team_id uuid references public.teams(id) on delete set null,
-  payment_status text not null default 'pending' check (payment_status in ('pending', 'paid', 'venue', 'refunded')),
+  payment_status text not null default 'pending' check (payment_status in ('pending', 'pending_payment', 'reserved', 'pending_approval', 'approved', 'rejected', 'paid', 'venue', 'refund_requested', 'refunded', 'cancelled', 'no_show')),
   paymongo_payment_id text,
   joined_at timestamptz default now(),
   unique(game_id, user_id)
@@ -77,6 +82,76 @@ create table public.announcements (
   game_id uuid references public.games(id) on delete cascade not null,
   organizer_id uuid references public.profiles(id) on delete cascade not null,
   body text not null,
+  created_at timestamptz default now()
+);
+
+-- ============================================================
+-- ORGANIZER BROADCASTS (organizer room updates)
+-- ============================================================
+create table public.organizer_broadcasts (
+  id uuid default uuid_generate_v4() primary key,
+  organizer_id uuid references public.profiles(id) on delete cascade,
+  organizer_key text not null,
+  category text not null default 'general' check (category in ('general', 'game_on', 'cancelled', 'rules', 'tournament_notice')),
+  body text not null,
+  created_at timestamptz default now()
+);
+
+-- ============================================================
+-- SUPPORT TICKETS
+-- ============================================================
+create table public.support_tickets (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  game_id uuid references public.games(id) on delete set null,
+  type text not null check (type in ('payment_issue', 'refund_request', 'game_cancelled', 'organizer_issue', 'player_issue', 'app_issue', 'other')),
+  description text not null,
+  refund_requested boolean not null default false,
+  status text not null default 'open' check (status in ('open', 'in_review', 'resolved', 'refund_pending', 'refunded', 'closed')),
+  admin_note text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- ============================================================
+-- WALLET + PAYOUTS
+-- ============================================================
+create table public.wallet_transactions (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  organizer_id uuid references public.profiles(id) on delete set null,
+  game_id uuid references public.games(id) on delete set null,
+  amount integer not null,
+  direction text not null check (direction in ('credit', 'debit')),
+  source text not null check (source in ('payment', 'refund', 'payout', 'adjustment')),
+  note text,
+  created_at timestamptz default now()
+);
+
+create table public.payout_requests (
+  id uuid default uuid_generate_v4() primary key,
+  organizer_id uuid references public.profiles(id) on delete cascade not null,
+  amount integer not null check (amount > 0),
+  status text not null default 'pending' check (status in ('pending', 'approved', 'rejected', 'paid')),
+  bank_account_name text,
+  bank_name text,
+  bank_account_number text,
+  note text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- ============================================================
+-- NOTIFICATIONS
+-- ============================================================
+create table public.notifications (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  type text not null,
+  title text not null,
+  body text not null,
+  link text,
+  read_at timestamptz,
   created_at timestamptz default now()
 );
 
@@ -136,6 +211,11 @@ alter table public.games enable row level security;
 alter table public.teams enable row level security;
 alter table public.game_players enable row level security;
 alter table public.announcements enable row level security;
+alter table public.organizer_broadcasts enable row level security;
+alter table public.support_tickets enable row level security;
+alter table public.wallet_transactions enable row level security;
+alter table public.payout_requests enable row level security;
+alter table public.notifications enable row level security;
 alter table public.follows enable row level security;
 alter table public.messages enable row level security;
 alter table public.timer_sessions enable row level security;
@@ -173,6 +253,38 @@ create policy "Announcements viewable by game participants" on public.announceme
   or auth.uid() = (select organizer_id from public.games where id = announcements.game_id)
 );
 create policy "Organizers can create announcements" on public.announcements for insert with check (auth.uid() = organizer_id);
+
+create policy "Organizer broadcasts are publicly viewable" on public.organizer_broadcasts for select using (true);
+create policy "Organizers can post their broadcasts" on public.organizer_broadcasts
+  for insert with check (auth.uid() = organizer_id);
+create policy "Organizers can edit their broadcasts" on public.organizer_broadcasts
+  for update using (auth.uid() = organizer_id);
+create policy "Organizers can delete their broadcasts" on public.organizer_broadcasts
+  for delete using (auth.uid() = organizer_id);
+
+create policy "Users can create their own support tickets" on public.support_tickets
+  for insert with check (auth.uid() = user_id);
+create policy "Users can view their own support tickets" on public.support_tickets
+  for select using (auth.uid() = user_id);
+create policy "Users can update their own open support tickets" on public.support_tickets
+  for update
+  using (auth.uid() = user_id and status in ('open', 'in_review'))
+  with check (auth.uid() = user_id);
+
+create policy "Users can view their wallet transactions" on public.wallet_transactions
+  for select using (auth.uid() = user_id or auth.uid() = organizer_id);
+
+create policy "Users can view their payout requests" on public.payout_requests
+  for select using (auth.uid() = organizer_id);
+create policy "Organizers can create payout requests" on public.payout_requests
+  for insert with check (auth.uid() = organizer_id);
+
+create policy "Users can view their notifications" on public.notifications
+  for select using (auth.uid() = user_id);
+create policy "Users can insert their own notifications" on public.notifications
+  for insert with check (auth.uid() = user_id);
+create policy "Users can mark their notifications read" on public.notifications
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create policy "Follows are publicly viewable" on public.follows for select using (true);
 create policy "Users can follow others" on public.follows for insert with check (auth.uid() = follower_id);
@@ -229,6 +341,10 @@ create trigger set_profiles_updated_at before update on public.profiles
 create trigger set_games_updated_at before update on public.games
   for each row execute procedure public.set_updated_at();
 create trigger set_timer_updated_at before update on public.timer_sessions
+  for each row execute procedure public.set_updated_at();
+create trigger set_support_tickets_updated_at before update on public.support_tickets
+  for each row execute procedure public.set_updated_at();
+create trigger set_payout_requests_updated_at before update on public.payout_requests
   for each row execute procedure public.set_updated_at();
 
 create or replace function public.enforce_game_player_payment_rules()

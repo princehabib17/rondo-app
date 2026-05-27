@@ -19,6 +19,7 @@ const GameMap = dynamic(() => import("@/components/map/GameMap"), {
 export default function FeedMapPage() {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
+  const [missingLocationCount, setMissingLocationCount] = useState(0);
 
   const fetchGames = useCallback(async () => {
     const supabase = createClient();
@@ -32,6 +33,8 @@ export default function FeedMapPage() {
       .limit(50);
 
     setGames((data as Game[]) ?? []);
+    const gameRows = (data as Game[]) ?? [];
+    setMissingLocationCount(gameRows.filter((g) => g.venue_lat == null || g.venue_lng == null).length);
     setLoading(false);
   }, []);
 
@@ -53,6 +56,14 @@ export default function FeedMapPage() {
       </header>
 
       <div className="flex-1 min-h-0">
+        {!loading && missingLocationCount > 0 && (
+          <div className="absolute top-[68px] left-4 right-4 z-20 bg-zinc-900/95 border border-white/10 rounded-xl px-3 py-2">
+            <p className="text-xs text-white/70">
+              {missingLocationCount} game{missingLocationCount > 1 ? "s" : ""} missing map coordinates.
+              Organizers need to add venue location to pin them.
+            </p>
+          </div>
+        )}
         {loading ? (
           <div className="w-full h-full flex items-center justify-center">
             <div className="w-2 h-2 rounded-full bg-rondo-accent animate-ping" />

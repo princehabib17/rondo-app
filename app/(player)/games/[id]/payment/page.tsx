@@ -6,6 +6,7 @@ import { ArrowLeft, CreditCard, MapPin, Shield } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatPrice } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
+import { pushInAppNotification } from "@/lib/notifications";
 
 function PaymentForm() {
   const { id } = useParams<{ id: string }>();
@@ -16,10 +17,17 @@ function PaymentForm() {
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
     async function load() {
       const supabase = createClient();
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData.user?.is_anonymous) {
+        router.push(`/signup?next=/games/${id}/payment`);
+        return;
+      }
+      setIsGuest(Boolean(userData.user?.is_anonymous));
       const { data } = await supabase.from("games").select("*").eq("id", id).single();
       if (data) setGame(data as Game);
       setLoading(false);
@@ -50,11 +58,22 @@ function PaymentForm() {
     const supabase = createClient();
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return;
+    if (userData.user.is_anonymous) {
+      router.push(`/signup?next=/games/${id}/payment`);
+      return;
+    }
     await supabase.from("game_players").insert({
       game_id: id,
       user_id: userData.user.id,
       team_id: teamId,
       payment_status: "venue",
+    });
+    await pushInAppNotification({
+      userId: userData.user.id,
+      type: "join_confirmed",
+      title: "Joined with pay-at-venue",
+      body: `You're in ${game?.title ?? "the game"}.`,
+      link: `/games/${id}`,
     });
     router.push(`/games/${id}/invite`);
   }
@@ -109,7 +128,7 @@ function PaymentForm() {
 
           <button
             onClick={handlePayOnline}
-            disabled={paying}
+            disabled={paying || isGuest}
             className="w-full bg-card border border-border hover:border-rondo-yellow/40 rounded-xl p-4 text-left transition-all cursor-pointer active:scale-[0.98] disabled:opacity-50 min-h-[44px]"
           >
             <div className="flex items-center gap-3">

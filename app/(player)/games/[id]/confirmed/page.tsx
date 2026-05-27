@@ -7,7 +7,15 @@ import { createClient } from "@/lib/supabase/client";
 import { formatGameDate } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
 
-type PaymentState = "loading" | "pending" | "paid" | "error";
+type PaymentState =
+  | "loading"
+  | "pending"
+  | "paid"
+  | "reserved"
+  | "pending_approval"
+  | "rejected"
+  | "venue"
+  | "error";
 
 function ConfirmedContent() {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +37,30 @@ function ConfirmedContent() {
       const { data: gameData } = await supabase.from("games").select("*").eq("id", id).single();
       if (gameData && !cancelled) setGame(gameData as Game);
 
+      const { data: myEntry } = await supabase
+        .from("game_players")
+        .select("payment_status")
+        .eq("game_id", id)
+        .eq("user_id", userData.user.id)
+        .maybeSingle();
+
+      if (myEntry?.payment_status === "reserved") {
+        setPaymentState("reserved");
+        return;
+      }
+      if (myEntry?.payment_status === "pending_approval") {
+        setPaymentState("pending_approval");
+        return;
+      }
+      if (myEntry?.payment_status === "rejected") {
+        setPaymentState("rejected");
+        return;
+      }
+      if (myEntry?.payment_status === "venue") {
+        setPaymentState("venue");
+        return;
+      }
+
       const res = await fetch("/api/payments/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -43,7 +75,7 @@ function ConfirmedContent() {
         return;
       }
 
-      if (json.status === "paid") {
+      if (json.status === "paid" || myEntry?.payment_status === "paid" || myEntry?.payment_status === "approved") {
         setPaymentState("paid");
         return;
       }
@@ -100,6 +132,71 @@ function ConfirmedContent() {
           className="w-full border border-border text-white text-sm py-4 rounded-xl cursor-pointer"
         >
           Back to payment
+        </button>
+        <button
+          onClick={() => router.push("/help/new")}
+          className="w-full border border-border text-white text-sm py-4 rounded-xl cursor-pointer"
+        >
+          Contact Help
+        </button>
+      </div>
+    );
+  }
+
+  if (paymentState === "reserved") {
+    return (
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 text-center space-y-6 max-w-sm">
+        <h1 className="text-white font-bold text-2xl">Spot Reserved</h1>
+        <p className="text-muted-foreground text-sm">
+          Your slot is reserved. Complete payment before kick-off to keep your place.
+        </p>
+        <button onClick={() => router.push(`/games/${id}/payment`)} className="w-full bg-rondo-yellow text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-xl">
+          Pay Now
+        </button>
+        <button onClick={() => router.push("/my-games")} className="w-full border border-border text-white text-sm py-4 rounded-xl">
+          My Matches
+        </button>
+      </div>
+    );
+  }
+
+  if (paymentState === "pending_approval") {
+    return (
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 text-center space-y-6 max-w-sm">
+        <h1 className="text-white font-bold text-2xl">Pending Approval</h1>
+        <p className="text-muted-foreground text-sm">
+          Your request is with the organizer. You will get an update once reviewed.
+        </p>
+        <button onClick={() => router.push("/my-games")} className="w-full border border-border text-white text-sm py-4 rounded-xl">
+          My Matches
+        </button>
+      </div>
+    );
+  }
+
+  if (paymentState === "rejected") {
+    return (
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 text-center space-y-6 max-w-sm">
+        <h1 className="text-white font-bold text-2xl">Request Not Approved</h1>
+        <p className="text-muted-foreground text-sm">
+          This slot request was declined by the organizer. Try another game or contact support.
+        </p>
+        <button onClick={() => router.push("/help/new")} className="w-full border border-border text-white text-sm py-4 rounded-xl">
+          Contact Help
+        </button>
+      </div>
+    );
+  }
+
+  if (paymentState === "venue") {
+    return (
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 text-center space-y-6 max-w-sm">
+        <h1 className="text-white font-bold text-2xl">Joined - Pay at Venue</h1>
+        <p className="text-muted-foreground text-sm">
+          You are in the match. Please settle payment with the organizer on game day.
+        </p>
+        <button onClick={() => router.push(`/games/${id}/chat`)} className="w-full bg-rondo-yellow text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-xl">
+          Open Match Chat
         </button>
       </div>
     );

@@ -47,6 +47,33 @@ export default function ManageGamePage() {
     await loadGame();
   }
 
+  async function removePlayer(playerId: string) {
+    const supabase = createClient();
+    await supabase.from("game_players").delete().eq("id", playerId);
+    await loadGame();
+  }
+
+  async function updatePlayerStatus(playerId: string, paymentStatus: string) {
+    const supabase = createClient();
+    await supabase.from("game_players").update({ payment_status: paymentStatus }).eq("id", playerId);
+    await loadGame();
+  }
+
+  async function updateGameStatus(status: "cancelled" | "open") {
+    const supabase = createClient();
+    await supabase.from("games").update({ status }).eq("id", id);
+    await loadGame();
+  }
+
+  async function toggleRegistration() {
+    const supabase = createClient();
+    await supabase
+      .from("games")
+      .update({ registration_open: !game?.registration_open })
+      .eq("id", id);
+    await loadGame();
+  }
+
   if (loading) {
     return (
       <div className="min-h-[100dvh] p-4 space-y-4">
@@ -86,6 +113,29 @@ export default function ManageGamePage() {
             <Timer size={18} className="text-rondo-yellow shrink-0" />
             <span className="text-white text-sm font-semibold">Timer</span>
           </button>
+          <button
+            onClick={() => router.push(`/organizer/games/${id}/payments`)}
+            className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-rondo-yellow/40 active:scale-[0.97] transition-all cursor-pointer min-h-[44px]"
+          >
+            <Users size={18} className="text-rondo-yellow shrink-0" />
+            <span className="text-white text-sm font-semibold">Payments</span>
+          </button>
+          <button
+            onClick={() => updateGameStatus(game.status === "cancelled" ? "open" : "cancelled")}
+            className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-rondo-yellow/40 active:scale-[0.97] transition-all cursor-pointer min-h-[44px]"
+          >
+            <span className="text-white text-sm font-semibold">
+              {game.status === "cancelled" ? "Reopen Game" : "Cancel Game"}
+            </span>
+          </button>
+          <button
+            onClick={toggleRegistration}
+            className="col-span-2 bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-rondo-yellow/40 active:scale-[0.97] transition-all cursor-pointer min-h-[44px]"
+          >
+            <span className="text-white text-sm font-semibold">
+              {game.registration_open === false ? "Open Registration" : "Close Registration"}
+            </span>
+          </button>
         </div>
 
         {/* Teams roster */}
@@ -108,9 +158,23 @@ export default function ManageGamePage() {
                     <div key={gp.id} className="flex items-center gap-3">
                       <PlayerAvatar profile={gp.profile} size="sm" showFlag linkable={false} />
                       <span className="text-white text-sm flex-1">{gp.profile.full_name}</span>
-                      <span className={`text-xs font-semibold ${gp.payment_status === "paid" ? "text-green-400" : "text-muted-foreground"}`}>
-                        {gp.payment_status === "paid" ? "Paid" : gp.payment_status === "venue" ? "At Venue" : "Pending"}
-                      </span>
+                      <select
+                        value={gp.payment_status}
+                        onChange={(e) => updatePlayerStatus(gp.id, e.target.value)}
+                        className="bg-black border border-white/10 text-white text-xs rounded px-2 py-1"
+                      >
+                        <option value="pending_payment">Pending</option>
+                        <option value="reserved">Reserved</option>
+                        <option value="venue">At Venue</option>
+                        <option value="no_show">No Show</option>
+                        <option value="refund_requested">Refund Requested</option>
+                      </select>
+                      <button
+                        onClick={() => removePlayer(gp.id)}
+                        className="text-xs text-red-400 hover:text-red-300"
+                      >
+                        Remove
+                      </button>
                     </div>
                   )
                 ))}

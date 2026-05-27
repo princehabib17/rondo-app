@@ -20,11 +20,15 @@ export default function GameDetailPage() {
   const [game, setGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
   const [myEntry, setMyEntry] = useState<GamePlayer | null>(null);
+  const [isGuest, setIsGuest] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
       const supabase = createClient();
       const { data: userData } = await supabase.auth.getUser();
+      setCurrentUserId(userData.user?.id ?? null);
+      setIsGuest(Boolean(userData.user?.is_anonymous));
 
       const { data } = await supabase
         .from("games")
@@ -238,7 +242,21 @@ export default function GameDetailPage() {
 
       {/* Sticky CTA */}
       <div className="fixed bottom-16 left-0 right-0 max-w-lg mx-auto px-4 pb-2 z-30 flex gap-3">
-        {myEntry ? (
+        {!currentUserId ? (
+          <Link
+            href={`/login?next=/games/${game.id}`}
+            className="flex-1 bg-rondo-accent text-black font-black uppercase tracking-widest text-sm py-4 rounded-xl flex items-center justify-center gap-2 hover:brightness-95 active:scale-[0.98] transition-all cursor-pointer min-h-[52px]"
+          >
+            Login to Join
+          </Link>
+        ) : isGuest ? (
+          <Link
+            href={`/signup?next=/games/${game.id}`}
+            className="flex-1 bg-rondo-accent text-black font-black uppercase tracking-widest text-sm py-4 rounded-xl flex items-center justify-center gap-2 hover:brightness-95 active:scale-[0.98] transition-all cursor-pointer min-h-[52px]"
+          >
+            Create Account to Join
+          </Link>
+        ) : myEntry ? (
           <Link
             href={`/games/${game.id}/chat`}
             className="flex-1 bg-rondo-yellow text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-xl flex items-center justify-center gap-2 hover:brightness-95 active:scale-[0.98] transition-all cursor-pointer min-h-[52px]"

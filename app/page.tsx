@@ -20,7 +20,7 @@ export default function HomePage() {
       setGuestError(result.error ?? "Guest sign-in failed");
       return;
     }
-    router.push("/onboarding/slides");
+    router.push("/feed");
     router.refresh();
   }
 

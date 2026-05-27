@@ -24,9 +24,7 @@ export function TopOrganizers({ organizers }: TopOrganizersProps) {
 
       <div className="flex gap-4 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1">
         {organizers.map((organizer) => {
-          const href = organizer.id.startsWith("placeholder")
-            ? "/feed"
-            : `/organizers/${organizer.id}`;
+          const href = `/organizers/${organizer.id}`;
 
           return (
             <Link

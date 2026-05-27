@@ -31,6 +31,12 @@ export async function POST(request: Request) {
     if (!userData.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (userData.user.is_anonymous) {
+      return NextResponse.json(
+        { error: "Please create an account before payment confirmation" },
+        { status: 403 }
+      );
+    }
 
     let checkoutSessionId = sessionId;
 

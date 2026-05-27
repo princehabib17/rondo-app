@@ -17,6 +17,11 @@ const profileSchema = z.object({
   phone: z.string().min(7, "Phone required"),
   address: z.string().min(2, "Address required"),
   nationality: z.string().min(1, "Nationality required"),
+  position: z.string().min(1, "Position required"),
+  skill_level: z.string().min(1, "Skill level required"),
+  preferred_foot: z.string().min(1, "Preferred foot required"),
+  preferred_areas: z.string().min(2, "Preferred areas required"),
+  game_preference: z.string().min(1, "Preference required"),
 });
 type ProfileForm = z.infer<typeof profileSchema>;
 
@@ -83,6 +88,8 @@ export default function PlayerSetupPage() {
         gender: data.gender,
         phone: data.phone,
         address: data.address,
+        preferred_areas: data.preferred_areas,
+        game_preference: data.game_preference,
       },
     });
 
@@ -91,6 +98,11 @@ export default function PlayerSetupPage() {
       .update({
         full_name: data.full_name,
         nationality: data.nationality,
+        position: data.position,
+        skill_level: data.skill_level,
+        preferred_foot: data.preferred_foot,
+        preferred_areas: data.preferred_areas,
+        game_preference: data.game_preference,
         role,
         ...(avatar_url ? { avatar_url } : {}),
       })
@@ -173,6 +185,55 @@ export default function PlayerSetupPage() {
                 <p className="text-red-400 text-xs font-body">{errors.nationality.message}</p>
               )}
             </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <label className={labelClass}>Position</label>
+              <select {...register("position")} className={inputClass}>
+                <option value="">Select</option>
+                <option value="goalkeeper">Goalkeeper</option>
+                <option value="defender">Defender</option>
+                <option value="midfielder">Midfielder</option>
+                <option value="forward">Forward</option>
+                <option value="any">Any</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className={labelClass}>Skill level</label>
+              <select {...register("skill_level")} className={inputClass}>
+                <option value="">Select</option>
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
+                <option value="pro">Pro</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <label className={labelClass}>Preferred foot</label>
+              <select {...register("preferred_foot")} className={inputClass}>
+                <option value="">Select</option>
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+                <option value="both">Both</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className={labelClass}>Game preference</label>
+              <select {...register("game_preference")} className={inputClass}>
+                <option value="">Select</option>
+                <option value="football">Football</option>
+                <option value="futsal">Futsal</option>
+                <option value="both">Both</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className={labelClass}>Preferred areas</label>
+            <input {...register("preferred_areas")} placeholder="BGC, Makati, Ortigas" className={inputClass} />
           </div>
 
           {error && <p className="text-red-400 text-sm text-center font-body">{error}</p>}

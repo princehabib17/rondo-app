@@ -43,12 +43,14 @@ export default function FeedPage() {
   const [organizers, setOrganizers] = useState<OrganizerGroup[]>(PLACEHOLDER_ORGANIZERS);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<GamesTab>("nearby");
+  const [notificationCount, setNotificationCount] = useState(0);
 
   const fetchData = useCallback(async () => {
     const supabase = createClient();
     const now = new Date().toISOString();
 
-    const [{ data: gamesData }, { data: organizersData }] = await Promise.all([
+    const { data: userData } = await supabase.auth.getUser();
+    const [{ data: gamesData }, { data: organizersData }, { count: unreadCount }] = await Promise.all([
       supabase
         .from("games")
         .select(
@@ -64,6 +66,13 @@ export default function FeedPage() {
         .eq("role", "organizer")
         .order("created_at", { ascending: false })
         .limit(8),
+      userData.user
+        ? supabase
+            .from("notifications")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", userData.user.id)
+            .is("read_at", null)
+        : Promise.resolve({ count: 0, data: null, error: null }),
     ]);
 
     setGames((gamesData as Game[]) ?? []);
@@ -78,6 +87,7 @@ export default function FeedPage() {
     if (realOrganizers && realOrganizers.length > 0) {
       setOrganizers(realOrganizers);
     }
+    setNotificationCount(unreadCount ?? 0);
 
     setLoading(false);
   }, []);
@@ -95,7 +105,7 @@ export default function FeedPage() {
 
   return (
     <div className="min-h-[100dvh] bg-black">
-      <FeedHeader notificationCount={1} />
+      <FeedHeader notificationCount={notificationCount} />
 
       <HeroCarousel slides={DEFAULT_CAROUSEL_SLIDES} />
 

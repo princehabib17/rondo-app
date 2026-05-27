@@ -33,6 +33,7 @@ export default function PublicProfilePage() {
   const [recentMatches, setRecentMatches] = useState<ProfileMatchEntry[]>([]);
   const [walletSpentCentavos, setWalletSpentCentavos] = useState(0);
   const [walletPaidCount, setWalletPaidCount] = useState(0);
+  const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -40,9 +41,10 @@ export default function PublicProfilePage() {
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id ?? null;
       setCurrentUserId(uid);
+      setIsGuest(Boolean(userData.user?.is_anonymous));
       const isOwnProfile = uid === id;
 
-      const [{ data: profileData }, { count }, { data: followData }, { data: matchesData }] = await Promise.all([
+      const [{ data: profileData }, { count }, { data: followData }, { data: matchesData }, { data: walletData }] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", id).single(),
         supabase.from("game_players").select("id", { count: "exact", head: true }).eq("user_id", id),
         uid
@@ -56,6 +58,14 @@ export default function PublicProfilePage() {
               .order("joined_at", { ascending: false })
               .limit(20)
           : Promise.resolve({ data: [] as ProfileMatchEntry[] }),
+        isOwnProfile
+          ? supabase
+              .from("wallet_transactions")
+              .select("amount, direction, source")
+              .eq("user_id", id)
+              .order("created_at", { ascending: false })
+              .limit(100)
+          : Promise.resolve({ data: [] as Array<{ amount: number; direction: "credit" | "debit"; source: string }> }),
       ]);
 
       setProfile(profileData as Profile);
@@ -63,11 +73,18 @@ export default function PublicProfilePage() {
       setIsFollowing(!!followData);
       const entries = ((matchesData as ProfileMatchEntry[] | null) ?? []).filter((entry) => !!entry.game);
       setRecentMatches(entries);
-      const paidEntries = entries.filter((entry) => entry.payment_status === "paid");
-      setWalletPaidCount(paidEntries.length);
-      setWalletSpentCentavos(
-        paidEntries.reduce((sum, entry) => sum + (entry.game?.price_per_player ?? 0), 0)
-      );
+      const walletRows = (walletData as Array<{ amount: number; direction: "credit" | "debit"; source: string }> | null) ?? [];
+      if (walletRows.length > 0) {
+        const debits = walletRows.filter((row) => row.direction === "debit");
+        setWalletPaidCount(debits.length);
+        setWalletSpentCentavos(debits.reduce((sum, row) => sum + row.amount, 0));
+      } else {
+        const paidEntries = entries.filter((entry) => entry.payment_status === "paid");
+        setWalletPaidCount(paidEntries.length);
+        setWalletSpentCentavos(
+          paidEntries.reduce((sum, entry) => sum + (entry.game?.price_per_player ?? 0), 0)
+        );
+      }
       setLoading(false);
     }
     load();
@@ -75,6 +92,10 @@ export default function PublicProfilePage() {
 
   async function handleFollow() {
     if (!currentUserId || followLoading) return;
+    if (isGuest) {
+      router.push(`/signup?next=/profile/${id}`);
+      return;
+    }
     setFollowLoading(true);
     const supabase = createClient();
     if (isFollowing) {
@@ -117,7 +138,7 @@ export default function PublicProfilePage() {
           <ArrowLeft size={20} />
         </button>
         <h1 className="text-white font-bold text-base flex-1 truncate">{profile.full_name}</h1>
-        {!isOwnProfile && currentUserId && (
+        {!isOwnProfile && currentUserId && !isGuest && (
           <button
             onClick={handleFollow}
             disabled={followLoading}
@@ -246,11 +267,23 @@ export default function PublicProfilePage() {
             </section>
 
             <button
-              onClick={() => router.push("/onboarding/profile")}
+              onClick={() => {
+                if (isGuest) {
+                  router.push("/signup?next=/profile");
+                  return;
+                }
+                router.push("/onboarding/profile");
+              }}
               className="w-full border border-border text-muted-foreground hover:text-white hover:border-border/80 text-sm py-3 rounded-xl active:scale-[0.98] transition-all cursor-pointer min-h-[44px]"
             >
               Edit Profile
             </button>
+            <Link
+              href="/help"
+              className="block w-full border border-border text-center text-muted-foreground hover:text-white hover:border-border/80 text-sm py-3 rounded-xl transition-all"
+            >
+              Help & Refunds
+            </Link>
           </>
         )}
       </div>

@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rondo App
 
-## Getting Started
+Rondo is a mobile-first football/futsal coordination app built with Next.js App Router + Supabase.
+It supports player and organizer journeys: discovery, join/payment, match chat, organizer operations, help tickets, wallet ledger records, notifications, and live timer screens.
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Next.js 16 App Router (Turbopack build)
+- React + TypeScript
+- Supabase (Auth, Postgres, Storage, Realtime)
+- Tailwind CSS
+- PayMongo checkout integration
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Local Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Install dependencies:
+   - `npm install`
+2. Configure `.env.local` (copy from `.env.example` and fill values).
+3. Run the app:
+   - `npm run dev`
+4. Open:
+   - `http://localhost:3000`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Environment Variables
 
-## Learn More
+Required (current implementation):
 
-To learn more about Next.js, take a look at the following resources:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_APP_URL`
+- `PAYMONGO_SECRET_KEY`
+- `PAYMONGO_WEBHOOK_SECRET`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Database / Migrations
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Run SQL migrations in Supabase SQL editor (or your normal migration flow), including:
 
-## Deploy on Vercel
+- `supabase/migrations/20250523000000_security_hardening.sql`
+- `supabase/migrations/20260527000100_organizer_broadcasts.sql`
+- `supabase/migrations/20260527000200_phase2_states_and_support.sql`
+- `supabase/migrations/20260527000300_wallet_notifications.sql`
+- `supabase/migrations/20260527000400_profile_onboarding_fields.sql`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Main User Journeys
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Auth**
+  - New user: welcome -> signup -> otp -> onboarding -> feed
+  - Returning user: login -> feed
+  - Guest: feed browsing only, gated on action routes
+- **Player**
+  - Browse feed/map -> open game -> join/reserve/pay -> confirmed -> invite/chat
+  - View profile wallet summary + matches
+  - Submit and track help tickets
+- **Organizer**
+  - Create/manage games, assign teams, update statuses
+  - Post organizer-room broadcasts
+  - View game payments breakdown
+  - Submit payout requests
+
+## Screens / Route Highlights
+
+- Player: `/feed`, `/feed/map`, `/games/[id]`, `/games/[id]/join`, `/games/[id]/payment`, `/games/[id]/chat`, `/my-games`, `/profile/[id]`, `/help`, `/notifications`
+- Organizer: `/organizer/dashboard`, `/organizer/create`, `/organizer/games/[id]/manage`, `/organizer/games/[id]/payments`
+- Organizer hubs: `/organizers/[id]`
+
+## Current Limitations
+
+- Tournament module is deferred.
+- Social feed posts/highlights are deferred.
+- Ticket admin dashboard is manual in v1.
+- Wallet payout execution is manual approval workflow (no automatic payout rail).
+
+## Launch Checklist
+
+- Verify all migrations are applied in Supabase.
+- Verify Auth providers (including anonymous) are configured as intended.
+- Verify PayMongo secret + webhook secret are correct in deployment env.
+- Run `npm run build` before release.
+- Smoke-test key flows: guest gate, signup/login, join/pay, organizer manage, help tickets, notifications.

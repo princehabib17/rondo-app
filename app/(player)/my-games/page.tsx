@@ -48,11 +48,28 @@ export default function MyGamesPage() {
   const now = new Date();
   const upcoming = entries.filter((e) => new Date(e.game.date_time) >= now);
   const past = entries.filter((e) => new Date(e.game.date_time) < now);
+  const pendingApproval = entries.filter((e) => e.payment_status === "pending_approval");
+  const reservedUnpaid = entries.filter((e) =>
+    ["reserved", "pending_payment", "pending", "venue"].includes(e.payment_status)
+  );
+  const completed = past.filter((e) =>
+    ["paid", "approved", "venue"].includes(e.payment_status) && e.game.status === "completed"
+  );
+  const cancelled = entries.filter((e) =>
+    e.game.status === "cancelled" || ["cancelled", "rejected", "refunded"].includes(e.payment_status)
+  );
 
   const paymentColor: Record<string, string> = {
     paid: "text-green-400",
     venue: "text-yellow-400",
     pending: "text-muted-foreground",
+    pending_payment: "text-blue-300",
+    reserved: "text-rondo-yellow",
+    pending_approval: "text-blue-300",
+    approved: "text-green-400",
+    rejected: "text-destructive",
+    cancelled: "text-destructive",
+    no_show: "text-destructive",
     refunded: "text-destructive",
   };
 
@@ -117,6 +134,30 @@ export default function MyGamesPage() {
                   <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Upcoming ({upcoming.length})</h2>
                 </div>
                 {upcoming.map((e) => <GameRow key={e.id} entry={e} />)}
+              </section>
+            )}
+            {pendingApproval.length > 0 && (
+              <section className="space-y-3">
+                <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Pending Approval ({pendingApproval.length})</h2>
+                {pendingApproval.map((e) => <GameRow key={`pending-${e.id}`} entry={e} />)}
+              </section>
+            )}
+            {reservedUnpaid.length > 0 && (
+              <section className="space-y-3">
+                <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Reserved / Unpaid ({reservedUnpaid.length})</h2>
+                {reservedUnpaid.map((e) => <GameRow key={`reserved-${e.id}`} entry={e} />)}
+              </section>
+            )}
+            {completed.length > 0 && (
+              <section className="space-y-3">
+                <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Completed ({completed.length})</h2>
+                {completed.map((e) => <GameRow key={`completed-${e.id}`} entry={e} />)}
+              </section>
+            )}
+            {cancelled.length > 0 && (
+              <section className="space-y-3">
+                <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Cancelled ({cancelled.length})</h2>
+                {cancelled.map((e) => <GameRow key={`cancelled-${e.id}`} entry={e} />)}
               </section>
             )}
             {past.length > 0 && (

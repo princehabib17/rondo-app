@@ -15,6 +15,21 @@ const PUBLIC_PREFIXES = [
   "/api/auth/guest",
 ];
 
+const GUEST_BLOCKED_PREFIXES = [
+  "/my-games",
+  "/profile",
+  "/community",
+  "/organizer",
+];
+
+const GUEST_BLOCKED_SUFFIXES = [
+  "/join",
+  "/payment",
+  "/chat",
+  "/confirmed",
+  "/invite",
+];
+
 function isPublicRoute(pathname: string): boolean {
   if (PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
     return true;
@@ -66,6 +81,22 @@ export async function proxy(request: NextRequest) {
     !user.is_anonymous
   ) {
     return NextResponse.redirect(new URL("/feed", request.url));
+  }
+
+  if (user?.is_anonymous) {
+    const isBlockedByPrefix = GUEST_BLOCKED_PREFIXES.some((prefix) =>
+      pathname.startsWith(prefix)
+    );
+    const isBlockedBySuffix = GUEST_BLOCKED_SUFFIXES.some((suffix) =>
+      pathname.endsWith(suffix)
+    );
+
+    if (isBlockedByPrefix || isBlockedBySuffix) {
+      const signupUrl = new URL("/signup", request.url);
+      signupUrl.searchParams.set("next", pathname);
+      signupUrl.searchParams.set("guest", "1");
+      return NextResponse.redirect(signupUrl);
+    }
   }
 
   return supabaseResponse;

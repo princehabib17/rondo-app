@@ -33,6 +33,7 @@ export default function ChatPage() {
   const [gameTitle, setGameTitle] = useState("");
   const [playerCount, setPlayerCount] = useState(0);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isGuest, setIsGuest] = useState(false);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -47,6 +48,7 @@ export default function ChatPage() {
       const supabase = createClient();
       const { data: userData } = await supabase.auth.getUser();
       setCurrentUserId(userData.user?.id ?? null);
+      setIsGuest(Boolean(userData.user?.is_anonymous));
 
       // Fetch game info
       const { data: game } = await supabase
@@ -101,7 +103,7 @@ export default function ChatPage() {
 
   async function sendMessage() {
     const body = input.trim();
-    if (!body || sending || !currentUserId) return;
+    if (!body || sending || !currentUserId || isGuest) return;
     setSending(true);
     setInput("");
     inputRef.current?.focus();
@@ -244,7 +246,7 @@ export default function ChatPage() {
         />
         <button
           onClick={sendMessage}
-          disabled={!input.trim() || sending}
+          disabled={!input.trim() || sending || isGuest}
           aria-label="Send message"
           className="min-w-[44px] min-h-[44px] rounded-full bg-rondo-yellow flex items-center justify-center active:scale-[0.92] transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer hover:brightness-95 shrink-0"
         >

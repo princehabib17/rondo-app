@@ -22,12 +22,19 @@ export default function OrganizerDashboardPage() {
   const router = useRouter();
   const [games, setGames] = useState<OrgGame[]>([]);
   const [loading, setLoading] = useState(true);
+  const [organizerId, setOrganizerId] = useState<string | null>(null);
+  const [payoutAmount, setPayoutAmount] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [bankAccountName, setBankAccountName] = useState("");
+  const [bankAccountNumber, setBankAccountNumber] = useState("");
+  const [payoutMessage, setPayoutMessage] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
       const supabase = createClient();
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) { router.push("/login"); return; }
+      setOrganizerId(userData.user.id);
       const { data } = await supabase
         .from("games")
         .select("id, title, date_time, price_per_player, max_players, status, format, game_players(id, payment_status)")
@@ -43,6 +50,27 @@ export default function OrganizerDashboardPage() {
     const paid = g.game_players.filter((p) => p.payment_status === "paid").length;
     return sum + paid * g.price_per_player;
   }, 0);
+
+  async function submitPayoutRequest() {
+    if (!organizerId) return;
+    const amount = Number(payoutAmount);
+    if (!amount || amount <= 0) return;
+    const supabase = createClient();
+    const { error } = await supabase.from("payout_requests").insert({
+      organizer_id: organizerId,
+      amount,
+      bank_name: bankName || null,
+      bank_account_name: bankAccountName || null,
+      bank_account_number: bankAccountNumber || null,
+      note: "Requested from organizer dashboard",
+    });
+    if (error) {
+      setPayoutMessage(error.message);
+      return;
+    }
+    setPayoutAmount("");
+    setPayoutMessage("Payout request submitted.");
+  }
 
   const statusColor: Record<string, string> = {
     open: "text-green-400",
@@ -87,6 +115,20 @@ export default function OrganizerDashboardPage() {
               <p className="text-rondo-yellow font-black text-lg">{formatPrice(totalEarnings)}</p>
               <p className="text-muted-foreground text-xs">Earned</p>
             </div>
+          </div>
+        )}
+
+        {!loading && (
+          <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+            <h2 className="text-white font-bold text-sm uppercase tracking-wider">Request Payout</h2>
+            <input value={payoutAmount} onChange={(e) => setPayoutAmount(e.target.value)} placeholder="Amount (centavos)" className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-white" />
+            <input value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="Bank name" className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-white" />
+            <input value={bankAccountName} onChange={(e) => setBankAccountName(e.target.value)} placeholder="Account name" className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-white" />
+            <input value={bankAccountNumber} onChange={(e) => setBankAccountNumber(e.target.value)} placeholder="Account number" className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-white" />
+            <button onClick={submitPayoutRequest} className="w-full bg-rondo-yellow text-rondo-black font-black text-xs uppercase tracking-wider py-3 rounded-lg">
+              Submit Payout Request
+            </button>
+            {payoutMessage && <p className="text-xs text-white/70">{payoutMessage}</p>}
           </div>
         )}
 

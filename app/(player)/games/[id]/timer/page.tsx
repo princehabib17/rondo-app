@@ -13,6 +13,22 @@ export default function PlayerTimerPage() {
   const router = useRouter();
   const [timer, setTimer] = useState<TimerSession | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [announcedRound, setAnnouncedRound] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = window.localStorage.getItem("timer_sound_enabled");
+    setSoundEnabled(saved !== "0");
+  }, []);
+
+  function toggleSound() {
+    const next = !soundEnabled;
+    setSoundEnabled(next);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("timer_sound_enabled", next ? "1" : "0");
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -35,6 +51,16 @@ export default function PlayerTimerPage() {
   const teamA = teams.find((t) => t.id === timer?.current_team_a_id);
   const teamB = teams.find((t) => t.id === timer?.current_team_b_id);
 
+  useEffect(() => {
+    if (!soundEnabled || !timer || timer.status !== "running") return;
+    if (announcedRound === timer.current_round) return;
+    const current = schedule?.find((r) => r.round === timer.current_round);
+    if (!current || typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    const utterance = new SpeechSynthesisUtterance(`Next: ${current.team_a_name} versus ${current.team_b_name}`);
+    window.speechSynthesis.speak(utterance);
+    setAnnouncedRound(timer.current_round);
+  }, [timer, soundEnabled, schedule, announcedRound]);
+
   return (
     <div className="min-h-[100dvh] bg-rondo-yellow flex flex-col">
       {/* Header */}
@@ -48,6 +74,12 @@ export default function PlayerTimerPage() {
         </button>
         <span className="text-rondo-black font-black text-sm uppercase tracking-widest">Live Match</span>
         <div className="ml-auto flex items-center gap-1.5">
+          <button
+            onClick={toggleSound}
+            className="text-[10px] uppercase tracking-wider border border-rondo-black/30 rounded-full px-2 py-1 text-rondo-black/70"
+          >
+            {soundEnabled ? "Sound On" : "Sound Off"}
+          </button>
           <div className={`w-2 h-2 rounded-full ${timer?.status === "running" ? "bg-green-600 animate-pulse" : "bg-rondo-black/30"}`} />
           <span className="text-rondo-black/60 text-xs font-semibold capitalize">{timer?.status ?? "waiting"}</span>
         </div>
