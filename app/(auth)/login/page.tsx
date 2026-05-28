@@ -44,7 +44,7 @@ export default function LoginPage() {
   }
 
   const inputClass =
-    "w-full bg-black border border-white text-white px-4 py-3.5 text-sm focus:outline-none focus:border-rondo-accent rounded-sm";
+    "w-full bg-black/60 border border-white/20 text-white px-4 py-3.5 text-sm focus:outline-none focus:border-rondo-accent focus:bg-black/80 rounded-xl transition-colors";
 
   return (
     <>
@@ -89,7 +89,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-rondo-accent text-black font-heading font-black uppercase tracking-widest text-sm py-4 disabled:opacity-50"
+          className="w-full bg-rondo-accent text-black font-heading font-black uppercase tracking-widest text-sm py-4 rounded-xl disabled:opacity-50 active:scale-[0.98] transition-transform"
         >
           {isSubmitting ? "Logging in..." : "Log In"}
         </button>

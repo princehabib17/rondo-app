@@ -50,7 +50,7 @@ export default function SignupPage() {
   }
 
   const inputClass =
-    "w-full bg-black border border-white text-white px-4 py-3.5 text-sm placeholder:text-white/30 focus:outline-none focus:border-rondo-yellow";
+    "w-full bg-black/60 border border-white/20 text-white px-4 py-3.5 text-sm placeholder:text-white/30 focus:outline-none focus:border-rondo-accent focus:bg-black/80 rounded-xl transition-colors";
 
   return (
     <>
@@ -106,7 +106,7 @@ export default function SignupPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-white text-black font-black uppercase tracking-widest text-sm py-4 hover:bg-white/90 transition disabled:opacity-50"
+          className="w-full bg-rondo-accent text-black font-heading font-black uppercase tracking-widest text-sm py-4 rounded-xl disabled:opacity-50 active:scale-[0.98] transition-all"
         >
           {isSubmitting ? "Creating..." : "Create Account"}
         </button>
@@ -114,7 +114,7 @@ export default function SignupPage() {
 
       <p className="text-center text-white text-sm mt-8">
         Already have an account?{" "}
-        <Link href="/login" className="text-rondo-yellow font-semibold hover:underline">
+        <Link href="/login" className="text-rondo-accent font-semibold hover:underline">
           Log In
         </Link>
       </p>

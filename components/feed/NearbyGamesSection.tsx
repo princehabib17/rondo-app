@@ -32,7 +32,7 @@ export function NearbyGameRow({ game }: NearbyGameRowProps) {
       href={`/games/${game.id}`}
       className="flex items-center gap-3 py-3 border-b border-white/5 last:border-0 active:opacity-80 transition-opacity"
     >
-      <div className="w-11 h-11 rounded-full bg-[#1c1c1c] border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
+      <div className="w-11 h-11 rounded-full bg-secondary border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
         {game.organizer?.avatar_url ? (
           <Image
             src={game.organizer.avatar_url}
@@ -85,25 +85,25 @@ export function NearbyGamesSection({ games, tab, onTabChange, loading }: NearbyG
   return (
     <section id="nearby-games" className="px-4 pt-6 pb-4">
       <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-1 bg-white/[0.06] rounded-xl p-1">
           <button
             type="button"
             onClick={() => onTabChange("nearby")}
-            className={`font-heading text-sm uppercase tracking-wide pb-2 border-b-2 transition-colors ${
+            className={`font-heading text-xs uppercase tracking-wide px-3 py-1.5 rounded-lg transition-all duration-200 ${
               tab === "nearby"
-                ? "text-white border-rondo-accent"
-                : "text-white/40 border-transparent"
+                ? "bg-rondo-accent text-black font-black"
+                : "text-white/50 hover:text-white/80"
             }`}
           >
-            Nearby Games
+            Nearby
           </button>
           <button
             type="button"
             onClick={() => onTabChange("upcoming")}
-            className={`font-heading text-sm uppercase tracking-wide pb-2 border-b-2 transition-colors ${
+            className={`font-heading text-xs uppercase tracking-wide px-3 py-1.5 rounded-lg transition-all duration-200 ${
               tab === "upcoming"
-                ? "text-white border-rondo-accent"
-                : "text-white/40 border-transparent"
+                ? "bg-rondo-accent text-black font-black"
+                : "text-white/50 hover:text-white/80"
             }`}
           >
             Upcoming
@@ -112,10 +112,10 @@ export function NearbyGamesSection({ games, tab, onTabChange, loading }: NearbyG
 
         <Link
           href="/feed/map"
-          className="flex items-center gap-1.5 font-body text-white/60 text-xs hover:text-rondo-accent transition-colors pb-2"
+          className="flex items-center gap-1.5 font-body text-white/50 text-xs hover:text-rondo-accent transition-colors"
         >
-          <Map size={14} />
-          Map
+          <Map size={13} />
+          <span>Map</span>
         </Link>
       </div>
 
