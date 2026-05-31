@@ -3,16 +3,19 @@ import { createClient } from "@/lib/supabase/client";
 export async function signInAsGuest(): Promise<{ ok: boolean; error?: string }> {
   const supabase = createClient();
 
-  // Try Supabase anonymous sign-in first
-  const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously();
+  let anonError: { message?: string } | null = null;
+  try {
+    const { data: anonData, error } = await supabase.auth.signInAnonymously();
+    anonError = error;
 
-  if (!anonError && anonData.user) {
-    // Don't block navigation — profile can be ensured in the background
-    void fetch("/api/auth/guest/ensure-profile", { method: "POST" });
-    return { ok: true };
+    if (!error && anonData.user) {
+      void fetch("/api/auth/guest/ensure-profile", { method: "POST" });
+      return { ok: true };
+    }
+  } catch (e: unknown) {
+    anonError = { message: e instanceof Error ? e.message : "Anonymous sign-in failed" };
   }
 
-  // Fallback: server creates a guest account (works without Anonymous provider)
   const res = await fetch("/api/auth/guest", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

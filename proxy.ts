@@ -16,6 +16,11 @@ const PUBLIC_PREFIXES = [
   "/api/auth/guest",
 ];
 
+const PUBLIC_BROWSE_PREFIXES = [
+  "/feed",
+  "/organizers",
+];
+
 /** Public routes that do not need a Supabase session lookup (faster dev loads). */
 const PUBLIC_SKIP_AUTH = [
   "/forgot-password",
@@ -25,9 +30,7 @@ const PUBLIC_SKIP_AUTH = [
 
 const GUEST_BLOCKED_PREFIXES = [
   "/my-games",
-  "/profile",
   "/wallet",
-  "/community",
   "/organizer",
 ];
 
@@ -43,6 +46,19 @@ const GUEST_BLOCKED_SUFFIXES = [
 function isPublicRoute(pathname: string): boolean {
   if (PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
     return true;
+  }
+  if (
+    PUBLIC_BROWSE_PREFIXES.some(
+      (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+    )
+  ) {
+    return true;
+  }
+  if (pathname.startsWith("/profile/")) {
+    return true;
+  }
+  if (pathname.startsWith("/games/")) {
+    return !GUEST_BLOCKED_SUFFIXES.some((suffix) => pathname.endsWith(suffix));
   }
   return PUBLIC_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
@@ -120,6 +136,9 @@ export async function proxy(request: NextRequest) {
   const user = await getUserWithTimeout(supabase);
 
   if (!user && !isPublicRoute(pathname)) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
@@ -142,6 +161,9 @@ export async function proxy(request: NextRequest) {
     );
 
     if (isBlockedByPrefix || isBlockedBySuffix) {
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "Create an account to continue" }, { status: 403 });
+      }
       const signupUrl = new URL("/signup", request.url);
       signupUrl.searchParams.set("next", pathname);
       signupUrl.searchParams.set("guest", "1");
