@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, UserPlus, UserMinus, MapPin, Trophy, Wallet, CalendarDays, ChevronRight } from "lucide-react";
+import { ArrowLeft, UserPlus, UserMinus, MapPin, Trophy, Wallet, CalendarDays, ChevronRight, MessageCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatGameDate, formatPrice, getFlagEmoji } from "@/lib/utils/format";
 import type { Profile } from "@/lib/supabase/types";
@@ -35,6 +35,8 @@ export default function PublicProfilePage() {
   const [walletSpentCentavos, setWalletSpentCentavos] = useState(0);
   const [walletPaidCount, setWalletPaidCount] = useState(0);
   const [isGuest, setIsGuest] = useState(false);
+  const [locationHidden, setLocationHidden] = useState(false);
+  const [savingLocation, setSavingLocation] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -70,6 +72,7 @@ export default function PublicProfilePage() {
       ]);
 
       setProfile(profileData as Profile);
+      setLocationHidden(Boolean((profileData as Profile)?.location_hidden));
       setGamesPlayed(count ?? 0);
       setIsFollowing(!!followData);
       const entries = ((matchesData as ProfileMatchEntry[] | null) ?? []).filter((entry) => !!entry.game);
@@ -118,6 +121,19 @@ export default function PublicProfilePage() {
     setFollowLoading(false);
   }
 
+  async function toggleLocationHidden() {
+    if (!currentUserId || savingLocation) return;
+    setSavingLocation(true);
+    const next = !locationHidden;
+    const supabase = createClient();
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ location_hidden: next })
+      .eq("id", currentUserId);
+    if (!updateError) setLocationHidden(next);
+    setSavingLocation(false);
+  }
+
   if (loading) {
     return (
       <div className="min-h-[100dvh] p-4 space-y-4">
@@ -149,14 +165,23 @@ export default function PublicProfilePage() {
         </button>
         <h1 className="text-white font-bold text-base flex-1 truncate">{profile.full_name}</h1>
         {!isOwnProfile && currentUserId && !isGuest && (
-          <button
-            onClick={handleFollow}
-            disabled={followLoading}
-            className="min-h-[44px] px-4 flex items-center gap-2 rounded-lg border border-border hover:border-rondo-yellow/40 text-sm font-semibold transition-all cursor-pointer active:scale-[0.97] disabled:opacity-50"
-            style={{ color: isFollowing ? "var(--muted-foreground)" : "var(--color-rondo-yellow)" }}
-          >
-            {isFollowing ? <><UserMinus size={15} />Unfollow</> : <><UserPlus size={15} />Follow</>}
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              href={`/messages/${id}`}
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-border hover:border-rondo-yellow/40 text-rondo-yellow transition-all"
+              aria-label="Message player"
+            >
+              <MessageCircle size={18} />
+            </Link>
+            <button
+              onClick={handleFollow}
+              disabled={followLoading}
+              className="min-h-[44px] px-4 flex items-center gap-2 rounded-lg border border-border hover:border-rondo-yellow/40 text-sm font-semibold transition-all cursor-pointer active:scale-[0.97] disabled:opacity-50"
+              style={{ color: isFollowing ? "var(--muted-foreground)" : "var(--color-rondo-yellow)" }}
+            >
+              {isFollowing ? <><UserMinus size={15} />Unfollow</> : <><UserPlus size={15} />Follow</>}
+            </button>
+          </div>
         )}
       </header>
 
@@ -187,7 +212,7 @@ export default function PublicProfilePage() {
             )}
             <div className="flex items-center gap-1.5 mt-1">
               <Trophy size={12} className="text-rondo-yellow" />
-              <span className="text-muted-foreground text-sm">{gamesPlayed} games played</span>
+              <span className="text-muted-foreground text-sm">{gamesPlayed} matches played</span>
             </div>
           </div>
         </div>
@@ -296,6 +321,29 @@ export default function PublicProfilePage() {
             >
               Edit Profile
             </button>
+
+            <label className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={locationHidden}
+                disabled={savingLocation}
+                onChange={toggleLocationHidden}
+                className="mt-0.5 h-4 w-4 accent-[#E9FF3A]"
+              />
+              <span className="text-sm text-white/80 leading-snug">
+                Hide my location from other players
+                <span className="block text-xs text-muted-foreground mt-0.5">
+                  When on, nearest-player discovery won&apos;t show where you are.
+                </span>
+              </span>
+            </label>
+
+            <Link
+              href="/messages"
+              className="block w-full border border-border text-center text-muted-foreground hover:text-white hover:border-border/80 text-sm py-3 rounded-xl transition-all"
+            >
+              Messages
+            </Link>
             <Link
               href="/help"
               className="block w-full border border-border text-center text-muted-foreground hover:text-white hover:border-border/80 text-sm py-3 rounded-xl transition-all"

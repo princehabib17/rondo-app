@@ -56,12 +56,12 @@ function ConfirmedContent() {
         setPaymentState("pending_approval");
         return;
       }
-      if (myEntry?.payment_status === "rejected") {
-        setPaymentState("rejected");
-        return;
-      }
       if (myEntry?.payment_status === "venue") {
         setPaymentState("venue");
+        return;
+      }
+      if (myEntry?.payment_status === "rejected") {
+        setPaymentState("rejected");
         return;
       }
 
@@ -121,7 +121,7 @@ function ConfirmedContent() {
           onClick={() => router.push("/my-games")}
           className="w-full border border-border text-white text-sm py-4 rounded-xl cursor-pointer min-h-[52px]"
         >
-          My Games
+          My Matches
         </button>
       </div>
     );
@@ -183,7 +183,7 @@ function ConfirmedContent() {
       <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 text-center space-y-6 max-w-sm">
         <h1 className="text-white font-bold text-2xl">Request Not Approved</h1>
         <p className="text-muted-foreground text-sm">
-          This slot request was declined by the organizer. Try another game or contact support.
+          This slot request was declined by the organizer. Try another match or contact support.
         </p>
         <button onClick={() => router.push("/help/new")} className="w-full border border-border text-white text-sm py-4 rounded-xl">
           Contact Help
@@ -197,10 +197,10 @@ function ConfirmedContent() {
       <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 text-center space-y-6 max-w-sm">
         <h1 className="text-white font-bold text-2xl">Joined - Pay at Venue</h1>
         <p className="text-muted-foreground text-sm">
-          You are in the match. Please settle payment with the organizer on game day.
+          You are in the match. Please settle payment with the organizer on match day.
         </p>
-        <button onClick={() => router.push(`/games/${id}/chat`)} className="w-full bg-rondo-yellow text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-xl">
-          Open Match Chat
+        <button onClick={() => router.push(`/games/${id}/room`)} className="w-full bg-rondo-yellow text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-xl">
+          Organizer room
         </button>
       </div>
     );

@@ -56,9 +56,18 @@ export async function POST(request: Request) {
       (session.attributes?.payment_intent as { id?: string } | undefined)?.id ??
       sessionId;
 
+    const paymentReference =
+      session.attributes?.reference_number ??
+      paymentId ??
+      sessionId;
+
     if (await hasTopUpBeenCredited(paymentId)) {
       const balanceCentavos = await getWalletBalanceCentavos(userData.user.id);
-      return NextResponse.json({ status: "credited", balanceCentavos });
+      return NextResponse.json({
+        status: "credited",
+        balanceCentavos,
+        paymentReference,
+      });
     }
 
     await creditWallet({
@@ -75,7 +84,12 @@ export async function POST(request: Request) {
     });
 
     const balanceCentavos = await getWalletBalanceCentavos(userData.user.id);
-    return NextResponse.json({ status: "credited", balanceCentavos, amountCentavos });
+    return NextResponse.json({
+      status: "credited",
+      balanceCentavos,
+      amountCentavos,
+      paymentReference,
+    });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Confirmation failed";
     return NextResponse.json({ error: message }, { status: 500 });

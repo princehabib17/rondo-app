@@ -7,6 +7,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 const bodySchema = z.object({
   gameId: z.string().uuid(),
   teamId: z.string().uuid().nullable().optional(),
+  idempotencyKey: z.string().min(8).max(128),
 });
 
 export async function POST(request: Request) {
@@ -23,23 +24,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
-    const { gameId, teamId } = parsed.data;
+    const { gameId, teamId, idempotencyKey } = parsed.data;
 
     const result = await payForGameWithWallet({
       userId: userData.user.id,
       gameId,
       teamId: teamId ?? null,
+      idempotencyKey,
     });
 
     if (!result.ok) {
       const status =
         result.code === "INSUFFICIENT_BALANCE"
           ? 402
-          : result.code === "ALREADY_PAID"
-            ? 400
-            : 400;
+          : result.code === "IN_PROGRESS"
+            ? 409
+            : result.code === "ALREADY_PAID"
+              ? 400
+              : 400;
       return NextResponse.json(
-        { error: result.error, code: result.code },
+        {
+          error: result.error,
+          code: result.code,
+          balanceCentavos: result.balanceCentavos,
+        },
         { status }
       );
     }
@@ -54,7 +62,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({
-      status: "paid",
+      status: result.paymentStatus,
       balanceCentavos: result.balanceAfter,
     });
   } catch (e: unknown) {

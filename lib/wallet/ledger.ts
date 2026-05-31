@@ -67,113 +67,86 @@ export async function creditOrganizerEarnings(params: {
 }
 
 export type PayGameResult =
-  | { ok: true; balanceAfter: number }
-  | { ok: false; error: string; code: "INSUFFICIENT_BALANCE" | "ALREADY_PAID" | "GAME_FULL" | "INVALID" };
+  | {
+      ok: true;
+      balanceAfter: number;
+      paymentStatus: string;
+    }
+  | {
+      ok: false;
+      error: string;
+      code:
+        | "INSUFFICIENT_BALANCE"
+        | "ALREADY_PAID"
+        | "GAME_FULL"
+        | "TEAM_FULL"
+        | "IN_PROGRESS"
+        | "INVALID";
+      balanceCentavos?: number;
+    };
 
+type RpcPayResult = {
+  ok: boolean;
+  code?: string;
+  error?: string;
+  balanceAfter?: number;
+  balanceCentavos?: number;
+  paymentStatus?: string;
+};
+
+/** Atomic match payment: balance, capacity, debit, organizer credit, roster — one DB transaction. */
 export async function payForGameWithWallet(params: {
   userId: string;
   gameId: string;
   teamId: string | null;
+  idempotencyKey: string;
 }): Promise<PayGameResult> {
   const supabase = createServiceClient();
 
-  const { data: game, error: gameError } = await supabase
-    .from("games")
-    .select("id, title, price_per_player, payment_type, status, max_players, organizer_id")
-    .eq("id", params.gameId)
-    .single();
+  const { data, error } = await supabase.rpc("pay_match_with_wallet", {
+    p_user_id: params.userId,
+    p_game_id: params.gameId,
+    p_team_id: params.teamId,
+    p_idempotency_key: params.idempotencyKey,
+  });
 
-  if (gameError || !game) {
-    return { ok: false, error: "Game not found", code: "INVALID" };
-  }
-
-  if (game.payment_type !== "online") {
-    return { ok: false, error: "This game does not use wallet payment", code: "INVALID" };
-  }
-
-  if (game.status !== "open") {
-    return { ok: false, error: "Game is not open for registration", code: "INVALID" };
-  }
-
-  if (params.teamId) {
-    const { data: team } = await supabase
-      .from("teams")
-      .select("id")
-      .eq("id", params.teamId)
-      .eq("game_id", params.gameId)
-      .maybeSingle();
-    if (!team) {
-      return { ok: false, error: "Invalid team", code: "INVALID" };
+  if (error) {
+    if (error.message.includes("pay_match_with_wallet")) {
+      return {
+        ok: false,
+        error:
+          "Wallet payment is not available yet. Run the latest Supabase migration (20260529200000_wallet_pay_atomic.sql).",
+        code: "INVALID",
+      };
     }
+    return { ok: false, error: error.message, code: "INVALID" };
   }
 
-  const { count: playerCount } = await supabase
-    .from("game_players")
-    .select("id", { count: "exact", head: true })
-    .eq("game_id", params.gameId);
-
-  if (playerCount !== null && playerCount >= game.max_players) {
-    return { ok: false, error: "Game is full", code: "GAME_FULL" };
-  }
-
-  const { data: existing } = await supabase
-    .from("game_players")
-    .select("payment_status")
-    .eq("game_id", params.gameId)
-    .eq("user_id", params.userId)
-    .maybeSingle();
-
-  if (existing?.payment_status === "paid") {
-    return { ok: false, error: "Already paid for this game", code: "ALREADY_PAID" };
-  }
-
-  const price = game.price_per_player;
-  const balance = await getWalletBalanceCentavos(params.userId);
-
-  if (balance < price) {
-    const shortfall = price - balance;
+  const row = data as RpcPayResult;
+  if (!row?.ok) {
+    const code = row?.code ?? "INVALID";
+    const allowed = [
+      "INSUFFICIENT_BALANCE",
+      "ALREADY_PAID",
+      "GAME_FULL",
+      "TEAM_FULL",
+      "IN_PROGRESS",
+      "INVALID",
+    ] as const;
+    const safeCode = allowed.includes(code as (typeof allowed)[number])
+      ? (code as (typeof allowed)[number])
+      : "INVALID";
     return {
       ok: false,
-      error: `Insufficient wallet balance. Add at least ₱${(shortfall / 100).toLocaleString("en-PH")} to continue.`,
-      code: "INSUFFICIENT_BALANCE",
+      error: row?.error ?? "Payment failed",
+      code: safeCode,
+      balanceCentavos: row?.balanceCentavos,
     };
   }
 
-  const { error: debitError } = await supabase.from("wallet_transactions").insert({
-    user_id: params.userId,
-    game_id: params.gameId,
-    organizer_id: game.organizer_id,
-    amount: price,
-    direction: "debit",
-    source: "payment",
-    note: `game_join:${params.gameId}`,
-  });
-
-  if (debitError) {
-    return { ok: false, error: debitError.message, code: "INVALID" };
-  }
-
-  await creditOrganizerEarnings({
-    organizerId: game.organizer_id,
-    amountCentavos: price,
-    gameId: params.gameId,
-  });
-
-  const { error: playerError } = await supabase.from("game_players").upsert(
-    {
-      game_id: params.gameId,
-      user_id: params.userId,
-      team_id: params.teamId,
-      payment_status: "paid",
-      paymongo_payment_id: null,
-    },
-    { onConflict: "game_id,user_id" }
-  );
-
-  if (playerError) {
-    return { ok: false, error: playerError.message, code: "INVALID" };
-  }
-
-  const balanceAfter = balance - price;
-  return { ok: true, balanceAfter };
+  return {
+    ok: true,
+    balanceAfter: row.balanceAfter ?? 0,
+    paymentStatus: row.paymentStatus ?? "paid",
+  };
 }

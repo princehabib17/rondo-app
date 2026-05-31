@@ -3,23 +3,27 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Calendar, MapPin, Users, Shield, ChevronRight, MessageCircle } from "lucide-react";
+import { ArrowLeft, Calendar, ChevronRight, MapPin, Megaphone, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { PlayerAvatar } from "@/components/game/PlayerAvatar";
-import { Badge } from "@/components/ui/badge";
+import { MatchTeamsRoster } from "@/components/match/MatchTeamsRoster";
+import { MatchRulesPanel } from "@/components/match/MatchRulesPanel";
 import { formatGameDate, formatPrice } from "@/lib/utils/format";
-import type { Game, GamePlayer, Profile, Team } from "@/lib/supabase/types";
+import {
+  getMatchStatusBanner,
+  resolveJoinCta,
+  spotsLeft,
+} from "@/lib/match/rules";
+import type { Game, GamePlayer } from "@/lib/supabase/types";
 
-interface TeamWithPlayers extends Team {
-  game_players: Array<{ id: string; user_id: string; profile: Profile | null }>;
-}
-
-export default function GameDetailPage() {
+export default function MatchDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [game, setGame] = useState<Game | null>(null);
+  const [gamesHosted, setGamesHosted] = useState(0);
   const [loading, setLoading] = useState(true);
   const [myEntry, setMyEntry] = useState<GamePlayer | null>(null);
+  const [onWaitlist, setOnWaitlist] = useState(false);
+  const [leavingWaitlist, setLeavingWaitlist] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
@@ -32,25 +36,44 @@ export default function GameDetailPage() {
 
       const { data } = await supabase
         .from("games")
-        .select(`
+        .select(
+          `
           *,
           organizer:profiles!organizer_id(*),
           teams(id, name, color, slot_number,
-            game_players:game_players(id, user_id, profile:profiles(id, full_name, avatar_url, nationality))
+            game_players:game_players(id, user_id, profile:profiles(id, avatar_url, nationality))
           ),
-          game_players(id, user_id, team_id)
-        `)
+          game_players(id, user_id, team_id, payment_status)
+        `
+        )
         .eq("id", id)
         .single();
 
       if (data) {
-        setGame(data as Game);
+        const g = data as Game;
+        setGame(g);
         if (userData.user?.id) {
-          const entry = (data.game_players as GamePlayer[]).find(
+          const entry = (g.game_players as GamePlayer[]).find(
             (gp) => gp.user_id === userData.user!.id
           );
           setMyEntry(entry ?? null);
+
+          const { data: wl } = await supabase
+            .from("game_waitlist")
+            .select("id")
+            .eq("game_id", id)
+            .eq("user_id", userData.user.id)
+            .eq("status", "waiting")
+            .maybeSingle();
+          setOnWaitlist(Boolean(wl));
         }
+
+        const { count } = await supabase
+          .from("games")
+          .select("id", { count: "exact", head: true })
+          .eq("organizer_id", g.organizer_id)
+          .neq("status", "cancelled");
+        setGamesHosted(count ?? 0);
       }
       setLoading(false);
     }
@@ -59,12 +82,12 @@ export default function GameDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] space-y-0">
-        <div className="h-52 bg-muted animate-pulse" />
-        <div className="p-4 space-y-4">
-          <div className="h-6 bg-muted rounded animate-pulse w-2/3" />
-          <div className="h-4 bg-muted rounded animate-pulse w-full" />
-          <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
+      <div className="min-h-[100dvh] rondo-page">
+        <div className="h-52 rondo-shimmer" />
+        <div className="p-4 space-y-4 max-w-lg mx-auto">
+          <div className="h-6 w-2/3 rondo-shimmer rounded" />
+          <div className="h-24 rondo-shimmer rounded-xl" />
+          <div className="h-40 rondo-shimmer rounded-xl" />
         </div>
       </div>
     );
@@ -72,216 +95,189 @@ export default function GameDetailPage() {
 
   if (!game) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center">
-        <p className="text-muted-foreground">Game not found</p>
+      <div className="min-h-[100dvh] rondo-page flex items-center justify-center">
+        <p className="text-white/50">Match not found</p>
       </div>
     );
   }
 
-  const totalPlayers = game.game_players?.length ?? 0;
-  const spotsLeft = game.max_players - totalPlayers;
+  const banner = getMatchStatusBanner(game);
+  const cta = resolveJoinCta({
+    game,
+    myEntry,
+    isGuest,
+    hasUser: Boolean(currentUserId),
+    onWaitlist,
+  });
+  const left = spotsLeft(game);
+  const spotOpenForWaitlist = onWaitlist && !myEntry && left > 0;
+
+  async function leaveWaitlist() {
+    setLeavingWaitlist(true);
+    try {
+      const res = await fetch(`/api/matches/waitlist?gameId=${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.error ?? "Could not leave waitlist");
+      }
+      setOnWaitlist(false);
+    } catch {
+      // silent — user can retry
+    } finally {
+      setLeavingWaitlist(false);
+    }
+  }
 
   return (
-    <div className="min-h-[100dvh] pb-32">
-      {/* Sticky header */}
-      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border px-4 py-3 flex items-center gap-3">
+    <div className="min-h-[100dvh] rondo-page pb-36">
+      <header className="sticky top-0 z-40 rondo-glass-nav border-b border-white/5 px-4 py-3 flex items-center gap-3">
         <button
+          type="button"
           onClick={() => router.back()}
-          className="w-10 h-10 flex items-center justify-center text-foreground hover:bg-secondary rounded-lg transition-colors cursor-pointer active:scale-[0.95]"
+          className="w-10 h-10 flex items-center justify-center text-white hover:bg-white/5 rounded-lg transition-colors active:scale-[0.95]"
           aria-label="Go back"
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-foreground font-black text-base flex-1 truncate">{game.title}</h1>
-        <span className="text-primary font-black text-base">{formatPrice(game.price_per_player)}</span>
+        <h1 className="font-heading text-white font-black italic text-base uppercase flex-1 truncate">
+          {game.title}
+        </h1>
+        <span className="font-heading text-rondo-accent font-black text-sm shrink-0">
+          {game.price_per_player === 0 ? "Free" : formatPrice(game.price_per_player)}
+        </span>
       </header>
 
-      {/* Banner */}
-      <div className="relative h-56 bg-muted">
+      <div className="relative h-48 bg-[#1c1c1c]">
         {game.banner_url ? (
-          <img src={game.banner_url} alt={game.title} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border-b border-border">
-            <Shield size={48} className="text-green-700" />
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={game.banner_url} alt="" className="w-full h-full object-cover" />
+        ) : null}
+        <div className="absolute inset-0 bg-gradient-to-t from-rondo-page via-rondo-page/40 to-transparent" />
+        <span className="absolute bottom-3 left-4 font-heading text-white/90 text-2xl font-black italic uppercase">
+          {game.format}
+        </span>
       </div>
 
       <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
-        {/* Tags/Badges */}
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="secondary" className="font-semibold">{game.format}</Badge>
-          <Badge variant="secondary" className="font-semibold">{game.round_duration_minutes}m rounds</Badge>
-          {game.payment_type === "online"
-            ? <Badge className="bg-primary/20 text-primary border-primary/30 font-semibold">Pay Online</Badge>
-            : <Badge variant="secondary" className="font-semibold">Pay at Venue</Badge>}
-          {spotsLeft <= 0 && <Badge variant="destructive" className="font-semibold">Full</Badge>}
-        </div>
+        {banner && (
+          <div
+            className={`rounded-xl px-4 py-3 text-sm font-medium border ${
+              banner.tone === "error"
+                ? "bg-red-950/40 border-red-800/50 text-red-200"
+                : "bg-amber-950/30 border-amber-700/40 text-amber-100"
+            }`}
+          >
+            {banner.text}
+          </div>
+        )}
 
-        {/* Game Details */}
+        <MatchRulesPanel game={game} organizer={game.organizer} gamesHosted={gamesHosted} />
+
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <Calendar size={16} className="text-primary shrink-0" />
+            <Calendar size={16} className="text-rondo-accent shrink-0" />
             <div>
-              <p className="text-xs text-muted-foreground">DATE & TIME</p>
-              <span className="text-foreground text-sm font-semibold">{formatGameDate(game.date_time)}</span>
+              <p className="text-white/45 text-[10px] uppercase">When</p>
+              <p className="text-white text-sm font-semibold">{formatGameDate(game.date_time)}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <MapPin size={16} className="text-primary shrink-0" />
+            <MapPin size={16} className="text-rondo-accent shrink-0" />
             <div>
-              <p className="text-xs text-muted-foreground">VENUE</p>
-              <span className="text-foreground text-sm font-semibold">{game.venue_name}</span>
+              <p className="text-white/45 text-[10px] uppercase">Where</p>
+              <p className="text-white text-sm font-semibold">{game.venue_name}</p>
+              <p className="text-white/50 text-xs">{game.venue_address}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Users size={16} className="text-primary shrink-0" />
+            <Users size={16} className="text-rondo-accent shrink-0" />
             <div>
-              <p className="text-xs text-muted-foreground">PLAYERS</p>
-              <span className="text-foreground text-sm font-semibold">
-                {totalPlayers} / {game.max_players}
-                {spotsLeft > 0 && <span className="text-primary font-bold ml-2">({spotsLeft} left)</span>}
-              </span>
+              <p className="text-white/45 text-[10px] uppercase">Spots</p>
+              <p className="text-white text-sm font-semibold">
+                {game.max_players - left} / {game.max_players} filled
+                {left > 0 && (
+                  <span className="text-rondo-accent ml-2">{left} left</span>
+                )}
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Organizer */}
-        {game.organizer && (
-          <div className="flex items-center gap-3 py-4 px-3 border border-border rounded-xl bg-card hover:border-primary/40 transition-colors">
-            <div className="w-10 h-10 rounded-lg bg-primary/20 border border-primary/40 overflow-hidden flex items-center justify-center shrink-0">
-              {game.organizer.avatar_url ? (
-                <img src={game.organizer.avatar_url} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-primary text-xs font-bold">
-                  {(game.organizer.full_name ?? "O").slice(0, 1)}
-                </span>
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-muted-foreground font-semibold uppercase">Organized by</p>
-              <p className="text-foreground text-sm font-bold truncate">{game.organizer.full_name}</p>
-            </div>
+        <a
+          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+            [game.venue_name, game.venue_address].filter(Boolean).join(", ")
+          )}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rondo-surface flex items-center gap-3 p-4 active:scale-[0.98] transition-transform"
+        >
+          <MapPin size={18} className="text-rondo-accent shrink-0" />
+          <span className="text-white text-sm font-semibold flex-1">Open in Maps</span>
+          <ChevronRight size={16} className="text-white/30" />
+        </a>
+
+        <MatchTeamsRoster game={game} />
+
+        {myEntry && (
+          <div className="rondo-surface border-rondo-accent/30 p-4 text-center">
+            <p className="text-rondo-accent font-semibold text-sm">You have a spot in this match</p>
+            <p className="text-white/50 text-xs mt-1 capitalize">{myEntry.payment_status.replace(/_/g, " ")}</p>
           </div>
         )}
 
-        {/* Open in Maps */}
-        {(game.venue_address || game.venue_name) && (
-          <a
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-              [game.venue_name, game.venue_address].filter(Boolean).join(", ")
-            )}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 w-full border-2 border-border rounded-xl px-4 py-3 hover:border-primary/60 bg-card active:scale-[0.98] transition-all cursor-pointer group"
-          >
-            <div className="w-10 h-10 rounded-lg bg-primary/20 border border-primary/40 flex items-center justify-center shrink-0">
-              <MapPin size={18} className="text-primary" />
-            </div>
-            <div className="flex-1 min-w-0 text-left">
-              <p className="text-foreground text-sm font-bold truncate">{game.venue_name}</p>
-              <p className="text-muted-foreground text-xs truncate">{game.venue_address}</p>
-            </div>
-            <ChevronRight size={16} className="text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
-          </a>
-        )}
-
-        {/* Teams */}
-        {game.teams && game.teams.length > 0 && (
-          <section>
-            <h2 className="text-foreground font-black text-lg mb-4">Choose Your Team</h2>
-            <div className="grid grid-cols-2 gap-3">
-              {(game.teams as TeamWithPlayers[])
-                .sort((a, b) => a.slot_number - b.slot_number)
-                .map((team) => {
-                  const teamPlayers = team.game_players;
-                  return (
-                    <div key={team.id} className="bg-card border-2 border-border rounded-xl p-4 space-y-3 hover:border-primary/40 transition-colors">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-4 h-4 rounded-full shrink-0 border-2 border-white"
-                          style={{ backgroundColor: team.color }}
-                        />
-                        <span className="text-foreground font-black text-sm flex-1">{team.name}</span>
-                        <span className="text-primary font-bold text-xs bg-primary/10 px-2 py-1 rounded-lg">
-                          {teamPlayers?.length ?? 0}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {teamPlayers?.map((gp) =>
-                          gp.profile ? (
-                            <PlayerAvatar
-                              key={gp.id}
-                              profile={gp.profile}
-                              size="xs"
-                              showFlag
-                              linkable
-                            />
-                          ) : null
-                        )}
-                        {(teamPlayers?.length ?? 0) === 0 && (
-                          <p className="text-muted-foreground text-xs">No players yet</p>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          </section>
-        )}
-
-        {/* Already joined */}
-        {myEntry && (
-          <div className="bg-green-950/40 border border-green-800/50 rounded-xl p-4 text-center">
-            <p className="text-green-300 font-semibold">You&apos;re in this game</p>
-            <p className="text-muted-foreground text-sm mt-1">See you on the pitch!</p>
+        {onWaitlist && !myEntry && (
+          <div className="rondo-surface border-amber-500/30 p-4 space-y-3">
+            {spotOpenForWaitlist ? (
+              <>
+                <p className="text-amber-100 text-sm font-semibold">A spot is open — claim it before someone else does.</p>
+                <p className="text-white/45 text-xs">Everyone on the waitlist was notified. First to accept wins.</p>
+              </>
+            ) : (
+              <>
+                <p className="text-white text-sm font-semibold">You&apos;re on the waitlist</p>
+                <p className="text-white/45 text-xs">
+                  When a spot opens, everyone gets notified. First to accept gets in. You stay on the list until you leave.
+                </p>
+              </>
+            )}
+            <button
+              type="button"
+              onClick={leaveWaitlist}
+              disabled={leavingWaitlist}
+              className="text-white/60 hover:text-white text-xs font-semibold underline underline-offset-2 disabled:opacity-50"
+            >
+              {leavingWaitlist ? "Leaving…" : "Leave waitlist"}
+            </button>
           </div>
         )}
       </div>
 
-      {/* Sticky CTA */}
-      <div className="fixed bottom-16 left-0 right-0 max-w-lg mx-auto px-4 pb-2 z-30 flex gap-3">
-        {!currentUserId ? (
-          <Link
-            href={`/login?next=/games/${game.id}`}
-            className="flex-1 bg-rondo-accent text-black font-black uppercase tracking-widest text-sm py-4 rounded-xl flex items-center justify-center gap-2 hover:brightness-95 active:scale-[0.98] transition-all cursor-pointer min-h-[52px]"
-          >
-            Login to Join
-          </Link>
-        ) : isGuest ? (
-          <Link
-            href={`/signup?next=/games/${game.id}`}
-            className="flex-1 bg-rondo-accent text-black font-black uppercase tracking-widest text-sm py-4 rounded-xl flex items-center justify-center gap-2 hover:brightness-95 active:scale-[0.98] transition-all cursor-pointer min-h-[52px]"
-          >
-            Create Account to Join
-          </Link>
-        ) : myEntry ? (
-          <Link
-            href={`/games/${game.id}/chat`}
-            className="flex-1 bg-rondo-yellow text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-xl flex items-center justify-center gap-2 hover:brightness-95 active:scale-[0.98] transition-all cursor-pointer min-h-[52px]"
-          >
-            <MessageCircle size={18} />
-            Squad Chat
+      <div className="fixed bottom-16 left-0 right-0 max-w-lg mx-auto px-4 pb-2 z-30 flex gap-2">
+        <Link
+          href={`/games/${game.id}/room`}
+          className="min-w-[52px] min-h-[52px] rondo-surface flex items-center justify-center text-white hover:text-rondo-accent transition-colors"
+          aria-label="Organizer room"
+        >
+          <Megaphone size={18} />
+        </Link>
+
+        {cta.action === "disabled" ? (
+          <div className="flex-1 rondo-surface px-4 py-3 flex flex-col justify-center min-h-[52px]">
+            <p className="text-white font-bold text-sm">{cta.label}</p>
+            <p className="text-white/45 text-xs">{cta.reason}</p>
+          </div>
+        ) : cta.action === "login" || cta.action === "signup" ? (
+          <Link href={cta.href!} className="flex-1 rondo-btn rondo-btn-primary min-h-[52px] flex items-center justify-center">
+            {cta.label}
           </Link>
         ) : (
-          <>
-            <Link
-              href={`/games/${game.id}/chat`}
-              className="min-w-[52px] min-h-[52px] bg-zinc-800 border border-white/10 text-white rounded-xl flex items-center justify-center hover:bg-zinc-700 active:scale-[0.96] transition-all cursor-pointer"
-              aria-label="Open chat"
-            >
-              <MessageCircle size={18} />
-            </Link>
-            <button
-              onClick={() => router.push(`/games/${game.id}/join`)}
-              disabled={spotsLeft <= 0}
-              className="flex-1 bg-rondo-yellow text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-xl flex items-center justify-center gap-2 hover:brightness-95 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer min-h-[52px]"
-            >
-              {spotsLeft <= 0 ? "Game Full" : "Join Game"}
-              {spotsLeft > 0 && <ChevronRight size={18} />}
-            </button>
-          </>
+          <Link
+            href={cta.href}
+            className="flex-1 rondo-btn rondo-btn-primary min-h-[52px] flex items-center justify-center gap-2"
+          >
+            {cta.label}
+            <ChevronRight size={18} />
+          </Link>
         )}
       </div>
     </div>

@@ -9,6 +9,7 @@ import { TOPUP_PRESETS_CENTAVOS } from "@/lib/wallet/constants";
 import type { WalletTransaction } from "@/lib/supabase/types";
 
 const TOPUP_SESSION_KEY = "rondo_pending_topup_session";
+const TOPUP_REFERENCE_KEY = "rondo_pending_topup_reference";
 
 function WalletContent() {
   const router = useRouter();
@@ -18,6 +19,8 @@ function WalletContent() {
   const [loading, setLoading] = useState(true);
   const [topingUp, setTopingUp] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [topupReference, setTopupReference] = useState<string | null>(null);
+  const [topupBanner, setTopupBanner] = useState<"cancelled" | "failed" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const loadWallet = useCallback(async () => {
@@ -48,12 +51,21 @@ function WalletContent() {
     if (json.status === "credited") {
       sessionStorage.removeItem(TOPUP_SESSION_KEY);
       setBalanceCentavos(json.balanceCentavos ?? balanceCentavos);
+      const ref = json.paymentReference as string | undefined;
+      if (ref) {
+        setTopupReference(ref);
+        sessionStorage.setItem(TOPUP_REFERENCE_KEY, ref);
+      }
       setMessage(`Added ${formatPrice(json.amountCentavos ?? 0)} to your wallet`);
+      setTopupBanner(null);
       return true;
     }
 
     if (json.status === "pending") return false;
+
     sessionStorage.removeItem(TOPUP_SESSION_KEY);
+    setTopupBanner("failed");
+    setError(json.error ?? "Top-up could not be confirmed. If you were charged, contact Help with your receipt.");
     return false;
   }, [balanceCentavos]);
 
@@ -79,7 +91,10 @@ function WalletContent() {
 
         if (searchParams.get("topup") === "cancelled") {
           sessionStorage.removeItem(TOPUP_SESSION_KEY);
-          setError("Top-up cancelled");
+          sessionStorage.removeItem(TOPUP_REFERENCE_KEY);
+          setTopupBanner("cancelled");
+          setMessage(null);
+          setError(null);
           const returnTo = searchParams.get("next");
           router.replace(returnTo && returnTo.startsWith("/") ? returnTo : "/wallet");
         }
@@ -126,8 +141,8 @@ function WalletContent() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-black pb-24">
-      <header className="sticky top-0 z-40 bg-black/95 backdrop-blur-md border-b border-white/5 px-4 py-3 flex items-center gap-3">
+    <div className="min-h-[100dvh] rondo-page pb-24">
+      <header className="sticky top-0 z-40 rondo-glass-nav border-b border-white/5 px-4 py-3 flex items-center gap-3">
         <button
           type="button"
           onClick={() => router.back()}
@@ -140,21 +155,44 @@ function WalletContent() {
       </header>
 
       <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
-        <div className="bg-gradient-to-br from-rondo-accent/20 to-transparent border border-rondo-accent/30 rounded-2xl p-6">
+        <div className="rondo-surface border-rondo-accent/30 bg-gradient-to-br from-rondo-accent/15 to-transparent p-6">
           <div className="flex items-center gap-2 mb-2">
             <Wallet size={18} className="text-rondo-accent" />
             <span className="font-body text-white/60 text-xs uppercase tracking-wider">Available balance</span>
           </div>
           <p className="font-heading text-white font-black text-4xl">{formatPrice(balanceCentavos)}</p>
-          <p className="font-body text-white/50 text-xs mt-2">Pay for matches instantly — no leaving the app.</p>
+          <p className="font-body text-white/50 text-xs mt-2">
+            Top up with PayMongo, then pay match fees from here — one balance, no paying the organizer directly in the app.
+          </p>
         </div>
 
+        {topupBanner === "cancelled" && (
+          <div className="bg-[#141414] border border-white/15 rounded-xl p-4 space-y-2">
+            <p className="text-white font-semibold text-sm">Top-up cancelled</p>
+            <p className="text-white/50 text-xs">No money was added. You can try again when ready.</p>
+          </div>
+        )}
+
+        {topupBanner === "failed" && error && (
+          <div className="bg-red-950/40 border border-red-800/50 rounded-xl p-4 space-y-2">
+            <p className="text-red-200 font-semibold text-sm">Top-up not completed</p>
+            <p className="text-red-200/80 text-xs">{error}</p>
+          </div>
+        )}
+
         {message && (
-          <p className="text-green-400 text-sm text-center bg-green-950/40 border border-green-800/50 rounded-xl py-3 px-4">
-            {message}
+          <div className="bg-green-950/40 border border-green-800/50 rounded-xl p-4 space-y-1">
+            <p className="text-green-400 text-sm font-semibold">{message}</p>
+            {topupReference && (
+              <p className="text-green-200/70 text-xs font-mono break-all">Ref: {topupReference}</p>
+            )}
+          </div>
+        )}
+        {error && !topupBanner && (
+          <p className="text-red-400 text-sm text-center bg-red-950/30 border border-red-800/40 rounded-xl py-3 px-4">
+            {error}
           </p>
         )}
-        {error && <p className="text-red-400 text-sm text-center">{error}</p>}
 
         <section>
           <h2 className="font-heading text-white font-black text-sm uppercase mb-3">Top up</h2>
@@ -186,7 +224,7 @@ function WalletContent() {
         <section>
           <h2 className="font-heading text-white font-black text-sm uppercase mb-3">Recent activity</h2>
           {transactions.length === 0 ? (
-            <p className="font-body text-white/40 text-sm">No transactions yet. Top up to join paid games.</p>
+            <p className="font-body text-white/40 text-sm">No transactions yet. Top up to join paid matches.</p>
           ) : (
             <div className="space-y-2">
               {transactions.map((tx) => (

@@ -15,7 +15,7 @@ It supports player and organizer journeys: discovery, join/payment, match chat, 
 
 1. Install dependencies:
    - `npm install`
-2. Configure `.env.local` (copy from `env.example` and fill values).
+2. Configure `.env.local` (copy from `.env.example` and fill values).
 3. Run the app:
    - `npm run dev`
 4. Open:
@@ -34,7 +34,7 @@ Required (current implementation):
 
 ## Vercel deployment
 
-In the Vercel project **Settings → Environment Variables**, add every variable from `env.example` for **Production** (and Preview if you use it). Then **Redeploy** the latest commit.
+In the Vercel project **Settings → Environment Variables**, add every variable from `.env.example` for **Production** (and Preview if you use it). Then **Redeploy** the latest commit.
 
 Set `NEXT_PUBLIC_APP_URL` to your production URL, e.g. `https://rondo-app.vercel.app`.
 

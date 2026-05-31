@@ -24,7 +24,7 @@ interface MyGame {
   };
 }
 
-export default function MyGamesPage() {
+export default function MyMatchesPage() {
   const router = useRouter();
   const [entries, setEntries] = useState<MyGame[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,7 +73,7 @@ export default function MyGamesPage() {
     refunded: "text-destructive",
   };
 
-  function GameRow({ entry }: { entry: MyGame }) {
+  function MatchRow({ entry }: { entry: MyGame }) {
     const needsWalletPay = ["reserved", "pending_payment", "pending"].includes(entry.payment_status);
     const href = needsWalletPay
       ? `/games/${entry.game.id}/payment`
@@ -81,7 +81,7 @@ export default function MyGamesPage() {
 
     return (
       <Link href={href} className="block cursor-pointer">
-        <div className="bg-card border border-border rounded-xl p-4 hover:border-rondo-yellow/40 active:scale-[0.98] transition-all space-y-2">
+        <div className="rondo-surface p-4 hover:border-rondo-accent/30 active:scale-[0.98] transition-[transform,border-color] duration-200 space-y-2">
           <div className="flex items-start justify-between gap-3">
             <h3 className="text-white font-bold text-sm leading-tight flex-1">{entry.game.title}</h3>
             <span className="text-rondo-yellow font-black text-sm whitespace-nowrap">{formatPrice(entry.game.price_per_player)}</span>
@@ -112,11 +112,11 @@ export default function MyGamesPage() {
   }
 
   return (
-    <div className="min-h-[100dvh]">
-      <header className="sticky top-0 bg-background/90 backdrop-blur-md border-b border-border z-40 px-4 py-3">
+    <div className="min-h-[100dvh] rondo-page pb-20">
+      <header className="sticky top-0 rondo-glass-nav border-b border-white/5 z-40 px-4 py-3">
         <div className="flex items-center gap-2.5 max-w-lg mx-auto">
           <Bookmark size={18} className="text-rondo-yellow" />
-          <h1 className="text-white font-black text-lg">My Games</h1>
+          <h1 className="text-white font-black text-lg">My Matches</h1>
         </div>
       </header>
 
@@ -130,9 +130,9 @@ export default function MyGamesPage() {
             <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center">
               <Bookmark size={24} className="text-muted-foreground" />
             </div>
-            <p className="text-white font-semibold">No games yet</p>
-            <p className="text-muted-foreground text-sm">Join a game from the feed to see it here</p>
-            <Link href="/feed" className="text-rondo-yellow text-sm font-semibold hover:underline mt-2">Browse Games</Link>
+            <p className="text-white font-semibold">No matches yet</p>
+            <p className="text-muted-foreground text-sm">Join a match from the feed to see it here</p>
+            <Link href="/feed" className="text-rondo-yellow text-sm font-semibold hover:underline mt-2">Browse Matches</Link>
           </div>
         ) : (
           <>
@@ -142,37 +142,37 @@ export default function MyGamesPage() {
                   <Clock size={14} className="text-rondo-yellow" />
                   <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Upcoming ({upcoming.length})</h2>
                 </div>
-                {upcoming.map((e) => <GameRow key={e.id} entry={e} />)}
+                {upcoming.map((e) => <MatchRow key={e.id} entry={e} />)}
               </section>
             )}
             {pendingApproval.length > 0 && (
               <section className="space-y-3">
                 <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Pending Approval ({pendingApproval.length})</h2>
-                {pendingApproval.map((e) => <GameRow key={`pending-${e.id}`} entry={e} />)}
+                {pendingApproval.map((e) => <MatchRow key={`pending-${e.id}`} entry={e} />)}
               </section>
             )}
             {reservedUnpaid.length > 0 && (
               <section className="space-y-3">
                 <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Reserved / Unpaid ({reservedUnpaid.length})</h2>
-                {reservedUnpaid.map((e) => <GameRow key={`reserved-${e.id}`} entry={e} />)}
+                {reservedUnpaid.map((e) => <MatchRow key={`reserved-${e.id}`} entry={e} />)}
               </section>
             )}
             {completed.length > 0 && (
               <section className="space-y-3">
                 <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Completed ({completed.length})</h2>
-                {completed.map((e) => <GameRow key={`completed-${e.id}`} entry={e} />)}
+                {completed.map((e) => <MatchRow key={`completed-${e.id}`} entry={e} />)}
               </section>
             )}
             {cancelled.length > 0 && (
               <section className="space-y-3">
                 <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Cancelled ({cancelled.length})</h2>
-                {cancelled.map((e) => <GameRow key={`cancelled-${e.id}`} entry={e} />)}
+                {cancelled.map((e) => <MatchRow key={`cancelled-${e.id}`} entry={e} />)}
               </section>
             )}
             {past.length > 0 && (
               <section className="space-y-3">
                 <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Past ({past.length})</h2>
-                {past.map((e) => <GameRow key={e.id} entry={e} />)}
+                {past.map((e) => <MatchRow key={e.id} entry={e} />)}
               </section>
             )}
           </>

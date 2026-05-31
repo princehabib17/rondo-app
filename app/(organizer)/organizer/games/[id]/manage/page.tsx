@@ -5,11 +5,13 @@ import { ArrowLeft, Megaphone, Timer, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import { formatGameDate } from "@/lib/utils/format";
-import type { Game, Team, GamePlayer, Profile } from "@/lib/supabase/types";
+import type { Game, Team, GamePlayer, Profile, GameWaitlistEntry } from "@/lib/supabase/types";
 
 interface ManagedGame extends Game {
   teams: (Team & { game_players: (GamePlayer & { profile: Profile | null })[] })[];
 }
+
+type WaitlistRow = GameWaitlistEntry & { profile: Profile | null };
 
 export default function ManageGamePage() {
   const { id } = useParams<{ id: string }>();
@@ -17,6 +19,8 @@ export default function ManageGamePage() {
   const [game, setGame] = useState<ManagedGame | null>(null);
   const [loading, setLoading] = useState(true);
   const [unassigned, setUnassigned] = useState<(GamePlayer & { profile: Profile | null })[]>([]);
+  const [waitlist, setWaitlist] = useState<WaitlistRow[]>([]);
+  const [addingWaitlistId, setAddingWaitlistId] = useState<string | null>(null);
 
   async function loadGame() {
     const supabase = createClient();
@@ -35,6 +39,14 @@ export default function ManageGamePage() {
         .eq("game_id", id)
         .is("team_id", null);
       setUnassigned((allGp as unknown as (GamePlayer & { profile: Profile | null })[]) ?? []);
+
+      const { data: wlRows } = await supabase
+        .from("game_waitlist")
+        .select("id, game_id, user_id, team_id, status, created_at, profile:profiles(id, full_name, avatar_url, nationality)")
+        .eq("game_id", id)
+        .eq("status", "waiting")
+        .order("created_at", { ascending: true });
+      setWaitlist((wlRows as unknown as WaitlistRow[]) ?? []);
     }
     setLoading(false);
   }
@@ -50,6 +62,27 @@ export default function ManageGamePage() {
   async function removePlayer(playerId: string) {
     const supabase = createClient();
     await supabase.from("game_players").delete().eq("id", playerId);
+    if (game) {
+      await fetch("/api/matches/waitlist/notify-open", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gameId: game.id }),
+      });
+    }
+    await loadGame();
+  }
+
+  async function approvePlayer(playerId: string) {
+    const res = await fetch(`/api/organizer/games/${id}/approve-player`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playerId }),
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      alert(json.error ?? "Failed to approve player");
+      return;
+    }
     await loadGame();
   }
 
@@ -74,6 +107,31 @@ export default function ManageGamePage() {
     await loadGame();
   }
 
+  async function togglePayRule() {
+    const supabase = createClient();
+    await supabase
+      .from("games")
+      .update({ allow_pay_later: !game?.allow_pay_later })
+      .eq("id", id);
+    await loadGame();
+  }
+
+  async function addFromWaitlist(waitlistId: string, teamId?: string | null) {
+    setAddingWaitlistId(waitlistId);
+    const res = await fetch(`/api/organizer/games/${id}/waitlist/add`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ waitlistId, teamId: teamId ?? null }),
+    });
+    setAddingWaitlistId(null);
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      alert(json.error ?? "Could not add player");
+      return;
+    }
+    await loadGame();
+  }
+
   if (loading) {
     return (
       <div className="min-h-[100dvh] p-4 space-y-4">
@@ -82,7 +140,7 @@ export default function ManageGamePage() {
     );
   }
 
-  if (!game) return <div className="min-h-[100dvh] flex items-center justify-center text-muted-foreground">Game not found</div>;
+  if (!game) return <div className="min-h-[100dvh] flex items-center justify-center text-muted-foreground">Match not found</div>;
 
   return (
     <div className="min-h-[100dvh] pb-8">
@@ -125,7 +183,15 @@ export default function ManageGamePage() {
             className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-rondo-yellow/40 active:scale-[0.97] transition-all cursor-pointer min-h-[44px]"
           >
             <span className="text-white text-sm font-semibold">
-              {game.status === "cancelled" ? "Reopen Game" : "Cancel Game"}
+              {game.status === "cancelled" ? "Reopen Match" : "Cancel Match"}
+            </span>
+          </button>
+          <button
+            onClick={togglePayRule}
+            className="col-span-2 bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-rondo-yellow/40 active:scale-[0.97] transition-all cursor-pointer min-h-[44px]"
+          >
+            <span className="text-white text-sm font-semibold">
+              {game.allow_pay_later ? "Require pay to reserve" : "Allow reserve & pay later"}
             </span>
           </button>
           <button
@@ -158,12 +224,23 @@ export default function ManageGamePage() {
                     <div key={gp.id} className="flex items-center gap-3">
                       <PlayerAvatar profile={gp.profile} size="sm" showFlag linkable={false} />
                       <span className="text-white text-sm flex-1">{gp.profile.full_name}</span>
+                      {gp.payment_status === "pending_approval" && (
+                        <button
+                          type="button"
+                          onClick={() => approvePlayer(gp.id)}
+                          className="text-xs text-rondo-accent font-semibold"
+                        >
+                          Approve
+                        </button>
+                      )}
                       <select
                         value={gp.payment_status}
                         onChange={(e) => updatePlayerStatus(gp.id, e.target.value)}
                         className="bg-black border border-white/10 text-white text-xs rounded px-2 py-1"
                       >
-                        <option value="pending_payment">Pending</option>
+                        <option value="pending_approval">Pending approval</option>
+                        <option value="pending_payment">Pending payment</option>
+                        <option value="paid">Paid</option>
                         <option value="reserved">Reserved</option>
                         <option value="venue">At Venue</option>
                         <option value="no_show">No Show</option>
@@ -213,6 +290,61 @@ export default function ManageGamePage() {
             </div>
           )}
         </div>
+
+        {waitlist.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Users size={14} className="text-rondo-yellow" />
+              <h2 className="text-white font-bold text-base">Waitlist ({waitlist.length})</h2>
+            </div>
+            <p className="text-muted-foreground text-xs">
+              No order — notify all when a spot opens, or add someone manually below.
+            </p>
+            <div className="bg-card border border-border rounded-xl divide-y divide-border">
+              {waitlist.map((row) => (
+                <div key={row.id} className="p-4 space-y-3">
+                  <div className="flex items-center gap-3">
+                    {row.profile ? (
+                      <PlayerAvatar profile={row.profile} size="sm" showFlag linkable={false} />
+                    ) : null}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white text-sm font-semibold truncate">
+                        {row.profile?.full_name ?? "Player"}
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        Joined {new Date(row.created_at).toLocaleDateString()}
+                        {row.team_id
+                          ? ` · prefers ${game.teams?.find((t) => t.id === row.team_id)?.name ?? "team"}`
+                          : ""}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={addingWaitlistId === row.id}
+                      onClick={() => addFromWaitlist(row.id, row.team_id)}
+                      className="text-xs text-rondo-accent font-semibold disabled:opacity-50 shrink-0"
+                    >
+                      {addingWaitlistId === row.id ? "Adding…" : "Add to roster"}
+                    </button>
+                  </div>
+                  <div className="flex gap-2 flex-wrap ml-12">
+                    {game.teams?.map((t) => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        disabled={addingWaitlistId === row.id}
+                        onClick={() => addFromWaitlist(row.id, t.id)}
+                        className="text-xs px-2 py-1 rounded border border-border hover:border-rondo-yellow text-muted-foreground hover:text-white transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        Add → {t.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

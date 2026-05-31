@@ -4,6 +4,7 @@ import { Calendar, ChevronRight, MapPin, Star, Users } from "lucide-react";
 import { formatGameDate, formatPrice } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
 import { getOrganizerInitials } from "@/lib/feed/organizers";
+import { GameBadges } from "@/components/feed/GameBadges";
 
 interface FeaturedGameCardProps {
   game: Game;
@@ -27,11 +28,11 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
       <div className="flex items-center gap-2 mb-3">
         <Star size={16} className="text-rondo-accent fill-rondo-accent" />
         <h2 className="font-heading text-white font-black italic text-sm uppercase tracking-wide">
-          Featured Game
+          Featured Match
         </h2>
       </div>
 
-      <article className="bg-[#141414] border border-white/10 rounded-2xl overflow-hidden">
+      <article className="rondo-surface rounded-2xl overflow-hidden">
         <div className="flex gap-0">
           <div className="relative w-[42%] min-h-[180px] shrink-0 bg-[#1c1c1c]">
             {game.banner_url ? (
@@ -49,6 +50,8 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
             <h3 className="font-heading text-white font-black italic text-lg uppercase leading-none mb-2 truncate">
               {game.title}
             </h3>
+
+            <GameBadges game={game} className="mb-2" />
 
             <div className="space-y-1.5 font-body text-white/60 text-[11px] mb-2">
               <div className="flex items-center gap-1.5 min-w-0">
@@ -86,7 +89,7 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
               href={`/games/${game.id}`}
               className="mt-3 self-end inline-flex items-center gap-1 font-heading text-rondo-accent text-[11px] font-black uppercase tracking-wider hover:underline"
             >
-              View Game
+              View Match
               <ChevronRight size={14} />
             </Link>
           </div>
@@ -99,8 +102,8 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
 export function FeaturedGameSkeleton() {
   return (
     <section className="px-4 pt-6">
-      <div className="h-4 w-32 bg-white/10 rounded animate-pulse mb-3" />
-      <div className="h-[180px] bg-[#141414] border border-white/10 rounded-2xl animate-pulse" />
+      <div className="h-4 w-32 rondo-shimmer rounded mb-3" />
+      <div className="h-[180px] rondo-surface rounded-2xl rondo-shimmer" />
     </section>
   );
 }

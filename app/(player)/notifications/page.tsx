@@ -36,22 +36,28 @@ export default function NotificationsPage() {
   }, [router]);
 
   return (
-    <div className="min-h-[100dvh] p-4 max-w-lg mx-auto space-y-3">
-      <h1 className="text-white font-bold text-xl">Notifications</h1>
+    <div className="min-h-[100dvh] rondo-page pb-20">
+      <header className="sticky top-0 rondo-glass-nav border-b border-white/5 z-40 px-4 py-3 max-w-lg mx-auto">
+        <h1 className="font-heading text-white font-black italic text-lg uppercase">Notifications</h1>
+      </header>
+      <div className="p-4 max-w-lg mx-auto space-y-3">
       {notifications.length === 0 ? (
-        <p className="text-white/60 text-sm">No notifications yet.</p>
+        <div className="rondo-surface p-6 text-center">
+          <p className="text-white/55 text-sm">No notifications yet.</p>
+        </div>
       ) : (
         notifications.map((item) => (
           <Link
             key={item.id}
             href={item.link ?? "/feed"}
-            className="block bg-card border border-border rounded-xl p-3"
+            className="block rondo-surface p-3 hover:border-rondo-accent/25 transition-[border-color] duration-200"
           >
             <p className="text-white text-sm font-semibold">{item.title}</p>
             <p className="text-white/70 text-xs mt-1">{item.body}</p>
           </Link>
         ))
       )}
+      </div>
     </div>
   );
 }

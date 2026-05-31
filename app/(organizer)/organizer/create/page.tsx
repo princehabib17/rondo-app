@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { deriveMatchType } from "@/lib/feed/filters";
 
 const TEAM_COLORS = [
   { name: "Red", color: "#E53935" },
@@ -30,6 +31,10 @@ const createGameSchema = z.object({
   format: z.string().min(1),
   round_duration_minutes: z.coerce.number().min(1).max(60),
   payment_type: z.enum(["online", "venue"]),
+  allow_pay_later: z.boolean().default(false),
+  is_private: z.boolean().default(false),
+  match_type: z.enum(["football", "futsal"]),
+  skill_level: z.enum(["beginner", "intermediate", "advanced", "pro"]).optional(),
   description: z.string().optional(),
 });
 type CreateGameForm = z.infer<typeof createGameSchema>;
@@ -42,7 +47,9 @@ async function geocodeAddress(address: string): Promise<{ lat: number; lng: numb
     );
     const data = await res.json();
     if (data[0]) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-  } catch {}
+  } catch {
+    /* geocode optional */
+  }
   return null;
 }
 
@@ -53,12 +60,15 @@ export default function CreateGamePage() {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<CreateGameForm>({
+  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<CreateGameForm>({
     resolver: zodResolver(createGameSchema) as any,
     defaultValues: {
       format: "5v5",
+      match_type: "futsal",
       round_duration_minutes: 8,
       payment_type: "online",
+      allow_pay_later: false,
+      is_private: false,
       max_players: 10,
       num_teams: 2,
       price_per_player: 200,
@@ -71,34 +81,44 @@ export default function CreateGamePage() {
     setError(null);
     const supabase = createClient();
     const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) { router.push("/login"); return; }
+    if (!userData.user) {
+      router.push("/login");
+      return;
+    }
 
-    // Geocode if we don't have coords yet
     let finalCoords = coords;
     if (!finalCoords) {
       finalCoords = await geocodeAddress(`${data.venue_name}, ${data.venue_address}`);
     }
 
-    const { data: game, error: gameError } = await supabase.from("games").insert({
-      organizer_id: userData.user.id,
-      title: data.title,
-      description: data.description ?? null,
-      venue_name: data.venue_name,
-      venue_address: data.venue_address,
-      venue_lat: finalCoords?.lat ?? null,
-      venue_lng: finalCoords?.lng ?? null,
-      date_time: new Date(data.date_time).toISOString(),
-      price_per_player: Math.round(data.price_per_player * 100),
-      max_players: data.max_players,
-      num_teams: data.num_teams,
-      format: data.format,
-      round_duration_minutes: data.round_duration_minutes,
-      payment_type: data.payment_type,
-      status: "open",
-    }).select().single();
+    const { data: game, error: gameError } = await supabase
+      .from("games")
+      .insert({
+        organizer_id: userData.user.id,
+        title: data.title,
+        description: data.description ?? null,
+        venue_name: data.venue_name,
+        venue_address: data.venue_address,
+        venue_lat: finalCoords?.lat ?? null,
+        venue_lng: finalCoords?.lng ?? null,
+        date_time: new Date(data.date_time).toISOString(),
+        price_per_player: Math.round(data.price_per_player * 100),
+        max_players: data.max_players,
+        num_teams: data.num_teams,
+        format: data.format,
+        match_type: data.match_type,
+        skill_level: data.skill_level ?? null,
+        is_private: data.is_private,
+        round_duration_minutes: data.round_duration_minutes,
+        payment_type: data.payment_type,
+        allow_pay_later: data.allow_pay_later,
+        status: "open",
+      })
+      .select()
+      .single();
 
     if (gameError || !game) {
-      setError(gameError?.message ?? "Failed to create game");
+      setError(gameError?.message ?? "Failed to create match");
       return;
     }
 
@@ -113,21 +133,26 @@ export default function CreateGamePage() {
     router.push(`/organizer/games/${game.id}/manage`);
   }
 
-  const fieldClass = "w-full bg-secondary border border-border text-white rounded-lg p-3 text-sm focus:border-rondo-yellow focus:outline-none placeholder:text-muted-foreground";
+  const fieldClass =
+    "w-full bg-secondary border border-border text-white rounded-lg p-3 text-sm focus:border-rondo-yellow focus:outline-none placeholder:text-muted-foreground";
   const labelClass = "text-muted-foreground text-xs uppercase tracking-wider";
 
   return (
     <div className="min-h-[100dvh] pb-8">
       <header className="sticky top-0 bg-background/90 backdrop-blur-md border-b border-border z-40 px-4 py-3 flex items-center gap-3">
-        <button onClick={() => router.back()} className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white hover:text-rondo-yellow transition-colors cursor-pointer" aria-label="Back">
+        <button
+          onClick={() => router.back()}
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white hover:text-rondo-yellow transition-colors cursor-pointer"
+          aria-label="Back"
+        >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-white font-bold text-base">Create Game</h1>
+        <h1 className="text-white font-bold text-base">Create Match</h1>
       </header>
 
       <form onSubmit={handleSubmit(onSubmit)} className="px-4 py-6 space-y-5 max-w-lg mx-auto">
         <div className="space-y-1.5">
-          <Label className={labelClass}>Game Title *</Label>
+          <Label className={labelClass}>Match Title *</Label>
           <Input {...register("title")} placeholder="Thursday Night Futsal" className="bg-secondary border-border text-white" />
           {errors.title && <p className="text-destructive text-xs">{errors.title.message}</p>}
         </div>
@@ -154,20 +179,15 @@ export default function CreateGamePage() {
                 setGeocoding(false);
               }}
             />
-            {/* Location status indicator */}
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
               {geocoding && (
                 <div className="w-3 h-3 rounded-full border-2 border-rondo-yellow border-t-transparent animate-spin" />
               )}
-              {!geocoding && coords && (
-                <div className="w-3 h-3 rounded-full bg-green-400" title="Location found" />
-              )}
+              {!geocoding && coords && <div className="w-3 h-3 rounded-full bg-green-400" title="Location found" />}
             </div>
           </div>
           {errors.venue_address && <p className="text-destructive text-xs">{errors.venue_address.message}</p>}
-          {!geocoding && coords && (
-            <p className="text-green-400 text-xs">Location pinned on map</p>
-          )}
+          {!geocoding && coords && <p className="text-green-400 text-xs">Location pinned on map</p>}
           {!geocoding && !coords && (
             <p className="text-muted-foreground text-xs">Leave the field to auto-detect location</p>
           )}
@@ -177,6 +197,26 @@ export default function CreateGamePage() {
           <Label className={labelClass}>Date & Time *</Label>
           <input {...register("date_time")} type="datetime-local" className={fieldClass} />
           {errors.date_time && <p className="text-destructive text-xs">{errors.date_time.message}</p>}
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label className={labelClass}>Match Type</Label>
+            <select {...register("match_type")} className={fieldClass}>
+              <option value="futsal">Futsal</option>
+              <option value="football">Football</option>
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className={labelClass}>Skill Level</Label>
+            <select {...register("skill_level")} className={fieldClass}>
+              <option value="">Any / not set</option>
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
+              <option value="pro">Pro</option>
+            </select>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -195,13 +235,28 @@ export default function CreateGamePage() {
           <div className="space-y-1.5">
             <Label className={labelClass}>Number of Teams</Label>
             <select {...register("num_teams")} className={fieldClass}>
-              {[2,3,4,5,6,7,8].map((n) => <option key={n} value={n}>{n} teams</option>)}
+              {[2, 3, 4, 5, 6, 7, 8].map((n) => (
+                <option key={n} value={n}>
+                  {n} teams
+                </option>
+              ))}
             </select>
           </div>
           <div className="space-y-1.5">
             <Label className={labelClass}>Format</Label>
-            <select {...register("format")} className={fieldClass}>
-              {["3v3","4v4","5v5","6v6","7v7","8v8","11v11"].map((f) => <option key={f} value={f}>{f}</option>)}
+            <select
+              {...register("format")}
+              className={fieldClass}
+              onChange={(e) => {
+                register("format").onChange(e);
+                setValue("match_type", deriveMatchType(e.target.value));
+              }}
+            >
+              {["3v3", "4v4", "5v5", "6v6", "7v7", "8v8", "11v11"].map((f) => (
+                <option key={f} value={f}>
+                  {f}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -209,18 +264,41 @@ export default function CreateGamePage() {
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label className={labelClass}>Round Duration (min)</Label>
-            <Input {...register("round_duration_minutes")} type="number" min="1" max="60" className="bg-secondary border-border text-white" />
+            <Input
+              {...register("round_duration_minutes")}
+              type="number"
+              min="1"
+              max="60"
+              className="bg-secondary border-border text-white"
+            />
           </div>
           <div className="space-y-1.5">
             <Label className={labelClass}>Payment</Label>
             <select {...register("payment_type")} className={fieldClass}>
               <option value="venue">Pay at Venue</option>
-              <option value="online">Online (PayMongo)</option>
+              <option value="online">Wallet (Top-up via PayMongo)</option>
             </select>
           </div>
         </div>
 
-        {/* Team preview */}
+        <label className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
+          <input type="checkbox" {...register("allow_pay_later")} className="mt-0.5 h-4 w-4 accent-[#E9FF3A]" />
+          <span className="text-sm text-white/80 leading-snug">
+            Allow reserve now and pay later.
+            <span className="block text-xs text-white/45 mt-0.5">If off, players must pay to reserve their spot.</span>
+          </span>
+        </label>
+
+        <label className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
+          <input type="checkbox" {...register("is_private")} className="mt-0.5 h-4 w-4 accent-[#E9FF3A]" />
+          <span className="text-sm text-white/80 leading-snug">
+            Private match — approval required.
+            <span className="block text-xs text-white/45 mt-0.5">
+              Players request to join; you choose who gets in.
+            </span>
+          </span>
+        </label>
+
         <div className="space-y-2">
           <Label className={labelClass}>Teams Preview</Label>
           <div className="flex flex-wrap gap-2">
@@ -235,7 +313,11 @@ export default function CreateGamePage() {
 
         <div className="space-y-1.5">
           <Label className={labelClass}>Description (optional)</Label>
-          <textarea {...register("description")} placeholder="Any extra details for players..." className={`${fieldClass} h-20 resize-none`} />
+          <textarea
+            {...register("description")}
+            placeholder="Any extra details for players..."
+            className={`${fieldClass} h-20 resize-none`}
+          />
         </div>
 
         {error && <p className="text-destructive text-sm">{error}</p>}
@@ -245,7 +327,7 @@ export default function CreateGamePage() {
           disabled={isSubmitting}
           className="w-full bg-rondo-yellow text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-xl active:scale-[0.98] transition-all min-h-[52px]"
         >
-          {isSubmitting ? "Creating..." : "Create Game"}
+          {isSubmitting ? "Creating..." : "Create Match"}
         </Button>
       </form>
     </div>

@@ -7,7 +7,8 @@ export async function signInAsGuest(): Promise<{ ok: boolean; error?: string }> 
   const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously();
 
   if (!anonError && anonData.user) {
-    await fetch("/api/auth/guest/ensure-profile", { method: "POST" });
+    // Don't block navigation — profile can be ensured in the background
+    void fetch("/api/auth/guest/ensure-profile", { method: "POST" });
     return { ok: true };
   }
 

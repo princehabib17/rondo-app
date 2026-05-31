@@ -7,12 +7,20 @@ const PUBLIC_ROUTES = [
   "/signup",
   "/otp",
   "/forgot-password",
+  "/reset-password",
   "/auth/callback",
 ];
 
 const PUBLIC_PREFIXES = [
   "/api/payments/webhook",
   "/api/auth/guest",
+];
+
+/** Public routes that do not need a Supabase session lookup (faster dev loads). */
+const PUBLIC_SKIP_AUTH = [
+  "/forgot-password",
+  "/reset-password",
+  "/auth/callback",
 ];
 
 const GUEST_BLOCKED_PREFIXES = [
@@ -27,6 +35,7 @@ const GUEST_BLOCKED_SUFFIXES = [
   "/join",
   "/payment",
   "/chat",
+  "/room",
   "/confirmed",
   "/invite",
 ];
@@ -40,8 +49,32 @@ function isPublicRoute(pathname: string): boolean {
   );
 }
 
+/** Avoid hanging requests when Supabase auth is slow or unreachable. */
+async function getUserWithTimeout(
+  supabase: ReturnType<typeof createServerClient>,
+  ms = 3000
+) {
+  const result = await Promise.race([
+    supabase.auth.getUser(),
+    new Promise<{ data: { user: null }; error: null }>((resolve) =>
+      setTimeout(() => resolve({ data: { user: null }, error: null }), ms)
+    ),
+  ]);
+  return result.data.user;
+}
+
+function isPublicSkipAuth(pathname: string): boolean {
+  return PUBLIC_SKIP_AUTH.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (isPublicSkipAuth(pathname)) {
+    return NextResponse.next({ request });
+  }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -84,9 +117,7 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUserWithTimeout(supabase);
 
   if (!user && !isPublicRoute(pathname)) {
     const loginUrl = new URL("/login", request.url);

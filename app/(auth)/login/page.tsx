@@ -9,6 +9,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/client";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
+import { RondoButton } from "@/components/rondo/primitives";
+import { rondoFieldClass } from "@/components/rondo/primitives";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -43,62 +45,65 @@ export default function LoginPage() {
     router.refresh();
   }
 
-  const inputClass =
-    "w-full bg-black border border-white text-white px-4 py-3.5 text-sm focus:outline-none focus:border-rondo-accent rounded-sm";
-
   return (
     <>
-      <div className="pt-2 mb-10">
-        <Image src="/rondo-logo.png" alt="RONDO" width={48} height={48} priority />
+      <div className="pt-2 mb-8">
+        <Image src="/rondo-logo.png" alt="RONDO" width={40} height={40} priority />
       </div>
 
-      <h1 className="font-heading text-white font-black italic text-5xl tracking-tight mb-10">LOGIN</h1>
+      <h1 className="font-heading text-white font-black italic text-4xl uppercase tracking-tight mb-2">
+        Log in
+      </h1>
+      <p className="font-body text-white/50 text-sm mb-8">Welcome back to the pitch.</p>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div className="space-y-2">
-          <label className="font-heading text-white text-sm">Email</label>
+          <label className="font-body text-white/70 text-xs uppercase tracking-wider">Email</label>
           <input
             {...register("email")}
             type="email"
             autoComplete="email"
-            placeholder=""
-            className={`${inputClass} font-body`}
+            className={rondoFieldClass}
           />
-          {errors.email && <p className="text-red-400 text-xs font-body">{errors.email.message}</p>}
+          {errors.email && (
+            <p className="text-red-400 text-xs font-body">{errors.email.message}</p>
+          )}
         </div>
 
         <div className="space-y-2">
-          <label className="font-heading text-white text-sm">Password</label>
+          <label className="font-body text-white/70 text-xs uppercase tracking-wider">Password</label>
           <input
             {...register("password")}
             type="password"
             autoComplete="current-password"
-            className={`${inputClass} font-body`}
+            className={rondoFieldClass}
           />
-          {errors.password && <p className="text-red-400 text-xs font-body">{errors.password.message}</p>}
+          {errors.password && (
+            <p className="text-red-400 text-xs font-body">{errors.password.message}</p>
+          )}
         </div>
 
         <div className="flex justify-end">
-          <Link href="/forgot-password" className="text-white text-sm hover:text-rondo-accent">
-            Forgot Password?
+          <Link href="/forgot-password" className="text-white/60 text-sm hover:text-rondo-accent">
+            Forgot password?
           </Link>
         </div>
 
-        {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+        {error && (
+          <p className="text-red-400 text-sm text-center" role="alert">
+            {error}
+          </p>
+        )}
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full bg-rondo-accent text-black font-heading font-black uppercase tracking-widest text-sm py-4 disabled:opacity-50"
-        >
-          {isSubmitting ? "Logging in..." : "Log In"}
-        </button>
+        <RondoButton type="submit" variant="primary" disabled={isSubmitting} className="mt-2">
+          {isSubmitting ? "Logging in…" : "Log in"}
+        </RondoButton>
       </form>
 
-      <p className="text-center text-white text-sm mt-8">
+      <p className="text-center text-white/55 text-sm mt-8">
         New to Rondo?{" "}
-        <Link href="/signup" className="text-rondo-accent font-semibold">
-          Create New Account
+        <Link href="/signup" className="text-rondo-accent font-semibold hover:underline">
+          Create account
         </Link>
       </p>
 

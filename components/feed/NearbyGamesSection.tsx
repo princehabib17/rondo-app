@@ -1,20 +1,29 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronRight, Map } from "lucide-react";
+import { ChevronRight, MapPinned } from "lucide-react";
 import { formatGameTime, formatPrice } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
 import { getOrganizerInitials } from "@/lib/feed/organizers";
+import { GameBadges } from "@/components/feed/GameBadges";
+import { getPlayerCount, isFull, type Coords } from "@/lib/feed/filters";
 import { format } from "date-fns";
 
 interface NearbyGameRowProps {
   game: Game;
+  coords?: Coords | null;
 }
 
 function PlayerProgress({ current, max }: { current: number; max: number }) {
   const pct = max > 0 ? Math.min(100, (current / max) * 100) : 0;
+  const full = current >= max;
   return (
     <div className="h-1 w-full rounded-full bg-white/10 overflow-hidden mt-2">
-      <div className="h-full bg-rondo-accent rounded-full" style={{ width: `${pct}%` }} />
+      <div
+        className={`h-full rounded-full transition-[width] duration-300 ${
+          full ? "bg-white/30" : pct >= 80 ? "bg-amber-400" : "bg-rondo-accent"
+        }`}
+        style={{ width: `${pct}%` }}
+      />
     </div>
   );
 }
@@ -23,9 +32,11 @@ function formatShortDate(dateString: string): string {
   return format(new Date(dateString), "EEE, MMM d");
 }
 
-export function NearbyGameRow({ game }: NearbyGameRowProps) {
-  const playerCount = game.game_players?.length ?? 0;
+export function NearbyGameRow({ game, coords = null }: NearbyGameRowProps) {
+  const playerCount = getPlayerCount(game);
   const organizerName = game.organizer?.full_name ?? "Organizer";
+  const full = isFull(game);
+  const spotsLeft = game.max_players - playerCount;
 
   return (
     <Link
@@ -54,16 +65,19 @@ export function NearbyGameRow({ game }: NearbyGameRowProps) {
             {game.title}
           </h3>
           <span className="font-heading text-rondo-accent text-xs font-black shrink-0">
-            {formatPrice(game.price_per_player)}
+            {game.price_per_player === 0 ? "Free" : formatPrice(game.price_per_player)}
           </span>
         </div>
         <p className="font-body text-white/50 text-[11px] truncate mt-0.5">{game.venue_name}</p>
-        <div className="flex items-center justify-between mt-1">
+
+        <GameBadges game={game} coords={coords} className="mt-1.5" />
+
+        <div className="flex items-center justify-between mt-1.5">
           <span className="font-body text-white/40 text-[10px]">
             {formatShortDate(game.date_time)} · {formatGameTime(game.date_time)}
           </span>
-          <span className="font-body text-white/50 text-[10px]">
-            {playerCount}/{game.max_players}
+          <span className={`font-body text-[10px] ${full ? "text-white/40" : "text-white/50"}`}>
+            {full ? "Full" : `${spotsLeft} left`} · {playerCount}/{game.max_players}
           </span>
         </div>
         <PlayerProgress current={playerCount} max={game.max_players} />
@@ -74,64 +88,97 @@ export function NearbyGameRow({ game }: NearbyGameRowProps) {
   );
 }
 
+function RowSkeleton() {
+  return (
+    <div className="flex items-center gap-3 py-3 border-b border-white/5 last:border-0">
+      <div className="w-11 h-11 rounded-full rondo-shimmer shrink-0" />
+      <div className="flex-1 min-w-0 space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="h-3.5 w-2/5 rounded rondo-shimmer" />
+          <div className="h-3 w-10 rounded rondo-shimmer" />
+        </div>
+        <div className="h-2.5 w-1/3 rounded rondo-shimmer" />
+        <div className="flex gap-1.5">
+          <div className="h-4 w-14 rounded-full rondo-shimmer" />
+          <div className="h-4 w-16 rounded-full rondo-shimmer" />
+        </div>
+        <div className="h-1 w-full rounded-full rondo-shimmer" />
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({ tab }: { tab: "nearby" | "upcoming" }) {
+  return (
+    <div className="flex flex-col items-center text-center py-12 px-4">
+      <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-4">
+        <MapPinned size={24} className="text-white/40" />
+      </div>
+      <p className="font-heading text-white font-black italic text-base uppercase">
+        {tab === "nearby" ? "No nearby matches" : "No upcoming matches"}
+      </p>
+      <p className="font-body text-white/50 text-sm mt-1 max-w-[260px]">
+        {tab === "nearby"
+          ? "Nothing in the next 7 days yet. Check Upcoming or the Map tab to explore more."
+          : "Nothing scheduled beyond this week yet. Check Nearby for sooner games."}
+      </p>
+    </div>
+  );
+}
+
 interface NearbyGamesSectionProps {
   games: Game[];
   tab: "nearby" | "upcoming";
   onTabChange: (tab: "nearby" | "upcoming") => void;
   loading?: boolean;
+  coords?: Coords | null;
 }
 
-export function NearbyGamesSection({ games, tab, onTabChange, loading }: NearbyGamesSectionProps) {
+export function NearbyGamesSection({
+  games,
+  tab,
+  onTabChange,
+  loading,
+  coords = null,
+}: NearbyGamesSectionProps) {
   return (
     <section id="nearby-games" className="px-4 pt-6 pb-4">
-      <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-5">
-          <button
-            type="button"
-            onClick={() => onTabChange("nearby")}
-            className={`font-heading text-sm uppercase tracking-wide pb-2 border-b-2 transition-colors ${
-              tab === "nearby"
-                ? "text-white border-rondo-accent"
-                : "text-white/40 border-transparent"
-            }`}
-          >
-            Nearby Games
-          </button>
-          <button
-            type="button"
-            onClick={() => onTabChange("upcoming")}
-            className={`font-heading text-sm uppercase tracking-wide pb-2 border-b-2 transition-colors ${
-              tab === "upcoming"
-                ? "text-white border-rondo-accent"
-                : "text-white/40 border-transparent"
-            }`}
-          >
-            Upcoming
-          </button>
-        </div>
-
-        <Link
-          href="/feed/map"
-          className="flex items-center gap-1.5 font-body text-white/60 text-xs hover:text-rondo-accent transition-colors pb-2"
+      <div className="flex items-center gap-5 mb-1">
+        <button
+          type="button"
+          onClick={() => onTabChange("nearby")}
+          className={`font-heading text-sm uppercase tracking-wide pb-2 border-b-2 transition-colors ${
+            tab === "nearby"
+              ? "text-white border-rondo-accent"
+              : "text-white/40 border-transparent"
+          }`}
         >
-          <Map size={14} />
-          Map
-        </Link>
+          Nearby
+        </button>
+        <button
+          type="button"
+          onClick={() => onTabChange("upcoming")}
+          className={`font-heading text-sm uppercase tracking-wide pb-2 border-b-2 transition-colors ${
+            tab === "upcoming"
+              ? "text-white border-rondo-accent"
+              : "text-white/40 border-transparent"
+          }`}
+        >
+          Upcoming
+        </button>
       </div>
 
       <div className="mt-2">
         {loading ? (
-          <div className="space-y-4 py-4">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="h-16 bg-white/5 rounded-xl animate-pulse" />
+          <div className="py-1">
+            {[0, 1, 2, 3].map((i) => (
+              <RowSkeleton key={i} />
             ))}
           </div>
         ) : games.length === 0 ? (
-          <p className="font-body text-white/40 text-sm text-center py-10">
-            No games found. Check back soon.
-          </p>
+          <EmptyState tab={tab} />
         ) : (
-          games.map((game) => <NearbyGameRow key={game.id} game={game} />)
+          games.map((game) => <NearbyGameRow key={game.id} game={game} coords={coords} />)
         )}
       </div>
     </section>

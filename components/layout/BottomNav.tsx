@@ -14,7 +14,7 @@ const tabs = [
 export function BottomNav() {
   const pathname = usePathname();
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-black border-t border-white/10 z-50">
+    <nav className="fixed bottom-0 left-0 right-0 rondo-glass-nav z-50 pb-[env(safe-area-inset-bottom)]">
       <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-2">
         {tabs.map(({ href, icon: Icon, label }) => {
           const active =
@@ -25,19 +25,21 @@ export function BottomNav() {
             <Link
               key={href}
               href={href}
-              className="flex flex-col items-center gap-1 flex-1 py-2 transition-colors active:scale-95"
+              className="rondo-nav-pill"
+              data-active={active ? "true" : "false"}
             >
               <Icon
                 size={22}
+                strokeWidth={active ? 2 : 1.75}
                 className={cn(
-                  "transition-colors",
-                  active ? "text-rondo-accent" : "text-white/40"
+                  "transition-colors duration-200",
+                  active ? "text-rondo-accent" : "text-white/45"
                 )}
               />
               <span
                 className={cn(
-                  "font-body text-[10px] font-medium transition-colors",
-                  active ? "text-rondo-accent" : "text-white/40"
+                  "font-body text-[10px] font-semibold transition-colors duration-200",
+                  active ? "text-rondo-accent" : "text-white/45"
                 )}
               >
                 {label}

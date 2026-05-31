@@ -23,19 +23,14 @@ function pickFeaturedGame(games: Game[]): Game | null {
   })[0];
 }
 
-function splitGamesByTab(games: Game[], tab: GamesTab): Game[] {
+/** Nearby = next 7 days; Upcoming = later than that. */
+function partitionByTab(games: Game[], tab: GamesTab): Game[] {
   const now = Date.now();
   const weekMs = 7 * 24 * 60 * 60 * 1000;
-
-  const sorted = [...games].sort(
-    (a, b) => new Date(a.date_time).getTime() - new Date(b.date_time).getTime()
-  );
-
   if (tab === "nearby") {
-    return sorted.filter((g) => new Date(g.date_time).getTime() - now <= weekMs);
+    return games.filter((g) => new Date(g.date_time).getTime() - now <= weekMs);
   }
-
-  return sorted.filter((g) => new Date(g.date_time).getTime() - now > weekMs);
+  return games.filter((g) => new Date(g.date_time).getTime() - now > weekMs);
 }
 
 export default function FeedPage() {
@@ -88,23 +83,36 @@ export default function FeedPage() {
       setOrganizers(realOrganizers);
     }
     setNotificationCount(unreadCount ?? 0);
-
     setLoading(false);
   }, []);
 
   useEffect(() => {
     fetchData();
+    fetch("/api/matches/expire-reservations", { method: "POST" }).catch(() => {});
   }, [fetchData]);
 
-  const featuredGame = useMemo(() => pickFeaturedGame(games), [games]);
+  const sortedGames = useMemo(
+    () =>
+      [...games].sort(
+        (a, b) => new Date(a.date_time).getTime() - new Date(b.date_time).getTime()
+      ),
+    [games]
+  );
+
+  const tabGames = useMemo(() => partitionByTab(sortedGames, tab), [sortedGames, tab]);
+
+  const featuredGame = useMemo(
+    () => (tab === "nearby" ? pickFeaturedGame(tabGames) : null),
+    [tabGames, tab]
+  );
+
   const listGames = useMemo(() => {
-    const filtered = splitGamesByTab(games, tab);
-    if (!featuredGame) return filtered;
-    return filtered.filter((g) => g.id !== featuredGame.id);
-  }, [games, tab, featuredGame]);
+    if (!featuredGame) return tabGames;
+    return tabGames.filter((g) => g.id !== featuredGame.id);
+  }, [tabGames, featuredGame]);
 
   return (
-    <div className="min-h-[100dvh] bg-black">
+    <div className="min-h-[100dvh] rondo-page">
       <FeedHeader notificationCount={notificationCount} />
 
       <HeroCarousel slides={DEFAULT_CAROUSEL_SLIDES} />
