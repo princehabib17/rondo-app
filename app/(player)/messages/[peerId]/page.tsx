@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Send } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -17,7 +17,7 @@ export default function DirectMessageThreadPage() {
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  async function loadThread() {
+  const loadThread = useCallback(async () => {
     const supabase = createClient();
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user || userData.user.is_anonymous) {
@@ -35,11 +35,11 @@ export default function DirectMessageThreadPage() {
     const json = await res.json();
     if (res.ok) setMessages(json.messages ?? []);
     setLoading(false);
-  }
+  }, [peerId, router]);
 
   useEffect(() => {
     loadThread();
-  }, [peerId]);
+  }, [loadThread]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

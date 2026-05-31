@@ -44,7 +44,6 @@ export function MatchRulesPanel({
         <div className="rondo-surface p-4 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
             {organizer.avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img src={organizer.avatar_url} alt="" className="w-full h-full object-cover" />
             ) : (
               <span className="text-rondo-accent font-black text-sm">

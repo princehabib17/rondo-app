@@ -149,7 +149,6 @@ export default function MatchDetailPage() {
 
       <div className="relative h-48 bg-[#1c1c1c]">
         {game.banner_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img src={game.banner_url} alt="" className="w-full h-full object-cover" />
         ) : null}
         <div className="absolute inset-0 bg-gradient-to-t from-rondo-page via-rondo-page/40 to-transparent" />

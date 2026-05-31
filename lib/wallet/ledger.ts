@@ -1,5 +1,4 @@
 import { createServiceClient } from "@/lib/supabase/service";
-import { getWalletBalanceCentavos } from "@/lib/wallet/balance";
 
 const TOPUP_NOTE_PREFIX = "paymongo_topup:";
 

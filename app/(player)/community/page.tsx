@@ -10,6 +10,41 @@ import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import { formatPlayerDistance, sortProfilesByDistance, type NearbyPlayer } from "@/lib/location/nearby";
 import type { Coords } from "@/lib/feed/filters";
 
+function PlayerList({ title, players }: { title: string; players: Profile[] }) {
+  return (
+    <section className="space-y-3">
+      <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+        {title} ({players.length})
+      </h2>
+      {players.length === 0 ? (
+        <div className="rondo-surface p-4">
+          <p className="text-muted-foreground text-sm">No players yet.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {players.map((player) => (
+            <Link
+              key={player.id}
+              href={`/profile/${player.id}`}
+              className="flex items-center gap-3 bg-card border border-border hover:border-rondo-accent/40 rounded-xl p-3 transition-colors"
+            >
+              <PlayerAvatar profile={player} size="sm" showFlag linkable={false} />
+              <div className="min-w-0">
+                <p className="text-white text-sm font-semibold truncate">
+                  {player.full_name ?? "Player"}
+                </p>
+                <p className="text-muted-foreground text-xs truncate">
+                  {player.nationality ?? "No nationality yet"}
+                </p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function CommunityPage() {
   const router = useRouter();
   const [following, setFollowing] = useState<Profile[]>([]);
@@ -104,41 +139,6 @@ export default function CommunityPage() {
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 120000 }
     );
   }, [currentUserId]);
-
-  function PlayerList({ title, players }: { title: string; players: Profile[] }) {
-    return (
-      <section className="space-y-3">
-        <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-          {title} ({players.length})
-        </h2>
-        {players.length === 0 ? (
-          <div className="rondo-surface p-4">
-            <p className="text-muted-foreground text-sm">No players yet.</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {players.map((player) => (
-              <Link
-                key={player.id}
-                href={`/profile/${player.id}`}
-                className="flex items-center gap-3 bg-card border border-border hover:border-rondo-accent/40 rounded-xl p-3 transition-colors"
-              >
-                <PlayerAvatar profile={player} size="sm" showFlag linkable={false} />
-                <div className="min-w-0">
-                  <p className="text-white text-sm font-semibold truncate">
-                    {player.full_name ?? "Player"}
-                  </p>
-                  <p className="text-muted-foreground text-xs truncate">
-                    {player.nationality ?? "No nationality yet"}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
-    );
-  }
 
   return (
     <div className="min-h-[100dvh] rondo-page pb-20">

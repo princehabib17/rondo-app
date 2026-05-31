@@ -173,8 +173,7 @@ export interface FilterContext {
 
 export function applyFeedFilters(
   games: Game[],
-  filters: FeedFilters,
-  ctx: FilterContext
+  filters: FeedFilters
 ): Game[] {
   return games.filter((game) => {
     if (filters.areas.length > 0 && !filters.areas.some((a) => gameMatchesArea(game, a)))

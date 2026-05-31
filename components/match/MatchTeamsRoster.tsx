@@ -38,7 +38,7 @@ export function MatchTeamsRoster({ game }: { game: Game }) {
       </p>
       <div className="grid grid-cols-2 gap-3">
         {teams.map((team) => {
-          const count = teamPlayerCount(team, game);
+          const count = teamPlayerCount(team);
           const left = teamSpotsLeft(team, game);
           const full = isTeamFull(team, game);
           const emptySlots = Array.from({ length: left });

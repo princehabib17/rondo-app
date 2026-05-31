@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Megaphone, Timer, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -22,7 +22,7 @@ export default function ManageGamePage() {
   const [waitlist, setWaitlist] = useState<WaitlistRow[]>([]);
   const [addingWaitlistId, setAddingWaitlistId] = useState<string | null>(null);
 
-  async function loadGame() {
+  const loadGame = useCallback(async () => {
     const supabase = createClient();
     const { data } = await supabase
       .from("games")
@@ -49,9 +49,9 @@ export default function ManageGamePage() {
       setWaitlist((wlRows as unknown as WaitlistRow[]) ?? []);
     }
     setLoading(false);
-  }
+  }, [id]);
 
-  useEffect(() => { loadGame(); }, [id]);
+  useEffect(() => { loadGame(); }, [loadGame]);
 
   async function assignTeam(playerId: string, teamId: string) {
     const supabase = createClient();

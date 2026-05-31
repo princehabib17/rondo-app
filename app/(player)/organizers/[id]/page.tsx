@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Calendar, Megaphone, MapPin } from "lucide-react";
@@ -46,7 +46,7 @@ export default function OrganizerHubPage() {
   const [postError, setPostError] = useState<string | null>(null);
   const [isPlaceholder, setIsPlaceholder] = useState(false);
 
-  async function loadHub() {
+  const loadHub = useCallback(async () => {
     const supabase = createClient();
     const now = new Date().toISOString();
     const { data: userData } = await supabase.auth.getUser();
@@ -132,11 +132,11 @@ export default function OrganizerHubPage() {
     setGames((gamesData as Game[]) ?? []);
     setBroadcasts(normalizedBroadcasts);
     setLoading(false);
-  }
+  }, [id, router]);
 
   useEffect(() => {
     loadHub();
-  }, [id, router]);
+  }, [loadHub]);
 
   async function handleBroadcastSubmit(e: React.FormEvent) {
     e.preventDefault();

@@ -36,7 +36,6 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
         <div className="flex gap-0">
           <div className="relative w-[42%] min-h-[180px] shrink-0 bg-[#1c1c1c]">
             {game.banner_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img src={game.banner_url} alt="" className="w-full h-full object-cover" />
             ) : (
               <Image src="/feed/hero-soccer.jpg" alt="" fill className="object-cover" sizes="160px" />

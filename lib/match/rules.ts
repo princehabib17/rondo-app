@@ -44,8 +44,7 @@ export function playersPerTeam(game: Game): number {
 }
 
 export function teamPlayerCount(
-  team: { game_players?: { id: string }[] },
-  game: Game
+  team: { game_players?: { id: string }[] }
 ): number {
   return team.game_players?.length ?? 0;
 }
@@ -54,7 +53,7 @@ export function teamSpotsLeft(
   team: { game_players?: { id: string }[] },
   game: Game
 ): number {
-  return Math.max(0, playersPerTeam(game) - teamPlayerCount(team, game));
+  return Math.max(0, playersPerTeam(game) - teamPlayerCount(team));
 }
 
 export function isTeamFull(

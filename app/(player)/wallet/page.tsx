@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState, Suspense } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Plus, Wallet } from "lucide-react";
 import { formatPrice, formatRelativeTime } from "@/lib/utils/format";

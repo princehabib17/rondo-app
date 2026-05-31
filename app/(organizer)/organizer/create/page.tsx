@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/client";
@@ -59,9 +59,8 @@ export default function CreateGamePage() {
   const [geocoding, setGeocoding] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<CreateGameForm>({
-    resolver: zodResolver(createGameSchema) as any,
+    resolver: zodResolver(createGameSchema) as Resolver<CreateGameForm>,
     defaultValues: {
       format: "5v5",
       match_type: "futsal",

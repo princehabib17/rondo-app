@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
-    let sessionId = parsed.data.sessionId;
+    const sessionId = parsed.data.sessionId;
     if (!sessionId) {
       return NextResponse.json({ status: "pending" });
     }

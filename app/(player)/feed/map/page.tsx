@@ -72,7 +72,7 @@ export default function FeedMapPage() {
   const ctx: FilterContext = useMemo(() => ({ coords }), [coords]);
 
   const mapGames = useMemo(() => {
-    const filtered = applyFeedFilters(games, filters, ctx);
+    const filtered = applyFeedFilters(games, filters);
     return sortFeedGames(filtered, filters.sort, ctx);
   }, [games, filters, ctx]);
 
