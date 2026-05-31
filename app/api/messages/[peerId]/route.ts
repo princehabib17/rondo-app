@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { isGuestUser } from "@/lib/auth/is-guest";
 
 const bodySchema = z.object({
   body: z.string().min(1).max(2000),
@@ -14,7 +15,7 @@ export async function GET(
     const { peerId } = await params;
     const supabase = await createClient();
     const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user || userData.user.is_anonymous) {
+    if (!userData.user || isGuestUser(userData.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -53,7 +54,7 @@ export async function POST(
     const { peerId } = await params;
     const supabase = await createClient();
     const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user || userData.user.is_anonymous) {
+    if (!userData.user || isGuestUser(userData.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

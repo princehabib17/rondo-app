@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { isGuestUser } from "@/lib/auth/is-guest";
 
 const bodySchema = z.object({
   gameId: z.string().uuid(),
@@ -13,7 +14,7 @@ export async function POST(request: Request) {
   try {
     const supabase = await createClient();
     const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user || userData.user.is_anonymous) {
+    if (!userData.user || isGuestUser(userData.user)) {
       return NextResponse.json({ error: "Sign in required" }, { status: 401 });
     }
 

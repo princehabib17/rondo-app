@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { isGuestUser } from "@/lib/auth/is-guest";
 import { getPaymongoAuthHeader } from "@/lib/paymongo/client";
 import { MAX_TOPUP_CENTAVOS, MIN_TOPUP_CENTAVOS } from "@/lib/wallet/constants";
 import { logPayment } from "@/lib/payments/logger";
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
 
     const supabase = await createClient();
     const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user || userData.user.is_anonymous) {
+    if (!userData.user || isGuestUser(userData.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

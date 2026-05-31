@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Check, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { isGuestUser } from "@/lib/auth/is-guest";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import type { Game } from "@/lib/supabase/types";
 
@@ -124,7 +125,7 @@ export default function JoinMatchPage() {
       router.push("/login");
       return;
     }
-    if (userData.user.is_anonymous) {
+    if (isGuestUser(userData.user)) {
       router.push(`/signup?next=/games/${id}/join`);
       return;
     }
@@ -301,7 +302,7 @@ export default function JoinMatchPage() {
         {error && <p className="text-red-400 text-sm text-center">{error}</p>}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto px-4 pb-6 pt-3 rondo-glass-nav z-30 space-y-2">
+      <div className="fixed bottom-16 left-0 right-0 max-w-lg mx-auto px-4 pb-6 pt-3 rondo-glass-nav z-30 space-y-2">
         <button
           type="button"
           onClick={onPrimary}

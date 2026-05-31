@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getSafeRedirectPath } from "@/lib/auth/safe-redirect";
+import { isGuestUser } from "@/lib/auth/is-guest";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -14,7 +15,7 @@ export async function GET(request: Request) {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      const destination = user?.is_anonymous ? "/feed" : next;
+      const destination = isGuestUser(user) ? "/feed" : next;
       return NextResponse.redirect(`${origin}${destination}`);
     }
   }

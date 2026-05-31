@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { isGuestUser } from "@/lib/auth/is-guest";
 import type { Game, Profile } from "@/lib/supabase/types";
 import { DEFAULT_CAROUSEL_SLIDES } from "@/lib/feed/carousel-slides";
 import { PLACEHOLDER_ORGANIZERS, type OrganizerGroup } from "@/lib/feed/organizers";
@@ -45,6 +46,10 @@ export default function FeedPage() {
     const now = new Date().toISOString();
 
     const { data: userData } = await supabase.auth.getUser();
+    if (userData.user && !isGuestUser(userData.user)) {
+      fetch("/api/matches/expire-reservations", { method: "POST" }).catch(() => {});
+    }
+
     const [{ data: gamesData }, { data: organizersData }, { count: unreadCount }] = await Promise.all([
       supabase
         .from("games")
@@ -88,7 +93,6 @@ export default function FeedPage() {
 
   useEffect(() => {
     fetchData();
-    fetch("/api/matches/expire-reservations", { method: "POST" }).catch(() => {});
   }, [fetchData]);
 
   const sortedGames = useMemo(

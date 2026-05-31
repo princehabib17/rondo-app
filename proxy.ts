@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isGuestUser } from "@/lib/auth/is-guest";
 
 const PUBLIC_ROUTES = [
   "/",
@@ -147,12 +148,12 @@ export async function proxy(request: NextRequest) {
   if (
     user &&
     (pathname === "/" || pathname === "/login" || pathname === "/signup") &&
-    !user.is_anonymous
+    !isGuestUser(user)
   ) {
     return NextResponse.redirect(new URL("/feed", request.url));
   }
 
-  if (user?.is_anonymous) {
+  if (isGuestUser(user)) {
     const isBlockedByPrefix = GUEST_BLOCKED_PREFIXES.some((prefix) =>
       pathname.startsWith(prefix)
     );

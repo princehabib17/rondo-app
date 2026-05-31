@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { isGuestUser } from "@/lib/auth/is-guest";
 import { getWalletBalanceCentavos } from "@/lib/wallet/balance";
 
 export async function GET() {
   try {
     const supabase = await createClient();
     const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user || userData.user.is_anonymous) {
+    if (!userData.user || isGuestUser(userData.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

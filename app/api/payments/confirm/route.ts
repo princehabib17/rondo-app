@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { isGuestUser } from "@/lib/auth/is-guest";
 import {
   isCheckoutSessionPaid,
   retrieveCheckoutSession,
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
     if (!userData.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    if (userData.user.is_anonymous) {
+    if (isGuestUser(userData.user)) {
       return NextResponse.json(
         { error: "Please create an account before payment confirmation" },
         { status: 403 }

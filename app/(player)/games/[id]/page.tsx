@@ -5,9 +5,11 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Calendar, ChevronRight, MapPin, Megaphone, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { isGuestUser } from "@/lib/auth/is-guest";
 import { MatchTeamsRoster } from "@/components/match/MatchTeamsRoster";
 import { MatchRulesPanel } from "@/components/match/MatchRulesPanel";
 import { formatGameDate, formatPrice } from "@/lib/utils/format";
+import { PUBLIC_PROFILE_SELECT } from "@/lib/supabase/profile-select";
 import {
   getMatchStatusBanner,
   resolveJoinCta,
@@ -32,14 +34,14 @@ export default function MatchDetailPage() {
       const supabase = createClient();
       const { data: userData } = await supabase.auth.getUser();
       setCurrentUserId(userData.user?.id ?? null);
-      setIsGuest(Boolean(userData.user?.is_anonymous));
+      setIsGuest(isGuestUser(userData.user));
 
       const { data } = await supabase
         .from("games")
         .select(
           `
           *,
-          organizer:profiles!organizer_id(*),
+          organizer:profiles!organizer_id(${PUBLIC_PROFILE_SELECT}),
           teams(id, name, color, slot_number,
             game_players:game_players(id, user_id, profile:profiles(id, avatar_url, nationality))
           ),

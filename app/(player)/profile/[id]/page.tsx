@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, UserPlus, UserMinus, MapPin, Trophy, Wallet, CalendarDays, ChevronRight, MessageCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { isGuestUser } from "@/lib/auth/is-guest";
+import { PUBLIC_PROFILE_SELECT } from "@/lib/supabase/profile-select";
 import { formatGameDate, formatPrice, getFlagEmoji } from "@/lib/utils/format";
 import type { Profile } from "@/lib/supabase/types";
 
@@ -44,11 +46,12 @@ export default function PublicProfilePage() {
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id ?? null;
       setCurrentUserId(uid);
-      setIsGuest(Boolean(userData.user?.is_anonymous));
+      setIsGuest(isGuestUser(userData.user));
       const isOwnProfile = uid === id;
 
+      const profileSelect = isOwnProfile ? "*" : PUBLIC_PROFILE_SELECT;
       const [{ data: profileData }, { count }, { data: followData }, { data: matchesData }, { data: walletData }] = await Promise.all([
-        supabase.from("profiles").select("*").eq("id", id).single(),
+        supabase.from("profiles").select(profileSelect).eq("id", id).single(),
         supabase.from("game_players").select("id", { count: "exact", head: true }).eq("user_id", id),
         uid
           ? supabase.from("follows").select("follower_id").eq("follower_id", uid).eq("following_id", id).maybeSingle()
@@ -71,8 +74,9 @@ export default function PublicProfilePage() {
           : Promise.resolve({ data: [] as Array<{ amount: number; direction: "credit" | "debit"; source: string }> }),
       ]);
 
-      setProfile(profileData as Profile);
-      setLocationHidden(Boolean((profileData as Profile)?.location_hidden));
+      const loadedProfile = profileData as unknown as Profile;
+      setProfile(loadedProfile);
+      setLocationHidden(Boolean(loadedProfile?.location_hidden));
       setGamesPlayed(count ?? 0);
       setIsFollowing(!!followData);
       const entries = ((matchesData as ProfileMatchEntry[] | null) ?? []).filter((entry) => !!entry.game);

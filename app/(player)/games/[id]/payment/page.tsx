@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, MapPin, Wallet, Zap } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { isGuestUser } from "@/lib/auth/is-guest";
 import { formatPrice } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
 
@@ -38,7 +39,7 @@ function PaymentForm() {
     async function load() {
       const supabase = createClient();
       const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user?.id || userData.user.is_anonymous) {
+      if (!userData.user?.id || isGuestUser(userData.user)) {
         router.push(`/signup?next=/games/${id}/payment`);
         return;
       }

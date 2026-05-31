@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { isGuestUser } from "@/lib/auth/is-guest";
 import { payForGameWithWallet } from "@/lib/wallet/ledger";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -14,7 +15,7 @@ export async function POST(request: Request) {
   try {
     const supabase = await createClient();
     const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user || userData.user.is_anonymous) {
+    if (!userData.user || isGuestUser(userData.user)) {
       return NextResponse.json({ error: "Please sign in to pay" }, { status: 401 });
     }
 

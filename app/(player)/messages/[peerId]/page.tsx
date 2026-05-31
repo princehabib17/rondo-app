@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Send } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { isGuestUser } from "@/lib/auth/is-guest";
 import type { DirectMessage, Profile } from "@/lib/supabase/types";
 
 export default function DirectMessageThreadPage() {
@@ -20,7 +21,7 @@ export default function DirectMessageThreadPage() {
   const loadThread = useCallback(async () => {
     const supabase = createClient();
     const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user || userData.user.is_anonymous) {
+    if (!userData.user || isGuestUser(userData.user)) {
       router.push(`/login?next=/messages/${peerId}`);
       return;
     }

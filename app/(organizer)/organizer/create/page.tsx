@@ -34,7 +34,10 @@ const createGameSchema = z.object({
   allow_pay_later: z.boolean().default(false),
   is_private: z.boolean().default(false),
   match_type: z.enum(["football", "futsal"]),
-  skill_level: z.enum(["beginner", "intermediate", "advanced", "pro"]).optional(),
+  skill_level: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.enum(["beginner", "intermediate", "advanced", "pro"]).optional()
+  ),
   description: z.string().optional(),
 });
 type CreateGameForm = z.infer<typeof createGameSchema>;
