@@ -7,7 +7,8 @@ export async function signInAsGuest(): Promise<{ ok: boolean; error?: string }> 
   const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously();
 
   if (!anonError && anonData.user) {
-    await fetch("/api/auth/guest/ensure-profile", { method: "POST" });
+    // Best-effort — profile creation failure shouldn't block the guest
+    await fetch("/api/auth/guest/ensure-profile", { method: "POST" }).catch(() => null);
     return { ok: true };
   }
 
@@ -22,9 +23,11 @@ export async function signInAsGuest(): Promise<{ ok: boolean; error?: string }> 
     return {
       ok: false,
       error:
-        (json.error as string) ??
-        anonError?.message ??
-        "Guest sign-in failed. Check Supabase keys in .env.local",
+        (json.error as string) === "Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY"
+          ? "Guest sign-in is not available right now. Please create an account."
+          : (json.error as string) ??
+            anonError?.message ??
+            "Guest sign-in failed. Please try again.",
     };
   }
 

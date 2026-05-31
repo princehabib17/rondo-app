@@ -34,7 +34,7 @@ export default function SignupPage() {
   async function onSubmit(data: SignupForm) {
     setError(null);
     const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
       options: {
@@ -44,6 +44,13 @@ export default function SignupPage() {
     });
     if (error) {
       setError(error.message);
+      return;
+    }
+    // If Supabase has "Confirm email" disabled, a session is returned immediately
+    // and no OTP email is sent — skip the OTP screen.
+    if (signUpData.session) {
+      router.push("/onboarding/slides");
+      router.refresh();
       return;
     }
     router.push(`/otp?email=${encodeURIComponent(data.email)}`);
