@@ -25,46 +25,73 @@ export default function HomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-black flex flex-col px-6 py-8 max-w-lg mx-auto">
-      <div className="pt-2">
-        <Image
-          src="/rondo-logo.png"
-          alt=""
-          width={48}
-          height={48}
-          priority
-          className="object-contain"
-        />
-      </div>
+    <main className="relative min-h-screen bg-black flex flex-col overflow-hidden">
+      {/* Hero image */}
+      <Image
+        src="/feed/hero-night-court.png"
+        alt=""
+        fill
+        priority
+        className="object-cover object-center"
+        sizes="100vw"
+      />
 
-      <div className="flex-1" />
+      {/* Gradient overlay — dark at top and heavy at bottom */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/10 to-black" />
 
-      <div className="space-y-3 pb-8 w-full">
-        <Link
-          href="/signup"
-          className="block w-full bg-white text-black font-bold py-4 text-center uppercase tracking-widest text-sm"
-        >
-          Create Account
-        </Link>
-        <Link
-          href="/login"
-          className="block w-full bg-rondo-accent text-black font-heading font-bold py-4 text-center uppercase tracking-widest text-sm"
-        >
-          Log In
-        </Link>
-        <button
-          type="button"
-          onClick={handleGuest}
-          disabled={guestLoading}
-          className="w-full py-3 text-white/80 text-xs uppercase tracking-[0.2em] hover:text-white disabled:opacity-50"
-        >
-          {guestLoading ? "Please wait..." : "Continue as guest"}
-        </button>
-        {guestError && (
-          <p className="text-red-400 text-xs text-center leading-relaxed px-2">
-            {guestError}
+      {/* Content */}
+      <div className="relative z-10 flex flex-col min-h-screen px-6 pt-14 pb-10 max-w-lg mx-auto w-full">
+
+        {/* Logo */}
+        <div className="flex justify-center">
+          <Image
+            src="/rondo-logo.png"
+            alt="Rondo"
+            width={52}
+            height={52}
+            priority
+            className="object-contain drop-shadow-[0_0_20px_rgba(255,250,152,0.4)]"
+          />
+        </div>
+
+        {/* Tagline — sits in the middle of the hero */}
+        <div className="flex-1 flex flex-col justify-end pb-12">
+          <h1 className="font-heading text-white font-black italic text-[3.5rem] uppercase leading-[0.9] tracking-tight">
+            FIND YOUR<br />GAME.
+          </h1>
+          <p className="font-body text-white/55 text-[13px] mt-3 leading-relaxed max-w-[240px]">
+            Connect with players, join pickup games, and build your crew.
           </p>
-        )}
+        </div>
+
+        {/* CTAs */}
+        <div className="space-y-3">
+          <Link
+            href="/signup"
+            className="block w-full bg-rondo-accent text-black font-heading font-black uppercase tracking-widest text-sm py-4 text-center rounded-xl active:scale-[0.98] transition-transform"
+          >
+            Create Account
+          </Link>
+          <Link
+            href="/login"
+            className="block w-full bg-white/[0.08] border border-white/15 text-white font-heading font-black uppercase tracking-widest text-sm py-4 text-center rounded-xl active:scale-[0.98] transition-transform backdrop-blur-sm"
+          >
+            Log In
+          </Link>
+          <button
+            type="button"
+            onClick={handleGuest}
+            disabled={guestLoading}
+            className="w-full py-3 text-white/45 text-xs uppercase tracking-[0.2em] disabled:opacity-40 transition-opacity"
+          >
+            {guestLoading ? "Please wait..." : "Continue as guest"}
+          </button>
+          {guestError && (
+            <p className="text-red-400 text-xs text-center leading-relaxed px-2">
+              {guestError}
+            </p>
+          )}
+        </div>
       </div>
     </main>
   );
