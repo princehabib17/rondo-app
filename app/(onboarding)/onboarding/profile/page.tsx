@@ -36,17 +36,10 @@ export default function PlayerSetupPage() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) setUserId(data.user.id);
-      else router.push("/");
-    });
-  }, [router]);
-
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -54,6 +47,42 @@ export default function PlayerSetupPage() {
       nationality: "Philippines",
     },
   });
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user) {
+        router.push("/");
+        return;
+      }
+      setUserId(data.user.id);
+
+      const meta = data.user.user_metadata ?? {};
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", data.user.id)
+        .single();
+
+      if (profileData?.avatar_url) {
+        setAvatarPreview(profileData.avatar_url);
+      }
+
+      reset({
+        full_name: profileData?.full_name ?? "",
+        age: meta.age ?? "",
+        gender: meta.gender ?? "",
+        phone: meta.phone ?? "",
+        address: meta.address ?? "",
+        nationality: profileData?.nationality ?? meta.nationality ?? "Philippines",
+        position: profileData?.position ?? "",
+        skill_level: profileData?.skill_level ?? "",
+        preferred_foot: profileData?.preferred_foot ?? "",
+        preferred_areas: profileData?.preferred_areas ?? meta.preferred_areas ?? "",
+        game_preference: profileData?.game_preference ?? meta.game_preference ?? "",
+      });
+    });
+  }, [router, reset]);
 
   function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, UserPlus, UserMinus, MapPin, Trophy, Wallet, CalendarDays, ChevronRight } from "lucide-react";
+import { ArrowLeft, UserPlus, UserMinus, MapPin, Trophy, Wallet, CalendarDays, ChevronRight, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatGameDate, formatPrice, getFlagEmoji } from "@/lib/utils/format";
 import type { Profile } from "@/lib/supabase/types";
@@ -33,6 +33,7 @@ export default function PublicProfilePage() {
   const [recentMatches, setRecentMatches] = useState<ProfileMatchEntry[]>([]);
   const [walletSpentCentavos, setWalletSpentCentavos] = useState(0);
   const [walletPaidCount, setWalletPaidCount] = useState(0);
+  const [walletRows, setWalletRows] = useState<Array<{ amount: number; direction: "credit" | "debit"; source: string }>>([]);
   const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
@@ -74,6 +75,7 @@ export default function PublicProfilePage() {
       const entries = ((matchesData as ProfileMatchEntry[] | null) ?? []).filter((entry) => !!entry.game);
       setRecentMatches(entries);
       const walletRows = (walletData as Array<{ amount: number; direction: "credit" | "debit"; source: string }> | null) ?? [];
+      setWalletRows(walletRows);
       if (walletRows.length > 0) {
         const debits = walletRows.filter((row) => row.direction === "debit");
         setWalletPaidCount(debits.length);
@@ -224,6 +226,35 @@ export default function PublicProfilePage() {
                   <p className="text-white font-black text-lg">{walletPaidCount}</p>
                 </div>
               </div>
+              {walletRows.length > 0 && (
+                <div className="bg-card border border-border rounded-xl overflow-hidden">
+                  {walletRows.slice(0, 10).map((row, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-b-0"
+                    >
+                      <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${row.direction === "credit" ? "bg-green-500/15" : "bg-red-500/15"}`}>
+                        {row.direction === "credit" ? (
+                          <ArrowUpRight size={15} className="text-green-400" />
+                        ) : (
+                          <ArrowDownLeft size={15} className="text-red-400" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white text-sm font-medium">
+                          {row.source
+                            .split("_")
+                            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                            .join(" ")}
+                        </p>
+                      </div>
+                      <p className={`text-sm font-black shrink-0 ${row.direction === "credit" ? "text-green-400" : "text-red-400"}`}>
+                        {row.direction === "credit" ? "+" : "-"}{formatPrice(row.amount)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </section>
 
             <section className="space-y-3">
