@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { signInAsGuest } from "@/lib/auth/guest";
-import { RondoButton, RondoPage } from "@/components/rondo/primitives";
+import Link from "next/link";
 
 export default function HomePage() {
   const router = useRouter();
@@ -86,6 +86,6 @@ export default function HomePage() {
           )}
         </div>
       </div>
-    </RondoPage>
+    </main>
   );
 }

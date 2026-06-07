@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, CreditCard, Loader2, MapPin, Shield } from "lucide-react";
+import { ArrowLeft, CreditCard, Loader2, MapPin, Shield, Zap } from "lucide-react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { formatPrice } from "@/lib/utils/format";
@@ -33,6 +34,7 @@ function PaymentForm() {
   const [paying, setPaying] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const payLock = useRef(false);
 
   useEffect(() => {
     async function load() {
@@ -189,6 +191,9 @@ function PaymentForm() {
                 <div className="w-4 h-4 border-2 border-rondo-yellow border-t-transparent rounded-full animate-spin" />
               )}
             </div>
+          </button>
+
+          <div className="rondo-surface p-4 flex items-center gap-3">
             <div className="flex-1 min-w-0">
               <p className="font-body text-white/50 text-xs uppercase">You have</p>
               <p className="font-heading text-white font-black text-2xl">{formatPrice(balanceCentavos)}</p>

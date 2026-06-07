@@ -88,19 +88,21 @@ export default function JoinMatchPage() {
     }
   }
 
-    // Pay at venue — join immediately; upsert prevents duplicate rows on double-tap
-    const { error: joinError } = await supabase.from("game_players").upsert(
-      {
-        game_id: id,
-        user_id: userData.user.id,
-        team_id: selectedTeamId,
-        payment_status: "venue",
-      },
-      { onConflict: "game_id,user_id" }
-    );
-
-    if (joinError) {
-      setError(joinError.message);
+  async function handleWaitlist() {
+    if (!game) return;
+    setJoining(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/matches/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gameId: game.id, teamId: selectedTeamId }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Could not join waitlist");
+      router.push(`/games/${id}/confirmed`);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Join waitlist failed");
       setJoining(false);
     }
   }
