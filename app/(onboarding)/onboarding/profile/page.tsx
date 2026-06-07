@@ -17,9 +17,9 @@ const profileSchema = z.object({
   phone: z.string().min(7, "Phone required"),
   address: z.string().min(2, "Address required"),
   nationality: z.string().min(1, "Nationality required"),
-  position: z.string().optional().default(""),
-  skill_level: z.string().optional().default(""),
-  preferred_foot: z.string().optional().default(""),
+  position: z.string(),
+  skill_level: z.string(),
+  preferred_foot: z.string(),
   preferred_areas: z.string().min(2, "Preferred areas required"),
   game_preference: z.string().min(1, "Preference required"),
 });
