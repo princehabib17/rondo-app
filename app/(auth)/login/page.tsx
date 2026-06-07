@@ -25,7 +25,7 @@ export default function LoginPage() {
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) router.replace("/feed");
+      if (data.user && !data.user.is_anonymous) router.replace("/feed");
     });
   }, [router]);
 
