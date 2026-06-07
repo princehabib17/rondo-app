@@ -8,18 +8,68 @@ import { createClient } from "@/lib/supabase/client";
 
 type UserRole = "player" | "organizer" | null;
 
-const playerTabs = [
-  { href: "/feed", icon: Home, label: "Home" },
-  { href: "/feed/map", icon: Map, label: "Map" },
-  { href: "/community", icon: Users, label: "Community" },
-  { href: "/profile", icon: User, label: "Profile" },
+type TabDef = {
+  href: string;
+  icon: React.ElementType;
+  label: string;
+  isActive: (pathname: string) => boolean;
+};
+
+const playerTabs: TabDef[] = [
+  {
+    href: "/feed",
+    icon: Home,
+    label: "Home",
+    isActive: (p) => p === "/feed",
+  },
+  {
+    href: "/feed/map",
+    icon: Map,
+    label: "Map",
+    isActive: (p) => p === "/feed/map" || p.startsWith("/feed/map/"),
+  },
+  {
+    href: "/community",
+    icon: Users,
+    label: "Community",
+    isActive: (p) => p === "/community" || p.startsWith("/community/"),
+  },
+  {
+    href: "/profile",
+    icon: User,
+    label: "Profile",
+    isActive: (p) => p === "/profile" || p.startsWith("/profile/"),
+  },
 ];
 
-const organizerTabs = [
-  { href: "/feed", icon: Home, label: "Feed" },
-  { href: "/organizer/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/organizer/room", icon: Radio, label: "Room" },
-  { href: "/profile", icon: User, label: "Profile" },
+const organizerTabs: TabDef[] = [
+  {
+    href: "/feed",
+    icon: Home,
+    label: "Feed",
+    isActive: (p) => p === "/feed",
+  },
+  {
+    href: "/organizer/dashboard",
+    icon: LayoutDashboard,
+    label: "Dashboard",
+    isActive: (p) =>
+      p === "/organizer/dashboard" ||
+      (p.startsWith("/organizer") && !p.startsWith("/organizer/room")),
+  },
+  {
+    href: "/organizer/room",
+    icon: Radio,
+    label: "Room",
+    isActive: (p) =>
+      p === "/organizer/room" || p.startsWith("/organizer/room"),
+  },
+  {
+    href: "/profile",
+    icon: User,
+    label: "Profile",
+    isActive: (p) => p === "/profile" || p.startsWith("/profile/"),
+  },
 ];
 
 export function BottomNav() {
@@ -47,13 +97,8 @@ export function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-black/96 backdrop-blur-xl border-t border-white/[0.06] z-50">
       <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-2">
-        {tabs.map(({ href, icon: Icon, label }) => {
-          const active =
-            href === "/feed"
-              ? pathname === "/feed"
-              : href === "/organizer/dashboard"
-              ? pathname === "/organizer/dashboard" || (pathname.startsWith("/organizer") && !pathname.startsWith("/organizer/room"))
-              : pathname === href || pathname.startsWith(`${href}/`);
+        {tabs.map(({ href, icon: Icon, label, isActive }) => {
+          const active = isActive(pathname);
           return (
             <Link
               key={href}
