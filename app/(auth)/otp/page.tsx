@@ -1,143 +1,74 @@
 "use client";
 
-import { useRef, useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import Image from "next/image";
+import { Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
 
-function OTPForm() {
-  const router = useRouter();
+function ConfirmEmailContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") ?? "";
-
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const inputs = useRef<(HTMLInputElement | null)[]>([]);
+  const [cooldown, setCooldown] = useState(60);
+  const [resent, setResent] = useState(false);
 
   useEffect(() => {
-    if (resendCooldown > 0) {
-      const t = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
-      return () => clearTimeout(t);
-    }
-  }, [resendCooldown]);
-
-  function handleChange(index: number, value: string) {
-    if (!/^\d*$/.test(value)) return;
-    const newOtp = [...otp];
-    newOtp[index] = value.slice(-1);
-    setOtp(newOtp);
-    if (value && index < 5) inputs.current[index + 1]?.focus();
-  }
-
-  function handleKeyDown(index: number, e: React.KeyboardEvent) {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      inputs.current[index - 1]?.focus();
-    }
-  }
-
-  async function handleSubmit() {
-    const token = otp.join("");
-    if (token.length < 6) {
-      setError("Enter all 6 digits");
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    const supabase = createClient();
-    const { error } = await supabase.auth.verifyOtp({ email, token, type: "email" });
-    setLoading(false);
-    if (error) {
-      setError(error.message);
-      if (error.message.toLowerCase().includes("expired")) {
-        setResendCooldown(0);
-        setError("Code expired — tap Resend OTP to get a new one.");
-      }
-      return;
-    }
-    router.push("/onboarding/slides");
-  }
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
 
   async function handleResend() {
-    if (resendCooldown > 0) return;
+    if (cooldown > 0) return;
     const supabase = createClient();
     await supabase.auth.resend({ type: "signup", email });
-    setResendCooldown(60);
+    setCooldown(60);
+    setResent(true);
   }
 
   return (
-    <div className="space-y-8">
-      {/* Logo */}
-      <div className="flex justify-center">
-        <div className="w-20 h-20 rounded-2xl border-2 border-primary flex items-center justify-center bg-primary/5">
-          <span className="text-primary font-black text-3xl tracking-widest">R</span>
-        </div>
+    <div className="space-y-8 text-center">
+      <div className="pt-2">
+        <Image src="/rondo-logo.png" alt="RONDO" width={48} height={48} priority className="mx-auto object-contain" />
       </div>
 
-      {/* Header */}
-      <div className="space-y-3 text-center">
-        <h1 className="text-3xl font-black tracking-tight text-foreground">ENTER OTP</h1>
-        <p className="text-sm text-muted-foreground">
-          We sent a code to <span className="font-semibold text-foreground">{email}</span>
+      <div className="w-20 h-20 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto">
+        <Mail size={36} className="text-primary" />
+      </div>
+
+      <div className="space-y-2">
+        <h1 className="font-heading text-white font-black italic text-3xl tracking-tight">CHECK YOUR EMAIL</h1>
+        <p className="text-muted-foreground text-sm">We sent a confirmation link to</p>
+        <p className="text-white font-semibold text-sm">{email || "your email"}</p>
+        <p className="text-muted-foreground text-xs leading-relaxed">
+          Click the link to activate your account. Check your spam folder if it doesn&apos;t show up.
         </p>
       </div>
 
-      {/* OTP Input Fields */}
-      <div className="flex gap-2 justify-center">
-        {otp.map((digit, i) => (
-          <input
-            key={i}
-            ref={(el) => {
-              inputs.current[i] = el;
-            }}
-            type="text"
-            inputMode="numeric"
-            maxLength={1}
-            value={digit}
-            onChange={(e) => handleChange(i, e.target.value)}
-            onKeyDown={(e) => handleKeyDown(i, e)}
-            className="w-14 h-16 text-center text-foreground text-2xl font-bold bg-secondary border-2 border-border rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-            placeholder="0"
-          />
-        ))}
-      </div>
+      {resent && <p className="text-primary text-sm font-medium">Email resent!</p>}
 
-      {/* Error Message */}
-      {error && (
-        <p className="text-destructive text-sm font-medium text-center bg-destructive/10 rounded-lg p-3">
-          {error}
-        </p>
-      )}
-
-      {/* Submit Button */}
-      <Button
-        onClick={handleSubmit}
-        disabled={loading}
-        className="w-full h-12 bg-primary text-primary-foreground font-black uppercase tracking-wider text-sm hover:brightness-110 disabled:opacity-50"
-      >
-        {loading ? "Verifying..." : "Continue"}
-      </Button>
-
-      {/* Resend OTP */}
-      <div className="text-center space-y-1">
-        <p className="text-muted-foreground text-xs">Didn&apos;t receive code?</p>
+      <div className="space-y-3">
         <button
+          type="button"
           onClick={handleResend}
-          disabled={resendCooldown > 0}
-          className="text-sm font-semibold text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          disabled={cooldown > 0}
+          className="w-full bg-rondo-accent text-black font-heading font-black uppercase tracking-widest text-sm py-4 rounded-xl disabled:opacity-40 active:scale-[0.98] transition-all"
         >
-          {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend OTP"}
+          {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend Email"}
         </button>
+        <Link href="/login" className="block text-muted-foreground text-sm hover:text-white transition-colors">
+          Back to Login
+        </Link>
       </div>
     </div>
   );
 }
 
-export default function OTPPage() {
+export default function ConfirmEmailPage() {
   return (
     <Suspense>
-      <OTPForm />
+      <ConfirmEmailContent />
     </Suspense>
   );
 }

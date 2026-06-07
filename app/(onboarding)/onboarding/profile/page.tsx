@@ -115,7 +115,7 @@ export default function PlayerSetupPage() {
       }
     }
 
-    const role = (sessionStorage.getItem("selectedRole") ?? "player") as "player" | "organizer";
+    const role = userRole;
 
     await supabase.auth.updateUser({
       data: {
@@ -123,8 +123,6 @@ export default function PlayerSetupPage() {
         gender: data.gender,
         phone: data.phone,
         address: data.address,
-        preferred_areas: data.preferred_areas,
-        game_preference: data.game_preference,
       },
     });
 

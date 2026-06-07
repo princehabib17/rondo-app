@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { createClient } from "@/lib/supabase/client";
 import { OnboardingHeader } from "@/components/onboarding/OnboardingHeader";
 
 const slides = [
@@ -14,6 +15,14 @@ const slides = [
 export default function OnboardingSlidesPage() {
   const [current, setCurrent] = useState(0);
   const router = useRouter();
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) router.replace("/login");
+    });
+  }, [router]);
+
   const slide = slides[current];
   const isLast = current === slides.length - 1;
 

@@ -38,7 +38,7 @@ export default function LoginPage() {
   async function onSubmit(data: LoginForm) {
     setError(null);
     const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email: data.email,
       password: data.password,
     });
@@ -46,7 +46,17 @@ export default function LoginPage() {
       setError(signInError.message);
       return;
     }
-    router.push("/feed");
+    const userId = signInData.user?.id;
+    if (userId) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .single();
+      router.push(profile?.role ? "/feed" : "/onboarding/slides");
+    } else {
+      router.push("/feed");
+    }
     router.refresh();
   }
 
