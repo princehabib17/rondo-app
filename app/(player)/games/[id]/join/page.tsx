@@ -109,16 +109,10 @@ export default function JoinMatchPage() {
 
   async function handleConfirm() {
     if (!selectedTeamId || !game) return;
-    const picked = (game.teams as TeamWithPlayers[] | undefined)?.find(
-      (t) => t.id === selectedTeamId
-    );
-    if (picked && isTeamFull(picked, game)) {
-      setError("That team is full. Pick another team.");
-      return;
-    }
 
     setJoining(true);
     setError(null);
+
     const supabase = createClient();
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) {
@@ -130,29 +124,33 @@ export default function JoinMatchPage() {
       return;
     }
 
+    // Wallet games redirect to payment page (payment page handles the insert)
+    if (usesWallet(game)) {
+      router.push(`/games/${id}/payment?teamId=${selectedTeamId}`);
+      return;
+    }
+
+    // All non-wallet joins go through the server route which enforces capacity
+    const paymentStatus = requiresApproval(game)
+      ? "pending_approval"
+      : canPayLater(game)
+        ? "reserved"
+        : "venue";
+
+    const res = await fetch("/api/matches/join", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ gameId: game.id, teamId: selectedTeamId, paymentStatus }),
+    });
+    const json = await res.json();
+
+    if (!res.ok) {
+      setError(json.error ?? "Could not join. Please try again.");
+      setJoining(false);
+      return;
+    }
+
     if (requiresApproval(game)) {
-      const { error: reqError } = await supabase.from("game_players").upsert(
-        {
-          game_id: id,
-          user_id: userData.user.id,
-          team_id: selectedTeamId,
-          payment_status: "pending_approval",
-        },
-        { onConflict: "game_id,user_id" }
-      );
-      if (reqError) {
-        setError(reqError.message);
-        setJoining(false);
-        return;
-      }
-      if (usesWallet(game) && !canPayLater(game)) {
-        router.push(`/games/${id}/payment?teamId=${selectedTeamId}`);
-        return;
-      }
-      if (usesWallet(game) && canPayLater(game)) {
-        router.push(`/games/${id}/payment?teamId=${selectedTeamId}&mode=reserve`);
-        return;
-      }
       await pushInAppNotification({
         userId: userData.user.id,
         type: "join_requested",
@@ -160,31 +158,8 @@ export default function JoinMatchPage() {
         body: `Your request to join ${game.title} is pending approval.`,
         link: `/games/${id}/confirmed`,
       });
-      router.push(`/games/${id}/confirmed`);
-      return;
     }
 
-    if (usesWallet(game)) {
-      router.push(`/games/${id}/payment?teamId=${selectedTeamId}`);
-      return;
-    }
-
-    const status = canPayLater(game) ? "reserved" : "venue";
-    const { error: joinError } = await supabase.from("game_players").upsert(
-      {
-        game_id: id,
-        user_id: userData.user.id,
-        team_id: selectedTeamId,
-        payment_status: status,
-      },
-      { onConflict: "game_id,user_id" }
-    );
-
-    if (joinError) {
-      setError(joinError.message);
-      setJoining(false);
-      return;
-    }
     router.push(`/games/${id}/confirmed`);
   }
 

@@ -92,7 +92,8 @@ export function BottomNav() {
     fetchRole();
   }, []);
 
-  const tabs = role === "organizer" ? organizerTabs : playerTabs;
+  const isOrganizerRoute = pathname.startsWith("/organizer");
+  const tabs = isOrganizerRoute || role === "organizer" ? organizerTabs : playerTabs;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-black/96 backdrop-blur-xl border-t border-white/[0.06] z-50">
