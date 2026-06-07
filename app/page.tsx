@@ -54,15 +54,7 @@ export default function HomePage() {
           />
         </div>
 
-        {/* Tagline — sits in the middle of the hero */}
-        <div className="flex-1 flex flex-col justify-end pb-12">
-          <h1 className="font-heading text-white font-black italic text-[3.5rem] uppercase leading-[0.9] tracking-tight">
-            FIND YOUR<br />GAME.
-          </h1>
-          <p className="font-body text-white/55 text-[13px] mt-3 leading-relaxed max-w-[240px]">
-            Connect with players, join pickup games, and build your crew.
-          </p>
-        </div>
+        <div className="flex-1" />
 
         {/* CTAs */}
         <div className="space-y-3">
