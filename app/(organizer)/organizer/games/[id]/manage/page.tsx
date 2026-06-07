@@ -18,6 +18,7 @@ export default function ManageGamePage() {
   const [loading, setLoading] = useState(true);
   const [unassigned, setUnassigned] = useState<(GamePlayer & { profile: Profile | null })[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   const loadGame = useCallback(async function loadGame() {
     const supabase = createClient();
@@ -168,14 +169,40 @@ export default function ManageGamePage() {
             <Users size={18} className="text-rondo-yellow shrink-0" />
             <span className="text-white text-sm font-semibold">Payments</span>
           </button>
-          <button
-            onClick={() => updateGameStatus(game.status === "cancelled" ? "open" : "cancelled")}
-            className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-rondo-yellow/40 active:scale-[0.97] transition-all cursor-pointer min-h-[44px]"
-          >
-            <span className="text-white text-sm font-semibold">
-              {game.status === "cancelled" ? "Reopen Game" : "Cancel Game"}
-            </span>
-          </button>
+          {game.status === "cancelled" ? (
+            <button
+              onClick={() => updateGameStatus("open")}
+              className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-rondo-yellow/40 active:scale-[0.97] transition-all cursor-pointer min-h-[44px]"
+            >
+              <span className="text-white text-sm font-semibold">Reopen Game</span>
+            </button>
+          ) : confirmCancel ? (
+            <div className="col-span-2 bg-card border border-red-500/40 rounded-xl p-4 space-y-3">
+              <p className="text-white text-sm font-bold">Cancel this game?</p>
+              <p className="text-muted-foreground text-xs">All players will lose their reserved spots.</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { updateGameStatus("cancelled"); setConfirmCancel(false); }}
+                  className="flex-1 bg-red-500/90 text-white text-xs font-black py-2.5 rounded-lg cursor-pointer"
+                >
+                  Yes, Cancel
+                </button>
+                <button
+                  onClick={() => setConfirmCancel(false)}
+                  className="flex-1 border border-border text-white/60 text-xs py-2.5 rounded-lg cursor-pointer"
+                >
+                  Go Back
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmCancel(true)}
+              className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-red-500/30 active:scale-[0.97] transition-all cursor-pointer min-h-[44px]"
+            >
+              <span className="text-white text-sm font-semibold">Cancel Game</span>
+            </button>
+          )}
           <button
             onClick={toggleRegistration}
             className="col-span-2 bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-rondo-yellow/40 active:scale-[0.97] transition-all cursor-pointer min-h-[44px]"
@@ -237,7 +264,7 @@ export default function ManageGamePage() {
           {unassigned.length > 0 && (
             <div className="bg-card border border-border rounded-xl p-4 space-y-3">
               <span className="text-muted-foreground font-bold text-sm">Unassigned</span>
-              {unassigned.map((gp) => (
+              {unassigned.slice().sort((a, b) => (a.profile?.full_name ?? "").localeCompare(b.profile?.full_name ?? "")).map((gp) => (
                 gp.profile && (
                   <div key={gp.id} className="space-y-2">
                     <div className="flex items-center gap-3">

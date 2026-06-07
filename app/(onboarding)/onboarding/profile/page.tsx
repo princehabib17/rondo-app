@@ -22,6 +22,7 @@ const profileSchema = z.object({
   preferred_foot: z.string(),
   preferred_areas: z.string().min(2, "Preferred areas required"),
   game_preference: z.string().min(1, "Preference required"),
+  bio: z.string(),
 });
 type ProfileForm = z.infer<typeof profileSchema>;
 
@@ -84,6 +85,7 @@ export default function PlayerSetupPage() {
         preferred_foot: profileData?.preferred_foot ?? "",
         preferred_areas: profileData?.preferred_areas ?? meta.preferred_areas ?? "",
         game_preference: profileData?.game_preference ?? meta.game_preference ?? "",
+        bio: profileData?.bio ?? "",
       });
     });
   }, [router, reset]);
@@ -133,6 +135,7 @@ export default function PlayerSetupPage() {
         nationality: data.nationality,
         preferred_areas: data.preferred_areas,
         game_preference: data.game_preference,
+        bio: data.bio || null,
         role,
         ...(role === "player" ? {
           position: data.position,
@@ -272,6 +275,17 @@ export default function PlayerSetupPage() {
           <div className="space-y-2">
             <label className={labelClass}>Preferred areas</label>
             <input {...register("preferred_areas")} placeholder="BGC, Makati, Ortigas" className={inputClass} />
+          </div>
+
+          <div className="space-y-2">
+            <label className={labelClass}>Bio <span className="text-white/30 normal-case text-[11px]">(optional)</span></label>
+            <textarea
+              {...register("bio")}
+              placeholder="Tell the squad about yourself..."
+              maxLength={200}
+              rows={3}
+              className={`${inputClass} resize-none`}
+            />
           </div>
 
           {error && <p className="text-red-400 text-sm text-center font-body">{error}</p>}

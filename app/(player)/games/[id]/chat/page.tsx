@@ -37,6 +37,7 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
+  const [retryKey, setRetryKey] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const unsubscribeRef = useRef<(() => void) | null>(null);
@@ -125,7 +126,7 @@ export default function ChatPage() {
         unsubscribeRef.current = null;
       }
     };
-  }, [id]);
+  }, [id, retryKey]);
 
   // Auto-scroll when messages change
   useEffect(() => {
@@ -191,10 +192,13 @@ export default function ChatPage() {
             <span className="text-rondo-yellow text-xs font-semibold">Live</span>
           </div>
         ) : (
-          <div className="flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 rounded-full px-3 py-1">
+          <button
+            onClick={() => setRetryKey((k) => k + 1)}
+            className="flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 rounded-full px-3 py-1 active:scale-[0.96] transition-transform"
+          >
             <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-red-400 text-xs font-semibold">Reconnecting...</span>
-          </div>
+            <span className="text-red-400 text-xs font-semibold">Retry</span>
+          </button>
         )}
       </header>
 

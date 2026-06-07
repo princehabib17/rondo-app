@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+// Colors also defined as CSS variables in globals.css under --color-team-*
 const TEAM_COLORS = [
   { name: "Red", color: "#E53935" },
   { name: "Blue", color: "#1E88E5" },

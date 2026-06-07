@@ -68,6 +68,24 @@ export default function OrganizerRoomPage() {
 
     setBody("");
     setPosting(false);
+
+    // Notify followers
+    const { data: followers } = await supabase
+      .from("follows")
+      .select("follower_id")
+      .eq("following_id", organizerId);
+    if (followers && followers.length > 0) {
+      await supabase.from("notifications").insert(
+        followers.map((f) => ({
+          user_id: f.follower_id,
+          type: "organizer_broadcast",
+          title: "New update from organizer",
+          body: body.trim().slice(0, 100) + (body.trim().length > 100 ? "..." : ""),
+          link: `/organizers/${organizerId}`,
+        }))
+      );
+    }
+
     await loadBroadcasts(organizerId);
   }
 

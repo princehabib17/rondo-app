@@ -129,6 +129,23 @@ export default function JoinGamePage() {
 
   const teams = (game.teams ?? []).sort((a: Team, b: Team) => a.slot_number - b.slot_number);
 
+  if (teams.length === 0) {
+    return (
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 text-center gap-4">
+        <p className="text-white font-bold text-lg">No teams yet</p>
+        <p className="text-muted-foreground text-sm max-w-xs">
+          The organizer hasn&apos;t set up teams for this game. Check back closer to kick-off.
+        </p>
+        <button
+          onClick={() => router.back()}
+          className="w-full max-w-xs border border-border text-white text-sm py-4 rounded-xl cursor-pointer min-h-[44px]"
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-[100dvh] pb-28">
       <header className="sticky top-0 bg-background/90 backdrop-blur-md border-b border-border z-40 px-4 py-3 flex items-center gap-3">

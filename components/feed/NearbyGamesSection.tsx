@@ -79,9 +79,12 @@ interface NearbyGamesSectionProps {
   tab: "nearby" | "upcoming";
   onTabChange: (tab: "nearby" | "upcoming") => void;
   loading?: boolean;
+  hasMore?: boolean;
+  loadingMore?: boolean;
+  onLoadMore?: () => void;
 }
 
-export function NearbyGamesSection({ games, tab, onTabChange, loading }: NearbyGamesSectionProps) {
+export function NearbyGamesSection({ games, tab, onTabChange, loading, hasMore, loadingMore, onLoadMore }: NearbyGamesSectionProps) {
   return (
     <section id="nearby-games" className="px-4 pt-6 pb-4">
       <div className="flex items-center justify-between mb-1">
@@ -131,7 +134,18 @@ export function NearbyGamesSection({ games, tab, onTabChange, loading }: NearbyG
             No games found. Check back soon.
           </p>
         ) : (
-          games.map((game) => <NearbyGameRow key={game.id} game={game} />)
+          <>
+            {games.map((game) => <NearbyGameRow key={game.id} game={game} />)}
+            {hasMore && onLoadMore && (
+              <button
+                onClick={onLoadMore}
+                disabled={loadingMore}
+                className="w-full mt-4 py-3 font-body text-white/50 hover:text-rondo-accent text-xs uppercase tracking-wider border border-white/10 rounded-xl transition-colors disabled:opacity-40 cursor-pointer"
+              >
+                {loadingMore ? "Loading..." : "Load More"}
+              </button>
+            )}
+          </>
         )}
       </div>
     </section>

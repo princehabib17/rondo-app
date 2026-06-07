@@ -13,6 +13,8 @@ import { NearbyGamesSection } from "@/components/feed/NearbyGamesSection";
 
 type GamesTab = "nearby" | "upcoming";
 
+const PAGE_SIZE = 20;
+
 function pickFeaturedGame(games: Game[]): Game | null {
   if (games.length === 0) return null;
   return [...games].sort((a, b) => {
@@ -44,6 +46,9 @@ export default function FeedPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<GamesTab>("nearby");
   const [notificationCount, setNotificationCount] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [gamesOffset, setGamesOffset] = useState(0);
 
   const fetchData = useCallback(async () => {
     const supabase = createClient();
@@ -59,13 +64,13 @@ export default function FeedPage() {
         .eq("status", "open")
         .gte("date_time", now)
         .order("date_time", { ascending: true })
-        .limit(50),
+        .range(0, PAGE_SIZE - 1),
       supabase
         .from("profiles")
         .select("id, full_name, avatar_url")
         .eq("role", "organizer")
         .order("created_at", { ascending: false })
-        .limit(8),
+        .limit(20),
       userData.user
         ? supabase
             .from("notifications")
@@ -75,7 +80,10 @@ export default function FeedPage() {
         : Promise.resolve({ count: 0, data: null, error: null }),
     ]);
 
-    setGames((gamesData as Game[]) ?? []);
+    const fetchedGames = (gamesData as Game[]) ?? [];
+    setGames(fetchedGames);
+    setHasMore(fetchedGames.length === PAGE_SIZE);
+    setGamesOffset(PAGE_SIZE);
 
     const realOrganizers = (organizersData as Profile[] | null)?.map((profile) => ({
       id: profile.id,
@@ -93,6 +101,27 @@ export default function FeedPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    const supabase = createClient();
+    const now = new Date().toISOString();
+    const { data } = await supabase
+      .from("games")
+      .select("*, organizer:profiles!organizer_id(id,full_name,avatar_url), game_players(id)")
+      .eq("status", "open")
+      .gte("date_time", now)
+      .order("date_time", { ascending: true })
+      .range(gamesOffset, gamesOffset + PAGE_SIZE - 1);
+    const more = (data as Game[]) ?? [];
+    if (more.length > 0) {
+      setGames((prev) => [...prev, ...more]);
+      setGamesOffset((off) => off + PAGE_SIZE);
+    }
+    setHasMore(more.length === PAGE_SIZE);
+    setLoadingMore(false);
+  }, [gamesOffset, hasMore, loadingMore]);
 
   useEffect(() => {
     const handler = () => setNotificationCount(0);
@@ -126,6 +155,9 @@ export default function FeedPage() {
         tab={tab}
         onTabChange={setTab}
         loading={loading}
+        hasMore={hasMore}
+        loadingMore={loadingMore}
+        onLoadMore={loadMore}
       />
     </div>
   );

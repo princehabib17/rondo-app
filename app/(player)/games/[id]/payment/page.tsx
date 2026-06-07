@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, CreditCard, MapPin, Shield } from "lucide-react";
+import { ArrowLeft, CreditCard, Loader2, MapPin, Shield } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatPrice } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
@@ -16,6 +16,7 @@ function PaymentForm() {
   const [game, setGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -46,6 +47,7 @@ function PaymentForm() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Payment failed");
+      setRedirecting(true);
       window.location.href = json.checkoutUrl;
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Payment failed");
@@ -87,6 +89,18 @@ function PaymentForm() {
       setError(e instanceof Error ? e.message : "Could not join. Please try again.");
       setPaying(false);
     }
+  }
+
+  if (redirecting) {
+    return (
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center gap-5 px-6 text-center">
+        <Loader2 size={44} className="text-rondo-yellow animate-spin" />
+        <div>
+          <p className="text-white font-black text-xl">Redirecting to payment</p>
+          <p className="text-muted-foreground text-sm mt-1">Do not close this page</p>
+        </div>
+      </div>
+    );
   }
 
   if (loading) {

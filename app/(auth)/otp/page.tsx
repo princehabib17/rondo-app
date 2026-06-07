@@ -50,6 +50,10 @@ function OTPForm() {
     setLoading(false);
     if (error) {
       setError(error.message);
+      if (error.message.toLowerCase().includes("expired")) {
+        setResendCooldown(0);
+        setError("Code expired — tap Resend OTP to get a new one.");
+      }
       return;
     }
     router.push("/onboarding/slides");

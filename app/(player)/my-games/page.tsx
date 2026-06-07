@@ -39,7 +39,7 @@ export default function MyGamesPage() {
         .select("id, game_id, payment_status, joined_at, game:games(id, title, venue_name, date_time, price_per_player, status, format)")
         .eq("user_id", userData.user.id)
         .order("joined_at", { ascending: false });
-      setEntries((data as unknown as MyGame[]) ?? []);
+      setEntries((data as MyGame[]) ?? []);
       setLoading(false);
     }
     load();
