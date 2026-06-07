@@ -242,7 +242,7 @@ export default function CreateGamePage() {
 
         <Button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || geocoding}
           className="w-full bg-rondo-yellow text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-xl active:scale-[0.98] transition-all min-h-[52px]"
         >
           {isSubmitting ? "Creating..." : "Create Game"}

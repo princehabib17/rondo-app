@@ -36,8 +36,10 @@ export default function ChatPage() {
   const [isGuest, setIsGuest] = useState(false);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [isConnected, setIsConnected] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
     bottomRef.current?.scrollIntoView({ behavior });
@@ -82,18 +84,29 @@ export default function ChatPage() {
 
   // Subscribe to new messages
   useEffect(() => {
-    const unsubscribe = subscribeToMessages(id, async (rawMsg) => {
-      const supabase = createClient();
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", rawMsg.user_id)
-        .single();
+    try {
+      const unsubscribe = subscribeToMessages(id, async (rawMsg) => {
+        const supabase = createClient();
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", rawMsg.user_id)
+          .single();
 
-      const msg: MessageWithProfile = { ...rawMsg, profile: profile ?? null };
-      setMessages((prev) => [...prev, msg]);
-    });
-    return () => { unsubscribe(); };
+        const msg: MessageWithProfile = { ...rawMsg, profile: profile ?? null };
+        setMessages((prev) => [...prev, msg]);
+      });
+      unsubscribeRef.current = unsubscribe;
+      setIsConnected(true);
+    } catch {
+      setIsConnected(false);
+    }
+    return () => {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+        unsubscribeRef.current = null;
+      }
+    };
   }, [id]);
 
   // Auto-scroll when messages change
@@ -154,10 +167,17 @@ export default function ChatPage() {
           <h1 className="text-white font-bold text-sm truncate">{gameTitle || "Game Chat"}</h1>
           <p className="text-muted-foreground text-xs">{playerCount} players</p>
         </div>
-        <div className="flex items-center gap-1.5 bg-rondo-yellow/10 border border-rondo-yellow/20 rounded-full px-3 py-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-          <span className="text-rondo-yellow text-xs font-semibold">Live</span>
-        </div>
+        {isConnected ? (
+          <div className="flex items-center gap-1.5 bg-rondo-yellow/10 border border-rondo-yellow/20 rounded-full px-3 py-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+            <span className="text-rondo-yellow text-xs font-semibold">Live</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 rounded-full px-3 py-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+            <span className="text-red-400 text-xs font-semibold">Reconnecting...</span>
+          </div>
+        )}
       </header>
 
       {/* Messages */}

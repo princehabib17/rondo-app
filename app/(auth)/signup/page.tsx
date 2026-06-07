@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -26,6 +26,13 @@ export default function SignupPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) router.replace("/feed");
+    });
+  }, [router]);
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignupForm>({
     resolver: zodResolver(signupSchema),
