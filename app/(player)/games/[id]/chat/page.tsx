@@ -49,19 +49,37 @@ export default function ChatPage() {
     async function load() {
       const supabase = createClient();
       const { data: userData } = await supabase.auth.getUser();
-      setCurrentUserId(userData.user?.id ?? null);
+      const uid = userData.user?.id ?? null;
+      setCurrentUserId(uid);
       setIsGuest(Boolean(userData.user?.is_anonymous));
 
-      // Fetch game info
+      if (!uid) {
+        router.replace(`/login?next=/games/${id}/chat`);
+        return;
+      }
+
+      // Fetch game info including organizer_id for access check
       const { data: game } = await supabase
         .from("games")
-        .select("title, game_players(user_id)")
+        .select("title, organizer_id, game_players(user_id)")
         .eq("id", id)
         .single();
 
-      if (game) {
-        setGameTitle(game.title);
-        setPlayerCount((game.game_players as { user_id: string }[]).length);
+      if (!game) {
+        router.replace("/feed");
+        return;
+      }
+
+      setGameTitle(game.title);
+      const players = game.game_players as { user_id: string }[];
+      setPlayerCount(players.length);
+
+      // Access check: must be a player in the game or the organizer
+      const isPlayer = players.some((p) => p.user_id === uid);
+      const isOrganizer = game.organizer_id === uid;
+      if (!isPlayer && !isOrganizer) {
+        router.replace(`/games/${id}`);
+        return;
       }
 
       // Fetch messages with profiles
@@ -75,7 +93,7 @@ export default function ChatPage() {
       setLoading(false);
     }
     load();
-  }, [id]);
+  }, [id, router]);
 
   // Scroll to bottom after initial load
   useEffect(() => {

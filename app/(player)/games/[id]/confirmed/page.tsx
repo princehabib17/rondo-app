@@ -28,15 +28,19 @@ function ConfirmedContent() {
     let cancelled = false;
 
     async function confirmPayment() {
+      // Guard first — component may have unmounted between polling intervals
+      if (cancelled) return;
+
       const supabase = createClient();
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) {
-        router.push("/login");
+        if (!cancelled) router.push("/login");
         return;
       }
 
       const { data: gameData } = await supabase.from("games").select("*").eq("id", id).single();
-      if (gameData && !cancelled) setGame(gameData as Game);
+      if (cancelled) return;
+      if (gameData) setGame(gameData as Game);
 
       const { data: myEntry } = await supabase
         .from("game_players")
@@ -44,6 +48,8 @@ function ConfirmedContent() {
         .eq("game_id", id)
         .eq("user_id", userData.user.id)
         .maybeSingle();
+
+      if (cancelled) return;
 
       if (myEntry?.payment_status === "reserved") {
         setPaymentState("reserved");
