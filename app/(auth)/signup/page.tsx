@@ -52,8 +52,8 @@ export default function SignupPage() {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
-    if (signUpError) {
-      setError(signUpError.message);
+    if (error) {
+      setError(error.message);
       return;
     }
     // If Supabase has "Confirm email" disabled, a session is returned immediately

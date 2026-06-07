@@ -1,7 +1,25 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { ArrowLeft, ArrowUp, MessageCircle } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { subscribeToMessages } from "@/lib/realtime";
+import { formatRelativeTime } from "@/lib/utils/format";
+import { PlayerAvatar } from "@/components/game/PlayerAvatar";
+import { cn } from "@/lib/utils";
+import type { Message, Profile } from "@/lib/supabase/types";
+
+type MessageWithProfile = Message;
+
+function MessageSkeleton({ align }: { align: "left" | "right" }) {
+  return (
+    <div className={cn("flex items-end gap-2", align === "right" && "flex-row-reverse")}>
+      <div className="w-7 h-7 rounded-full bg-white/10 animate-pulse shrink-0" />
+      <div className={cn("h-10 w-48 rounded-2xl bg-white/10 animate-pulse", align === "right" && "rounded-br-sm")} />
+    </div>
+  );
+}
 
 /** Legacy squad chat — redirects to organizer room (read-only announcements). */
 export default function LegacyChatRedirectPage() {

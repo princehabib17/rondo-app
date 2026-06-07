@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronRight, MapPinned } from "lucide-react";
+import { ChevronRight, Map, MapPinned } from "lucide-react";
 import { formatGameTime, formatPrice } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
 import { getOrganizerInitials } from "@/lib/feed/organizers";

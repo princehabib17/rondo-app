@@ -21,6 +21,8 @@ export default function ManageGamePage() {
   const [unassigned, setUnassigned] = useState<(GamePlayer & { profile: Profile | null })[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [waitlist, setWaitlist] = useState<WaitlistRow[]>([]);
+  const [addingWaitlistId, setAddingWaitlistId] = useState<string | null>(null);
 
   const loadGame = useCallback(async function loadGame() {
     const supabase = createClient();
@@ -57,6 +59,14 @@ export default function ManageGamePage() {
       .eq("game_id", id)
       .is("team_id", null);
     setUnassigned((allGp as unknown as (GamePlayer & { profile: Profile | null })[]) ?? []);
+
+    const { data: wlData } = await supabase
+      .from("game_waitlist")
+      .select("*, profile:profiles(id, full_name, avatar_url, nationality)")
+      .eq("game_id", id)
+      .order("created_at", { ascending: true });
+    setWaitlist((wlData as unknown as WaitlistRow[]) ?? []);
+
     setLoading(false);
   }, [id, router]);
 
@@ -99,6 +109,10 @@ export default function ManageGamePage() {
       .eq("id", playerId)
       .eq("game_id", id);
     await loadGame();
+  }
+
+  async function approvePlayer(playerId: string) {
+    await updatePlayerStatus(playerId, "reserved");
   }
 
   async function updateGameStatus(status: "cancelled" | "open") {

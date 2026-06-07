@@ -93,7 +93,12 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
+  const { pathname } = request.nextUrl;
   let supabaseResponse = NextResponse.next({ request });
+
+  if (isPublicSkipAuth(pathname)) {
+    return supabaseResponse;
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,

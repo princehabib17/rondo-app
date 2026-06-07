@@ -7,6 +7,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { formatPrice } from "@/lib/utils/format";
+import { pushInAppNotification } from "@/lib/notifications";
 import type { Game } from "@/lib/supabase/types";
 
 function payIdempotencyKey(gameId: string) {
@@ -45,12 +46,39 @@ function PaymentForm() {
         router.push(`/signup?next=/games/${id}/payment`);
         return;
       }
-      const { data } = await supabase.from("games").select("*").eq("id", id).single();
+      const [{ data }, { data: balData }] = await Promise.all([
+        supabase.from("games").select("*").eq("id", id).single(),
+        fetch("/api/wallet/balance").then((r) => r.json()).catch(() => ({ balanceCentavos: 0 })),
+      ]);
       if (data) setGame(data as Game);
+      if (typeof balData?.balanceCentavos === "number") setBalanceCentavos(balData.balanceCentavos);
       setLoading(false);
     }
     load();
   }, [id, router]);
+
+  async function handlePayOnline() {
+    if (!game || paying) return;
+    setPaying(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/wallet/topup/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amountCentavos: game.price_per_player,
+          returnPath: `/games/${id}/payment?teamId=${teamId ?? ""}`,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Payment failed");
+      setRedirecting(true);
+      window.location.href = json.checkoutUrl;
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Payment failed");
+      setPaying(false);
+    }
+  }
 
   async function handlePayWithWallet() {
     if (!game || payLock.current) return;
@@ -70,8 +98,8 @@ function PaymentForm() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Payment failed");
-      setRedirecting(true);
-      window.location.href = json.checkoutUrl;
+      clearPayIdempotencyKey(game.id);
+      router.push(`/games/${id}/confirmed`);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Payment failed");
       setPaying(false);

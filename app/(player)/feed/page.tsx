@@ -128,6 +128,7 @@ export default function FeedPage() {
     return () => window.removeEventListener("notifications-read", handler);
   }, []);
 
+  const tabGames = useMemo(() => partitionByTab(games, tab), [games, tab]);
   const featuredGame = useMemo(() => pickFeaturedGame(games), [games]);
   const listGames = useMemo(() => {
     if (!featuredGame) return tabGames;
