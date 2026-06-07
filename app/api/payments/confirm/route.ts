@@ -59,6 +59,9 @@ export async function POST(request: Request) {
     }
 
     const session = await retrieveCheckoutSession(checkoutSessionId);
+    if (!session) {
+      return NextResponse.json({ status: "pending" });
+    }
     if (!isCheckoutSessionPaid(session)) {
       return NextResponse.json({ status: "pending" });
     }

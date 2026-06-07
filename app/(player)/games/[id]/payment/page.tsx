@@ -54,6 +54,7 @@ function PaymentForm() {
   }
 
   async function handlePayAtVenue() {
+    if (!game || paying) return;
     const supabase = createClient();
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return;
@@ -61,20 +62,31 @@ function PaymentForm() {
       router.push(`/signup?next=/games/${id}/payment`);
       return;
     }
-    await supabase.from("game_players").insert({
-      game_id: id,
-      user_id: userData.user.id,
-      team_id: teamId,
-      payment_status: "venue",
-    });
-    await pushInAppNotification({
-      userId: userData.user.id,
-      type: "join_confirmed",
-      title: "Joined with pay-at-venue",
-      body: `You're in ${game?.title ?? "the game"}.`,
-      link: `/games/${id}`,
-    });
-    router.push(`/games/${id}/invite`);
+    setPaying(true);
+    setError(null);
+    try {
+      const { error: joinError } = await supabase.from("game_players").upsert(
+        {
+          game_id: id,
+          user_id: userData.user.id,
+          team_id: teamId,
+          payment_status: "venue",
+        },
+        { onConflict: "game_id,user_id" }
+      );
+      if (joinError) throw new Error(joinError.message);
+      await pushInAppNotification({
+        userId: userData.user.id,
+        type: "join_confirmed",
+        title: "Joined with pay-at-venue",
+        body: `You're in ${game.title}.`,
+        link: `/games/${id}`,
+      });
+      router.push(`/games/${id}/invite`);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Could not join. Please try again.");
+      setPaying(false);
+    }
   }
 
   if (loading) {

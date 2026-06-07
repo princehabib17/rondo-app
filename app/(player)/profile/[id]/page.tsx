@@ -76,17 +76,9 @@ export default function PublicProfilePage() {
       setRecentMatches(entries);
       const walletRows = (walletData as Array<{ amount: number; direction: "credit" | "debit"; source: string }> | null) ?? [];
       setWalletRows(walletRows);
-      if (walletRows.length > 0) {
-        const debits = walletRows.filter((row) => row.direction === "debit");
-        setWalletPaidCount(debits.length);
-        setWalletSpentCentavos(debits.reduce((sum, row) => sum + row.amount, 0));
-      } else {
-        const paidEntries = entries.filter((entry) => entry.payment_status === "paid");
-        setWalletPaidCount(paidEntries.length);
-        setWalletSpentCentavos(
-          paidEntries.reduce((sum, entry) => sum + (entry.game?.price_per_player ?? 0), 0)
-        );
-      }
+      const debits = walletRows.filter((row) => row.direction === "debit");
+      setWalletPaidCount(debits.length);
+      setWalletSpentCentavos(debits.reduce((sum, row) => sum + row.amount, 0));
       setLoading(false);
     }
     load();

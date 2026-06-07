@@ -49,13 +49,16 @@ export default function JoinGamePage() {
       return;
     }
 
-    // Pay at venue — join immediately
-    const { error: joinError } = await supabase.from("game_players").insert({
-      game_id: id,
-      user_id: userData.user.id,
-      team_id: selectedTeamId,
-      payment_status: "venue",
-    });
+    // Pay at venue — join immediately; upsert prevents duplicate rows on double-tap
+    const { error: joinError } = await supabase.from("game_players").upsert(
+      {
+        game_id: id,
+        user_id: userData.user.id,
+        team_id: selectedTeamId,
+        payment_status: "venue",
+      },
+      { onConflict: "game_id,user_id" }
+    );
 
     if (joinError) {
       setError(joinError.message);

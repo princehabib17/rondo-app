@@ -84,9 +84,7 @@ export default function FeedPage() {
       verified: true,
     }));
 
-    if (realOrganizers && realOrganizers.length > 0) {
-      setOrganizers(realOrganizers);
-    }
+    setOrganizers(realOrganizers && realOrganizers.length > 0 ? realOrganizers : []);
     setNotificationCount(unreadCount ?? 0);
 
     setLoading(false);
@@ -95,6 +93,12 @@ export default function FeedPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    const handler = () => setNotificationCount(0);
+    window.addEventListener("notifications-read", handler);
+    return () => window.removeEventListener("notifications-read", handler);
+  }, []);
 
   const featuredGame = useMemo(() => pickFeaturedGame(games), [games]);
   const listGames = useMemo(() => {

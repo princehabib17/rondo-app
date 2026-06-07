@@ -31,6 +31,8 @@ export default function NotificationsPage() {
         .update({ read_at: new Date().toISOString() })
         .eq("user_id", userData.user.id)
         .is("read_at", null);
+
+      window.dispatchEvent(new Event("notifications-read"));
     }
     load();
   }, [router]);
