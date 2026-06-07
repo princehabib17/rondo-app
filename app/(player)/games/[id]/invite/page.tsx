@@ -37,8 +37,8 @@ export default function InvitePage() {
         .eq("id", id)
         .single();
       if (data) {
-        setGame(data as InviteGame);
-        setPlayers((data.game_players as InvitePlayer[]) ?? []);
+        setGame(data as unknown as InviteGame);
+        setPlayers((data.game_players as unknown as InvitePlayer[]) ?? []);
       }
     }
     load();
