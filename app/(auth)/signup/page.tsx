@@ -10,16 +10,19 @@ import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
+import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
 
-const signupSchema = z.object({
-  fullName: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Enter a valid email"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  confirmPassword: z.string(),
-}).refine((d) => d.password === d.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
+const signupSchema = z
+  .object({
+    fullName: z.string().min(2, "Name must be at least 2 characters"),
+    email: z.string().email("Enter a valid email"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 type SignupForm = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
@@ -49,8 +52,8 @@ export default function SignupPage() {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
-    if (error) {
-      setError(error.message);
+    if (signUpError) {
+      setError(signUpError.message);
       return;
     }
     // If Supabase has "Confirm email" disabled, a session is returned immediately
@@ -68,54 +71,67 @@ export default function SignupPage() {
 
   return (
     <>
-      <div className="pt-2 mb-10">
-        <Image src="/rondo-logo.png" alt="RONDO" width={48} height={48} className="object-contain" />
+      <div className="pt-2 mb-8">
+        <Image src="/rondo-logo.png" alt="RONDO" width={40} height={40} className="object-contain" />
       </div>
 
-      <h1 className="text-white font-black italic text-4xl tracking-tight mb-8">CREATE ACCOUNT</h1>
+      <h1 className="font-heading text-white font-black italic text-4xl uppercase tracking-tight mb-2">
+        Join Rondo
+      </h1>
+      <p className="font-body text-white/50 text-sm mb-8">Create your player profile in under a minute.</p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div className="space-y-2">
-          <label className="text-white text-sm font-medium">Full name</label>
-          <input {...register("fullName")} placeholder="Juan dela Cruz" className={inputClass} />
-          {errors.fullName && <p className="text-destructive text-xs">{errors.fullName.message}</p>}
+          <label className="font-body text-white/70 text-xs uppercase tracking-wider">Full name</label>
+          <input {...register("fullName")} placeholder="Juan dela Cruz" className={rondoFieldClass} />
+          {errors.fullName && (
+            <p className="text-red-400 text-xs font-body">{errors.fullName.message}</p>
+          )}
         </div>
 
         <div className="space-y-2">
-          <label className="text-white text-sm font-medium">Email</label>
-          <input {...register("email")} type="email" placeholder="you@email.com" className={inputClass} />
-          {errors.email && <p className="text-destructive text-xs">{errors.email.message}</p>}
+          <label className="font-body text-white/70 text-xs uppercase tracking-wider">Email</label>
+          <input {...register("email")} type="email" placeholder="you@email.com" className={rondoFieldClass} />
+          {errors.email && <p className="text-red-400 text-xs font-body">{errors.email.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <label className="text-white text-sm font-medium">Password</label>
+          <label className="font-body text-white/70 text-xs uppercase tracking-wider">Password</label>
           <div className="relative">
             <input
               {...register("password")}
               type={showPassword ? "text" : "password"}
-              className={inputClass}
+              className={rondoFieldClass}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-          {errors.password && <p className="text-destructive text-xs">{errors.password.message}</p>}
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-white text-sm font-medium">Confirm password</label>
-          <input {...register("confirmPassword")} type="password" className={inputClass} />
-          {errors.confirmPassword && (
-            <p className="text-destructive text-xs">{errors.confirmPassword.message}</p>
+          {errors.password && (
+            <p className="text-red-400 text-xs font-body">{errors.password.message}</p>
           )}
         </div>
 
-        {error && <p className="text-destructive text-sm text-center">{error}</p>}
+        <div className="space-y-2">
+          <label className="font-body text-white/70 text-xs uppercase tracking-wider">
+            Confirm password
+          </label>
+          <input {...register("confirmPassword")} type="password" className={rondoFieldClass} />
+          {errors.confirmPassword && (
+            <p className="text-red-400 text-xs font-body">{errors.confirmPassword.message}</p>
+          )}
+        </div>
+
+        {error && (
+          <p className="text-red-400 text-sm text-center" role="alert">
+            {error}
+          </p>
+        )}
 
         <button
           type="submit"
@@ -126,7 +142,7 @@ export default function SignupPage() {
         </button>
       </form>
 
-      <p className="text-center text-white text-sm mt-8">
+      <p className="text-center text-white/55 text-sm mt-8">
         Already have an account?{" "}
         <Link href="/login" className="text-rondo-accent font-semibold hover:underline">
           Log In

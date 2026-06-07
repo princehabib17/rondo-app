@@ -1,5 +1,6 @@
 import { createClient } from "./server";
 import type { Game, Profile, GamePlayer } from "./types";
+import { PUBLIC_PROFILE_SELECT } from "./profile-select";
 
 export async function getGameById(gameId: string) {
   const supabase = await createClient();
@@ -7,9 +8,9 @@ export async function getGameById(gameId: string) {
     .from("games")
     .select(`
       *,
-      organizer:profiles!organizer_id(*),
+      organizer:profiles!organizer_id(${PUBLIC_PROFILE_SELECT}),
       teams(*),
-      game_players(*, profile:profiles(*))
+      game_players(*, profile:profiles(${PUBLIC_PROFILE_SELECT}))
     `)
     .eq("id", gameId)
     .single();
@@ -34,7 +35,7 @@ export async function getProfile(userId: string) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("profiles")
-    .select("*")
+    .select(PUBLIC_PROFILE_SELECT)
     .eq("id", userId)
     .single();
   if (error) throw error;

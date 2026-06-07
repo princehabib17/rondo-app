@@ -56,7 +56,7 @@ export default function NewHelpTicketPage() {
         <select value={type} onChange={(e) => setType(e.target.value)} className="w-full bg-card border border-border rounded-xl p-3 text-white">
           <option value="payment_issue">Payment issue</option>
           <option value="refund_request">Refund request</option>
-          <option value="game_cancelled">Game cancelled</option>
+          <option value="game_cancelled">Match cancelled</option>
           <option value="organizer_issue">Organizer issue</option>
           <option value="player_issue">Player issue</option>
           <option value="app_issue">App issue</option>

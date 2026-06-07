@@ -163,7 +163,6 @@ export default function PlayerSetupPage() {
           <label className="relative cursor-pointer">
             <div className="w-36 h-36 rounded-full bg-[#1c1c1c] flex items-center justify-center overflow-hidden border border-white/10">
               {avatarPreview ? (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img src={avatarPreview} alt="" className="w-full h-full object-cover" />
               ) : (
                 <Upload className="text-white/50 w-10 h-10" strokeWidth={1.5} />

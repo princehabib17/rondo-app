@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import { signInAsGuest } from "@/lib/auth/guest";
+import { RondoButton, RondoPage } from "@/components/rondo/primitives";
 
 export default function HomePage() {
   const router = useRouter();
@@ -15,9 +16,9 @@ export default function HomePage() {
     setGuestError(null);
     setGuestLoading(true);
     const result = await signInAsGuest();
-    setGuestLoading(false);
     if (!result.ok) {
       setGuestError(result.error ?? "Guest sign-in failed");
+      setGuestLoading(false);
       return;
     }
     router.push("/feed");
@@ -85,6 +86,6 @@ export default function HomePage() {
           )}
         </div>
       </div>
-    </main>
+    </RondoPage>
   );
 }

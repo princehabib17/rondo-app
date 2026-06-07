@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { verifyPaymongoSignature } from "@/lib/paymongo/verify-signature";
 import { logPayment } from "@/lib/payments/logger";
+import {
+  creditWallet,
+  hasTopUpBeenCredited,
+  topUpNote,
+} from "@/lib/wallet/ledger";
 
 export async function POST(request: Request) {
   const rawBody = await request.text();
@@ -59,10 +64,39 @@ export async function POST(request: Request) {
     const nested = attributes?.data as Record<string, unknown> | undefined;
     const nestedAttrs = nested?.attributes as Record<string, unknown> | undefined;
     const metadata = nestedAttrs?.metadata as Record<string, string> | undefined;
-    const paymentId = nested?.id as string | undefined;
+    const paymentIdFromSession = nested?.id as string | undefined;
+
+    const purpose = metadata?.purpose;
+    const user_id = metadata?.user_id;
+
+    if (purpose === "wallet_topup") {
+      const amountCentavos = Number(metadata?.amount_centavos);
+      const paymentId = paymentIdFromSession ?? eventId;
+
+      if (!user_id || !Number.isFinite(amountCentavos) || amountCentavos <= 0) {
+        logPayment({ event: "webhook_wallet_topup_bad_metadata", level: "error", eventId });
+        return NextResponse.json({ error: "Invalid wallet top-up metadata" }, { status: 400 });
+      }
+
+      if (!(await hasTopUpBeenCredited(paymentId))) {
+        await creditWallet({
+          userId: user_id,
+          amountCentavos,
+          source: "payment",
+          note: topUpNote(paymentId),
+        });
+      }
+
+      await supabase.from("webhook_events").insert({
+        id: eventId,
+        event_type: eventType,
+      });
+
+      logPayment({ event: "webhook_wallet_topup_credited", eventId, userId: user_id });
+      return NextResponse.json({ received: true });
+    }
 
     const game_id = metadata?.game_id;
-    const user_id = metadata?.user_id;
     const team_id = metadata?.team_id ?? null;
 
     if (!game_id || !user_id) {
@@ -76,7 +110,7 @@ export async function POST(request: Request) {
         user_id,
         team_id,
         payment_status: "paid",
-        paymongo_payment_id: paymentId ?? null,
+        paymongo_payment_id: paymentIdFromSession ?? null,
       },
       { onConflict: "game_id,user_id" }
     );

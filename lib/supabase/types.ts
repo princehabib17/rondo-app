@@ -4,6 +4,7 @@ export type PreferredFoot = "left" | "right" | "both";
 export type SkillLevel = "beginner" | "intermediate" | "advanced" | "pro";
 export type GameStatus = "open" | "full" | "in_progress" | "completed" | "cancelled";
 export type PaymentType = "online" | "venue";
+export type MatchType = "football" | "futsal";
 export type PaymentStatus =
   | "pending"
   | "pending_payment"
@@ -32,6 +33,10 @@ export interface Profile {
   skill_level?: SkillLevel | null;
   preferred_areas?: string | null;
   game_preference?: "football" | "futsal" | "both" | null;
+  organizer_verified?: boolean;
+  location_hidden?: boolean;
+  last_lat?: number | null;
+  last_lng?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -53,8 +58,11 @@ export interface Game {
   round_duration_minutes: number;
   payment_type: PaymentType;
   status: GameStatus;
+  match_type?: MatchType | null;
+  skill_level?: SkillLevel | null;
   registration_open?: boolean;
   is_private?: boolean;
+  allow_pay_later?: boolean;
   banner_url: string | null;
   created_at: string;
   updated_at: string;
@@ -183,6 +191,27 @@ export interface PayoutRequest {
   note: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface GameWaitlistEntry {
+  id: string;
+  game_id: string;
+  user_id: string;
+  team_id: string | null;
+  status: "waiting" | "refused";
+  created_at: string;
+  profile?: Profile;
+}
+
+export interface DirectMessage {
+  id: string;
+  sender_id: string;
+  recipient_id: string;
+  body: string;
+  read_at: string | null;
+  created_at: string;
+  sender?: Profile;
+  recipient?: Profile;
 }
 
 export interface AppNotification {

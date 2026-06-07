@@ -4,6 +4,7 @@ import { Calendar, ChevronRight, MapPin, Star, Users } from "lucide-react";
 import { formatGameDate, formatPrice } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
 import { getOrganizerInitials } from "@/lib/feed/organizers";
+import { GameBadges } from "@/components/feed/GameBadges";
 
 interface FeaturedGameCardProps {
   game: Game;
@@ -27,7 +28,7 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
       <div className="flex items-center gap-2 mb-3">
         <Star size={16} className="text-rondo-accent fill-rondo-accent" />
         <h2 className="font-heading text-white font-black italic text-sm uppercase tracking-wide">
-          Featured Game
+          Featured Match
         </h2>
       </div>
 
@@ -35,7 +36,6 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
         <div className="flex gap-0">
           <div className="relative w-[42%] min-h-[180px] shrink-0 bg-secondary">
             {game.banner_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img src={game.banner_url} alt="" className="w-full h-full object-cover" />
             ) : (
               <Image src="/feed/hero-soccer.jpg" alt="" fill className="object-cover" sizes="160px" />
@@ -49,6 +49,8 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
             <h3 className="font-heading text-white font-black italic text-lg uppercase leading-none mb-2 truncate">
               {game.title}
             </h3>
+
+            <GameBadges game={game} className="mb-2" />
 
             <div className="space-y-1.5 font-body text-white/60 text-[11px] mb-2">
               <div className="flex items-center gap-1.5 min-w-0">
@@ -86,7 +88,7 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
               href={`/games/${game.id}`}
               className="mt-3 self-end inline-flex items-center gap-1 font-heading text-rondo-accent text-[11px] font-black uppercase tracking-wider hover:underline"
             >
-              View Game
+              View Match
               <ChevronRight size={14} />
             </Link>
           </div>

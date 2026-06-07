@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, UserPlus, UserMinus, MapPin, Trophy, Wallet, CalendarDays, ChevronRight, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { isGuestUser } from "@/lib/auth/is-guest";
+import { PUBLIC_PROFILE_SELECT } from "@/lib/supabase/profile-select";
 import { formatGameDate, formatPrice, getFlagEmoji } from "@/lib/utils/format";
 import type { Profile } from "@/lib/supabase/types";
 
@@ -31,10 +33,13 @@ export default function PublicProfilePage() {
   const [loading, setLoading] = useState(true);
   const [followLoading, setFollowLoading] = useState(false);
   const [recentMatches, setRecentMatches] = useState<ProfileMatchEntry[]>([]);
+  const [walletBalanceCentavos, setWalletBalanceCentavos] = useState(0);
   const [walletSpentCentavos, setWalletSpentCentavos] = useState(0);
   const [walletPaidCount, setWalletPaidCount] = useState(0);
   const [walletRows, setWalletRows] = useState<Array<{ amount: number; direction: "credit" | "debit"; source: string }>>([]);
   const [isGuest, setIsGuest] = useState(false);
+  const [locationHidden, setLocationHidden] = useState(false);
+  const [savingLocation, setSavingLocation] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -42,11 +47,12 @@ export default function PublicProfilePage() {
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id ?? null;
       setCurrentUserId(uid);
-      setIsGuest(Boolean(userData.user?.is_anonymous));
+      setIsGuest(isGuestUser(userData.user));
       const isOwnProfile = uid === id;
 
+      const profileSelect = isOwnProfile ? "*" : PUBLIC_PROFILE_SELECT;
       const [{ data: profileData }, { count }, { data: followData }, { data: matchesData }, { data: walletData }] = await Promise.all([
-        supabase.from("profiles").select("*").eq("id", id).single(),
+        supabase.from("profiles").select(profileSelect).eq("id", id).single(),
         supabase.from("game_players").select("id", { count: "exact", head: true }).eq("user_id", id),
         uid
           ? supabase.from("follows").select("follower_id").eq("follower_id", uid).eq("following_id", id).maybeSingle()
@@ -69,11 +75,22 @@ export default function PublicProfilePage() {
           : Promise.resolve({ data: [] as Array<{ amount: number; direction: "credit" | "debit"; source: string }> }),
       ]);
 
-      setProfile(profileData as Profile);
+      const loadedProfile = profileData as unknown as Profile;
+      setProfile(loadedProfile);
+      setLocationHidden(Boolean(loadedProfile?.location_hidden));
       setGamesPlayed(count ?? 0);
       setIsFollowing(!!followData);
       const entries = ((matchesData as ProfileMatchEntry[] | null) ?? []).filter((entry) => !!entry.game);
       setRecentMatches(entries);
+
+      if (isOwnProfile && uid) {
+        const balanceRes = await fetch("/api/wallet/balance");
+        if (balanceRes.ok) {
+          const balanceJson = await balanceRes.json();
+          setWalletBalanceCentavos(balanceJson.balanceCentavos ?? 0);
+        }
+      }
+
       const walletRows = (walletData as Array<{ amount: number; direction: "credit" | "debit"; source: string }> | null) ?? [];
       setWalletRows(walletRows);
       const debits = walletRows.filter((row) => row.direction === "debit");
@@ -100,6 +117,19 @@ export default function PublicProfilePage() {
       setIsFollowing(true);
     }
     setFollowLoading(false);
+  }
+
+  async function toggleLocationHidden() {
+    if (!currentUserId || savingLocation) return;
+    setSavingLocation(true);
+    const next = !locationHidden;
+    const supabase = createClient();
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ location_hidden: next })
+      .eq("id", currentUserId);
+    if (!updateError) setLocationHidden(next);
+    setSavingLocation(false);
   }
 
   if (loading) {
@@ -133,14 +163,23 @@ export default function PublicProfilePage() {
         </button>
         <h1 className="text-white font-bold text-base flex-1 truncate">{profile.full_name}</h1>
         {!isOwnProfile && currentUserId && !isGuest && (
-          <button
-            onClick={handleFollow}
-            disabled={followLoading}
-            className="min-h-[44px] px-4 flex items-center gap-2 rounded-lg border border-border hover:border-rondo-yellow/40 text-sm font-semibold transition-all cursor-pointer active:scale-[0.97] disabled:opacity-50"
-            style={{ color: isFollowing ? "var(--muted-foreground)" : "var(--color-rondo-yellow)" }}
-          >
-            {isFollowing ? <><UserMinus size={15} />Unfollow</> : <><UserPlus size={15} />Follow</>}
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              href={`/messages/${id}`}
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-border hover:border-rondo-yellow/40 text-rondo-yellow transition-all"
+              aria-label="Message player"
+            >
+              <MessageCircle size={18} />
+            </Link>
+            <button
+              onClick={handleFollow}
+              disabled={followLoading}
+              className="min-h-[44px] px-4 flex items-center gap-2 rounded-lg border border-border hover:border-rondo-yellow/40 text-sm font-semibold transition-all cursor-pointer active:scale-[0.97] disabled:opacity-50"
+              style={{ color: isFollowing ? "var(--muted-foreground)" : "var(--color-rondo-yellow)" }}
+            >
+              {isFollowing ? <><UserMinus size={15} />Unfollow</> : <><UserPlus size={15} />Follow</>}
+            </button>
+          </div>
         )}
       </header>
 
@@ -171,7 +210,7 @@ export default function PublicProfilePage() {
             )}
             <div className="flex items-center gap-1.5 mt-1">
               <Trophy size={12} className="text-rondo-yellow" />
-              <span className="text-muted-foreground text-sm">{gamesPlayed} games played</span>
+              <span className="text-muted-foreground text-sm">{gamesPlayed} matches played</span>
             </div>
           </div>
         </div>
@@ -204,19 +243,17 @@ export default function PublicProfilePage() {
         {isOwnProfile && (
           <>
             <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Wallet size={16} className="text-rondo-accent" />
-                <h3 className="text-white font-bold text-base">Wallet</h3>
-              </div>
-              <div className="bg-card border border-border rounded-xl p-4 grid grid-cols-2 gap-3">
-                <div>
-                  <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Total Paid</p>
-                  <p className="text-rondo-accent font-black text-lg">{formatPrice(walletSpentCentavos)}</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Wallet size={16} className="text-rondo-accent" />
+                  <h3 className="text-white font-bold text-base">Rondo Wallet</h3>
                 </div>
-                <div>
-                  <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Paid Matches</p>
-                  <p className="text-white font-black text-lg">{walletPaidCount}</p>
-                </div>
+                <Link
+                  href="/wallet"
+                  className="text-rondo-accent text-xs font-semibold uppercase tracking-wide"
+                >
+                  Manage
+                </Link>
               </div>
               {walletRows.length > 0 && (
                 <div className="bg-card border border-border rounded-xl overflow-hidden">
@@ -301,6 +338,29 @@ export default function PublicProfilePage() {
             >
               Edit Profile
             </button>
+
+            <label className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={locationHidden}
+                disabled={savingLocation}
+                onChange={toggleLocationHidden}
+                className="mt-0.5 h-4 w-4 accent-[#E9FF3A]"
+              />
+              <span className="text-sm text-white/80 leading-snug">
+                Hide my location from other players
+                <span className="block text-xs text-muted-foreground mt-0.5">
+                  When on, nearest-player discovery won&apos;t show where you are.
+                </span>
+              </span>
+            </label>
+
+            <Link
+              href="/messages"
+              className="block w-full border border-border text-center text-muted-foreground hover:text-white hover:border-border/80 text-sm py-3 rounded-xl transition-all"
+            >
+              Messages
+            </Link>
             <Link
               href="/help"
               className="block w-full border border-border text-center text-muted-foreground hover:text-white hover:border-border/80 text-sm py-3 rounded-xl transition-all"

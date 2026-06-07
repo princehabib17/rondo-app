@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { isGuestUser } from "@/lib/auth/is-guest";
 import type { Game, Profile } from "@/lib/supabase/types";
 import { DEFAULT_CAROUSEL_SLIDES } from "@/lib/feed/carousel-slides";
 import { PLACEHOLDER_ORGANIZERS, type OrganizerGroup } from "@/lib/feed/organizers";
@@ -25,19 +26,14 @@ function pickFeaturedGame(games: Game[]): Game | null {
   })[0];
 }
 
-function splitGamesByTab(games: Game[], tab: GamesTab): Game[] {
+/** Nearby = next 7 days; Upcoming = later than that. */
+function partitionByTab(games: Game[], tab: GamesTab): Game[] {
   const now = Date.now();
   const weekMs = 7 * 24 * 60 * 60 * 1000;
-
-  const sorted = [...games].sort(
-    (a, b) => new Date(a.date_time).getTime() - new Date(b.date_time).getTime()
-  );
-
   if (tab === "nearby") {
-    return sorted.filter((g) => new Date(g.date_time).getTime() - now <= weekMs);
+    return games.filter((g) => new Date(g.date_time).getTime() - now <= weekMs);
   }
-
-  return sorted.filter((g) => new Date(g.date_time).getTime() - now > weekMs);
+  return games.filter((g) => new Date(g.date_time).getTime() - now > weekMs);
 }
 
 export default function FeedPage() {
@@ -55,6 +51,10 @@ export default function FeedPage() {
     const now = new Date().toISOString();
 
     const { data: userData } = await supabase.auth.getUser();
+    if (userData.user && !isGuestUser(userData.user)) {
+      fetch("/api/matches/expire-reservations", { method: "POST" }).catch(() => {});
+    }
+
     const [{ data: gamesData }, { data: organizersData }, { count: unreadCount }] = await Promise.all([
       supabase
         .from("games")
@@ -94,7 +94,6 @@ export default function FeedPage() {
 
     setOrganizers(realOrganizers && realOrganizers.length > 0 ? realOrganizers : []);
     setNotificationCount(unreadCount ?? 0);
-
     setLoading(false);
   }, []);
 
@@ -131,13 +130,12 @@ export default function FeedPage() {
 
   const featuredGame = useMemo(() => pickFeaturedGame(games), [games]);
   const listGames = useMemo(() => {
-    const filtered = splitGamesByTab(games, tab);
-    if (!featuredGame) return filtered;
-    return filtered.filter((g) => g.id !== featuredGame.id);
-  }, [games, tab, featuredGame]);
+    if (!featuredGame) return tabGames;
+    return tabGames.filter((g) => g.id !== featuredGame.id);
+  }, [tabGames, featuredGame]);
 
   return (
-    <div className="min-h-[100dvh] bg-black">
+    <div className="min-h-[100dvh] rondo-page">
       <FeedHeader notificationCount={notificationCount} />
 
       <HeroCarousel slides={DEFAULT_CAROUSEL_SLIDES} />

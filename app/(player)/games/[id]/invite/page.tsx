@@ -47,7 +47,7 @@ export default function InvitePage() {
   async function handleShare() {
     const url = `${window.location.origin}/games/${id}`;
     if (navigator.share) {
-      await navigator.share({ title: game?.title ?? "RONDO Game", url });
+      await navigator.share({ title: game?.title ?? "RONDO Match", url });
     } else {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -75,7 +75,7 @@ export default function InvitePage() {
           </div>
           <h2 className="text-white font-black text-2xl tracking-tight">Bring Your Squad!</h2>
           <p className="text-muted-foreground text-sm">
-            Share this game with your friends so they can join too
+            Share this match with your friends so they can join too
           </p>
         </div>
 
@@ -91,7 +91,7 @@ export default function InvitePage() {
           ) : (
             <>
               <Share2 size={18} />
-              Share Game Link
+              Share Match Link
             </>
           )}
         </button>

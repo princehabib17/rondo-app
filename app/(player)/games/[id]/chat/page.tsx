@@ -1,31 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, ArrowUp, MessageCircle } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { subscribeToMessages } from "@/lib/realtime";
-import { PlayerAvatar } from "@/components/game/PlayerAvatar";
-import { formatRelativeTime } from "@/lib/utils/format";
-import type { Message, Profile } from "@/lib/supabase/types";
-import { cn } from "@/lib/utils";
 
-interface MessageWithProfile extends Omit<Message, "profile"> {
-  profile: Profile | null;
-}
-
-function MessageSkeleton({ align }: { align: "left" | "right" }) {
-  return (
-    <div className={cn("flex items-end gap-2", align === "right" && "flex-row-reverse")}>
-      <div className="w-7 h-7 rounded-full bg-white/10 animate-pulse shrink-0" />
-      <div className={cn("space-y-1", align === "right" && "items-end flex flex-col")}>
-        <div className="h-10 w-44 rounded-2xl bg-white/10 animate-pulse" />
-      </div>
-    </div>
-  );
-}
-
-export default function ChatPage() {
+/** Legacy squad chat — redirects to organizer room (read-only announcements). */
+export default function LegacyChatRedirectPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [messages, setMessages] = useState<MessageWithProfile[]>([]);
@@ -96,7 +75,6 @@ export default function ChatPage() {
     load();
   }, [id, router]);
 
-  // Scroll to bottom after initial load
   useEffect(() => {
     if (!loading) scrollToBottom("instant" as ScrollBehavior);
   }, [loading, scrollToBottom]);

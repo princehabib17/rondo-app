@@ -7,9 +7,9 @@ import { createClient } from "@/lib/supabase/client";
 import { OnboardingHeader } from "@/components/onboarding/OnboardingHeader";
 
 const slides = [
-  { image: "/onboarding/secure.png", title: "SECURE YOUR SPOT" },
-  { image: "/onboarding/map.png", title: "FIND GAMES NEAR YOU" },
-  { image: "/onboarding/players.png", title: "SEE WHO'S PLAYING" },
+  { image: "/onboarding/match-details.png", title: "KNOW THE MATCH" },
+  { image: "/onboarding/roster.png", title: "SEE WHO'S PLAYING" },
+  { image: "/onboarding/confidence.png", title: "PLAY WITH CONFIDENCE" },
 ];
 
 export default function OnboardingSlidesPage() {

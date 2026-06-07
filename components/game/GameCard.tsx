@@ -3,7 +3,6 @@ import { Calendar, MapPin, Users, Trophy } from "lucide-react";
 import { formatGameDate, formatPrice } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 
 interface GameCardProps {
   game: Game;
