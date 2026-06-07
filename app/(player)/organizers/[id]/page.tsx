@@ -301,6 +301,33 @@ export default function OrganizerHubPage() {
           </div>
         )}
       </section>
+
+      <section className="px-4 pt-6 pb-8">
+        <div className="flex items-center gap-2 mb-3">
+          <Megaphone size={15} className="text-rondo-accent" />
+          <h2 className="font-heading text-white font-black italic text-sm uppercase">Room</h2>
+        </div>
+
+        {broadcasts.length === 0 ? (
+          <p className="font-body text-white/40 text-sm bg-[#141414] border border-white/10 rounded-xl p-4">
+            No updates yet.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {broadcasts.slice(0, 10).map((item) => (
+              <article
+                key={item.id}
+                className="bg-[#141414] border border-white/10 rounded-xl p-4"
+              >
+                <p className="font-body text-white/90 text-sm leading-relaxed">{item.body}</p>
+                <p className="font-body text-white/40 text-xs mt-2">
+                  {formatRelativeTime(item.created_at)}
+                </p>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

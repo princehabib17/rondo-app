@@ -1,18 +1,49 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Map, Users, User } from "lucide-react";
+import { Home, Map, Users, User, LayoutDashboard, Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 
-const tabs = [
+type UserRole = "player" | "organizer" | null;
+
+const playerTabs = [
   { href: "/feed", icon: Home, label: "Home" },
   { href: "/feed/map", icon: Map, label: "Map" },
   { href: "/community", icon: Users, label: "Community" },
   { href: "/profile", icon: User, label: "Profile" },
 ];
 
+const organizerTabs = [
+  { href: "/feed", icon: Home, label: "Feed" },
+  { href: "/organizer/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/organizer/room", icon: Radio, label: "Room" },
+  { href: "/profile", icon: User, label: "Profile" },
+];
+
 export function BottomNav() {
   const pathname = usePathname();
+  const [role, setRole] = useState<UserRole>(null);
+
+  useEffect(() => {
+    async function fetchRole() {
+      const supabase = createClient();
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      if (!userId) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .single();
+      if (data?.role) setRole(data.role as UserRole);
+    }
+    fetchRole();
+  }, []);
+
+  const tabs = role === "organizer" ? organizerTabs : playerTabs;
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-black/96 backdrop-blur-xl border-t border-white/[0.06] z-50">
       <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-2">
@@ -20,6 +51,8 @@ export function BottomNav() {
           const active =
             href === "/feed"
               ? pathname === "/feed"
+              : href === "/organizer/dashboard"
+              ? pathname === "/organizer/dashboard" || (pathname.startsWith("/organizer") && !pathname.startsWith("/organizer/room"))
               : pathname === href || pathname.startsWith(`${href}/`);
           return (
             <Link
