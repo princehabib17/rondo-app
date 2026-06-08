@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import type { Game, Profile } from "@/lib/supabase/types";
@@ -37,6 +38,7 @@ function partitionByTab(games: Game[], tab: GamesTab): Game[] {
 }
 
 export default function FeedPage() {
+  const router = useRouter();
   const [games, setGames] = useState<Game[]>([]);
   const [organizers, setOrganizers] = useState<OrganizerGroup[]>(PLACEHOLDER_ORGANIZERS);
   const [loading, setLoading] = useState(true);
@@ -53,6 +55,12 @@ export default function FeedPage() {
     const { data: userData } = await supabase.auth.getUser();
     if (userData.user && !isGuestUser(userData.user)) {
       fetch("/api/matches/expire-reservations", { method: "POST" }).catch(() => {});
+      // Redirect users who haven't completed onboarding
+      const { data: profile } = await supabase.from("profiles").select("role").eq("id", userData.user.id).single();
+      if (!profile?.role) {
+        router.replace("/onboarding/slides");
+        return;
+      }
     }
 
     const [{ data: gamesData }, { data: organizersData }, { count: unreadCount }] = await Promise.all([

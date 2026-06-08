@@ -33,7 +33,11 @@ export default function SignupPage() {
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user && !data.user.is_anonymous) router.replace("/feed");
+      if (!data.user || data.user.is_anonymous) return;
+      // Logged-in user with no role still needs to onboard
+      supabase.from("profiles").select("role").eq("id", data.user.id).single().then(({ data: profile }) => {
+        router.replace(profile?.role ? "/feed" : "/onboarding/slides");
+      });
     });
   }, [router]);
 
@@ -41,16 +45,26 @@ export default function SignupPage() {
     resolver: zodResolver(signupSchema),
   });
 
-  async function onSubmit(data: SignupForm) {
+  async function onSubmit(formData: SignupForm) {
     setError(null);
-    const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: { data: { full_name: data.fullName } },
+    // Use server-side admin signup to skip email confirmation entirely
+    const res = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: formData.email, password: formData.password, fullName: formData.fullName }),
     });
-    if (error) {
-      setError(error.message);
+    const json = await res.json();
+    if (!res.ok) {
+      setError(json.error ?? "Could not create account");
+      return;
+    }
+    const supabase = createClient();
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: formData.email,
+      password: formData.password,
+    });
+    if (signInError) {
+      setError(signInError.message);
       return;
     }
     router.push("/onboarding/slides");

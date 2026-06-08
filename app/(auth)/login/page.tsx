@@ -32,10 +32,12 @@ export default function LoginPage() {
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user && !data.user.is_anonymous) {
-        const next = safeNext(new URLSearchParams(window.location.search).get("next"));
-        router.replace(next ?? "/feed");
-      }
+      if (!data.user || data.user.is_anonymous) return;
+      const next = safeNext(new URLSearchParams(window.location.search).get("next"));
+      if (next) { router.replace(next); return; }
+      supabase.from("profiles").select("role").eq("id", data.user.id).single().then(({ data: profile }) => {
+        router.replace(profile?.role ? "/feed" : "/onboarding/slides");
+      });
     });
   }, [router]);
 
