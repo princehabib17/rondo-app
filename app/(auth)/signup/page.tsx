@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -30,31 +30,35 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<SignupForm>({
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user && !data.user.is_anonymous) router.replace("/feed");
+    });
+  }, [router]);
+
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignupForm>({
     resolver: zodResolver(signupSchema),
   });
 
   async function onSubmit(data: SignupForm) {
     setError(null);
     const supabase = createClient();
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
-      options: {
-        data: { full_name: data.fullName },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
+      options: { data: { full_name: data.fullName } },
     });
-    if (signUpError) {
-      setError(signUpError.message);
+    if (error) {
+      setError(error.message);
       return;
     }
-    router.push(`/otp?email=${encodeURIComponent(data.email)}`);
+    router.push("/onboarding/slides");
+    router.refresh();
   }
+
+  const inputClass =
+    "w-full bg-black/60 border border-white/20 text-white px-4 py-3.5 text-sm placeholder:text-white/30 focus:outline-none focus:border-rondo-accent focus:bg-black/80 rounded-xl transition-colors";
 
   return (
     <>
@@ -120,15 +124,19 @@ export default function SignupPage() {
           </p>
         )}
 
-        <RondoButton type="submit" variant="secondary" disabled={isSubmitting} className="mt-2">
-          {isSubmitting ? "Creating…" : "Create account"}
-        </RondoButton>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full bg-rondo-accent text-black font-heading font-black uppercase tracking-widest text-sm py-4 rounded-xl disabled:opacity-50 active:scale-[0.98] transition-all"
+        >
+          {isSubmitting ? "Creating..." : "Create Account"}
+        </button>
       </form>
 
       <p className="text-center text-white/55 text-sm mt-8">
         Already have an account?{" "}
         <Link href="/login" className="text-rondo-accent font-semibold hover:underline">
-          Log in
+          Log In
         </Link>
       </p>
 

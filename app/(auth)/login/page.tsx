@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -22,6 +22,13 @@ export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user && !data.user.is_anonymous) router.replace("/feed");
+    });
+  }, [router]);
+
   const {
     register,
     handleSubmit,
@@ -33,7 +40,7 @@ export default function LoginPage() {
   async function onSubmit(data: LoginForm) {
     setError(null);
     const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email: data.email,
       password: data.password,
     });
@@ -41,9 +48,22 @@ export default function LoginPage() {
       setError(signInError.message);
       return;
     }
-    router.push("/feed");
+    const userId = signInData.user?.id;
+    if (userId) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .single();
+      router.push(profile?.role ? "/feed" : "/onboarding/slides");
+    } else {
+      router.push("/feed");
+    }
     router.refresh();
   }
+
+  const inputClass =
+    "w-full bg-black/60 border border-white/20 text-white px-4 py-3.5 text-sm focus:outline-none focus:border-rondo-accent focus:bg-black/80 rounded-xl transition-colors";
 
   return (
     <>
@@ -95,9 +115,13 @@ export default function LoginPage() {
           </p>
         )}
 
-        <RondoButton type="submit" variant="primary" disabled={isSubmitting} className="mt-2">
-          {isSubmitting ? "Logging in…" : "Log in"}
-        </RondoButton>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full bg-rondo-accent text-black font-heading font-black uppercase tracking-widest text-sm py-4 rounded-xl disabled:opacity-50 active:scale-[0.98] transition-transform"
+        >
+          {isSubmitting ? "Logging in..." : "Log In"}
+        </button>
       </form>
 
       <p className="text-center text-white/55 text-sm mt-8">

@@ -99,26 +99,20 @@ export default function JoinMatchPage() {
         body: JSON.stringify({ gameId: game.id, teamId: selectedTeamId }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Waitlist failed");
-      router.push(`/games/${id}?waitlisted=1`);
+      if (!res.ok) throw new Error(json.error ?? "Could not join waitlist");
+      router.push(`/games/${id}/confirmed`);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Waitlist failed");
+      setError(e instanceof Error ? e.message : "Join waitlist failed");
       setJoining(false);
     }
   }
 
   async function handleConfirm() {
     if (!selectedTeamId || !game) return;
-    const picked = (game.teams as TeamWithPlayers[] | undefined)?.find(
-      (t) => t.id === selectedTeamId
-    );
-    if (picked && isTeamFull(picked, game)) {
-      setError("That team is full. Pick another team.");
-      return;
-    }
 
     setJoining(true);
     setError(null);
+
     const supabase = createClient();
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) {
@@ -130,29 +124,33 @@ export default function JoinMatchPage() {
       return;
     }
 
+    // Wallet games redirect to payment page (payment page handles the insert)
+    if (usesWallet(game)) {
+      router.push(`/games/${id}/payment?teamId=${selectedTeamId}`);
+      return;
+    }
+
+    // All non-wallet joins go through the server route which enforces capacity
+    const paymentStatus = requiresApproval(game)
+      ? "pending_approval"
+      : canPayLater(game)
+        ? "reserved"
+        : "venue";
+
+    const res = await fetch("/api/matches/join", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ gameId: game.id, teamId: selectedTeamId, paymentStatus }),
+    });
+    const json = await res.json();
+
+    if (!res.ok) {
+      setError(json.error ?? "Could not join. Please try again.");
+      setJoining(false);
+      return;
+    }
+
     if (requiresApproval(game)) {
-      const { error: reqError } = await supabase.from("game_players").upsert(
-        {
-          game_id: id,
-          user_id: userData.user.id,
-          team_id: selectedTeamId,
-          payment_status: "pending_approval",
-        },
-        { onConflict: "game_id,user_id" }
-      );
-      if (reqError) {
-        setError(reqError.message);
-        setJoining(false);
-        return;
-      }
-      if (usesWallet(game) && !canPayLater(game)) {
-        router.push(`/games/${id}/payment?teamId=${selectedTeamId}`);
-        return;
-      }
-      if (usesWallet(game) && canPayLater(game)) {
-        router.push(`/games/${id}/payment?teamId=${selectedTeamId}&mode=reserve`);
-        return;
-      }
       await pushInAppNotification({
         userId: userData.user.id,
         type: "join_requested",
@@ -160,31 +158,8 @@ export default function JoinMatchPage() {
         body: `Your request to join ${game.title} is pending approval.`,
         link: `/games/${id}/confirmed`,
       });
-      router.push(`/games/${id}/confirmed`);
-      return;
     }
 
-    if (usesWallet(game)) {
-      router.push(`/games/${id}/payment?teamId=${selectedTeamId}`);
-      return;
-    }
-
-    const status = canPayLater(game) ? "reserved" : "venue";
-    const { error: joinError } = await supabase.from("game_players").upsert(
-      {
-        game_id: id,
-        user_id: userData.user.id,
-        team_id: selectedTeamId,
-        payment_status: status,
-      },
-      { onConflict: "game_id,user_id" }
-    );
-
-    if (joinError) {
-      setError(joinError.message);
-      setJoining(false);
-      return;
-    }
     router.push(`/games/${id}/confirmed`);
   }
 
@@ -221,6 +196,23 @@ export default function JoinMatchPage() {
             : "Choose slot";
 
   const onPrimary = claimSpot ? handleClaimSpot : waitlistOnly ? handleWaitlist : handleConfirm;
+
+  if (teams.length === 0) {
+    return (
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 text-center gap-4">
+        <p className="text-white font-bold text-lg">No teams yet</p>
+        <p className="text-muted-foreground text-sm max-w-xs">
+          The organizer hasn&apos;t set up teams for this game. Check back closer to kick-off.
+        </p>
+        <button
+          onClick={() => router.back()}
+          className="w-full max-w-xs border border-border text-white text-sm py-4 rounded-xl cursor-pointer min-h-[44px]"
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[100dvh] rondo-page pb-28">

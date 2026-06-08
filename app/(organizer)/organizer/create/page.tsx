@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { deriveMatchType } from "@/lib/feed/filters";
 
+// Colors also defined as CSS variables in globals.css under --color-team-*
 const TEAM_COLORS = [
   { name: "Red", color: "#E53935" },
   { name: "Blue", color: "#1E88E5" },
@@ -326,7 +327,7 @@ export default function CreateGamePage() {
 
         <Button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || geocoding}
           className="w-full bg-rondo-yellow text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-xl active:scale-[0.98] transition-all min-h-[52px]"
         >
           {isSubmitting ? "Creating..." : "Create Match"}

@@ -15,8 +15,25 @@ export async function GET(request: Request) {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      const destination = isGuestUser(user) ? "/feed" : next;
-      return NextResponse.redirect(`${origin}${destination}`);
+
+      if (user?.is_anonymous) {
+        return NextResponse.redirect(`${origin}/feed`);
+      }
+
+      if (user) {
+        // Password reset flow — always follow next
+        if (next.startsWith("/reset-password")) {
+          return NextResponse.redirect(`${origin}${next}`);
+        }
+        // Check whether the user has completed onboarding
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+        const destination = profile?.role ? next : "/onboarding/slides";
+        return NextResponse.redirect(`${origin}${destination}`);
+      }
     }
   }
 

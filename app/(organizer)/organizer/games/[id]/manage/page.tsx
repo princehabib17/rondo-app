@@ -19,91 +19,123 @@ export default function ManageGamePage() {
   const [game, setGame] = useState<ManagedGame | null>(null);
   const [loading, setLoading] = useState(true);
   const [unassigned, setUnassigned] = useState<(GamePlayer & { profile: Profile | null })[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [confirmCancel, setConfirmCancel] = useState(false);
   const [waitlist, setWaitlist] = useState<WaitlistRow[]>([]);
   const [addingWaitlistId, setAddingWaitlistId] = useState<string | null>(null);
 
-  const loadGame = useCallback(async () => {
+  const loadGame = useCallback(async function loadGame() {
     const supabase = createClient();
+
+    const { data: userData } = await supabase.auth.getUser();
+    const uid = userData.user?.id ?? null;
+    setCurrentUserId(uid);
+
+    if (!uid) {
+      router.replace("/login");
+      return;
+    }
+
+    // Fetch game — scoped to organizer_id so a non-organizer gets no data
     const { data } = await supabase
       .from("games")
       .select(`*, teams(id, name, color, slot_number, game_players(id, user_id, payment_status, profile:profiles(id, full_name, avatar_url, nationality)))`)
       .eq("id", id)
+      .eq("organizer_id", uid)
       .single();
 
-    if (data) {
-      const gameData = data as unknown as ManagedGame;
-      setGame(gameData);
-      const { data: allGp } = await supabase
-        .from("game_players")
-        .select("id, user_id, team_id, payment_status, profile:profiles(id, full_name, avatar_url, nationality)")
-        .eq("game_id", id)
-        .is("team_id", null);
-      setUnassigned((allGp as unknown as (GamePlayer & { profile: Profile | null })[]) ?? []);
-
-      const { data: wlRows } = await supabase
-        .from("game_waitlist")
-        .select("id, game_id, user_id, team_id, status, created_at, profile:profiles(id, full_name, avatar_url, nationality)")
-        .eq("game_id", id)
-        .eq("status", "waiting")
-        .order("created_at", { ascending: true });
-      setWaitlist((wlRows as unknown as WaitlistRow[]) ?? []);
+    if (!data) {
+      // Game doesn't exist or current user is not the organizer
+      router.replace("/organizer/dashboard");
+      return;
     }
+
+    const gameData = data as unknown as ManagedGame;
+    setGame(gameData);
+
+    const { data: allGp } = await supabase
+      .from("game_players")
+      .select("id, user_id, team_id, payment_status, profile:profiles(id, full_name, avatar_url, nationality)")
+      .eq("game_id", id)
+      .is("team_id", null);
+    setUnassigned((allGp as unknown as (GamePlayer & { profile: Profile | null })[]) ?? []);
+
+    const { data: wlData } = await supabase
+      .from("game_waitlist")
+      .select("*, profile:profiles(id, full_name, avatar_url, nationality)")
+      .eq("game_id", id)
+      .order("created_at", { ascending: true });
+    setWaitlist((wlData as unknown as WaitlistRow[]) ?? []);
+
     setLoading(false);
-  }, [id]);
+  }, [id, router]);
 
   useEffect(() => { loadGame(); }, [loadGame]);
 
   async function assignTeam(playerId: string, teamId: string) {
+    if (!currentUserId) return;
+    // Verify the teamId belongs to this game (checked against already-loaded state)
+    const teamBelongsToGame = game?.teams?.some((t) => t.id === teamId);
+    if (!teamBelongsToGame) return;
     const supabase = createClient();
-    await supabase.from("game_players").update({ team_id: teamId }).eq("id", playerId);
+    // Scope update: player must belong to this game AND team must belong to this game
+    await supabase
+      .from("game_players")
+      .update({ team_id: teamId })
+      .eq("id", playerId)
+      .eq("game_id", id);
     await loadGame();
   }
 
   async function removePlayer(playerId: string) {
+    if (!currentUserId) return;
     const supabase = createClient();
-    await supabase.from("game_players").delete().eq("id", playerId);
-    if (game) {
-      await fetch("/api/matches/waitlist/notify-open", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gameId: game.id }),
-      });
-    }
-    await loadGame();
-  }
-
-  async function approvePlayer(playerId: string) {
-    const res = await fetch(`/api/organizer/games/${id}/approve-player`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ playerId }),
-    });
-    if (!res.ok) {
-      const json = await res.json().catch(() => ({}));
-      alert(json.error ?? "Failed to approve player");
-      return;
-    }
+    // Scope delete to this game only — prevents deleting players from other games
+    await supabase
+      .from("game_players")
+      .delete()
+      .eq("id", playerId)
+      .eq("game_id", id);
     await loadGame();
   }
 
   async function updatePlayerStatus(playerId: string, paymentStatus: string) {
+    if (!currentUserId) return;
     const supabase = createClient();
-    await supabase.from("game_players").update({ payment_status: paymentStatus }).eq("id", playerId);
+    // Scope update to this game only
+    await supabase
+      .from("game_players")
+      .update({ payment_status: paymentStatus })
+      .eq("id", playerId)
+      .eq("game_id", id);
     await loadGame();
   }
 
+  async function approvePlayer(playerId: string) {
+    await updatePlayerStatus(playerId, "reserved");
+  }
+
   async function updateGameStatus(status: "cancelled" | "open") {
+    if (!currentUserId) return;
     const supabase = createClient();
-    await supabase.from("games").update({ status }).eq("id", id);
+    // organizer_id guard ensures only the owner can change status
+    await supabase
+      .from("games")
+      .update({ status })
+      .eq("id", id)
+      .eq("organizer_id", currentUserId);
     await loadGame();
   }
 
   async function toggleRegistration() {
+    if (!currentUserId) return;
     const supabase = createClient();
+    // organizer_id guard ensures only the owner can toggle registration
     await supabase
       .from("games")
       .update({ registration_open: !game?.registration_open })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("organizer_id", currentUserId);
     await loadGame();
   }
 
@@ -178,22 +210,40 @@ export default function ManageGamePage() {
             <Users size={18} className="text-rondo-yellow shrink-0" />
             <span className="text-white text-sm font-semibold">Payments</span>
           </button>
-          <button
-            onClick={() => updateGameStatus(game.status === "cancelled" ? "open" : "cancelled")}
-            className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-rondo-yellow/40 active:scale-[0.97] transition-all cursor-pointer min-h-[44px]"
-          >
-            <span className="text-white text-sm font-semibold">
-              {game.status === "cancelled" ? "Reopen Match" : "Cancel Match"}
-            </span>
-          </button>
-          <button
-            onClick={togglePayRule}
-            className="col-span-2 bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-rondo-yellow/40 active:scale-[0.97] transition-all cursor-pointer min-h-[44px]"
-          >
-            <span className="text-white text-sm font-semibold">
-              {game.allow_pay_later ? "Require pay to reserve" : "Allow reserve & pay later"}
-            </span>
-          </button>
+          {game.status === "cancelled" ? (
+            <button
+              onClick={() => updateGameStatus("open")}
+              className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-rondo-yellow/40 active:scale-[0.97] transition-all cursor-pointer min-h-[44px]"
+            >
+              <span className="text-white text-sm font-semibold">Reopen Game</span>
+            </button>
+          ) : confirmCancel ? (
+            <div className="col-span-2 bg-card border border-red-500/40 rounded-xl p-4 space-y-3">
+              <p className="text-white text-sm font-bold">Cancel this game?</p>
+              <p className="text-muted-foreground text-xs">All players will lose their reserved spots.</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { updateGameStatus("cancelled"); setConfirmCancel(false); }}
+                  className="flex-1 bg-red-500/90 text-white text-xs font-black py-2.5 rounded-lg cursor-pointer"
+                >
+                  Yes, Cancel
+                </button>
+                <button
+                  onClick={() => setConfirmCancel(false)}
+                  className="flex-1 border border-border text-white/60 text-xs py-2.5 rounded-lg cursor-pointer"
+                >
+                  Go Back
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmCancel(true)}
+              className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-red-500/30 active:scale-[0.97] transition-all cursor-pointer min-h-[44px]"
+            >
+              <span className="text-white text-sm font-semibold">Cancel Game</span>
+            </button>
+          )}
           <button
             onClick={toggleRegistration}
             className="col-span-2 bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-rondo-yellow/40 active:scale-[0.97] transition-all cursor-pointer min-h-[44px]"
@@ -266,7 +316,7 @@ export default function ManageGamePage() {
           {unassigned.length > 0 && (
             <div className="bg-card border border-border rounded-xl p-4 space-y-3">
               <span className="text-muted-foreground font-bold text-sm">Unassigned</span>
-              {unassigned.map((gp) => (
+              {unassigned.slice().sort((a, b) => (a.profile?.full_name ?? "").localeCompare(b.profile?.full_name ?? "")).map((gp) => (
                 gp.profile && (
                   <div key={gp.id} className="space-y-2">
                     <div className="flex items-center gap-3">

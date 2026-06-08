@@ -32,9 +32,9 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
         </h2>
       </div>
 
-      <article className="rondo-surface rounded-2xl overflow-hidden">
+      <article className="bg-card border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition-colors">
         <div className="flex gap-0">
-          <div className="relative w-[42%] min-h-[180px] shrink-0 bg-[#1c1c1c]">
+          <div className="relative w-[42%] min-h-[180px] shrink-0 bg-secondary">
             {game.banner_url ? (
               <img src={game.banner_url} alt="" className="w-full h-full object-cover" />
             ) : (
@@ -54,7 +54,7 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
 
             <div className="space-y-1.5 font-body text-white/60 text-[11px] mb-2">
               <div className="flex items-center gap-1.5 min-w-0">
-                <span className="w-4 h-4 rounded-full bg-[#2a2a2a] flex items-center justify-center shrink-0 text-[8px] font-heading text-white">
+                <span className="w-4 h-4 rounded-full bg-secondary flex items-center justify-center shrink-0 text-[8px] font-heading text-white">
                   {getOrganizerInitials(organizerName)}
                 </span>
                 <span className="truncate">{organizerName}</span>
@@ -101,8 +101,8 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
 export function FeaturedGameSkeleton() {
   return (
     <section className="px-4 pt-6">
-      <div className="h-4 w-32 rondo-shimmer rounded mb-3" />
-      <div className="h-[180px] rondo-surface rounded-2xl rondo-shimmer" />
+      <div className="h-4 w-32 bg-white/10 rounded animate-pulse mb-3" />
+      <div className="h-[180px] bg-card border border-white/10 rounded-2xl animate-pulse" />
     </section>
   );
 }

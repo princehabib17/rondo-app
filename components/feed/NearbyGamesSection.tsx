@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronRight, MapPinned } from "lucide-react";
+import { ChevronRight, Map, MapPinned } from "lucide-react";
 import { formatGameTime, formatPrice } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
 import { getOrganizerInitials } from "@/lib/feed/organizers";
@@ -43,7 +43,7 @@ export function NearbyGameRow({ game, coords = null }: NearbyGameRowProps) {
       href={`/games/${game.id}`}
       className="flex items-center gap-3 py-3 border-b border-white/5 last:border-0 active:opacity-80 transition-opacity"
     >
-      <div className="w-11 h-11 rounded-full bg-[#1c1c1c] border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
+      <div className="w-11 h-11 rounded-full bg-secondary border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
         {game.organizer?.avatar_url ? (
           <Image
             src={game.organizer.avatar_url}
@@ -131,41 +131,47 @@ interface NearbyGamesSectionProps {
   tab: "nearby" | "upcoming";
   onTabChange: (tab: "nearby" | "upcoming") => void;
   loading?: boolean;
-  coords?: Coords | null;
+  hasMore?: boolean;
+  loadingMore?: boolean;
+  onLoadMore?: () => void;
 }
 
-export function NearbyGamesSection({
-  games,
-  tab,
-  onTabChange,
-  loading,
-  coords = null,
-}: NearbyGamesSectionProps) {
+export function NearbyGamesSection({ games, tab, onTabChange, loading, hasMore, loadingMore, onLoadMore }: NearbyGamesSectionProps) {
   return (
     <section id="nearby-games" className="px-4 pt-6 pb-4">
-      <div className="flex items-center gap-5 mb-1">
-        <button
-          type="button"
-          onClick={() => onTabChange("nearby")}
-          className={`font-heading text-sm uppercase tracking-wide pb-2 border-b-2 transition-colors ${
-            tab === "nearby"
-              ? "text-white border-rondo-accent"
-              : "text-white/40 border-transparent"
-          }`}
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-1 bg-white/[0.06] rounded-xl p-1">
+          <button
+            type="button"
+            onClick={() => onTabChange("nearby")}
+            className={`font-heading text-xs uppercase tracking-wide px-3 py-1.5 rounded-lg transition-all duration-200 ${
+              tab === "nearby"
+                ? "bg-rondo-accent text-black font-black"
+                : "text-white/50 hover:text-white/80"
+            }`}
+          >
+            Nearby
+          </button>
+          <button
+            type="button"
+            onClick={() => onTabChange("upcoming")}
+            className={`font-heading text-xs uppercase tracking-wide px-3 py-1.5 rounded-lg transition-all duration-200 ${
+              tab === "upcoming"
+                ? "bg-rondo-accent text-black font-black"
+                : "text-white/50 hover:text-white/80"
+            }`}
+          >
+            Upcoming
+          </button>
+        </div>
+
+        <Link
+          href="/feed/map"
+          className="flex items-center gap-1.5 font-body text-white/50 text-xs hover:text-rondo-accent transition-colors"
         >
-          Nearby
-        </button>
-        <button
-          type="button"
-          onClick={() => onTabChange("upcoming")}
-          className={`font-heading text-sm uppercase tracking-wide pb-2 border-b-2 transition-colors ${
-            tab === "upcoming"
-              ? "text-white border-rondo-accent"
-              : "text-white/40 border-transparent"
-          }`}
-        >
-          Upcoming
-        </button>
+          <Map size={13} />
+          <span>Map</span>
+        </Link>
       </div>
 
       <div className="mt-2">
@@ -178,7 +184,18 @@ export function NearbyGamesSection({
         ) : games.length === 0 ? (
           <EmptyState tab={tab} />
         ) : (
-          games.map((game) => <NearbyGameRow key={game.id} game={game} coords={coords} />)
+          <>
+            {games.map((game) => <NearbyGameRow key={game.id} game={game} />)}
+            {hasMore && onLoadMore && (
+              <button
+                onClick={onLoadMore}
+                disabled={loadingMore}
+                className="w-full mt-4 py-3 font-body text-white/50 hover:text-rondo-accent text-xs uppercase tracking-wider border border-white/10 rounded-xl transition-colors disabled:opacity-40 cursor-pointer"
+              >
+                {loadingMore ? "Loading..." : "Load More"}
+              </button>
+            )}
+          </>
         )}
       </div>
     </section>

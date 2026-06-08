@@ -2,11 +2,12 @@
 
 import { useEffect, useRef, useState, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft, CreditCard, Loader2, MapPin, Shield, Zap } from "lucide-react";
 import Link from "next/link";
-import { ArrowLeft, MapPin, Wallet, Zap } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { formatPrice } from "@/lib/utils/format";
+import { pushInAppNotification } from "@/lib/notifications";
 import type { Game } from "@/lib/supabase/types";
 
 function payIdempotencyKey(gameId: string) {
@@ -32,6 +33,7 @@ function PaymentForm() {
   const [balanceCentavos, setBalanceCentavos] = useState(0);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const payLock = useRef(false);
 
@@ -39,53 +41,43 @@ function PaymentForm() {
     async function load() {
       const supabase = createClient();
       const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user?.id || isGuestUser(userData.user)) {
+      if (!userData.user) { router.push("/login"); return; }
+      if (userData.user.is_anonymous) {
         router.push(`/signup?next=/games/${id}/payment`);
         return;
       }
-
-      const [{ data: gameData }, walletRes, { data: playerRow }] = await Promise.all([
+      const [{ data }, { data: balData }] = await Promise.all([
         supabase.from("games").select("*").eq("id", id).single(),
-        fetch("/api/wallet/balance"),
-        supabase
-          .from("game_players")
-          .select("team_id, payment_status")
-          .eq("game_id", id)
-          .eq("user_id", userData.user.id)
-          .maybeSingle(),
+        fetch("/api/wallet/balance").then((r) => r.json()).catch(() => ({ balanceCentavos: 0 })),
       ]);
-
-      if (gameData) {
-        const g = gameData as Game;
-        setGame(g);
-        if (g.payment_type !== "online") {
-          router.replace(`/games/${id}/join`);
-          return;
-        }
-      }
-
-      if (!teamIdFromUrl && playerRow?.team_id) {
-        setTeamId(playerRow.team_id);
-      }
-
-      if (playerRow?.payment_status === "paid" || playerRow?.payment_status === "approved") {
-        router.replace(`/games/${id}/confirmed`);
-        return;
-      }
-
-      const walletJson = await walletRes.json();
-      if (walletRes.ok) {
-        setBalanceCentavos(walletJson.balanceCentavos ?? 0);
-      }
+      if (data) setGame(data as Game);
+      if (typeof balData?.balanceCentavos === "number") setBalanceCentavos(balData.balanceCentavos);
       setLoading(false);
     }
     load();
-  }, [id, router, teamIdFromUrl]);
+  }, [id, router]);
 
-  async function refreshBalance() {
-    const walletRes = await fetch("/api/wallet/balance");
-    const walletJson = await walletRes.json();
-    if (walletRes.ok) setBalanceCentavos(walletJson.balanceCentavos ?? 0);
+  async function handlePayOnline() {
+    if (!game || paying) return;
+    setPaying(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/wallet/topup/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amountCentavos: game.price_per_player,
+          returnPath: `/games/${id}/payment?teamId=${teamId ?? ""}`,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Payment failed");
+      setRedirecting(true);
+      window.location.href = json.checkoutUrl;
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Payment failed");
+      setPaying(false);
+    }
   }
 
   async function handlePayWithWallet() {
@@ -105,27 +97,62 @@ function PaymentForm() {
         }),
       });
       const json = await res.json();
-
-      if (!res.ok) {
-        if (json.balanceCentavos != null) {
-          setBalanceCentavos(json.balanceCentavos);
-        } else {
-          await refreshBalance();
-        }
-        setError(json.error ?? "Payment failed");
-        setPaying(false);
-        payLock.current = false;
-        return;
-      }
-
+      if (!res.ok) throw new Error(json.error ?? "Payment failed");
       clearPayIdempotencyKey(game.id);
-      setBalanceCentavos(json.balanceCentavos ?? balanceCentavos);
-      router.push(`/games/${id}/confirmed?teamId=${teamId ?? ""}`);
+      router.push(`/games/${id}/confirmed`);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Payment failed");
       setPaying(false);
       payLock.current = false;
     }
+  }
+
+  async function handlePayAtVenue() {
+    if (!game || paying) return;
+    const supabase = createClient();
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) return;
+    if (userData.user.is_anonymous) {
+      router.push(`/signup?next=/games/${id}/payment`);
+      return;
+    }
+    setPaying(true);
+    setError(null);
+    try {
+      const { error: joinError } = await supabase.from("game_players").upsert(
+        {
+          game_id: id,
+          user_id: userData.user.id,
+          team_id: teamId,
+          payment_status: "venue",
+        },
+        { onConflict: "game_id,user_id" }
+      );
+      if (joinError) throw new Error(joinError.message);
+      await pushInAppNotification({
+        userId: userData.user.id,
+        type: "join_confirmed",
+        title: "Joined with pay-at-venue",
+        body: `You're in ${game.title}.`,
+        link: `/games/${id}`,
+      });
+      router.push(`/games/${id}/invite`);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Could not join. Please try again.");
+      setPaying(false);
+    }
+  }
+
+  if (redirecting) {
+    return (
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center gap-5 px-6 text-center">
+        <Loader2 size={44} className="text-rondo-yellow animate-spin" />
+        <div>
+          <p className="text-white font-black text-xl">Redirecting to payment</p>
+          <p className="text-muted-foreground text-sm mt-1">Do not close this page</p>
+        </div>
+      </div>
+    );
   }
 
   if (loading) {
@@ -169,11 +196,32 @@ function PaymentForm() {
           </div>
         </div>
 
-        <div className="rondo-surface border-rondo-accent/30 p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-rondo-accent/15 flex items-center justify-center shrink-0">
-              <Wallet size={18} className="text-rondo-accent" />
+        {/* Payment options */}
+        <div className="space-y-3">
+          <h2 className="text-white font-bold text-base">Select Payment Method</h2>
+
+          <button
+            onClick={handlePayOnline}
+            disabled={paying}
+            className="w-full bg-card border border-border hover:border-rondo-yellow/40 rounded-xl p-4 text-left transition-all cursor-pointer active:scale-[0.98] disabled:opacity-50 min-h-[44px]"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-rondo-yellow/10 flex items-center justify-center">
+                <CreditCard size={18} className="text-rondo-yellow" />
+              </div>
+              <div className="flex-1">
+                <p className="text-white font-semibold text-sm">Pay Online</p>
+                <p className="text-muted-foreground text-xs">
+                  GCash, Maya, credit/debit card via PayMongo
+                </p>
+              </div>
+              {paying && (
+                <div className="w-4 h-4 border-2 border-rondo-yellow border-t-transparent rounded-full animate-spin" />
+              )}
             </div>
+          </button>
+
+          <div className="rondo-surface p-4 flex items-center gap-3">
             <div className="flex-1 min-w-0">
               <p className="font-body text-white/50 text-xs uppercase">You have</p>
               <p className="font-heading text-white font-black text-2xl">{formatPrice(balanceCentavos)}</p>

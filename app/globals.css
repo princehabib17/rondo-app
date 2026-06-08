@@ -40,6 +40,14 @@
   --ease-in-out-rondo: cubic-bezier(0.77, 0, 0.175, 1);
   --font-mono: var(--font-geist-mono);
 
+  /* Team colors — used as default options in game creation */
+  --color-team-red: #E53935;
+  --color-team-blue: #1E88E5;
+  --color-team-yellow: #F5E642;
+  --color-team-green: #43A047;
+  --color-team-orange: #FB8C00;
+  --color-team-purple: #8E24AA;
+
   /* RONDO brand colors */
   --color-rondo-accent: #fffa98;
   --color-rondo-yellow: #fffa98;

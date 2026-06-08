@@ -17,11 +17,12 @@ const profileSchema = z.object({
   phone: z.string().min(7, "Phone required"),
   address: z.string().min(2, "Address required"),
   nationality: z.string().min(1, "Nationality required"),
-  position: z.string().min(1, "Position required"),
-  skill_level: z.string().min(1, "Skill level required"),
-  preferred_foot: z.string().min(1, "Preferred foot required"),
+  position: z.string(),
+  skill_level: z.string(),
+  preferred_foot: z.string(),
   preferred_areas: z.string().min(2, "Preferred areas required"),
   game_preference: z.string().min(1, "Preference required"),
+  bio: z.string(),
 });
 type ProfileForm = z.infer<typeof profileSchema>;
 
@@ -35,18 +36,12 @@ export default function PlayerSetupPage() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) setUserId(data.user.id);
-      else router.push("/");
-    });
-  }, [router]);
+  const [userRole, setUserRole] = useState<"player" | "organizer">("player");
 
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -54,6 +49,46 @@ export default function PlayerSetupPage() {
       nationality: "Philippines",
     },
   });
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user) {
+        router.push("/");
+        return;
+      }
+      setUserId(data.user.id);
+
+      const meta = data.user.user_metadata ?? {};
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", data.user.id)
+        .single();
+
+      if (profileData?.avatar_url) {
+        setAvatarPreview(profileData.avatar_url);
+      }
+
+      const savedRole = sessionStorage.getItem("selectedRole") as "player" | "organizer" | null;
+      setUserRole(savedRole ?? (profileData?.role as "player" | "organizer") ?? "player");
+
+      reset({
+        full_name: profileData?.full_name ?? "",
+        age: meta.age ?? "",
+        gender: meta.gender ?? "",
+        phone: meta.phone ?? "",
+        address: meta.address ?? "",
+        nationality: profileData?.nationality ?? meta.nationality ?? "Philippines",
+        position: profileData?.position ?? "",
+        skill_level: profileData?.skill_level ?? "",
+        preferred_foot: profileData?.preferred_foot ?? "",
+        preferred_areas: profileData?.preferred_areas ?? meta.preferred_areas ?? "",
+        game_preference: profileData?.game_preference ?? meta.game_preference ?? "",
+        bio: profileData?.bio ?? "",
+      });
+    });
+  }, [router, reset]);
 
   function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -80,7 +115,7 @@ export default function PlayerSetupPage() {
       }
     }
 
-    const role = (sessionStorage.getItem("selectedRole") ?? "player") as "player" | "organizer";
+    const role = userRole;
 
     await supabase.auth.updateUser({
       data: {
@@ -88,8 +123,6 @@ export default function PlayerSetupPage() {
         gender: data.gender,
         phone: data.phone,
         address: data.address,
-        preferred_areas: data.preferred_areas,
-        game_preference: data.game_preference,
       },
     });
 
@@ -98,12 +131,15 @@ export default function PlayerSetupPage() {
       .update({
         full_name: data.full_name,
         nationality: data.nationality,
-        position: data.position,
-        skill_level: data.skill_level,
-        preferred_foot: data.preferred_foot,
         preferred_areas: data.preferred_areas,
         game_preference: data.game_preference,
+        bio: data.bio || null,
         role,
+        ...(role === "player" ? {
+          position: data.position,
+          skill_level: data.skill_level,
+          preferred_foot: data.preferred_foot,
+        } : {}),
         ...(avatar_url ? { avatar_url } : {}),
       })
       .eq("id", userId);
@@ -185,54 +221,68 @@ export default function PlayerSetupPage() {
               )}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <label className={labelClass}>Position</label>
-              <select {...register("position")} className={inputClass}>
-                <option value="">Select</option>
-                <option value="goalkeeper">Goalkeeper</option>
-                <option value="defender">Defender</option>
-                <option value="midfielder">Midfielder</option>
-                <option value="forward">Forward</option>
-                <option value="any">Any</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className={labelClass}>Skill level</label>
-              <select {...register("skill_level")} className={inputClass}>
-                <option value="">Select</option>
-                <option value="beginner">Beginner</option>
-                <option value="intermediate">Intermediate</option>
-                <option value="advanced">Advanced</option>
-                <option value="pro">Pro</option>
-              </select>
-            </div>
-          </div>
+          {userRole === "player" && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <label className={labelClass}>Position</label>
+                  <select {...register("position")} className={inputClass}>
+                    <option value="">Select</option>
+                    <option value="goalkeeper">Goalkeeper</option>
+                    <option value="defender">Defender</option>
+                    <option value="midfielder">Midfielder</option>
+                    <option value="forward">Forward</option>
+                    <option value="any">Any</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className={labelClass}>Skill level</label>
+                  <select {...register("skill_level")} className={inputClass}>
+                    <option value="">Select</option>
+                    <option value="beginner">Beginner</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
+                    <option value="pro">Pro</option>
+                  </select>
+                </div>
+              </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <label className={labelClass}>Preferred foot</label>
-              <select {...register("preferred_foot")} className={inputClass}>
-                <option value="">Select</option>
-                <option value="left">Left</option>
-                <option value="right">Right</option>
-                <option value="both">Both</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className={labelClass}>Game preference</label>
-              <select {...register("game_preference")} className={inputClass}>
-                <option value="">Select</option>
-                <option value="football">Football</option>
-                <option value="futsal">Futsal</option>
-                <option value="both">Both</option>
-              </select>
-            </div>
+              <div className="space-y-2">
+                <label className={labelClass}>Preferred foot</label>
+                <select {...register("preferred_foot")} className={inputClass}>
+                  <option value="">Select</option>
+                  <option value="left">Left</option>
+                  <option value="right">Right</option>
+                  <option value="both">Both</option>
+                </select>
+              </div>
+            </>
+          )}
+
+          <div className="space-y-2">
+            <label className={labelClass}>Game preference</label>
+            <select {...register("game_preference")} className={inputClass}>
+              <option value="">Select</option>
+              <option value="football">Football</option>
+              <option value="futsal">Futsal</option>
+              <option value="both">Both</option>
+            </select>
           </div>
 
           <div className="space-y-2">
             <label className={labelClass}>Preferred areas</label>
             <input {...register("preferred_areas")} placeholder="BGC, Makati, Ortigas" className={inputClass} />
+          </div>
+
+          <div className="space-y-2">
+            <label className={labelClass}>Bio <span className="text-white/30 normal-case text-[11px]">(optional)</span></label>
+            <textarea
+              {...register("bio")}
+              placeholder="Tell the squad about yourself..."
+              maxLength={200}
+              rows={3}
+              className={`${inputClass} resize-none`}
+            />
           </div>
 
           {error && <p className="text-red-400 text-sm text-center font-body">{error}</p>}

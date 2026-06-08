@@ -53,7 +53,7 @@ export default function OrganizerDashboardPage() {
 
   async function submitPayoutRequest() {
     if (!organizerId) return;
-    const amount = Number(payoutAmount);
+    const amount = Math.round(Number(payoutAmount) * 100); // convert ₱ → centavos
     if (!amount || amount <= 0) return;
     const supabase = createClient();
     const { error } = await supabase.from("payout_requests").insert({
@@ -121,7 +121,7 @@ export default function OrganizerDashboardPage() {
         {!loading && (
           <div className="bg-card border border-border rounded-xl p-4 space-y-3">
             <h2 className="text-white font-bold text-sm uppercase tracking-wider">Request Payout</h2>
-            <input value={payoutAmount} onChange={(e) => setPayoutAmount(e.target.value)} placeholder="Amount (centavos)" className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-white" />
+            <input value={payoutAmount} onChange={(e) => setPayoutAmount(e.target.value)} placeholder="Amount in ₱ (e.g. 500)" type="number" min="1" className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-white" />
             <input value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="Bank name" className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-white" />
             <input value={bankAccountName} onChange={(e) => setBankAccountName(e.target.value)} placeholder="Account name" className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-white" />
             <input value={bankAccountNumber} onChange={(e) => setBankAccountNumber(e.target.value)} placeholder="Account number" className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm text-white" />

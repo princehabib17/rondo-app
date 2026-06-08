@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Calendar, Megaphone, MapPin } from "lucide-react";
+import { ArrowLeft, Calendar, Megaphone, MapPin, Radio } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatGameDate, formatRelativeTime } from "@/lib/utils/format";
 import type { Announcement, Game, Profile } from "@/lib/supabase/types";
@@ -17,6 +17,13 @@ interface OrganizerBroadcast {
   organizer_key: string;
   body: string;
   category: BroadcastCategory;
+  created_at: string;
+}
+
+interface RoomBroadcast {
+  id: string;
+  organizer_id: string;
+  body: string;
   created_at: string;
 }
 
@@ -39,6 +46,7 @@ export default function OrganizerHubPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [games, setGames] = useState<Game[]>([]);
   const [broadcasts, setBroadcasts] = useState<OrganizerBroadcast[]>([]);
+  const [roomBroadcasts, setRoomBroadcasts] = useState<RoomBroadcast[]>([]);
   const [loading, setLoading] = useState(true);
   const [newBody, setNewBody] = useState("");
   const [newCategory, setNewCategory] = useState<BroadcastCategory>("general");
@@ -85,36 +93,50 @@ export default function OrganizerHubPage() {
       setIsPlaceholder(false);
     }
 
+    const queries = [
+      supabase
+        .from("games")
+        .select("*, game_players(id)")
+        .eq("organizer_id", profile.id)
+        .eq("status", "open")
+        .gte("date_time", now)
+        .order("date_time", { ascending: true })
+        .limit(10),
+      isRealOrganizerId
+        ? supabase
+            .from("organizer_broadcasts")
+            .select("*")
+            .or(`organizer_key.eq.${id},organizer_id.eq.${id}`)
+            .order("created_at", { ascending: false })
+            .limit(50)
+        : supabase
+            .from("organizer_broadcasts")
+            .select("*")
+            .eq("organizer_key", id)
+            .order("created_at", { ascending: false })
+            .limit(50),
+      supabase
+        .from("announcements")
+        .select("*")
+        .eq("organizer_id", profile.id)
+        .order("created_at", { ascending: false })
+        .limit(20),
+    ] as const;
+
     const [{ data: gamesData }, { data: organizerBroadcasts }, { data: legacyAnnouncements }] =
-      await Promise.all([
-        supabase
-          .from("games")
-          .select("*, game_players(id)")
-          .eq("organizer_id", profile.id)
-          .eq("status", "open")
-          .gte("date_time", now)
-          .order("date_time", { ascending: true })
-          .limit(10),
-        isRealOrganizerId
-          ? supabase
-              .from("organizer_broadcasts")
-              .select("*")
-              .or(`organizer_key.eq.${id},organizer_id.eq.${id}`)
-              .order("created_at", { ascending: false })
-              .limit(50)
-          : supabase
-              .from("organizer_broadcasts")
-              .select("*")
-              .eq("organizer_key", id)
-              .order("created_at", { ascending: false })
-              .limit(50),
-        supabase
-          .from("announcements")
-          .select("*")
-          .eq("organizer_id", profile.id)
-          .order("created_at", { ascending: false })
-          .limit(20),
-      ]);
+      await Promise.all(queries);
+
+    // Room broadcasts: only real organizer_id rows, last 10
+    let room: RoomBroadcast[] = [];
+    if (isRealOrganizerId) {
+      const { data: roomData } = await supabase
+        .from("organizer_broadcasts")
+        .select("id, organizer_id, body, created_at")
+        .eq("organizer_id", id)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      room = (roomData as RoomBroadcast[] | null) ?? [];
+    }
 
     const normalizedBroadcasts =
       ((organizerBroadcasts as OrganizerBroadcast[] | null) ?? []).length > 0
@@ -131,6 +153,7 @@ export default function OrganizerHubPage() {
     setOrganizer(profile);
     setGames((gamesData as Game[]) ?? []);
     setBroadcasts(normalizedBroadcasts);
+    setRoomBroadcasts(room);
     setLoading(false);
   }, [id, router]);
 
@@ -297,6 +320,34 @@ export default function OrganizerHubPage() {
                   </div>
                 </div>
               </Link>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Room section — organizer's broadcast room updates */}
+      <section className="px-4 pt-6 pb-8">
+        <div className="flex items-center gap-2 mb-3">
+          <Radio size={15} className="text-rondo-accent" />
+          <h2 className="font-heading text-white font-black italic text-sm uppercase">Room</h2>
+        </div>
+
+        {roomBroadcasts.length === 0 ? (
+          <p className="font-body text-white/40 text-sm bg-[#141414] border border-white/10 rounded-xl p-4">
+            No updates yet.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {roomBroadcasts.map((item) => (
+              <article
+                key={item.id}
+                className="bg-[#141414] border border-white/10 rounded-xl p-4"
+              >
+                <p className="font-body text-white/90 text-sm leading-relaxed">{item.body}</p>
+                <p className="font-body text-white/40 text-xs mt-2">
+                  {formatRelativeTime(item.created_at)}
+                </p>
+              </article>
             ))}
           </div>
         )}

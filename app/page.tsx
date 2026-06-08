@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { signInAsGuest } from "@/lib/auth/guest";
-import { RondoButton, RondoPage } from "@/components/rondo/primitives";
+import Link from "next/link";
 
 export default function HomePage() {
   const router = useRouter();
@@ -26,63 +26,66 @@ export default function HomePage() {
   }
 
   return (
-    <RondoPage className="flex flex-col px-6 py-8 max-w-lg mx-auto">
-      <header className="pt-2 flex items-center justify-between">
-        <Image
-          src="/rondo-logo.png"
-          alt="RONDO"
-          width={44}
-          height={44}
-          priority
-          className="object-contain"
-        />
-        <span className="font-heading text-[10px] uppercase tracking-[0.35em] text-white/40">
-          Manila · Futsal
-        </span>
-      </header>
+    <main className="relative min-h-screen bg-black flex flex-col overflow-hidden">
+      {/* Hero image */}
+      <Image
+        src="/feed/hero-night-court.png"
+        alt=""
+        fill
+        priority
+        className="object-cover object-center"
+        sizes="100vw"
+      />
 
-      <div className="flex-1 flex flex-col justify-center py-10">
-        <p className="font-heading text-rondo-accent text-xs uppercase tracking-[0.28em] mb-4">
-          Find your match
-        </p>
-        <h1 className="font-heading text-white font-black italic uppercase text-[clamp(2.75rem,12vw,4.25rem)] leading-[0.92] tracking-tight">
-          Play
-          <br />
-          tonight.
-        </h1>
-        <p className="font-body text-white/55 text-sm leading-relaxed max-w-[28ch] mt-5">
-          Join local matches, pay from your wallet, and show up ready.
-        </p>
-      </div>
+      {/* Gradient overlay — dark at top and heavy at bottom */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/10 to-black" />
 
-      <div className="space-y-3 pb-6 w-full">
-        <RondoButton href="/signup" variant="secondary">
-          Create account
-        </RondoButton>
-        <RondoButton href="/login" variant="primary">
-          Log in
-        </RondoButton>
-        <button
-          type="button"
-          onClick={handleGuest}
-          disabled={guestLoading}
-          className="rondo-btn rondo-btn-ghost w-full"
-        >
-          {guestLoading ? (
-            <>
-              <Loader2 size={16} className="animate-spin" aria-hidden />
-              Opening feed…
-            </>
-          ) : (
-            "Continue as guest"
+      {/* Content */}
+      <div className="relative z-10 flex flex-col min-h-screen px-6 pt-14 pb-10 max-w-lg mx-auto w-full">
+
+        {/* Logo */}
+        <div className="flex justify-center">
+          <Image
+            src="/rondo-logo.png"
+            alt="Rondo"
+            width={52}
+            height={52}
+            priority
+            className="object-contain drop-shadow-[0_0_20px_rgba(255,250,152,0.4)]"
+          />
+        </div>
+
+        <div className="flex-1" />
+
+        {/* CTAs */}
+        <div className="space-y-3">
+          <Link
+            href="/signup"
+            className="block w-full bg-rondo-accent text-black font-heading font-black uppercase tracking-widest text-sm py-4 text-center rounded-xl active:scale-[0.98] transition-transform"
+          >
+            Create Account
+          </Link>
+          <Link
+            href="/login"
+            className="block w-full bg-white/[0.08] border border-white/15 text-white font-heading font-black uppercase tracking-widest text-sm py-4 text-center rounded-xl active:scale-[0.98] transition-transform backdrop-blur-sm"
+          >
+            Log In
+          </Link>
+          <button
+            type="button"
+            onClick={handleGuest}
+            disabled={guestLoading}
+            className="w-full py-3 text-white/45 text-xs uppercase tracking-[0.2em] disabled:opacity-40 transition-opacity"
+          >
+            {guestLoading ? "Please wait..." : "Continue as guest"}
+          </button>
+          {guestError && (
+            <p className="text-red-400 text-xs text-center leading-relaxed px-2">
+              {guestError}
+            </p>
           )}
-        </button>
-        {guestError && (
-          <p className="text-red-400/90 text-xs text-center leading-relaxed px-2" role="alert">
-            {guestError}
-          </p>
-        )}
+        </div>
       </div>
-    </RondoPage>
+    </main>
   );
 }

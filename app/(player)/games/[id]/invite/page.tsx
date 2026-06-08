@@ -5,13 +5,25 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Share2, Link2, Users, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
-import type { Game, GamePlayer, Profile } from "@/lib/supabase/types";
+import type { Profile } from "@/lib/supabase/types";
+
+interface InvitePlayer {
+  id: string;
+  profile: Profile | null;
+}
+
+interface InviteGame {
+  id: string;
+  title: string;
+  venue_name: string;
+  game_players: InvitePlayer[];
+}
 
 export default function InvitePage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const [game, setGame] = useState<Game | null>(null);
-  const [players, setPlayers] = useState<GamePlayer[]>([]);
+  const [game, setGame] = useState<InviteGame | null>(null);
+  const [players, setPlayers] = useState<InvitePlayer[]>([]);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -25,8 +37,8 @@ export default function InvitePage() {
         .eq("id", id)
         .single();
       if (data) {
-        setGame(data as unknown as Game);
-        setPlayers((data.game_players as unknown as GamePlayer[]) ?? []);
+        setGame(data as unknown as InviteGame);
+        setPlayers((data.game_players as unknown as InvitePlayer[]) ?? []);
       }
     }
     load();
@@ -101,13 +113,13 @@ export default function InvitePage() {
                 gp.profile ? (
                   <div key={gp.id} className="flex flex-col items-center gap-1">
                     <PlayerAvatar
-                      profile={gp.profile as Profile}
+                      profile={gp.profile}
                       size="md"
                       showFlag
                       linkable
                     />
                     <span className="text-muted-foreground text-[10px] max-w-[44px] truncate text-center">
-                      {(gp.profile as Profile)?.full_name?.split(" ")[0]}
+                      {gp.profile.full_name?.split(" ")[0]}
                     </span>
                   </div>
                 ) : null

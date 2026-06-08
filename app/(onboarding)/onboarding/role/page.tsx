@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 import { OnboardingHeader } from "@/components/onboarding/OnboardingHeader";
 
 type Role = "player" | "organizer";
@@ -31,6 +32,13 @@ const roles: {
 export default function RoleSelectionPage() {
   const [selected, setSelected] = useState<Role | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) router.replace("/login");
+    });
+  }, [router]);
 
   function handleConfirm() {
     if (!selected) return;

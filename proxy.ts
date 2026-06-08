@@ -87,35 +87,22 @@ function isPublicSkipAuth(pathname: string): boolean {
 }
 
 export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  if (isPublicSkipAuth(pathname)) {
+  // Guard: if Supabase env vars are missing (e.g. preview deployments without secrets),
+  // pass through rather than crashing the middleware with a 500.
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     return NextResponse.next({ request });
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    if (isPublicRoute(pathname)) {
-      return NextResponse.next({ request });
-    }
-    if (pathname.startsWith("/api/")) {
-      return NextResponse.json(
-        { error: "Server misconfigured: set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel." },
-        { status: 503 }
-      );
-    }
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
+  const { pathname } = request.nextUrl;
   let supabaseResponse = NextResponse.next({ request });
 
+  if (isPublicSkipAuth(pathname)) {
+    return supabaseResponse;
+  }
+
   const supabase = createServerClient(
-    supabaseUrl,
-    supabaseAnonKey,
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
         getAll() {

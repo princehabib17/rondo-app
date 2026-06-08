@@ -6,6 +6,12 @@ import { createServiceClient } from "@/lib/supabase/service";
  * Returns credentials for the client to sign in with password.
  */
 export async function POST() {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json(
+      { error: "Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY" },
+      { status: 503 }
+    );
+  }
   try {
     const service = createServiceClient();
     const id = crypto.randomUUID().slice(0, 8);

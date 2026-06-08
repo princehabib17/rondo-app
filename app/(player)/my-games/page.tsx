@@ -46,17 +46,51 @@ export default function MyMatchesPage() {
   }, [router]);
 
   const now = new Date();
-  const upcoming = entries.filter((e) => new Date(e.game.date_time) >= now);
-  const past = entries.filter((e) => new Date(e.game.date_time) < now);
-  const pendingApproval = entries.filter((e) => e.payment_status === "pending_approval");
-  const reservedUnpaid = entries.filter((e) =>
-    ["reserved", "pending_payment", "pending", "venue"].includes(e.payment_status)
-  );
-  const completed = past.filter((e) =>
-    ["paid", "approved", "venue"].includes(e.payment_status) && e.game.status === "completed"
-  );
+
+  // Build mutually exclusive sections by priority so entries don't appear twice.
   const cancelled = entries.filter((e) =>
     e.game.status === "cancelled" || ["cancelled", "rejected", "refunded"].includes(e.payment_status)
+  );
+  const cancelledIds = new Set(cancelled.map((e) => e.id));
+
+  const pendingApproval = entries.filter(
+    (e) => !cancelledIds.has(e.id) && e.payment_status === "pending_approval"
+  );
+  const pendingApprovalIds = new Set(pendingApproval.map((e) => e.id));
+
+  // "Needs payment" — future games where payment action is still required.
+  // "venue" status means the player confirmed pay-at-venue, so it's NOT unpaid.
+  const reservedUnpaid = entries.filter(
+    (e) =>
+      !cancelledIds.has(e.id) &&
+      !pendingApprovalIds.has(e.id) &&
+      new Date(e.game.date_time) >= now &&
+      ["reserved", "pending_payment", "pending"].includes(e.payment_status)
+  );
+  const reservedUnpaidIds = new Set(reservedUnpaid.map((e) => e.id));
+
+  const upcoming = entries.filter(
+    (e) =>
+      !cancelledIds.has(e.id) &&
+      !pendingApprovalIds.has(e.id) &&
+      !reservedUnpaidIds.has(e.id) &&
+      new Date(e.game.date_time) >= now
+  );
+
+  const completed = entries.filter(
+    (e) =>
+      !cancelledIds.has(e.id) &&
+      new Date(e.game.date_time) < now &&
+      ["paid", "approved", "venue"].includes(e.payment_status) &&
+      e.game.status === "completed"
+  );
+  const completedIds = new Set(completed.map((e) => e.id));
+
+  const past = entries.filter(
+    (e) =>
+      !cancelledIds.has(e.id) &&
+      !completedIds.has(e.id) &&
+      new Date(e.game.date_time) < now
   );
 
   const paymentColor: Record<string, string> = {

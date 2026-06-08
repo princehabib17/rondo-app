@@ -15,6 +15,7 @@ export function CountdownTimer({ roundStartTime, roundDurationMinutes, status, c
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const previousSecondsRef = useRef(secondsLeft);
   const soundEnabledRef = useRef(true);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -53,7 +54,11 @@ export function CountdownTimer({ roundStartTime, roundDurationMinutes, status, c
 
     if (secondsLeft <= 10 && secondsLeft > 0) {
       if (typeof window !== "undefined" && "AudioContext" in window) {
-        const context = new AudioContext();
+        if (!audioContextRef.current || audioContextRef.current.state === "closed") {
+          audioContextRef.current = new AudioContext();
+        }
+        const context = audioContextRef.current;
+        if (context.state === "suspended") context.resume();
         const oscillator = context.createOscillator();
         const gain = context.createGain();
         oscillator.frequency.value = 880;
@@ -71,6 +76,10 @@ export function CountdownTimer({ roundStartTime, roundDurationMinutes, status, c
       window.speechSynthesis.speak(utterance);
     }
   }, [secondsLeft, status]);
+
+  useEffect(() => {
+    return () => { audioContextRef.current?.close(); };
+  }, []);
 
   return (
     <div className={cn("tabular-nums font-black tracking-tighter", className)}>

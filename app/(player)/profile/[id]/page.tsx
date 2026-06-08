@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, UserPlus, UserMinus, MapPin, Trophy, Wallet, CalendarDays, ChevronRight, MessageCircle } from "lucide-react";
+import { ArrowLeft, UserPlus, UserMinus, MapPin, Trophy, Wallet, CalendarDays, ChevronRight, ArrowUpRight, ArrowDownLeft, MessageCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { PUBLIC_PROFILE_SELECT } from "@/lib/supabase/profile-select";
@@ -36,6 +36,7 @@ export default function PublicProfilePage() {
   const [walletBalanceCentavos, setWalletBalanceCentavos] = useState(0);
   const [walletSpentCentavos, setWalletSpentCentavos] = useState(0);
   const [walletPaidCount, setWalletPaidCount] = useState(0);
+  const [walletRows, setWalletRows] = useState<Array<{ amount: number; direction: "credit" | "debit"; source: string }>>([]);
   const [isGuest, setIsGuest] = useState(false);
   const [locationHidden, setLocationHidden] = useState(false);
   const [savingLocation, setSavingLocation] = useState(false);
@@ -91,17 +92,10 @@ export default function PublicProfilePage() {
       }
 
       const walletRows = (walletData as Array<{ amount: number; direction: "credit" | "debit"; source: string }> | null) ?? [];
-      if (walletRows.length > 0) {
-        const debits = walletRows.filter((row) => row.direction === "debit");
-        setWalletPaidCount(debits.length);
-        setWalletSpentCentavos(debits.reduce((sum, row) => sum + row.amount, 0));
-      } else {
-        const paidEntries = entries.filter((entry) => entry.payment_status === "paid");
-        setWalletPaidCount(paidEntries.length);
-        setWalletSpentCentavos(
-          paidEntries.reduce((sum, entry) => sum + (entry.game?.price_per_player ?? 0), 0)
-        );
-      }
+      setWalletRows(walletRows);
+      const debits = walletRows.filter((row) => row.direction === "debit");
+      setWalletPaidCount(debits.length);
+      setWalletSpentCentavos(debits.reduce((sum, row) => sum + row.amount, 0));
       setLoading(false);
     }
     load();
@@ -261,16 +255,35 @@ export default function PublicProfilePage() {
                   Manage
                 </Link>
               </div>
-              <Link
-                href="/wallet"
-                className="block bg-card border border-rondo-accent/30 hover:border-rondo-accent/60 rounded-xl p-4 transition-colors"
-              >
-                <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Available balance</p>
-                <p className="text-rondo-accent font-black text-2xl">{formatPrice(walletBalanceCentavos)}</p>
-                <p className="text-muted-foreground text-xs mt-2">
-                  {walletPaidCount} paid match{walletPaidCount === 1 ? "" : "es"} · {formatPrice(walletSpentCentavos)} spent
-                </p>
-              </Link>
+              {walletRows.length > 0 && (
+                <div className="bg-card border border-border rounded-xl overflow-hidden">
+                  {walletRows.slice(0, 10).map((row, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-b-0"
+                    >
+                      <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${row.direction === "credit" ? "bg-green-500/15" : "bg-red-500/15"}`}>
+                        {row.direction === "credit" ? (
+                          <ArrowUpRight size={15} className="text-green-400" />
+                        ) : (
+                          <ArrowDownLeft size={15} className="text-red-400" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white text-sm font-medium">
+                          {row.source
+                            .split("_")
+                            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                            .join(" ")}
+                        </p>
+                      </div>
+                      <p className={`text-sm font-black shrink-0 ${row.direction === "credit" ? "text-green-400" : "text-red-400"}`}>
+                        {row.direction === "credit" ? "+" : "-"}{formatPrice(row.amount)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </section>
 
             <section className="space-y-3">

@@ -25,7 +25,7 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
 
   return (
     <section className="px-4 pt-4">
-      <div className="relative h-52 rounded-2xl overflow-hidden bg-[#1c1c1c]">
+      <div className="relative h-52 rounded-2xl overflow-hidden bg-secondary">
         <Image
           src={slide.image}
           alt=""
@@ -56,15 +56,15 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
         </div>
       </div>
 
-      <div className="flex justify-center gap-2 mt-3">
+      <div className="flex justify-center gap-1.5 mt-3">
         {slides.map((item, i) => (
           <button
             key={item.id}
             type="button"
             onClick={() => setCurrent(i)}
             aria-label={`Go to slide ${i + 1}`}
-            className={`rounded-full transition-all ${
-              i === current ? "w-2.5 h-2.5 bg-rondo-accent" : "w-2 h-2 bg-rondo-accent/30"
+            className={`h-1.5 rounded-full transition-all duration-300 ${
+              i === current ? "w-5 bg-rondo-accent" : "w-1.5 bg-rondo-accent/30"
             }`}
           />
         ))}
