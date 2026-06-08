@@ -27,6 +27,7 @@ const PUBLIC_SKIP_AUTH = [
   "/forgot-password",
   "/reset-password",
   "/auth/callback",
+  "/onboarding",
 ];
 
 const GUEST_BLOCKED_PREFIXES = [

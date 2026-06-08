@@ -74,6 +74,21 @@ export function FeedFiltersBar({
           )}
         </button>
 
+        <button
+          type="button"
+          onClick={onUseLocation}
+          disabled={locating}
+          className={cn(
+            "shrink-0 inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
+            hasLocation
+              ? "bg-rondo-accent/15 text-rondo-accent border-rondo-accent/30"
+              : "bg-white/5 text-white/60 border-white/12 hover:border-white/25"
+          )}
+        >
+          <MapPin size={12} />
+          {locating ? "Locating…" : hasLocation ? "Near me ✓" : "Near me"}
+        </button>
+
         {QUICK_AREAS.map((area) => {
           const active = filters.areas.includes(area);
           return (

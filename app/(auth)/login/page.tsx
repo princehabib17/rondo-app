@@ -18,6 +18,13 @@ const loginSchema = z.object({
 });
 type LoginForm = z.infer<typeof loginSchema>;
 
+function safeNext(raw: string | null): string | null {
+  if (!raw) return null;
+  if (!raw.startsWith("/") || raw.startsWith("//")) return null;
+  if (raw === "/login" || raw === "/signup") return null;
+  return raw;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +32,10 @@ export default function LoginPage() {
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user && !data.user.is_anonymous) router.replace("/feed");
+      if (data.user && !data.user.is_anonymous) {
+        const next = safeNext(new URLSearchParams(window.location.search).get("next"));
+        router.replace(next ?? "/feed");
+      }
     });
   }, [router]);
 
@@ -46,6 +56,12 @@ export default function LoginPage() {
     });
     if (signInError) {
       setError(signInError.message);
+      return;
+    }
+    const next = safeNext(new URLSearchParams(window.location.search).get("next"));
+    if (next) {
+      router.push(next);
+      router.refresh();
       return;
     }
     const userId = signInData.user?.id;
