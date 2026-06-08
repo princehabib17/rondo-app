@@ -1,401 +1,352 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Megaphone, Timer, Users } from "lucide-react";
+import { ArrowLeft, Megaphone, Timer, CreditCard, ChevronDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import { formatGameDate } from "@/lib/utils/format";
-import type { Game, Team, GamePlayer, Profile, GameWaitlistEntry } from "@/lib/supabase/types";
+import type { Game, Team, GamePlayer, Profile, PaymentStatus } from "@/lib/supabase/types";
 
-interface ManagedGame extends Game {
-  teams: (Team & { game_players: (GamePlayer & { profile: Profile | null })[] })[];
-}
+type ManagedPlayer = GamePlayer & { profile: Profile | null };
+type GameBase = Omit<Game, "teams" | "game_players"> & { teams: Team[] };
 
-type WaitlistRow = GameWaitlistEntry & { profile: Profile | null };
+const STATUS_STYLE: Record<string, string> = {
+  paid: "text-green-400 bg-green-400/10",
+  approved: "text-green-400/70 bg-green-400/10",
+  venue: "text-rondo-accent bg-rondo-accent/10",
+  pending_payment: "text-white/40 bg-white/8",
+  reserved: "text-blue-400 bg-blue-400/10",
+  no_show: "text-red-400 bg-red-400/10",
+  refund_requested: "text-orange-400 bg-orange-400/10",
+  cancelled: "text-white/20 bg-white/5",
+};
 
 export default function ManageGamePage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const [game, setGame] = useState<ManagedGame | null>(null);
+  const [gameBase, setGameBase] = useState<GameBase | null>(null);
+  const [allPlayers, setAllPlayers] = useState<ManagedPlayer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [unassigned, setUnassigned] = useState<(GamePlayer & { profile: Profile | null })[]>([]);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [confirmCancel, setConfirmCancel] = useState(false);
-  const [waitlist, setWaitlist] = useState<WaitlistRow[]>([]);
-  const [addingWaitlistId, setAddingWaitlistId] = useState<string | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
-  const loadGame = useCallback(async function loadGame() {
+  const loadGame = useCallback(async () => {
     const supabase = createClient();
-
-    const { data: userData } = await supabase.auth.getUser();
-    const uid = userData.user?.id ?? null;
-    setCurrentUserId(uid);
-
-    if (!uid) {
-      router.replace("/login");
-      return;
-    }
-
-    // Fetch game — scoped to organizer_id so a non-organizer gets no data
-    const { data } = await supabase
-      .from("games")
-      .select(`*, teams(id, name, color, slot_number, game_players(id, user_id, payment_status, profile:profiles(id, full_name, avatar_url, nationality)))`)
-      .eq("id", id)
-      .eq("organizer_id", uid)
-      .single();
-
-    if (!data) {
-      // Game doesn't exist or current user is not the organizer
-      router.replace("/organizer/dashboard");
-      return;
-    }
-
-    const gameData = data as unknown as ManagedGame;
-    setGame(gameData);
-
-    const { data: allGp } = await supabase
-      .from("game_players")
-      .select("id, user_id, team_id, payment_status, profile:profiles(id, full_name, avatar_url, nationality)")
-      .eq("game_id", id)
-      .is("team_id", null);
-    setUnassigned((allGp as unknown as (GamePlayer & { profile: Profile | null })[]) ?? []);
-
-    const { data: wlData } = await supabase
-      .from("game_waitlist")
-      .select("*, profile:profiles(id, full_name, avatar_url, nationality)")
-      .eq("game_id", id)
-      .order("created_at", { ascending: true });
-    setWaitlist((wlData as unknown as WaitlistRow[]) ?? []);
-
+    const [{ data: gameData }, { data: playersData }] = await Promise.all([
+      supabase
+        .from("games")
+        .select("id, title, date_time, status, registration_open, format, max_players, price_per_player, teams(id, name, color, slot_number)")
+        .eq("id", id)
+        .single(),
+      supabase
+        .from("game_players")
+        .select("id, user_id, team_id, payment_status, profile:profiles(id, full_name, avatar_url, nationality)")
+        .eq("game_id", id),
+    ]);
+    if (gameData) setGameBase(gameData as unknown as GameBase);
+    setAllPlayers((playersData as unknown as ManagedPlayer[]) ?? []);
     setLoading(false);
-  }, [id, router]);
+  }, [id]);
 
   useEffect(() => { loadGame(); }, [loadGame]);
 
-  async function assignTeam(playerId: string, teamId: string) {
-    if (!currentUserId) return;
-    // Verify the teamId belongs to this game (checked against already-loaded state)
-    const teamBelongsToGame = game?.teams?.some((t) => t.id === teamId);
-    if (!teamBelongsToGame) return;
-    const supabase = createClient();
-    // Scope update: player must belong to this game AND team must belong to this game
-    await supabase
-      .from("game_players")
-      .update({ team_id: teamId })
-      .eq("id", playerId)
-      .eq("game_id", id);
-    await loadGame();
+  // Derived views — instant, no DB round-trips
+  const byTeam = useMemo(() => {
+    if (!gameBase) return {} as Record<string, ManagedPlayer[]>;
+    return (gameBase.teams ?? []).reduce<Record<string, ManagedPlayer[]>>((acc, team) => {
+      acc[team.id] = allPlayers.filter((p) => p.team_id === team.id);
+      return acc;
+    }, {});
+  }, [gameBase, allPlayers]);
+
+  const unassigned = useMemo(() => allPlayers.filter((p) => !p.team_id), [allPlayers]);
+
+  // ── Optimistic mutations ─────────────────────────────────────────────
+  function assignTeam(playerId: string, teamId: string) {
+    setAllPlayers((prev) => prev.map((p) => p.id === playerId ? { ...p, team_id: teamId } : p));
+    createClient().from("game_players").update({ team_id: teamId }).eq("id", playerId)
+      .then(({ error }) => { if (error) loadGame(); });
   }
 
-  async function removePlayer(playerId: string) {
-    if (!currentUserId) return;
-    const supabase = createClient();
-    // Scope delete to this game only — prevents deleting players from other games
-    await supabase
-      .from("game_players")
-      .delete()
-      .eq("id", playerId)
-      .eq("game_id", id);
-    await loadGame();
+  function removePlayer(playerId: string) {
+    setAllPlayers((prev) => prev.filter((p) => p.id !== playerId));
+    createClient().from("game_players").delete().eq("id", playerId)
+      .then(({ error }) => { if (error) loadGame(); });
   }
 
-  async function updatePlayerStatus(playerId: string, paymentStatus: string) {
-    if (!currentUserId) return;
-    const supabase = createClient();
-    // Scope update to this game only
-    await supabase
-      .from("game_players")
-      .update({ payment_status: paymentStatus })
-      .eq("id", playerId)
-      .eq("game_id", id);
-    await loadGame();
+  function updateStatus(playerId: string, status: string) {
+    setAllPlayers((prev) => prev.map((p) => p.id === playerId ? { ...p, payment_status: status as PaymentStatus } : p));
+    createClient().from("game_players").update({ payment_status: status }).eq("id", playerId)
+      .then(({ error }) => { if (error) loadGame(); });
   }
 
-  async function approvePlayer(playerId: string) {
-    await updatePlayerStatus(playerId, "reserved");
+  function setGameStatus(status: "open" | "cancelled") {
+    setGameBase((prev) => prev ? { ...prev, status } : prev);
+    setShowCancelConfirm(false);
+    createClient().from("games").update({ status }).eq("id", id)
+      .then(({ error }) => { if (error) loadGame(); });
   }
 
-  async function updateGameStatus(status: "cancelled" | "open") {
-    if (!currentUserId) return;
-    const supabase = createClient();
-    // organizer_id guard ensures only the owner can change status
-    await supabase
-      .from("games")
-      .update({ status })
-      .eq("id", id)
-      .eq("organizer_id", currentUserId);
-    await loadGame();
-  }
-
-  async function toggleRegistration() {
-    if (!currentUserId) return;
-    const supabase = createClient();
-    // organizer_id guard ensures only the owner can toggle registration
-    await supabase
-      .from("games")
-      .update({ registration_open: !game?.registration_open })
-      .eq("id", id)
-      .eq("organizer_id", currentUserId);
-    await loadGame();
-  }
-
-  async function togglePayRule() {
-    const supabase = createClient();
-    await supabase
-      .from("games")
-      .update({ allow_pay_later: !game?.allow_pay_later })
-      .eq("id", id);
-    await loadGame();
-  }
-
-  async function addFromWaitlist(waitlistId: string, teamId?: string | null) {
-    setAddingWaitlistId(waitlistId);
-    const res = await fetch(`/api/organizer/games/${id}/waitlist/add`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ waitlistId, teamId: teamId ?? null }),
-    });
-    setAddingWaitlistId(null);
-    if (!res.ok) {
-      const json = await res.json().catch(() => ({}));
-      alert(json.error ?? "Could not add player");
-      return;
-    }
-    await loadGame();
+  function toggleRegistration() {
+    const next = !gameBase?.registration_open;
+    setGameBase((prev) => prev ? { ...prev, registration_open: next } : prev);
+    createClient().from("games").update({ registration_open: next }).eq("id", id)
+      .then(({ error }) => { if (error) loadGame(); });
   }
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] p-4 space-y-4">
-        {[0,1,2].map((i) => <div key={i} className="h-24 bg-card border border-border rounded-xl animate-pulse" />)}
+      <div className="min-h-[100dvh] bg-black p-4 space-y-3">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="h-20 bg-[#141414] border border-white/8 rounded-2xl animate-pulse" />
+        ))}
       </div>
     );
   }
 
-  if (!game) return <div className="min-h-[100dvh] flex items-center justify-center text-muted-foreground">Match not found</div>;
+  if (!gameBase) {
+    return (
+      <div className="min-h-[100dvh] bg-black flex items-center justify-center text-white/40 text-sm">
+        Game not found
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-[100dvh] pb-8">
-      <header className="sticky top-0 bg-background/90 backdrop-blur-md border-b border-border z-40 px-4 py-3 flex items-center gap-3">
-        <button onClick={() => router.back()} className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white hover:text-rondo-yellow cursor-pointer" aria-label="Back">
+    <div className="min-h-[100dvh] bg-black pb-10">
+      <header className="sticky top-0 z-40 bg-black border-b border-white/8 px-4 py-3 flex items-center gap-3">
+        <button
+          onClick={() => router.back()}
+          className="w-10 h-10 flex items-center justify-center text-white/70 shrink-0"
+          aria-label="Back"
+        >
           <ArrowLeft size={20} />
         </button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-white font-bold text-sm truncate">{game.title}</h1>
-          <p className="text-muted-foreground text-xs">{formatGameDate(game.date_time)}</p>
+          <p className="text-white font-bold text-sm truncate leading-tight">{gameBase.title}</p>
+          <p className="text-white/40 text-xs">{formatGameDate(gameBase.date_time)}</p>
         </div>
+        <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${STATUS_STYLE[gameBase.status] ?? "text-white/40 bg-white/5"}`}>
+          {gameBase.status}
+        </span>
       </header>
 
-      <div className="px-4 py-5 space-y-5 max-w-lg mx-auto">
+      <div className="px-4 py-4 space-y-4 max-w-lg mx-auto">
         {/* Quick actions */}
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={() => router.push(`/organizer/games/${id}/announce`)}
-            className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-rondo-yellow/40 active:scale-[0.97] transition-all cursor-pointer min-h-[44px]"
-          >
-            <Megaphone size={18} className="text-rondo-yellow shrink-0" />
-            <span className="text-white text-sm font-semibold">Announce</span>
-          </button>
-          <button
-            onClick={() => router.push(`/organizer/games/${id}/timer`)}
-            className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-rondo-yellow/40 active:scale-[0.97] transition-all cursor-pointer min-h-[44px]"
-          >
-            <Timer size={18} className="text-rondo-yellow shrink-0" />
-            <span className="text-white text-sm font-semibold">Timer</span>
-          </button>
-          <button
-            onClick={() => router.push(`/organizer/games/${id}/payments`)}
-            className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-rondo-yellow/40 active:scale-[0.97] transition-all cursor-pointer min-h-[44px]"
-          >
-            <Users size={18} className="text-rondo-yellow shrink-0" />
-            <span className="text-white text-sm font-semibold">Payments</span>
-          </button>
-          {game.status === "cancelled" ? (
-            <button
-              onClick={() => updateGameStatus("open")}
-              className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-rondo-yellow/40 active:scale-[0.97] transition-all cursor-pointer min-h-[44px]"
-            >
-              <span className="text-white text-sm font-semibold">Reopen Game</span>
-            </button>
-          ) : confirmCancel ? (
-            <div className="col-span-2 bg-card border border-red-500/40 rounded-xl p-4 space-y-3">
-              <p className="text-white text-sm font-bold">Cancel this game?</p>
-              <p className="text-muted-foreground text-xs">All players will lose their reserved spots.</p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => { updateGameStatus("cancelled"); setConfirmCancel(false); }}
-                  className="flex-1 bg-red-500/90 text-white text-xs font-black py-2.5 rounded-lg cursor-pointer"
-                >
-                  Yes, Cancel
-                </button>
-                <button
-                  onClick={() => setConfirmCancel(false)}
-                  className="flex-1 border border-border text-white/60 text-xs py-2.5 rounded-lg cursor-pointer"
-                >
-                  Go Back
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => setConfirmCancel(true)}
-              className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-red-500/30 active:scale-[0.97] transition-all cursor-pointer min-h-[44px]"
-            >
-              <span className="text-white text-sm font-semibold">Cancel Game</span>
-            </button>
-          )}
-          <button
-            onClick={toggleRegistration}
-            className="col-span-2 bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-rondo-yellow/40 active:scale-[0.97] transition-all cursor-pointer min-h-[44px]"
-          >
-            <span className="text-white text-sm font-semibold">
-              {game.registration_open === false ? "Open Registration" : "Close Registration"}
-            </span>
-          </button>
+        <div className="grid grid-cols-3 gap-2">
+          <ActionBtn icon={<Megaphone size={16} />} label="Announce" onClick={() => router.push(`/organizer/games/${id}/announce`)} />
+          <ActionBtn icon={<CreditCard size={16} />} label="Payments" onClick={() => router.push(`/organizer/games/${id}/payments`)} />
+          <ActionBtn icon={<Timer size={16} />} label="Timer" onClick={() => router.push(`/organizer/games/${id}/timer`)} />
         </div>
 
-        {/* Teams roster */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Users size={14} className="text-rondo-yellow" />
-            <h2 className="text-white font-bold text-base">Roster</h2>
-          </div>
+        {/* Game controls */}
+        <div className="flex gap-2">
+          <button
+            onClick={toggleRegistration}
+            className={`flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all ${
+              gameBase.registration_open
+                ? "border-white/15 text-white/60 bg-transparent"
+                : "border-rondo-accent/40 text-rondo-accent bg-rondo-accent/8"
+            }`}
+          >
+            {gameBase.registration_open ? "Close Registration" : "Registration Closed"}
+          </button>
+          {gameBase.status !== "cancelled" ? (
+            showCancelConfirm ? (
+              <button
+                onClick={() => setGameStatus("cancelled")}
+                className="flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-red-900/40 border border-red-700/50 text-red-300"
+              >
+                Confirm Cancel
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowCancelConfirm(true)}
+                className="px-4 py-2.5 rounded-xl text-xs font-bold text-red-400/70 border border-white/8"
+              >
+                Cancel Game
+              </button>
+            )
+          ) : (
+            <button
+              onClick={() => setGameStatus("open")}
+              className="flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-green-800/50 text-green-400"
+            >
+              Reopen
+            </button>
+          )}
+        </div>
 
-          {game.teams?.sort((a, b) => a.slot_number - b.slot_number).map((team) => (
-            <div key={team.id} className="bg-card border border-border rounded-xl p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: team.color }} />
-                <span className="text-white font-bold text-sm">{team.name}</span>
-                <span className="text-muted-foreground text-xs ml-auto">{team.game_players?.length ?? 0} players</span>
-              </div>
-              <div className="space-y-2">
-                {(team.game_players ?? []).map((gp) => (
-                  gp.profile && (
-                    <div key={gp.id} className="flex items-center gap-3">
-                      <PlayerAvatar profile={gp.profile} size="sm" showFlag linkable={false} />
-                      <span className="text-white text-sm flex-1">{gp.profile.full_name}</span>
-                      {gp.payment_status === "pending_approval" && (
-                        <button
-                          type="button"
-                          onClick={() => approvePlayer(gp.id)}
-                          className="text-xs text-rondo-accent font-semibold"
-                        >
-                          Approve
-                        </button>
-                      )}
-                      <select
-                        value={gp.payment_status}
-                        onChange={(e) => updatePlayerStatus(gp.id, e.target.value)}
-                        className="bg-black border border-white/10 text-white text-xs rounded px-2 py-1"
-                      >
-                        <option value="pending_approval">Pending approval</option>
-                        <option value="pending_payment">Pending payment</option>
-                        <option value="paid">Paid</option>
-                        <option value="reserved">Reserved</option>
-                        <option value="venue">At Venue</option>
-                        <option value="no_show">No Show</option>
-                        <option value="refund_requested">Refund Requested</option>
-                      </select>
-                      <button
-                        onClick={() => removePlayer(gp.id)}
-                        className="text-xs text-red-400 hover:text-red-300"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  )
-                ))}
-                {(team.game_players?.length ?? 0) === 0 && (
-                  <p className="text-muted-foreground text-xs">No players yet</p>
-                )}
-              </div>
+        {/* Unassigned players */}
+        {unassigned.length > 0 && (
+          <section className="bg-[#141414] border border-rondo-accent/20 rounded-2xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-white/6 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-rondo-accent animate-pulse" />
+              <span className="text-white font-bold text-sm">Unassigned ({unassigned.length})</span>
             </div>
-          ))}
-
-          {/* Unassigned */}
-          {unassigned.length > 0 && (
-            <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-              <span className="text-muted-foreground font-bold text-sm">Unassigned</span>
-              {unassigned.slice().sort((a, b) => (a.profile?.full_name ?? "").localeCompare(b.profile?.full_name ?? "")).map((gp) => (
-                gp.profile && (
-                  <div key={gp.id} className="space-y-2">
+            <div className="divide-y divide-white/5">
+              {unassigned.map((gp) =>
+                gp.profile ? (
+                  <div key={gp.id} className="px-4 py-3 space-y-2">
                     <div className="flex items-center gap-3">
                       <PlayerAvatar profile={gp.profile} size="sm" showFlag linkable={false} />
                       <span className="text-white text-sm flex-1">{gp.profile.full_name}</span>
+                      <StatusBadge status={gp.payment_status} playerId={gp.id} onChange={updateStatus} />
                     </div>
-                    <div className="flex gap-2 flex-wrap ml-12">
-                      {game.teams?.map((t) => (
+                    <div className="flex gap-1.5 flex-wrap pl-10">
+                      {gameBase.teams?.sort((a, b) => a.slot_number - b.slot_number).map((t) => (
                         <button
                           key={t.id}
                           onClick={() => assignTeam(gp.id, t.id)}
-                          className="text-xs px-2 py-1 rounded border border-border hover:border-rondo-yellow text-muted-foreground hover:text-white transition-all cursor-pointer"
+                          className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-lg border border-white/10 text-white/50 hover:text-white active:scale-95 transition-all"
                         >
-                          &rarr; {t.name}
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: t.color }} />
+                          {t.name}
                         </button>
                       ))}
                     </div>
                   </div>
-                )
-              ))}
+                ) : null
+              )}
             </div>
-          )}
+          </section>
+        )}
+
+        {/* Teams */}
+        <div className="space-y-3">
+          {gameBase.teams?.sort((a, b) => a.slot_number - b.slot_number).map((team) => {
+            const players = byTeam[team.id] ?? [];
+            return (
+              <section key={team.id} className="bg-[#141414] border border-white/8 rounded-2xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-white/6 flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: team.color }} />
+                  <span className="text-white font-bold text-sm">{team.name}</span>
+                  <span className="text-white/30 text-xs ml-auto">{players.length} players</span>
+                </div>
+                {players.length === 0 ? (
+                  <p className="px-4 py-3 text-white/25 text-xs">No players yet</p>
+                ) : (
+                  <div className="divide-y divide-white/5">
+                    {players.map((gp) =>
+                      gp.profile ? (
+                        <PlayerRow
+                          key={gp.id}
+                          gp={gp}
+                          teams={gameBase.teams}
+                          currentTeamId={team.id}
+                          onStatusChange={updateStatus}
+                          onAssignTeam={assignTeam}
+                          onRemove={removePlayer}
+                        />
+                      ) : null
+                    )}
+                  </div>
+                )}
+              </section>
+            );
+          })}
         </div>
 
-        {waitlist.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Users size={14} className="text-rondo-yellow" />
-              <h2 className="text-white font-bold text-base">Waitlist ({waitlist.length})</h2>
-            </div>
-            <p className="text-muted-foreground text-xs">
-              No order — notify all when a spot opens, or add someone manually below.
-            </p>
-            <div className="bg-card border border-border rounded-xl divide-y divide-border">
-              {waitlist.map((row) => (
-                <div key={row.id} className="p-4 space-y-3">
-                  <div className="flex items-center gap-3">
-                    {row.profile ? (
-                      <PlayerAvatar profile={row.profile} size="sm" showFlag linkable={false} />
-                    ) : null}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-semibold truncate">
-                        {row.profile?.full_name ?? "Player"}
-                      </p>
-                      <p className="text-muted-foreground text-xs">
-                        Joined {new Date(row.created_at).toLocaleDateString()}
-                        {row.team_id
-                          ? ` · prefers ${game.teams?.find((t) => t.id === row.team_id)?.name ?? "team"}`
-                          : ""}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      disabled={addingWaitlistId === row.id}
-                      onClick={() => addFromWaitlist(row.id, row.team_id)}
-                      className="text-xs text-rondo-accent font-semibold disabled:opacity-50 shrink-0"
-                    >
-                      {addingWaitlistId === row.id ? "Adding…" : "Add to roster"}
-                    </button>
-                  </div>
-                  <div className="flex gap-2 flex-wrap ml-12">
-                    {game.teams?.map((t) => (
-                      <button
-                        key={t.id}
-                        type="button"
-                        disabled={addingWaitlistId === row.id}
-                        onClick={() => addFromWaitlist(row.id, t.id)}
-                        className="text-xs px-2 py-1 rounded border border-border hover:border-rondo-yellow text-muted-foreground hover:text-white transition-all cursor-pointer disabled:opacity-50"
-                      >
-                        Add → {t.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+        {allPlayers.length === 0 && (
+          <p className="text-center text-white/25 text-sm py-8">No players have joined yet.</p>
         )}
       </div>
+    </div>
+  );
+}
+
+function ActionBtn({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="bg-[#141414] border border-white/8 rounded-xl py-3 flex flex-col items-center gap-1.5 text-white/70 active:scale-95 active:border-rondo-accent/30 transition-all"
+    >
+      <span className="text-rondo-accent">{icon}</span>
+      <span className="text-[11px] font-semibold">{label}</span>
+    </button>
+  );
+}
+
+function StatusBadge({
+  status,
+  playerId,
+  onChange,
+}: {
+  status: string;
+  playerId: string;
+  onChange: (id: string, status: string) => void;
+}) {
+  const style = STATUS_STYLE[status] ?? "text-white/40 bg-white/5";
+  return (
+    <select
+      value={status}
+      onChange={(e) => onChange(playerId, e.target.value)}
+      className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full border-0 cursor-pointer ${style}`}
+    >
+      <option value="pending_payment">Pending</option>
+      <option value="venue">At Venue</option>
+      <option value="approved">Approved</option>
+      <option value="no_show">No Show</option>
+      <option value="refund_requested">Refund</option>
+      <option value="cancelled">Cancelled</option>
+    </select>
+  );
+}
+
+function PlayerRow({
+  gp,
+  teams,
+  currentTeamId,
+  onStatusChange,
+  onAssignTeam,
+  onRemove,
+}: {
+  gp: ManagedPlayer;
+  teams: Team[];
+  currentTeamId: string;
+  onStatusChange: (id: string, status: string) => void;
+  onAssignTeam: (playerId: string, teamId: string) => void;
+  onRemove: (id: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  if (!gp.profile) return null;
+
+  return (
+    <div className="px-4 py-3">
+      <div className="flex items-center gap-3">
+        <PlayerAvatar profile={gp.profile} size="sm" showFlag linkable={false} />
+        <span className="text-white text-sm flex-1 min-w-0 truncate">{gp.profile.full_name}</span>
+        <StatusBadge status={gp.payment_status} playerId={gp.id} onChange={onStatusChange} />
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="text-white/25 hover:text-white/50 transition-colors"
+        >
+          <ChevronDown size={14} className={`transition-transform ${expanded ? "rotate-180" : ""}`} />
+        </button>
+      </div>
+
+      {expanded && (
+        <div className="mt-2.5 pl-10 flex items-center gap-2 flex-wrap">
+          {teams
+            .filter((t) => t.id !== currentTeamId)
+            .map((t) => (
+              <button
+                key={t.id}
+                onClick={() => { onAssignTeam(gp.id, t.id); setExpanded(false); }}
+                className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg border border-white/10 text-white/40 hover:text-white active:scale-95 transition-all"
+              >
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: t.color }} />
+                Move to {t.name}
+              </button>
+            ))}
+          <button
+            onClick={() => onRemove(gp.id)}
+            className="text-[11px] px-2 py-1 rounded-lg border border-red-900/50 text-red-400/70 hover:text-red-300 active:scale-95 transition-all"
+          >
+            Remove
+          </button>
+        </div>
+      )}
     </div>
   );
 }
