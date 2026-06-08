@@ -16,6 +16,7 @@ const PUBLIC_PREFIXES = [
   "/api/payments/webhook",
   "/api/auth/guest",
   "/api/auth/signup",
+  "/api/seed",
 ];
 
 const PUBLIC_BROWSE_PREFIXES = [

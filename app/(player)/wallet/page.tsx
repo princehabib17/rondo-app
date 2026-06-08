@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Plus, Wallet } from "lucide-react";
+import { ArrowLeft, Plus, Wallet, ArrowDownToLine, Clock } from "lucide-react";
 import { formatPrice, formatRelativeTime } from "@/lib/utils/format";
 import { TOPUP_PRESETS_CENTAVOS } from "@/lib/wallet/constants";
 import type { WalletTransaction } from "@/lib/supabase/types";
@@ -10,30 +10,56 @@ import type { WalletTransaction } from "@/lib/supabase/types";
 const TOPUP_SESSION_KEY = "rondo_pending_topup_session";
 const TOPUP_REFERENCE_KEY = "rondo_pending_topup_reference";
 
+interface PayoutRequest {
+  id: string;
+  amount: number;
+  status: string;
+  bank_name: string;
+  bank_account_name: string;
+  note: string | null;
+  created_at: string;
+}
+
 function WalletContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [balanceCentavos, setBalanceCentavos] = useState(0);
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
+  const [payoutRequests, setPayoutRequests] = useState<PayoutRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [topingUp, setTopingUp] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [topupReference, setTopupReference] = useState<string | null>(null);
   const [topupBanner, setTopupBanner] = useState<"cancelled" | "failed" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showPayoutForm, setShowPayoutForm] = useState(false);
+  const [payoutAmount, setPayoutAmount] = useState("");
+  const [payoutBank, setPayoutBank] = useState("");
+  const [payoutName, setPayoutName] = useState("");
+  const [payoutAccount, setPayoutAccount] = useState("");
+  const [payoutLoading, setPayoutLoading] = useState(false);
+  const [payoutError, setPayoutError] = useState<string | null>(null);
+  const [payoutSuccess, setPayoutSuccess] = useState(false);
 
   const loadWallet = useCallback(async () => {
-    const res = await fetch("/api/wallet/balance");
-    const json = await res.json();
-    if (!res.ok) {
-      if (res.status === 401) {
+    const [balRes, payoutRes] = await Promise.all([
+      fetch("/api/wallet/balance"),
+      fetch("/api/wallet/payout"),
+    ]);
+    const balJson = await balRes.json();
+    if (!balRes.ok) {
+      if (balRes.status === 401) {
         router.push("/login?next=/wallet");
         return;
       }
-      throw new Error(json.error ?? "Failed to load wallet");
+      throw new Error(balJson.error ?? "Failed to load wallet");
     }
-    setBalanceCentavos(json.balanceCentavos ?? 0);
-    setTransactions(json.transactions ?? []);
+    setBalanceCentavos(balJson.balanceCentavos ?? 0);
+    setTransactions(balJson.transactions ?? []);
+    if (payoutRes.ok) {
+      const payoutJson = await payoutRes.json();
+      setPayoutRequests(payoutJson.requests ?? []);
+    }
   }, [router]);
 
   const confirmPendingTopUp = useCallback(async () => {
@@ -218,6 +244,143 @@ function WalletContent() {
               </button>
             ))}
           </div>
+        </section>
+
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-heading text-white font-black text-sm uppercase">Cash Out</h2>
+            {!showPayoutForm && (
+              <button
+                type="button"
+                onClick={() => { setShowPayoutForm(true); setPayoutSuccess(false); setPayoutError(null); }}
+                className="flex items-center gap-1.5 text-rondo-accent text-xs font-bold uppercase tracking-wider"
+              >
+                <ArrowDownToLine size={13} /> Request
+              </button>
+            )}
+          </div>
+
+          <div className="bg-[#0f0f0f] border border-white/10 rounded-xl p-4 mb-3 space-y-1">
+            <p className="text-white/60 text-xs leading-relaxed">
+              Top-ups via GCash, Maya, and card are <span className="text-white font-semibold">real money</span>. Payouts are processed manually by the Rondo team and sent via bank transfer within 3–5 business days.
+            </p>
+          </div>
+
+          {payoutSuccess && (
+            <div className="bg-green-950/40 border border-green-800/50 rounded-xl p-4 mb-3">
+              <p className="text-green-400 text-sm font-semibold">Payout request submitted</p>
+              <p className="text-green-200/70 text-xs mt-0.5">We&apos;ll process it within 3–5 business days.</p>
+            </div>
+          )}
+
+          {showPayoutForm && !payoutSuccess && (
+            <div className="bg-[#141414] border border-white/10 rounded-xl p-4 space-y-3 mb-3">
+              <div className="space-y-1">
+                <label className="font-heading text-white/60 text-[10px] uppercase tracking-wider">Amount (₱)</label>
+                <input
+                  type="number"
+                  placeholder="e.g. 500"
+                  value={payoutAmount}
+                  onChange={(e) => setPayoutAmount(e.target.value)}
+                  className="w-full bg-[#1c1c1c] text-white font-body text-sm px-4 py-3 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-rondo-accent/50 placeholder:text-white/30"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="font-heading text-white/60 text-[10px] uppercase tracking-wider">Bank Name</label>
+                <input
+                  type="text"
+                  placeholder="BDO, BPI, GCash, Maya…"
+                  value={payoutBank}
+                  onChange={(e) => setPayoutBank(e.target.value)}
+                  className="w-full bg-[#1c1c1c] text-white font-body text-sm px-4 py-3 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-rondo-accent/50 placeholder:text-white/30"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="font-heading text-white/60 text-[10px] uppercase tracking-wider">Account Name</label>
+                <input
+                  type="text"
+                  placeholder="Full name on account"
+                  value={payoutName}
+                  onChange={(e) => setPayoutName(e.target.value)}
+                  className="w-full bg-[#1c1c1c] text-white font-body text-sm px-4 py-3 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-rondo-accent/50 placeholder:text-white/30"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="font-heading text-white/60 text-[10px] uppercase tracking-wider">Account Number</label>
+                <input
+                  type="text"
+                  placeholder="09xxxxxxxxxx or account number"
+                  value={payoutAccount}
+                  onChange={(e) => setPayoutAccount(e.target.value)}
+                  className="w-full bg-[#1c1c1c] text-white font-body text-sm px-4 py-3 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-rondo-accent/50 placeholder:text-white/30"
+                />
+              </div>
+              {payoutError && (
+                <p className="text-red-400 text-xs">{payoutError}</p>
+              )}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPayoutForm(false)}
+                  className="flex-1 py-3 rounded-xl border border-white/10 text-white/50 text-xs font-bold uppercase tracking-wider"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={payoutLoading}
+                  onClick={async () => {
+                    setPayoutLoading(true);
+                    setPayoutError(null);
+                    try {
+                      const res = await fetch("/api/wallet/payout", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          amountCentavos: Math.round(parseFloat(payoutAmount) * 100),
+                          bankName: payoutBank,
+                          bankAccountName: payoutName,
+                          bankAccountNumber: payoutAccount,
+                        }),
+                      });
+                      const json = await res.json();
+                      if (!res.ok) { setPayoutError(json.error ?? "Request failed"); return; }
+                      setPayoutSuccess(true);
+                      setShowPayoutForm(false);
+                      setPayoutAmount(""); setPayoutBank(""); setPayoutName(""); setPayoutAccount("");
+                      await loadWallet();
+                    } finally {
+                      setPayoutLoading(false);
+                    }
+                  }}
+                  className="flex-1 py-3 rounded-xl bg-rondo-accent text-black text-xs font-black uppercase tracking-wider disabled:opacity-50"
+                >
+                  {payoutLoading ? "Submitting…" : "Submit Request"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {payoutRequests.length > 0 && (
+            <div className="space-y-2 mb-3">
+              {payoutRequests.map((req) => (
+                <div key={req.id} className="bg-[#141414] border border-white/10 rounded-xl px-4 py-3 flex items-center gap-3">
+                  <Clock size={14} className="text-white/30 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-sm font-semibold">{formatPrice(req.amount)} → {req.bank_name}</p>
+                    <p className="text-white/40 text-xs">{req.bank_account_name} · {formatRelativeTime(req.created_at)}</p>
+                  </div>
+                  <span className={`text-xs font-bold uppercase ${
+                    req.status === "paid" ? "text-green-400" :
+                    req.status === "rejected" ? "text-red-400" :
+                    "text-rondo-accent/80"
+                  }`}>
+                    {req.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         <section>
