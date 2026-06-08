@@ -15,6 +15,8 @@ const PUBLIC_ROUTES = [
 const PUBLIC_PREFIXES = [
   "/api/payments/webhook",
   "/api/auth/guest",
+  "/api/auth/signup",
+  "/api/seed",
 ];
 
 const PUBLIC_BROWSE_PREFIXES = [
@@ -27,6 +29,7 @@ const PUBLIC_SKIP_AUTH = [
   "/forgot-password",
   "/reset-password",
   "/auth/callback",
+  "/onboarding",
 ];
 
 const GUEST_BLOCKED_PREFIXES = [

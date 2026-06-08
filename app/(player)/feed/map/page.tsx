@@ -81,7 +81,7 @@ export default function FeedMapPage() {
   ).length;
 
   return (
-    <div className="h-[100dvh] bg-black flex flex-col">
+    <div className="h-[calc(100dvh-4rem)] bg-black flex flex-col">
       <div className="shrink-0 z-20 bg-black/95 border-b border-white/5">
         <div className="px-4 py-3 max-w-lg mx-auto">
           <h1 className="font-heading text-white font-black italic text-lg uppercase mb-1">

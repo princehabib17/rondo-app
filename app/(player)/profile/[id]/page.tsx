@@ -367,6 +367,17 @@ export default function PublicProfilePage() {
             >
               Help & Refunds
             </Link>
+            <button
+              onClick={async () => {
+                const supabase = createClient();
+                await supabase.auth.signOut();
+                router.push("/");
+                router.refresh();
+              }}
+              className="w-full border border-red-500/30 text-red-400 hover:text-red-300 hover:border-red-400/50 text-sm py-3 rounded-xl transition-all cursor-pointer min-h-[44px]"
+            >
+              Sign Out
+            </button>
           </>
         )}
       </div>
