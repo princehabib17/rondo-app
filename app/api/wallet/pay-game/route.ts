@@ -4,6 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { payForGameWithWallet } from "@/lib/wallet/ledger";
 import { createServiceClient } from "@/lib/supabase/service";
+import {
+  checkAndRecordPaymentAttempt,
+  PAYMENT_RATE_LIMIT_MESSAGE,
+  settlePaymentAttempt,
+} from "@/lib/payments/anti-fraud";
 
 const bodySchema = z.object({
   gameId: z.string().uuid(),
@@ -27,12 +32,30 @@ export async function POST(request: Request) {
 
     const { gameId, teamId, idempotencyKey } = parsed.data;
 
+    const service = createServiceClient();
+    const { data: game } = await service
+      .from("games")
+      .select("price_per_player")
+      .eq("id", gameId)
+      .single();
+
+    const risk = await checkAndRecordPaymentAttempt(service, {
+      userId: userData.user.id,
+      kind: "wallet_pay",
+      amountCentavos: game?.price_per_player ?? 0,
+    });
+    if (risk.rateLimited) {
+      return NextResponse.json({ error: PAYMENT_RATE_LIMIT_MESSAGE }, { status: 429 });
+    }
+
     const result = await payForGameWithWallet({
       userId: userData.user.id,
       gameId,
       teamId: teamId ?? null,
       idempotencyKey,
     });
+
+    await settlePaymentAttempt(service, risk.attemptId, result.ok ? "succeeded" : "failed");
 
     if (!result.ok) {
       const status =
@@ -53,7 +76,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const service = createServiceClient();
     await service.from("notifications").insert({
       user_id: userData.user.id,
       type: "payment_success",
