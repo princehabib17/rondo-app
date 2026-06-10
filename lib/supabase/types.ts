@@ -214,6 +214,87 @@ export interface DirectMessage {
   recipient?: Profile;
 }
 
+export type TournamentFormat = "single_elimination" | "round_robin";
+export type TournamentStatus = "registration" | "active" | "completed" | "cancelled";
+export type TournamentMatchStatus = "scheduled" | "completed" | "bye";
+export type PostKind = "post" | "highlight" | "match_result";
+
+export interface Tournament {
+  id: string;
+  organizer_id: string;
+  name: string;
+  description: string | null;
+  format: TournamentFormat;
+  status: TournamentStatus;
+  venue_name: string | null;
+  venue_address: string | null;
+  starts_at: string;
+  max_teams: number;
+  team_size: number;
+  entry_fee: number; // centavos per team
+  banner_url: string | null;
+  created_at: string;
+  updated_at: string;
+  // joined relations
+  organizer?: Profile;
+  tournament_teams?: TournamentTeam[];
+}
+
+export interface TournamentTeam {
+  id: string;
+  tournament_id: string;
+  captain_id: string;
+  name: string;
+  status: "registered" | "withdrawn";
+  seed: number | null;
+  created_at: string;
+  // joined
+  captain?: Profile;
+}
+
+export interface TournamentMatch {
+  id: string;
+  tournament_id: string;
+  round: number;
+  position: number;
+  home_team_id: string | null;
+  away_team_id: string | null;
+  home_score: number | null;
+  away_score: number | null;
+  status: TournamentMatchStatus;
+  scheduled_at: string | null;
+  created_at: string;
+  updated_at: string;
+  // joined
+  home_team?: TournamentTeam | null;
+  away_team?: TournamentTeam | null;
+}
+
+export interface Post {
+  id: string;
+  author_id: string;
+  game_id: string | null;
+  tournament_id: string | null;
+  kind: PostKind;
+  body: string;
+  media_url: string | null;
+  created_at: string;
+  // joined
+  author?: Profile;
+  post_likes?: { user_id: string }[];
+  post_comments?: { count: number }[];
+}
+
+export interface PostComment {
+  id: string;
+  post_id: string;
+  author_id: string;
+  body: string;
+  created_at: string;
+  // joined
+  author?: Profile;
+}
+
 export interface AppNotification {
   id: string;
   user_id: string;

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Map, Users, User, LayoutDashboard, Radio } from "lucide-react";
+import { Home, Map, Trophy, Users, User, LayoutDashboard, Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -27,6 +27,12 @@ const playerTabs: TabDef[] = [
     icon: Map,
     label: "Map",
     isActive: (p) => p === "/feed/map" || p.startsWith("/feed/map/"),
+  },
+  {
+    href: "/tournaments",
+    icon: Trophy,
+    label: "Cups",
+    isActive: (p) => p === "/tournaments" || p.startsWith("/tournaments/"),
   },
   {
     href: "/community",

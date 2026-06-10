@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, ClipboardList, Users, ChevronRight } from "lucide-react";
+import { Plus, ClipboardList, Trophy, Users, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatGameDate, formatPrice } from "@/lib/utils/format";
 import Link from "next/link";
@@ -98,6 +98,20 @@ export default function OrganizerDashboardPage() {
       </header>
 
       <div className="px-4 py-5 space-y-6 max-w-lg mx-auto">
+        <Link
+          href="/organizer/tournaments"
+          className="flex items-center justify-between bg-card border border-border hover:border-rondo-accent/40 rounded-xl p-4 transition-colors"
+        >
+          <div className="flex items-center gap-2.5">
+            <Trophy size={18} className="text-rondo-yellow" />
+            <div>
+              <p className="text-white font-bold text-sm">Tournaments</p>
+              <p className="text-muted-foreground text-xs">Run knockout cups and leagues</p>
+            </div>
+          </div>
+          <span className="text-rondo-yellow text-xs font-black uppercase tracking-wider">Manage</span>
+        </Link>
+
         {/* Earnings summary */}
         {!loading && games.length > 0 && (
           <div className="bg-card border border-border rounded-xl p-4 grid grid-cols-3 gap-4 text-center">
