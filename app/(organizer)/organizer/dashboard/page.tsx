@@ -18,6 +18,21 @@ interface OrgGame {
   game_players: { id: string; payment_status: string }[];
 }
 
+interface PayoutHistoryEntry {
+  id: string;
+  amount: number;
+  status: "pending" | "approved" | "rejected" | "paid";
+  bank_name: string | null;
+  created_at: string;
+}
+
+const payoutStatusStyle: Record<PayoutHistoryEntry["status"], string> = {
+  pending: "bg-amber-400/15 text-amber-300",
+  approved: "bg-sky-400/15 text-sky-300",
+  paid: "bg-emerald-400/15 text-emerald-300",
+  rejected: "bg-red-400/15 text-red-300",
+};
+
 export default function OrganizerDashboardPage() {
   const router = useRouter();
   const [games, setGames] = useState<OrgGame[]>([]);
@@ -28,6 +43,14 @@ export default function OrganizerDashboardPage() {
   const [bankAccountName, setBankAccountName] = useState("");
   const [bankAccountNumber, setBankAccountNumber] = useState("");
   const [payoutMessage, setPayoutMessage] = useState<string | null>(null);
+  const [payoutHistory, setPayoutHistory] = useState<PayoutHistoryEntry[]>([]);
+
+  async function loadPayoutHistory() {
+    const res = await fetch("/api/wallet/payout");
+    if (!res.ok) return;
+    const json = await res.json();
+    setPayoutHistory(json.requests ?? []);
+  }
 
   useEffect(() => {
     async function load() {
@@ -35,11 +58,14 @@ export default function OrganizerDashboardPage() {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) { router.push("/login"); return; }
       setOrganizerId(userData.user.id);
-      const { data } = await supabase
-        .from("games")
-        .select("id, title, date_time, price_per_player, max_players, status, format, game_players(id, payment_status)")
-        .eq("organizer_id", userData.user.id)
-        .order("date_time", { ascending: false });
+      const [{ data }] = await Promise.all([
+        supabase
+          .from("games")
+          .select("id, title, date_time, price_per_player, max_players, status, format, game_players(id, payment_status)")
+          .eq("organizer_id", userData.user.id)
+          .order("date_time", { ascending: false }),
+        loadPayoutHistory(),
+      ]);
       setGames((data as unknown as OrgGame[]) ?? []);
       setLoading(false);
     }
@@ -55,21 +81,26 @@ export default function OrganizerDashboardPage() {
     if (!organizerId) return;
     const amount = Math.round(Number(payoutAmount) * 100); // convert ₱ → centavos
     if (!amount || amount <= 0) return;
-    const supabase = createClient();
-    const { error } = await supabase.from("payout_requests").insert({
-      organizer_id: organizerId,
-      amount,
-      bank_name: bankName || null,
-      bank_account_name: bankAccountName || null,
-      bank_account_number: bankAccountNumber || null,
-      note: "Requested from organizer dashboard",
+    // Goes through the API so balance validation and pending-request
+    // dedup apply (a direct insert would skip both).
+    const res = await fetch("/api/wallet/payout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amountCentavos: amount,
+        bankName,
+        bankAccountName,
+        bankAccountNumber,
+      }),
     });
-    if (error) {
-      setPayoutMessage(error.message);
+    const json = await res.json();
+    if (!res.ok) {
+      setPayoutMessage(json.error ?? "Could not submit payout request");
       return;
     }
     setPayoutAmount("");
     setPayoutMessage("Payout request submitted.");
+    await loadPayoutHistory();
   }
 
   const statusColor: Record<string, string> = {
@@ -143,6 +174,26 @@ export default function OrganizerDashboardPage() {
               Submit Payout Request
             </button>
             {payoutMessage && <p className="text-xs text-white/70">{payoutMessage}</p>}
+            {payoutHistory.length > 0 && (
+              <div className="space-y-2 pt-2 border-t border-border">
+                <h3 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+                  Recent requests
+                </h3>
+                {payoutHistory.map((entry) => (
+                  <div key={entry.id} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="text-white font-semibold">{formatPrice(entry.amount)}</span>
+                    <span className="text-muted-foreground truncate flex-1">
+                      {entry.bank_name ?? "—"} · {formatGameDate(entry.created_at)}
+                    </span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide shrink-0 ${payoutStatusStyle[entry.status]}`}
+                    >
+                      {entry.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

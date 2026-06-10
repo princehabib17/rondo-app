@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Play, Shield, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { subscribeToTournament } from "@/lib/realtime";
 import type { Tournament, TournamentMatch, TournamentTeam } from "@/lib/supabase/types";
 import { BracketView } from "@/components/tournament/BracketView";
 import { StandingsTable } from "@/components/tournament/StandingsTable";
@@ -139,6 +140,14 @@ export default function ManageTournamentPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Keep the bracket and result list current while captains watch from
+  // their own screens.
+  useEffect(() => {
+    return subscribeToTournament(id, () => {
+      load();
+    });
+  }, [id, load]);
 
   async function startTournament() {
     if (starting) return;

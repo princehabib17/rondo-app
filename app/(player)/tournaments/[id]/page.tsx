@@ -7,6 +7,7 @@ import { ArrowLeft, CalendarDays, MapPin, Shield, Trophy, Users } from "lucide-r
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
+import { subscribeToTournament } from "@/lib/realtime";
 import type { Tournament, TournamentMatch, TournamentTeam } from "@/lib/supabase/types";
 import { BracketView } from "@/components/tournament/BracketView";
 import { StandingsTable } from "@/components/tournament/StandingsTable";
@@ -25,28 +26,25 @@ export default function TournamentDetailPage() {
   const [teamName, setTeamName] = useState("");
   const [registering, setRegistering] = useState(false);
 
-  const load = useCallback(async () => {
+  // Data refresh without re-hitting the auth server; also runs on realtime events.
+  const refreshData = useCallback(async () => {
     const supabase = createClient();
-    const [{ data: userData }, { data: t }, { data: teamRows }, { data: matchRows }] =
-      await Promise.all([
-        supabase.auth.getUser(),
-        supabase.from("tournaments").select("*").eq("id", id).single(),
-        supabase
-          .from("tournament_teams")
-          .select("*")
-          .eq("tournament_id", id)
-          .eq("status", "registered")
-          .order("created_at", { ascending: true }),
-        supabase
-          .from("tournament_matches")
-          .select("*")
-          .eq("tournament_id", id)
-          .order("round", { ascending: true })
-          .order("position", { ascending: true }),
-      ]);
+    const [{ data: t }, { data: teamRows }, { data: matchRows }] = await Promise.all([
+      supabase.from("tournaments").select("*").eq("id", id).single(),
+      supabase
+        .from("tournament_teams")
+        .select("*")
+        .eq("tournament_id", id)
+        .eq("status", "registered")
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("tournament_matches")
+        .select("*")
+        .eq("tournament_id", id)
+        .order("round", { ascending: true })
+        .order("position", { ascending: true }),
+    ]);
 
-    setUserId(userData.user?.id ?? null);
-    setIsGuest(isGuestUser(userData.user));
     if (!t) {
       setNotFound(true);
     } else {
@@ -54,12 +52,24 @@ export default function TournamentDetailPage() {
       setTeams((teamRows as TournamentTeam[]) ?? []);
       setMatches((matchRows as TournamentMatch[]) ?? []);
     }
-    setLoading(false);
   }, [id]);
+
+  const load = useCallback(async () => {
+    const supabase = createClient();
+    const [{ data: userData }] = await Promise.all([supabase.auth.getUser(), refreshData()]);
+    setUserId(userData.user?.id ?? null);
+    setIsGuest(isGuestUser(userData.user));
+    setLoading(false);
+  }, [refreshData]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  // Live bracket/standings: scores and advancement land without a refresh.
+  useEffect(() => {
+    return subscribeToTournament(id, refreshData);
+  }, [id, refreshData]);
 
   async function registerTeam() {
     const name = teamName.trim();

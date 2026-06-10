@@ -1,6 +1,41 @@
 import { createClient } from "@/lib/supabase/client";
 import type { TimerSession, Message } from "@/lib/supabase/types";
 
+/**
+ * Fires on any change to a tournament's matches or its own row (status,
+ * scores, bracket advancement). Callers refetch; payloads are not trusted
+ * as full row state since bracket updates touch several rows at once.
+ */
+export function subscribeToTournament(tournamentId: string, onChange: () => void) {
+  const supabase = createClient();
+  const channel = supabase
+    .channel(`tournament:${tournamentId}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "tournament_matches",
+        filter: `tournament_id=eq.${tournamentId}`,
+      },
+      onChange
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "tournaments",
+        filter: `id=eq.${tournamentId}`,
+      },
+      onChange
+    )
+    .subscribe();
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}
+
 export function subscribeToTimer(
   gameId: string,
   onUpdate: (session: TimerSession) => void

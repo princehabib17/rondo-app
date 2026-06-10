@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { createCommentSchema } from "@/lib/social/post-schema";
+import { MODERATION_REJECTION_MESSAGE, moderateContent } from "@/lib/social/moderation";
+import { COMMENT_LIMIT, isRateLimited, RATE_LIMIT_MESSAGE } from "@/lib/social/rate-limit";
 
 export async function POST(
   request: Request,
@@ -26,7 +28,16 @@ export async function POST(
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
+    if (!moderateContent(parsed.data.body).ok) {
+      return NextResponse.json({ error: MODERATION_REJECTION_MESSAGE }, { status: 400 });
+    }
+
     const userId = userData.user.id;
+
+    if (await isRateLimited(createServiceClient(), "post_comments", userId, COMMENT_LIMIT)) {
+      return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
+    }
+
     const { data: post } = await supabase
       .from("posts")
       .select("id, author_id")
