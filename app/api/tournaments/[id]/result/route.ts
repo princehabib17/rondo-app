@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { isGuestUser } from "@/lib/auth/is-guest";
-import { placeInSlot, totalEliminationRounds } from "@/lib/tournament/bracket";
+import { placeInSlot } from "@/lib/tournament/bracket";
 
 const bodySchema = z.object({
   matchId: z.string().uuid(),
@@ -91,12 +91,16 @@ export async function POST(
 
     if (isElimination) {
       const winnerId = homeScore > awayScore ? match.home_team_id : match.away_team_id;
-      const { count: teamCount } = await service
-        .from("tournament_teams")
-        .select("id", { count: "exact", head: true })
+      // The final is simply the bracket's last round — cheaper and more robust
+      // than re-deriving it from the team count.
+      const { data: lastMatch } = await service
+        .from("tournament_matches")
+        .select("round")
         .eq("tournament_id", tournamentId)
-        .eq("status", "registered");
-      const finalRound = totalEliminationRounds(teamCount ?? 2);
+        .order("round", { ascending: false })
+        .limit(1)
+        .single();
+      const finalRound = lastMatch?.round ?? 1;
 
       if (match.round >= finalRound) {
         tournamentCompleted = true;

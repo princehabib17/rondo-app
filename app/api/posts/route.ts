@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { createPostSchema } from "@/lib/social/post-schema";
+import { MODERATION_REJECTION_MESSAGE, moderateContent } from "@/lib/social/moderation";
+import { isRateLimited, POST_LIMIT, RATE_LIMIT_MESSAGE } from "@/lib/social/rate-limit";
 
 export async function POST(request: Request) {
   try {
@@ -22,6 +25,16 @@ export async function POST(request: Request) {
     }
 
     const input = parsed.data;
+
+    if (!moderateContent(input.body).ok) {
+      return NextResponse.json({ error: MODERATION_REJECTION_MESSAGE }, { status: 400 });
+    }
+
+    const service = createServiceClient();
+    if (await isRateLimited(service, "posts", userData.user.id, POST_LIMIT)) {
+      return NextResponse.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
+    }
+
     // RLS enforces author_id = auth.uid().
     const { data: post, error } = await supabase
       .from("posts")

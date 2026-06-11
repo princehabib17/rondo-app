@@ -40,6 +40,52 @@ export default function PublicProfilePage() {
   const [isGuest, setIsGuest] = useState(false);
   const [locationHidden, setLocationHidden] = useState(false);
   const [savingLocation, setSavingLocation] = useState(false);
+  const [switchingRole, setSwitchingRole] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [accountError, setAccountError] = useState<string | null>(null);
+
+  async function switchRole() {
+    if (!profile || switchingRole) return;
+    const nextRole = profile.role === "organizer" ? "player" : "organizer";
+    setSwitchingRole(true);
+    setAccountError(null);
+    try {
+      const res = await fetch("/api/profile/switch-role", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: nextRole }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setAccountError(json.error ?? "Could not switch role");
+        return;
+      }
+      // Full reload so the role-aware bottom nav picks up the new role.
+      window.location.assign(nextRole === "organizer" ? "/organizer/dashboard" : "/feed");
+    } finally {
+      setSwitchingRole(false);
+    }
+  }
+
+  async function deleteAccount() {
+    if (deleting) return;
+    setDeleting(true);
+    setAccountError(null);
+    try {
+      const res = await fetch("/api/account/delete", { method: "POST" });
+      const json = await res.json();
+      if (!res.ok) {
+        setAccountError(json.error ?? "Could not delete account");
+        return;
+      }
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      window.location.assign("/");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -339,6 +385,20 @@ export default function PublicProfilePage() {
               Edit Profile
             </button>
 
+            {!isGuest && profile.role !== "admin" && (
+              <button
+                onClick={switchRole}
+                disabled={switchingRole}
+                className="w-full text-center text-muted-foreground hover:text-white text-xs py-1 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {switchingRole
+                  ? "Switching…"
+                  : profile.role === "organizer"
+                    ? "Switch to a player account"
+                    : "Switch to an organizer account"}
+              </button>
+            )}
+
             <label className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 cursor-pointer">
               <input
                 type="checkbox"
@@ -378,6 +438,38 @@ export default function PublicProfilePage() {
             >
               Sign Out
             </button>
+
+            {!confirmDelete ? (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="w-full text-center text-white/30 hover:text-red-400 text-xs py-1 transition-colors cursor-pointer"
+              >
+                Delete account
+              </button>
+            ) : (
+              <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 space-y-3">
+                <p className="text-white/80 text-sm">
+                  This permanently deletes your account, profile, and match history. It can&apos;t
+                  be undone.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setConfirmDelete(false)}
+                    className="flex-1 border border-border text-muted-foreground text-sm py-2.5 rounded-xl"
+                  >
+                    Keep my account
+                  </button>
+                  <button
+                    onClick={deleteAccount}
+                    disabled={deleting}
+                    className="flex-1 bg-red-500/90 text-white text-sm font-bold py-2.5 rounded-xl disabled:opacity-50"
+                  >
+                    {deleting ? "Deleting…" : "Delete forever"}
+                  </button>
+                </div>
+              </div>
+            )}
+            {accountError && <p className="text-red-400 text-xs text-center">{accountError}</p>}
           </>
         )}
       </div>

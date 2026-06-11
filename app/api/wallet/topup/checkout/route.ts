@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { isGuestUser } from "@/lib/auth/is-guest";
+import {
+  checkAndRecordPaymentAttempt,
+  PAYMENT_RATE_LIMIT_MESSAGE,
+  settlePaymentAttempt,
+} from "@/lib/payments/anti-fraud";
 import { getPaymongoAuthHeader } from "@/lib/paymongo/client";
 import { MAX_TOPUP_CENTAVOS, MIN_TOPUP_CENTAVOS } from "@/lib/wallet/constants";
 import { logPayment } from "@/lib/payments/logger";
@@ -34,6 +40,26 @@ export async function POST(request: Request) {
     }
 
     const { amountCentavos, returnPath } = parsed.data;
+
+    const service = createServiceClient();
+    const risk = await checkAndRecordPaymentAttempt(service, {
+      userId: userData.user.id,
+      kind: "wallet_topup",
+      amountCentavos,
+    });
+    if (risk.rateLimited) {
+      logPayment({ event: "wallet_topup_rate_limited", level: "warn", userId: userData.user.id });
+      return NextResponse.json({ error: PAYMENT_RATE_LIMIT_MESSAGE }, { status: 429 });
+    }
+    if (risk.flagged) {
+      logPayment({
+        event: "wallet_topup_flagged",
+        level: "warn",
+        userId: userData.user.id,
+        detail: risk.flagReason ?? undefined,
+      });
+    }
+
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const amountPhp = (amountCentavos / 100).toLocaleString("en-PH");
     const safeReturn =
@@ -80,6 +106,7 @@ export async function POST(request: Request) {
 
     const paymongoJson = await response.json();
     if (!response.ok) {
+      await settlePaymentAttempt(service, risk.attemptId, "failed");
       logPayment({
         event: "wallet_topup_checkout_error",
         level: "error",

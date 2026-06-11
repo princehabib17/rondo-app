@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { getWalletBalanceCentavos } from "@/lib/wallet/balance";
+import {
+  checkAndRecordPaymentAttempt,
+  PAYMENT_RATE_LIMIT_MESSAGE,
+  settlePaymentAttempt,
+} from "@/lib/payments/anti-fraud";
 
 export async function GET() {
   try {
@@ -47,8 +53,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Bank details are required" }, { status: 400 });
     }
 
+    const service = createServiceClient();
+    const risk = await checkAndRecordPaymentAttempt(service, {
+      userId: userData.user.id,
+      kind: "payout_request",
+      amountCentavos,
+    });
+    if (risk.rateLimited) {
+      return NextResponse.json({ error: PAYMENT_RATE_LIMIT_MESSAGE }, { status: 429 });
+    }
+
     const balance = await getWalletBalanceCentavos(userData.user.id);
     if (amountCentavos > balance) {
+      await settlePaymentAttempt(service, risk.attemptId, "failed");
       return NextResponse.json({ error: "Amount exceeds your available balance" }, { status: 400 });
     }
 
@@ -80,9 +97,11 @@ export async function POST(request: Request) {
       .single();
 
     if (insertErr) {
+      await settlePaymentAttempt(service, risk.attemptId, "failed");
       return NextResponse.json({ error: insertErr.message }, { status: 500 });
     }
 
+    await settlePaymentAttempt(service, risk.attemptId, "succeeded");
     return NextResponse.json({ ok: true, requestId: req.id });
   } catch (e: unknown) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Failed" }, { status: 500 });

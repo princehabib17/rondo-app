@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MapPin, Users } from "lucide-react";
@@ -129,12 +129,28 @@ export default function CommunityPage() {
     init();
   }, [router, loadSocial, loadPosts]);
 
-  async function loadMorePosts() {
+  const loadMorePosts = useCallback(async () => {
     if (loadingMore) return;
     setLoadingMore(true);
     await loadPosts(posts.length);
     setLoadingMore(false);
-  }
+  }, [loadingMore, loadPosts, posts.length]);
+
+  // Infinite scroll: fetch the next page when the sentinel below the list
+  // comes into view. The button stays as a fallback.
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || tab !== "feed" || !hasMorePosts) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) loadMorePosts();
+      },
+      { rootMargin: "400px" }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [tab, hasMorePosts, loadMorePosts]);
 
   const findNearbyPlayers = useCallback(() => {
     if (!("geolocation" in navigator)) return;
@@ -256,14 +272,16 @@ export default function CommunityPage() {
                   />
                 ))}
                 {hasMorePosts && (
-                  <button
-                    type="button"
-                    onClick={loadMorePosts}
-                    disabled={loadingMore}
-                    className="w-full rounded-xl border border-white/10 py-2.5 text-white/60 text-xs font-semibold disabled:opacity-50"
-                  >
-                    {loadingMore ? "Loading…" : "Load more"}
-                  </button>
+                  <div ref={sentinelRef}>
+                    <button
+                      type="button"
+                      onClick={loadMorePosts}
+                      disabled={loadingMore}
+                      className="w-full rounded-xl border border-white/10 py-2.5 text-white/60 text-xs font-semibold disabled:opacity-50"
+                    >
+                      {loadingMore ? "Loading…" : "Load more"}
+                    </button>
+                  </div>
                 )}
               </div>
             )}

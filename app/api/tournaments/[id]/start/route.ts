@@ -60,9 +60,11 @@ export async function POST(
         : generateRoundRobin(teamIds);
 
     // Seeds follow registration order.
-    for (let i = 0; i < teams.length; i++) {
-      await service.from("tournament_teams").update({ seed: i + 1 }).eq("id", teams[i].id);
-    }
+    await Promise.all(
+      teams.map((team, i) =>
+        service.from("tournament_teams").update({ seed: i + 1 }).eq("id", team.id)
+      )
+    );
 
     const { error: insertError } = await service.from("tournament_matches").insert(
       fixtures.map((f) => ({

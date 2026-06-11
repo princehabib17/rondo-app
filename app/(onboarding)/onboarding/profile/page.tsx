@@ -10,10 +10,10 @@ import { createClient } from "@/lib/supabase/client";
 import { OnboardingHeader } from "@/components/onboarding/OnboardingHeader";
 import { NATIONALITIES } from "@/lib/utils/format";
 
-const profileSchema = z.object({
+const baseProfileSchema = z.object({
   full_name: z.string().min(2, "Name required"),
-  age: z.string().min(1, "Age required"),
-  gender: z.string().min(1, "Gender required"),
+  age: z.string(),
+  gender: z.string(),
   phone: z.string().min(7, "Phone required"),
   address: z.string().min(2, "Address required"),
   nationality: z.string().min(1, "Nationality required"),
@@ -24,7 +24,15 @@ const profileSchema = z.object({
   game_preference: z.string().min(1, "Preference required"),
   bio: z.string(),
 });
-type ProfileForm = z.infer<typeof profileSchema>;
+
+// Players register as people (age/gender matter for matchmaking); organizers
+// register as a brand, so those fields are skipped.
+const playerSchema = baseProfileSchema.extend({
+  age: z.string().min(1, "Age required"),
+  gender: z.string().min(1, "Gender required"),
+});
+
+type ProfileForm = z.infer<typeof baseProfileSchema>;
 
 const labelClass = "font-heading text-white text-xs uppercase tracking-wider";
 const inputClass =
@@ -37,14 +45,16 @@ export default function PlayerSetupPage() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<"player" | "organizer">("player");
+  const isOrganizer = userRole === "organizer";
 
   const {
     register,
     handleSubmit,
     reset,
+    setError: setFieldError,
     formState: { errors, isSubmitting },
   } = useForm<ProfileForm>({
-    resolver: zodResolver(profileSchema),
+    resolver: zodResolver(baseProfileSchema),
     defaultValues: {
       nationality: "Philippines",
     },
@@ -100,6 +110,18 @@ export default function PlayerSetupPage() {
   async function onSubmit(data: ProfileForm) {
     if (!userId) return;
     setError(null);
+
+    // Player-only requirements, checked here because the role is dynamic.
+    if (!isOrganizer) {
+      const playerCheck = playerSchema.safeParse(data);
+      if (!playerCheck.success) {
+        for (const issue of playerCheck.error.issues) {
+          setFieldError(issue.path[0] as keyof ProfileForm, { message: issue.message });
+        }
+        return;
+      }
+    }
+
     const supabase = createClient();
 
     let avatar_url: string | undefined;
@@ -176,27 +198,44 @@ export default function PlayerSetupPage() {
         </div>
 
         <div className="space-y-4 flex-1">
+          {isOrganizer && (
+            <div className="space-y-1 pb-1">
+              <h2 className="font-heading text-white font-black italic text-lg uppercase">
+                Set up your organizer profile
+              </h2>
+              <p className="text-white/50 text-xs font-body">
+                This is what players see when they browse your games.
+              </p>
+            </div>
+          )}
+
           <div className="space-y-2">
-            <label className={labelClass}>Full name</label>
-            <input {...register("full_name")} placeholder="Miguel Santos" className={inputClass} />
+            <label className={labelClass}>{isOrganizer ? "Organizer / brand name" : "Full name"}</label>
+            <input
+              {...register("full_name")}
+              placeholder={isOrganizer ? "Urban Futsal MNL" : "Miguel Santos"}
+              className={inputClass}
+            />
             {errors.full_name && <p className="text-red-400 text-xs font-body">{errors.full_name.message}</p>}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <label className={labelClass}>Age</label>
-              <input {...register("age")} placeholder="24" className={inputClass} />
-              {errors.age && <p className="text-red-400 text-xs font-body">{errors.age.message}</p>}
+          {!isOrganizer && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <label className={labelClass}>Age</label>
+                <input {...register("age")} placeholder="24" className={inputClass} />
+                {errors.age && <p className="text-red-400 text-xs font-body">{errors.age.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <label className={labelClass}>Gender</label>
+                <input {...register("gender")} placeholder="Male" className={inputClass} />
+                {errors.gender && <p className="text-red-400 text-xs font-body">{errors.gender.message}</p>}
+              </div>
             </div>
-            <div className="space-y-2">
-              <label className={labelClass}>Gender</label>
-              <input {...register("gender")} placeholder="Male" className={inputClass} />
-              {errors.gender && <p className="text-red-400 text-xs font-body">{errors.gender.message}</p>}
-            </div>
-          </div>
+          )}
 
           <div className="space-y-2">
-            <label className={labelClass}>Phone number</label>
+            <label className={labelClass}>{isOrganizer ? "Contact number" : "Phone number"}</label>
             <input {...register("phone")} type="tel" placeholder="0917 123 4567" className={inputClass} />
             {errors.phone && <p className="text-red-400 text-xs font-body">{errors.phone.message}</p>}
           </div>
@@ -260,7 +299,7 @@ export default function PlayerSetupPage() {
           )}
 
           <div className="space-y-2">
-            <label className={labelClass}>Game preference</label>
+            <label className={labelClass}>{isOrganizer ? "What do you host?" : "Game preference"}</label>
             <select {...register("game_preference")} className={inputClass}>
               <option value="">Select</option>
               <option value="football">Football</option>
@@ -270,15 +309,22 @@ export default function PlayerSetupPage() {
           </div>
 
           <div className="space-y-2">
-            <label className={labelClass}>Preferred areas</label>
+            <label className={labelClass}>{isOrganizer ? "Areas you host games in" : "Preferred areas"}</label>
             <input {...register("preferred_areas")} placeholder="BGC, Makati, Ortigas" className={inputClass} />
           </div>
 
           <div className="space-y-2">
-            <label className={labelClass}>Bio <span className="text-white/30 normal-case text-[11px]">(optional)</span></label>
+            <label className={labelClass}>
+              {isOrganizer ? "About your games" : "Bio"}{" "}
+              <span className="text-white/30 normal-case text-[11px]">(optional)</span>
+            </label>
             <textarea
               {...register("bio")}
-              placeholder="Tell the squad about yourself..."
+              placeholder={
+                isOrganizer
+                  ? "Weekly 5v5 nights, all levels welcome, shirts provided..."
+                  : "Tell the squad about yourself..."
+              }
               maxLength={200}
               rows={3}
               className={`${inputClass} resize-none`}

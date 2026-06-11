@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, Manrope } from "next/font/google";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const barlowCondensed = Barlow_Condensed({
@@ -39,6 +40,7 @@ export default function RootLayout({
     <html lang="en" className={`dark ${barlowCondensed.variable} ${manrope.variable}`}>
       <body className="font-body bg-background text-foreground antialiased">
         {children}
+        <Toaster position="top-center" />
       </body>
     </html>
   );

@@ -75,7 +75,7 @@ export default function FeedPage() {
         .range(0, PAGE_SIZE - 1),
       supabase
         .from("profiles")
-        .select("id, full_name, avatar_url")
+        .select("id, full_name, avatar_url, organizer_verified, games!organizer_id(id)")
         .eq("role", "organizer")
         .order("created_at", { ascending: false })
         .limit(20),
@@ -93,14 +93,24 @@ export default function FeedPage() {
     setHasMore(fetchedGames.length === PAGE_SIZE);
     setGamesOffset(PAGE_SIZE);
 
-    const realOrganizers = (organizersData as Profile[] | null)?.map((profile) => ({
-      id: profile.id,
-      full_name: profile.full_name,
-      avatar_url: profile.avatar_url,
-      verified: true,
-    }));
+    // Only accounts that actually host games qualify — stray profiles with an
+    // organizer role but no games (e.g. mis-onboarded players) are excluded.
+    const realOrganizers = (
+      organizersData as (Profile & { games?: { id: string }[] })[] | null
+    )
+      ?.filter((profile) => (profile.games?.length ?? 0) > 0)
+      .map((profile) => ({
+        id: profile.id,
+        full_name: profile.full_name,
+        avatar_url: profile.avatar_url,
+        verified: profile.organizer_verified ?? false,
+      }));
 
-    setOrganizers(realOrganizers && realOrganizers.length > 0 ? realOrganizers : []);
+    // Keep the placeholder groups until real organizers exist, instead of
+    // flashing them and then clearing the row.
+    setOrganizers(
+      realOrganizers && realOrganizers.length > 0 ? realOrganizers : PLACEHOLDER_ORGANIZERS
+    );
     setNotificationCount(unreadCount ?? 0);
     setLoading(false);
   }, []);
