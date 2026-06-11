@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, ClipboardList, Trophy, Users, ChevronRight } from "lucide-react";
+import { Plus, ClipboardList, ImagePlus, Trophy, Users, ChevronRight } from "lucide-react";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { formatGameDate, formatPrice } from "@/lib/utils/format";
 import Link from "next/link";
@@ -15,6 +16,7 @@ interface OrgGame {
   max_players: number;
   status: string;
   format: string;
+  banner_url: string | null;
   game_players: { id: string; payment_status: string }[];
 }
 
@@ -61,7 +63,7 @@ export default function OrganizerDashboardPage() {
       const [{ data }] = await Promise.all([
         supabase
           .from("games")
-          .select("id, title, date_time, price_per_player, max_players, status, format, game_players(id, payment_status)")
+          .select("id, title, date_time, price_per_player, max_players, status, format, banner_url, game_players(id, payment_status)")
           .eq("organizer_id", userData.user.id)
           .order("date_time", { ascending: false }),
         loadPayoutHistory(),
@@ -101,6 +103,41 @@ export default function OrganizerDashboardPage() {
     setPayoutAmount("");
     setPayoutMessage("Payout request submitted.");
     await loadPayoutHistory();
+  }
+
+  const [uploadingCoverId, setUploadingCoverId] = useState<string | null>(null);
+
+  async function uploadCover(gameId: string, file: File) {
+    if (!organizerId || uploadingCoverId) return;
+    setUploadingCoverId(gameId);
+    try {
+      const supabase = createClient();
+      const ext = file.name.split(".").pop() ?? "jpg";
+      const path = `${organizerId}/${gameId}-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("game-covers")
+        .upload(path, file, { upsert: true });
+      if (uploadError) {
+        toast.error(`Cover upload failed: ${uploadError.message}`);
+        return;
+      }
+      const { data: urlData } = supabase.storage.from("game-covers").getPublicUrl(path);
+      const bannerUrl = urlData.publicUrl;
+      const { error: updateError } = await supabase
+        .from("games")
+        .update({ banner_url: bannerUrl })
+        .eq("id", gameId);
+      if (updateError) {
+        toast.error(`Could not save cover: ${updateError.message}`);
+        return;
+      }
+      setGames((prev) =>
+        prev.map((g) => (g.id === gameId ? { ...g, banner_url: bannerUrl } : g))
+      );
+      toast.success("Cover updated");
+    } finally {
+      setUploadingCoverId(null);
+    }
   }
 
   const statusColor: Record<string, string> = {
@@ -214,8 +251,50 @@ export default function OrganizerDashboardPage() {
         ) : (
           <div className="space-y-3">
             {games.map((game) => (
-              <Link key={game.id} href={`/organizer/games/${game.id}/manage`} className="block cursor-pointer">
-                <div className="bg-card border border-border rounded-xl p-4 hover:border-rondo-yellow/40 active:scale-[0.98] transition-all">
+              <div key={game.id} className="bg-card border border-border rounded-xl overflow-hidden hover:border-rondo-yellow/40 transition-all">
+                {game.banner_url ? (
+                  <div className="relative h-24">
+                    <img src={game.banner_url} alt="" className="w-full h-full object-cover" />
+                    <label
+                      className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-full bg-black/70 text-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide cursor-pointer"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ImagePlus size={11} />
+                      {uploadingCoverId === game.id ? "Uploading…" : "Change cover"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={uploadingCoverId !== null}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) uploadCover(game.id, file);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                  </div>
+                ) : (
+                  <label
+                    className="flex items-center justify-center gap-1.5 h-10 border-b border-dashed border-border text-muted-foreground hover:text-rondo-yellow text-xs font-semibold cursor-pointer transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ImagePlus size={13} />
+                    {uploadingCoverId === game.id ? "Uploading…" : "Add cover image"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={uploadingCoverId !== null}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) uploadCover(game.id, file);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                )}
+                <Link href={`/organizer/games/${game.id}/manage`} className="block cursor-pointer p-4 active:scale-[0.98] transition-all">
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <h3 className="text-white font-bold text-sm leading-tight flex-1">{game.title}</h3>
                     <ChevronRight size={16} className="text-muted-foreground shrink-0 mt-0.5" />
@@ -230,8 +309,8 @@ export default function OrganizerDashboardPage() {
                     <Badge variant="secondary" className="text-xs h-5">{game.format}</Badge>
                     <span className={`text-xs font-semibold capitalize ${statusColor[game.status] ?? "text-muted-foreground"}`}>{game.status}</span>
                   </div>
-                </div>
-              </Link>
+                </Link>
+              </div>
             ))}
           </div>
         )}

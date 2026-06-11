@@ -1,4 +1,4 @@
-export type UserRole = "player" | "organizer";
+export type UserRole = "player" | "organizer" | "admin";
 export type Position = "goalkeeper" | "defender" | "midfielder" | "forward" | "any";
 export type PreferredFoot = "left" | "right" | "both";
 export type SkillLevel = "beginner" | "intermediate" | "advanced" | "pro";
