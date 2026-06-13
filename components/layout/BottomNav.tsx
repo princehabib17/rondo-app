@@ -111,14 +111,14 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 rondo-glass-nav z-[200] pb-[env(safe-area-inset-bottom)]">
-      <div className="flex h-16 max-w-lg items-center justify-around px-2 mx-auto">
+      <div className="mx-auto flex h-16 w-full max-w-[430px] items-center justify-around overflow-hidden px-2">
         {tabs.map(({ href, icon: Icon, label, isActive }) => {
           const active = isActive(pathname);
           return (
             <Link
               key={href}
               href={href}
-              className="flex flex-1 flex-col items-center gap-0.5 py-2 transition-all active:scale-90"
+              className="flex min-w-0 flex-1 flex-col items-center gap-0.5 py-2 transition-all active:scale-90"
             >
               <Icon
                 size={25}
@@ -130,7 +130,7 @@ export function BottomNav() {
               />
               <span
                 className={cn(
-                  "font-body text-[11px] font-medium transition-colors duration-200",
+                  "max-w-full truncate font-body text-[11px] font-medium transition-colors duration-200",
                   active ? "text-rondo-accent" : "text-white/45"
                 )}
               >
