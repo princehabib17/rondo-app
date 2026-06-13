@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, ClipboardList, ImagePlus, Trophy, Users, ChevronRight } from "lucide-react";
+import { Plus, ClipboardList, ImagePlus, Trophy, Users, ChevronRight, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { formatGameDate, formatPrice } from "@/lib/utils/format";
@@ -175,6 +175,20 @@ export default function OrganizerDashboardPage() {
             <div>
               <p className="text-white font-bold text-sm">Tournaments</p>
               <p className="text-muted-foreground text-xs">Run knockout cups and leagues</p>
+            </div>
+          </div>
+          <span className="text-rondo-yellow text-xs font-black uppercase tracking-wider">Manage</span>
+        </Link>
+
+        <Link
+          href="/organizer/organizations"
+          className="flex items-center justify-between bg-card border border-border hover:border-rondo-accent/40 rounded-xl p-4 transition-colors"
+        >
+          <div className="flex items-center gap-2.5">
+            <Building2 size={18} className="text-rondo-yellow" />
+            <div>
+              <p className="text-white font-bold text-sm">Organizations</p>
+              <p className="text-muted-foreground text-xs">Create brands and approve managers</p>
             </div>
           </div>
           <span className="text-rondo-yellow text-xs font-black uppercase tracking-wider">Manage</span>

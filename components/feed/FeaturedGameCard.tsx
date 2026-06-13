@@ -21,7 +21,7 @@ function PlayerProgress({ current, max }: { current: number; max: number }) {
 
 export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
   const playerCount = game.game_players?.length ?? 0;
-  const organizerName = game.organizer?.full_name ?? "Organizer";
+  const organizerName = game.organization?.name ?? game.organizer?.full_name ?? "Organizer";
 
   return (
     <section className="px-4 pt-6">
@@ -54,9 +54,19 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
 
             <div className="space-y-1.5 font-body text-white/60 text-[11px] mb-2">
               <div className="flex items-center gap-1.5 min-w-0">
-                <span className="w-4 h-4 rounded-full bg-secondary flex items-center justify-center shrink-0 text-[8px] font-heading text-white">
-                  {getOrganizerInitials(organizerName)}
-                </span>
+                {game.organization?.logo_url ? (
+                  <Image
+                    src={game.organization.logo_url}
+                    alt=""
+                    width={16}
+                    height={16}
+                    className="h-4 w-4 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="w-4 h-4 rounded-full bg-secondary flex items-center justify-center shrink-0 text-[8px] font-heading text-white">
+                    {getOrganizerInitials(organizerName)}
+                  </span>
+                )}
                 <span className="truncate">{organizerName}</span>
               </div>
               <div className="flex items-center gap-1.5">

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { deriveMatchType } from "@/lib/feed/filters";
+import { OrganizationPicker } from "@/components/organizer/OrganizationPicker";
 
 // Colors also defined as CSS variables in globals.css under --color-team-*
 const TEAM_COLORS = [
@@ -62,6 +63,8 @@ export default function CreateGamePage() {
   const [error, setError] = useState<string | null>(null);
   const [geocoding, setGeocoding] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [organizationId, setOrganizationId] = useState("");
+  const [organizationsReady, setOrganizationsReady] = useState(false);
 
   const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<CreateGameForm>({
     resolver: zodResolver(createGameSchema) as Resolver<CreateGameForm>,
@@ -88,6 +91,10 @@ export default function CreateGamePage() {
       router.push("/login");
       return;
     }
+    if (!organizationId) {
+      setError("Choose or create an organization first.");
+      return;
+    }
 
     let finalCoords = coords;
     if (!finalCoords) {
@@ -98,6 +105,7 @@ export default function CreateGamePage() {
       .from("games")
       .insert({
         organizer_id: userData.user.id,
+        organization_id: organizationId,
         title: data.title,
         description: data.description ?? null,
         venue_name: data.venue_name,
@@ -161,6 +169,12 @@ export default function CreateGamePage() {
           <p className="mt-4 font-body text-sm text-white">Upload cover photo</p>
           <p className="mt-1 font-body text-xs italic text-white/45">Recommended 16:9 ratio</p>
         </div>
+
+        <OrganizationPicker
+          value={organizationId}
+          onChange={setOrganizationId}
+          onReady={setOrganizationsReady}
+        />
 
         <div className="space-y-1.5">
           <Label htmlFor="title" className={labelClass}>Match Title *</Label>
@@ -336,7 +350,7 @@ export default function CreateGamePage() {
 
         <Button
           type="submit"
-          disabled={isSubmitting || geocoding}
+          disabled={isSubmitting || geocoding || !organizationsReady}
           className="w-full bg-rondo-yellow text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-xl active:scale-[0.98] transition-all min-h-[52px]"
         >
           {isSubmitting ? "Creating..." : "Create Match"}

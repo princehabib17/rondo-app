@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { getAuthCallbackUrl } from "@/lib/auth/redirect-url";
 
-type OAuthProvider = "google" | "facebook";
+type OAuthProvider = "google" | "facebook" | "apple";
 
 export async function signInWithOAuthProvider(provider: OAuthProvider, next = "/feed"): Promise<{
   ok: boolean;
@@ -33,6 +33,6 @@ export async function signInWithOAuthProvider(provider: OAuthProvider, next = "/
   return {
     ok: false,
     error:
-      `${provider === "google" ? "Google" : "Facebook"} sign-in is not configured. Enable it in Supabase > Authentication > Providers, or continue as guest.`,
+      `${provider === "google" ? "Google" : provider === "facebook" ? "Facebook" : "Apple"} sign-in is not configured. Enable it in Supabase > Authentication > Providers, or continue as guest.`,
   };
 }

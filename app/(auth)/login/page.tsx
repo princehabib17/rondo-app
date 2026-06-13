@@ -4,19 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { Phone } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { ContinueAsGuestLink } from "@/components/auth/ContinueAsGuestLink";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
-
-const loginSchema = z.object({
-  email: z.string().email("Enter a valid email"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
-type LoginForm = z.infer<typeof loginSchema>;
+import { isLikelyPhoneNumber, normalizePhoneNumber } from "@/lib/auth/phone";
 
 function safeNext(raw: string | null): string | null {
   if (!raw) return null;
@@ -27,7 +20,9 @@ function safeNext(raw: string | null): string | null {
 
 export default function LoginPage() {
   const router = useRouter();
+  const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
   const [nextParam, setNextParam] = useState<string | null>(null);
 
   useEffect(() => {
@@ -48,49 +43,34 @@ export default function LoginPage() {
           router.replace(profile?.role ? "/feed" : "/onboarding/slides");
         });
     });
+    setNextParam(new URLSearchParams(window.location.search).get("next"));
   }, [router]);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema),
-  });
-
-  useEffect(() => {
-    setNextParam(new URLSearchParams(window.location.search).get("next"));
-  }, []);
-
-  async function onSubmit(data: LoginForm) {
+  async function sendOtp(e: React.FormEvent) {
+    e.preventDefault();
     setError(null);
+    const normalizedPhone = normalizePhoneNumber(phone);
+    if (!isLikelyPhoneNumber(normalizedPhone)) {
+      setError("Enter a valid phone number with country code.");
+      return;
+    }
+
+    setSending(true);
     const supabase = createClient();
-    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-      email: data.email,
-      password: data.password,
+    const { error: otpError } = await supabase.auth.signInWithOtp({
+      phone: normalizedPhone,
     });
-    if (signInError) {
-      setError(signInError.message);
+    setSending(false);
+
+    if (otpError) {
+      setError(otpError.message);
       return;
     }
+
     const next = safeNext(new URLSearchParams(window.location.search).get("next"));
-    if (next) {
-      router.push(next);
-      router.refresh();
-      return;
-    }
-    const userId = signInData.user?.id;
-    if (userId) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", userId)
-        .single();
-      router.push(profile?.role ? "/feed" : "/onboarding/slides");
-    } else {
-      router.push("/feed");
-    }
-    router.refresh();
+    const params = new URLSearchParams({ phone: normalizedPhone });
+    if (next) params.set("next", next);
+    router.push(`/otp?${params.toString()}`);
   }
 
   return (
@@ -107,45 +87,28 @@ export default function LoginPage() {
       </div>
 
       <h1 className="rondo-hero-title text-4xl mb-2">Log in</h1>
-      <p className="font-body text-white/50 text-sm mb-8">Welcome back to the pitch.</p>
+      <p className="font-body text-white/50 text-sm mb-8">
+        Enter your phone number. We will send a one-time code.
+      </p>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={sendOtp} className="space-y-5">
         <div className="space-y-2">
-          <label htmlFor="email" className="font-body text-white/70 text-xs uppercase tracking-wider">
-            Email
+          <label htmlFor="phone" className="font-body text-white/70 text-xs uppercase tracking-wider">
+            Phone number
           </label>
-          <input
-            id="email"
-            {...register("email")}
-            type="email"
-            autoComplete="email"
-            className={rondoFieldClass}
-          />
-          {errors.email && (
-            <p className="text-red-400 text-xs font-body">{errors.email.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <label htmlFor="password" className="font-body text-white/70 text-xs uppercase tracking-wider">
-            Password
-          </label>
-          <input
-            id="password"
-            {...register("password")}
-            type="password"
-            autoComplete="current-password"
-            className={rondoFieldClass}
-          />
-          {errors.password && (
-            <p className="text-red-400 text-xs font-body">{errors.password.message}</p>
-          )}
-        </div>
-
-        <div className="flex justify-end">
-          <Link href="/forgot-password" className="text-white/60 text-sm hover:text-rondo-accent">
-            Forgot password?
-          </Link>
+          <div className="relative">
+            <Phone size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/35" />
+            <input
+              id="phone"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="+63 917 123 4567"
+              className={`${rondoFieldClass} pl-11`}
+            />
+          </div>
         </div>
 
         {error && (
@@ -154,13 +117,13 @@ export default function LoginPage() {
           </p>
         )}
 
-        <RondoButton type="submit" variant="primary" disabled={isSubmitting} className="mt-2">
-          {isSubmitting ? "Logging in..." : "Log in"}
+        <RondoButton type="submit" variant="primary" disabled={sending} className="mt-2">
+          {sending ? "Sending code..." : "Send OTP"}
         </RondoButton>
       </form>
 
       <p className="text-center text-white/55 text-sm mt-8">
-        New to Rondo?{" "}
+        First time here?{" "}
         <Link
           href={`/signup${nextParam ? `?next=${encodeURIComponent(nextParam)}` : ""}`}
           className="text-rondo-accent font-semibold hover:underline"

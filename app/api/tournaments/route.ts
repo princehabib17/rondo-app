@@ -13,6 +13,7 @@ const bodySchema = z.object({
   maxTeams: z.coerce.number().int().min(2).max(64),
   teamSize: z.coerce.number().int().min(1).max(11),
   entryFee: z.coerce.number().int().min(0), // centavos per team
+  organizationId: z.string().uuid(),
 });
 
 export async function POST(request: Request) {
@@ -44,11 +45,24 @@ export async function POST(request: Request) {
     }
 
     const input = parsed.data;
+    const { data: membership } = await supabase
+      .from("organization_members")
+      .select("status")
+      .eq("organization_id", input.organizationId)
+      .eq("user_id", userData.user.id)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (!membership) {
+      return NextResponse.json({ error: "You do not have access to this organization" }, { status: 403 });
+    }
+
     // RLS also enforces organizer_id = auth.uid() and role = organizer.
     const { data: tournament, error } = await supabase
       .from("tournaments")
       .insert({
         organizer_id: userData.user.id,
+        organization_id: input.organizationId,
         name: input.name,
         description: input.description ?? null,
         format: input.format,

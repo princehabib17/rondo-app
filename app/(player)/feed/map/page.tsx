@@ -49,7 +49,7 @@ export default function FeedMapPage() {
     const now = new Date().toISOString();
     const { data } = await supabase
       .from("games")
-      .select("*, organizer:profiles!organizer_id(id,full_name,avatar_url), game_players(id)")
+      .select("*, organizer:profiles!organizer_id(id,full_name,avatar_url), organization:organizations(id,name,slug,logo_url,verified,created_by), game_players(id)")
       .eq("status", "open")
       .gte("date_time", now)
       .order("date_time", { ascending: true })

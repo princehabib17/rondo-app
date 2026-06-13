@@ -9,6 +9,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { OrganizationPicker } from "@/components/organizer/OrganizationPicker";
 
 const createTournamentSchema = z.object({
   name: z.string().min(3, "Name required").max(120),
@@ -26,6 +27,8 @@ type CreateTournamentForm = z.infer<typeof createTournamentSchema>;
 export default function CreateTournamentPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [organizationId, setOrganizationId] = useState("");
+  const [organizationsReady, setOrganizationsReady] = useState(false);
 
   const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } =
     useForm<CreateTournamentForm>({
@@ -42,6 +45,10 @@ export default function CreateTournamentPage() {
 
   async function onSubmit(values: CreateTournamentForm) {
     setError(null);
+    if (!organizationId) {
+      setError("Choose or create an organization first.");
+      return;
+    }
     const res = await fetch("/api/tournaments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -55,6 +62,7 @@ export default function CreateTournamentPage() {
         maxTeams: values.max_teams,
         teamSize: values.team_size,
         entryFee: Math.round(values.entry_fee * 100),
+        organizationId,
       }),
     });
     const json = await res.json();
@@ -85,6 +93,12 @@ export default function CreateTournamentPage() {
           <Input id="name" placeholder="Rondo Summer Cup" {...register("name")} />
           {errors.name && <p className="text-red-400 text-xs">{errors.name.message}</p>}
         </div>
+
+        <OrganizationPicker
+          value={organizationId}
+          onChange={setOrganizationId}
+          onReady={setOrganizationsReady}
+        />
 
         <div className="space-y-1.5">
           <Label>Format</Label>
@@ -157,7 +171,7 @@ export default function CreateTournamentPage() {
 
         {error && <p className="text-red-400 text-sm">{error}</p>}
 
-        <Button type="submit" disabled={isSubmitting} className="w-full">
+        <Button type="submit" disabled={isSubmitting || !organizationsReady} className="w-full">
           {isSubmitting ? "Creating…" : "Create tournament"}
         </Button>
       </form>

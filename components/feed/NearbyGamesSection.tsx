@@ -34,7 +34,7 @@ function formatShortDate(dateString: string): string {
 
 export function NearbyGameRow({ game, coords = null }: NearbyGameRowProps) {
   const playerCount = getPlayerCount(game);
-  const organizerName = game.organizer?.full_name ?? "Organizer";
+  const organizerName = game.organization?.name ?? game.organizer?.full_name ?? "Organizer";
   const full = isFull(game);
   const spotsLeft = game.max_players - playerCount;
 
@@ -44,7 +44,15 @@ export function NearbyGameRow({ game, coords = null }: NearbyGameRowProps) {
       className="flex items-center gap-3 py-3 border-b border-white/5 last:border-0 active:opacity-80 transition-opacity"
     >
       <div className="w-11 h-11 rounded-full bg-secondary border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
-        {game.organizer?.avatar_url ? (
+        {game.organization?.logo_url ? (
+          <Image
+            src={game.organization.logo_url}
+            alt=""
+            width={44}
+            height={44}
+            className="w-full h-full object-cover"
+          />
+        ) : game.organizer?.avatar_url ? (
           <Image
             src={game.organizer.avatar_url}
             alt=""

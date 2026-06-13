@@ -23,6 +23,7 @@ export type TimerStatus = "waiting" | "running" | "paused" | "finished";
 export interface Profile {
   id: string;
   email: string | null;
+  phone?: string | null;
   full_name: string | null;
   avatar_url: string | null;
   role: UserRole;
@@ -41,9 +42,31 @@ export interface Profile {
   updated_at: string;
 }
 
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  logo_url: string | null;
+  verified: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OrganizationMember {
+  organization_id: string;
+  user_id: string;
+  role: "owner" | "admin" | "manager";
+  status: "active" | "requested" | "invited" | "rejected";
+  requested_at: string;
+  approved_at: string | null;
+  organization?: Organization;
+}
+
 export interface Game {
   id: string;
   organizer_id: string;
+  organization_id?: string | null;
   title: string;
   description: string | null;
   venue_name: string;
@@ -68,6 +91,7 @@ export interface Game {
   updated_at: string;
   // joined relations
   organizer?: Profile;
+  organization?: Organization | null;
   teams?: Team[];
   game_players?: GamePlayer[];
 }
@@ -222,6 +246,7 @@ export type PostKind = "post" | "highlight" | "match_result";
 export interface Tournament {
   id: string;
   organizer_id: string;
+  organization_id?: string | null;
   name: string;
   description: string | null;
   format: TournamentFormat;
@@ -237,6 +262,7 @@ export interface Tournament {
   updated_at: string;
   // joined relations
   organizer?: Profile;
+  organization?: Organization | null;
   tournament_teams?: TournamentTeam[];
 }
 

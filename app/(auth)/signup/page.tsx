@@ -2,30 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import Image from "next/image";
-import { Eye, EyeOff } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Phone, UserRound } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { getSafeRedirectPath } from "@/lib/auth/safe-redirect";
 import { ContinueAsGuestLink } from "@/components/auth/ContinueAsGuestLink";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
-
-const signupSchema = z
-  .object({
-    fullName: z.string().min(2, "Name must be at least 2 characters"),
-    email: z.string().email("Enter a valid email"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string(),
-  })
-  .refine((d) => d.password === d.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
-type SignupForm = z.infer<typeof signupSchema>;
+import { isLikelyPhoneNumber, normalizePhoneNumber } from "@/lib/auth/phone";
 
 function safeSignupNext(raw: string | null): string {
   const next = getSafeRedirectPath(raw, "/onboarding/slides");
@@ -34,8 +19,10 @@ function safeSignupNext(raw: string | null): string {
 
 export default function SignupPage() {
   const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
   const [nextParam, setNextParam] = useState<string | null>(null);
 
   useEffect(() => {
@@ -51,48 +38,40 @@ export default function SignupPage() {
           router.replace(profile?.role ? "/feed" : "/onboarding/slides");
         });
     });
+    setNextParam(new URLSearchParams(window.location.search).get("next"));
   }, [router]);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<SignupForm>({
-    resolver: zodResolver(signupSchema),
-  });
-
-  useEffect(() => {
-    setNextParam(new URLSearchParams(window.location.search).get("next"));
-  }, []);
-
-  async function onSubmit(formData: SignupForm) {
+  async function sendOtp(e: React.FormEvent) {
+    e.preventDefault();
     setError(null);
-    const next = safeSignupNext(new URLSearchParams(window.location.search).get("next"));
-    const res = await fetch("/api/auth/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: formData.email,
-        password: formData.password,
-        fullName: formData.fullName,
-      }),
-    });
-    const json = await res.json();
-    if (!res.ok) {
-      setError(json.error ?? "Could not create account");
+    const normalizedPhone = normalizePhoneNumber(phone);
+    if (fullName.trim().length < 2) {
+      setError("Enter your name.");
       return;
     }
+    if (!isLikelyPhoneNumber(normalizedPhone)) {
+      setError("Enter a valid phone number with country code.");
+      return;
+    }
+
+    setSending(true);
     const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: formData.email,
-      password: formData.password,
+    const { error: otpError } = await supabase.auth.signInWithOtp({
+      phone: normalizedPhone,
+      options: {
+        data: { full_name: fullName.trim(), phone: normalizedPhone },
+      },
     });
-    if (signInError) {
-      setError(signInError.message);
+    setSending(false);
+
+    if (otpError) {
+      setError(otpError.message);
       return;
     }
-    router.push(next);
-    router.refresh();
+
+    const next = safeSignupNext(new URLSearchParams(window.location.search).get("next"));
+    const params = new URLSearchParams({ phone: normalizedPhone, next });
+    router.push(`/otp?${params.toString()}`);
   }
 
   return (
@@ -110,61 +89,43 @@ export default function SignupPage() {
 
       <h1 className="rondo-hero-title text-4xl mb-2">Join Rondo</h1>
       <p className="font-body text-white/50 text-sm mb-8">
-        Create your player profile in under a minute.
+        Create your account with your phone number. No password.
       </p>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={sendOtp} className="space-y-5">
         <div className="space-y-2">
           <label htmlFor="fullName" className="font-body text-white/70 text-xs uppercase tracking-wider">
             Full name
           </label>
-          <input id="fullName" {...register("fullName")} placeholder="Juan dela Cruz" className={rondoFieldClass} />
-          {errors.fullName && (
-            <p className="text-red-400 text-xs font-body">{errors.fullName.message}</p>
-          )}
+          <div className="relative">
+            <UserRound size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/35" />
+            <input
+              id="fullName"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Juan dela Cruz"
+              className={`${rondoFieldClass} pl-11`}
+            />
+          </div>
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="email" className="font-body text-white/70 text-xs uppercase tracking-wider">
-            Email
-          </label>
-          <input id="email" {...register("email")} type="email" placeholder="you@email.com" className={rondoFieldClass} />
-          {errors.email && <p className="text-red-400 text-xs font-body">{errors.email.message}</p>}
-        </div>
-
-        <div className="space-y-2">
-          <label htmlFor="password" className="font-body text-white/70 text-xs uppercase tracking-wider">
-            Password
+          <label htmlFor="phone" className="font-body text-white/70 text-xs uppercase tracking-wider">
+            Phone number
           </label>
           <div className="relative">
+            <Phone size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/35" />
             <input
-              id="password"
-              {...register("password")}
-              type={showPassword ? "text" : "password"}
-              className={rondoFieldClass}
+              id="phone"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="+63 917 123 4567"
+              className={`${rondoFieldClass} pl-11`}
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
           </div>
-          {errors.password && (
-            <p className="text-red-400 text-xs font-body">{errors.password.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <label htmlFor="confirmPassword" className="font-body text-white/70 text-xs uppercase tracking-wider">
-            Confirm password
-          </label>
-          <input id="confirmPassword" {...register("confirmPassword")} type="password" className={rondoFieldClass} />
-          {errors.confirmPassword && (
-            <p className="text-red-400 text-xs font-body">{errors.confirmPassword.message}</p>
-          )}
         </div>
 
         {error && (
@@ -173,8 +134,8 @@ export default function SignupPage() {
           </p>
         )}
 
-        <RondoButton type="submit" variant="secondary" disabled={isSubmitting} className="mt-2">
-          {isSubmitting ? "Creating..." : "Create account"}
+        <RondoButton type="submit" variant="secondary" disabled={sending} className="mt-2">
+          {sending ? "Sending code..." : "Get OTP"}
         </RondoButton>
       </form>
 

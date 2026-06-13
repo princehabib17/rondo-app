@@ -5,26 +5,16 @@ import { signInWithOAuthProvider } from "@/lib/auth/oauth";
 import { getSafeRedirectPath } from "@/lib/auth/safe-redirect";
 
 const providers = [
-  {
-    id: "google" as const,
-    enabled: process.env.NEXT_PUBLIC_ENABLE_GOOGLE_OAUTH === "true",
-  },
-  {
-    id: "facebook" as const,
-    enabled: process.env.NEXT_PUBLIC_ENABLE_FACEBOOK_OAUTH === "true",
-  },
+  { id: "apple" as const },
+  { id: "google" as const },
+  { id: "facebook" as const },
 ];
 
 export function SocialLoginButtons() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
-  const enabledProviders = providers.filter((provider) => provider.enabled);
 
-  if (enabledProviders.length === 0) {
-    return null;
-  }
-
-  async function handle(provider: "google" | "facebook") {
+  async function handle(provider: "apple" | "google" | "facebook") {
     setError(null);
     setLoading(provider);
     const currentNext = new URLSearchParams(window.location.search).get("next");
@@ -40,7 +30,19 @@ export function SocialLoginButtons() {
     <div className="space-y-3">
       <p className="text-center text-white/70 text-xs uppercase tracking-wider">Or login using</p>
       <div className="flex gap-4 justify-center">
-        {enabledProviders.some((provider) => provider.id === "google") && (
+        <button
+          type="button"
+          onClick={() => handle("apple")}
+          disabled={!!loading}
+          aria-label="Continue with Apple"
+          className="w-11 h-11 rounded-lg bg-black border border-white/20 flex items-center justify-center hover:border-rondo-yellow transition disabled:opacity-50"
+        >
+          <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white" aria-hidden>
+            <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+          </svg>
+        </button>
+
+        {providers.some((provider) => provider.id === "google") && (
           <button
             type="button"
             onClick={() => handle("google")}
@@ -68,7 +70,7 @@ export function SocialLoginButtons() {
             </svg>
           </button>
         )}
-        {enabledProviders.some((provider) => provider.id === "facebook") && (
+        {providers.some((provider) => provider.id === "facebook") && (
           <button
             type="button"
             onClick={() => handle("facebook")}
@@ -81,16 +83,6 @@ export function SocialLoginButtons() {
             </svg>
           </button>
         )}
-        <button
-          type="button"
-          disabled
-          aria-label="Continue with Apple (coming soon)"
-          className="w-11 h-11 rounded-lg bg-black border border-white/20 flex items-center justify-center opacity-40 cursor-not-allowed"
-        >
-          <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white" aria-hidden>
-            <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-          </svg>
-        </button>
       </div>
       {error && (
         <p className="text-center text-destructive text-xs leading-relaxed px-2">{error}</p>
