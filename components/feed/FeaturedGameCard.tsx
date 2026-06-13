@@ -32,21 +32,21 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
         </h2>
       </div>
 
-      <article className="bg-card border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition-colors">
+      <article className="rondo-surface overflow-hidden rounded-[1.35rem]">
         <div className="flex gap-0">
-          <div className="relative w-[42%] min-h-[180px] shrink-0 bg-secondary">
+          <div className="relative w-[42%] min-h-[205px] shrink-0 bg-[#1c1c1c]">
             {game.banner_url ? (
               <img src={game.banner_url} alt="" className="w-full h-full object-cover" />
             ) : (
               <Image src="/feed/hero-soccer.jpg" alt="" fill className="object-cover" sizes="160px" />
             )}
-            <span className="absolute top-2 left-2 bg-rondo-accent text-black font-heading font-black text-[9px] uppercase px-2 py-0.5 rounded">
-              Featured
+            <span className="absolute top-3 left-3 rounded-full border border-rondo-accent/35 bg-black/75 px-3 py-1 font-heading text-[10px] font-black uppercase tracking-wide text-rondo-accent">
+              {Math.max(0, game.max_players - playerCount)} spots left
             </span>
           </div>
 
-          <div className="flex-1 p-3.5 flex flex-col min-w-0">
-            <h3 className="font-heading text-white font-black italic text-lg uppercase leading-none mb-2 truncate">
+          <div className="flex-1 p-4 flex flex-col min-w-0">
+            <h3 className="rondo-hero-title text-[1.9rem] leading-none mb-2 truncate">
               {game.title}
             </h3>
 
@@ -75,9 +75,9 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
               </div>
             </div>
 
-            <p className="font-heading text-rondo-accent font-black text-sm uppercase mb-2">
+            <p className="font-heading text-rondo-accent font-black text-2xl italic uppercase mb-2">
               {formatPrice(game.price_per_player)}{" "}
-              <span className="text-[10px] text-white/50 font-body normal-case tracking-normal">
+              <span className="text-[10px] text-white/50 font-body normal-case tracking-normal not-italic">
                 per player
               </span>
             </p>
@@ -86,7 +86,7 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
 
             <Link
               href={`/games/${game.id}`}
-              className="mt-3 self-end inline-flex items-center gap-1 font-heading text-rondo-accent text-[11px] font-black uppercase tracking-wider hover:underline"
+              className="rondo-btn rondo-btn-primary mt-3 min-h-11 text-[12px]"
             >
               View Match
               <ChevronRight size={14} />

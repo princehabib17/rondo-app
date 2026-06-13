@@ -14,21 +14,21 @@ const ALLOWED_PREFIXES = [
 /**
  * Validates OAuth `next` redirect targets to prevent open redirects.
  */
-export function getSafeRedirectPath(next: string | null): string {
-  if (!next) return DEFAULT_REDIRECT;
+export function getSafeRedirectPath(next: string | null, fallback = DEFAULT_REDIRECT): string {
+  if (!next) return fallback;
 
   const trimmed = next.trim();
   if (!trimmed.startsWith("/") || trimmed.startsWith("//")) {
-    return DEFAULT_REDIRECT;
+    return fallback;
   }
 
   if (trimmed.includes("://") || trimmed.includes("\\")) {
-    return DEFAULT_REDIRECT;
+    return fallback;
   }
 
   const allowed = ALLOWED_PREFIXES.some(
     (prefix) => trimmed === prefix || trimmed.startsWith(`${prefix}/`)
   );
 
-  return allowed ? trimmed : DEFAULT_REDIRECT;
+  return allowed ? trimmed : fallback;
 }

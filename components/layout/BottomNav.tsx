@@ -1,9 +1,17 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Map, Trophy, Users, User, LayoutDashboard, Radio } from "lucide-react";
+import {
+  CalendarDays,
+  CirclePlus,
+  Home,
+  LayoutDashboard,
+  MapPinned,
+  Radio,
+  User,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 type UserRole = "player" | "organizer" | null;
@@ -24,21 +32,21 @@ const playerTabs: TabDef[] = [
   },
   {
     href: "/feed/map",
-    icon: Map,
+    icon: MapPinned,
     label: "Map",
     isActive: (p) => p === "/feed/map" || p.startsWith("/feed/map/"),
   },
   {
-    href: "/tournaments",
-    icon: Trophy,
-    label: "Cups",
-    isActive: (p) => p === "/tournaments" || p.startsWith("/tournaments/"),
+    href: "/my-games",
+    icon: CalendarDays,
+    label: "Matches",
+    isActive: (p) => p === "/my-games" || p.startsWith("/my-games/"),
   },
   {
-    href: "/community",
-    icon: Users,
-    label: "Community",
-    isActive: (p) => p === "/community" || p.startsWith("/community/"),
+    href: "/organizer/dashboard",
+    icon: CirclePlus,
+    label: "Organize",
+    isActive: (p) => p.startsWith("/organizer"),
   },
   {
     href: "/profile",
@@ -102,35 +110,28 @@ export function BottomNav() {
   const tabs = isOrganizerRoute || role === "organizer" ? organizerTabs : playerTabs;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-black border-t border-white/10 z-[200]">
-      <div className="flex justify-around items-center h-16 max-w-lg mx-auto px-2">
+    <nav className="fixed bottom-0 left-0 right-0 rondo-glass-nav z-[200] pb-[env(safe-area-inset-bottom)]">
+      <div className="flex h-16 max-w-lg items-center justify-around px-2 mx-auto">
         {tabs.map(({ href, icon: Icon, label, isActive }) => {
           const active = isActive(pathname);
           return (
             <Link
               key={href}
               href={href}
-              className="flex flex-col items-center gap-0.5 flex-1 py-2 transition-all active:scale-90"
+              className="flex flex-1 flex-col items-center gap-0.5 py-2 transition-all active:scale-90"
             >
-              <div
+              <Icon
+                size={25}
+                strokeWidth={active ? 2 : 1.75}
                 className={cn(
-                  "w-12 h-7 flex items-center justify-center rounded-2xl transition-all duration-200",
-                  active ? "bg-rondo-accent/15" : ""
+                  "transition-colors duration-200",
+                  active ? "text-rondo-accent" : "text-white/45"
                 )}
-              >
-                <Icon
-                  size={20}
-                  strokeWidth={active ? 2.5 : 1.75}
-                  className={cn(
-                    "transition-all duration-200",
-                    active ? "text-rondo-accent" : "text-white/35"
-                  )}
-                />
-              </div>
+              />
               <span
                 className={cn(
-                  "font-body text-[9px] font-semibold tracking-wide transition-all duration-200 leading-none",
-                  active ? "text-rondo-accent" : "text-white/35"
+                  "font-body text-[11px] font-medium transition-colors duration-200",
+                  active ? "text-rondo-accent" : "text-white/45"
                 )}
               >
                 {label}

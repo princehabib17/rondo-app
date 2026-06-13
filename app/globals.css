@@ -49,15 +49,14 @@
   --color-team-purple: #8E24AA;
 
   /* RONDO brand colors */
-  --color-rondo-accent: #fffa98;
-  --color-rondo-yellow: #fffa98;
-  --color-rondo-black: #0a0a0a;
-  --color-rondo-dark: #111111;
-  --color-rondo-elevated: #141414;
-  --color-rondo-card: #1a1a1a;
-  --color-rondo-elevated: #141414;
-  --color-rondo-border: #2A2A2A;
-  --color-rondo-muted: #505050;
+  --color-rondo-accent: oklch(92% 0.16 102);
+  --color-rondo-yellow: oklch(92% 0.16 102);
+  --color-rondo-black: oklch(7.5% 0.008 102);
+  --color-rondo-dark: oklch(10.5% 0.01 102);
+  --color-rondo-elevated: oklch(14% 0.012 102);
+  --color-rondo-card: oklch(17% 0.014 102);
+  --color-rondo-border: oklch(31% 0.014 102);
+  --color-rondo-muted: oklch(43% 0.012 102);
   --color-rondo-red: #EF4444;
   --color-rondo-blue: #3B82F6;
   --color-rondo-gold: #D4A574;
@@ -78,30 +77,30 @@
    Pure black background, bold gold yellow
    ======================================== */
 :root {
-  --background: #0A0A0A;                  /* Pure black */
+  --background: oklch(10% 0.01 102);
   --foreground: #FFFFFF;                  /* White text */
   --card: #161616;                        /* Deep dark gray */
   --card-foreground: #FFFFFF;
   --popover: #161616;
   --popover-foreground: #FFFFFF;
-  --primary: #fffa98;
+  --primary: oklch(92% 0.13 102);
   --primary-foreground: #000000;
   --secondary: #1A1A1A;                   /* Dark gray */
   --secondary-foreground: #FFFFFF;
   --muted: #1A1A1A;
   --muted-foreground: #808080;            /* Gray text */
-  --accent: #fffa98;
+  --accent: oklch(92% 0.13 102);
   --accent-foreground: #000000;
   --destructive: #EF4444;                 /* Red */
   --border: #2A2A2A;                      /* Subtle borders */
   --input: #1A1A1A;                       /* Dark input bg */
-  --ring: #fffa98;
+  --ring: oklch(92% 0.13 102);
   --radius: 0.875rem;                     /* Rounded corners */
 
   /* Sidebar */
   --sidebar: #161616;
   --sidebar-foreground: #FFFFFF;
-  --sidebar-primary: #fffa98;
+  --sidebar-primary: oklch(92% 0.13 102);
   --sidebar-primary-foreground: #0A0A0A;
   --sidebar-accent: #1A1A1A;
   --sidebar-accent-foreground: #FFFFFF;
@@ -198,6 +197,15 @@
   button:not(:disabled):active {
     transform: scale(0.98);
   }
+
+  :where(a, button, input, select, textarea):focus {
+    outline: none;
+  }
+
+  :where(a, button, input, select, textarea):focus-visible {
+    outline: 2px solid var(--color-rondo-accent);
+    outline-offset: 3px;
+  }
 }
 
 /* ---- Rondo design system utilities ---- */
@@ -205,17 +213,84 @@
 .rondo-page {
   background-color: var(--color-rondo-black);
   background-image:
-    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(255, 250, 152, 0.07), transparent 55%),
-    linear-gradient(180deg, #0a0a0a 0%, #0d0d0d 50%, #0a0a0a 100%);
+    radial-gradient(ellipse 90% 60% at 20% -10%, rgba(255, 235, 55, 0.09), transparent 45%),
+    radial-gradient(ellipse 80% 50% at 80% 0%, rgba(255, 250, 152, 0.045), transparent 48%),
+    linear-gradient(180deg, #050505 0%, #090909 54%, #050505 100%);
 }
 
 .rondo-surface {
-  background: var(--color-rondo-elevated);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 1rem;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012)),
+    var(--color-rondo-elevated);
+  border: 1px solid rgba(255, 255, 255, 0.105);
+  border-radius: 1.125rem;
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.04) inset,
-    0 12px 40px rgba(0, 0, 0, 0.35);
+    0 1px 0 rgba(255, 255, 255, 0.055) inset,
+    0 18px 48px rgba(0, 0, 0, 0.45);
+}
+
+.rondo-map-shell {
+  background:
+    radial-gradient(circle at 24% 28%, rgba(246, 224, 55, 0.12), transparent 9%),
+    radial-gradient(circle at 72% 38%, rgba(246, 224, 55, 0.1), transparent 8%),
+    radial-gradient(circle at 54% 70%, rgba(246, 224, 55, 0.1), transparent 8%),
+    linear-gradient(28deg, transparent 0 46%, rgba(255, 255, 255, 0.08) 46.4% 47%, transparent 47.4% 100%),
+    linear-gradient(112deg, transparent 0 42%, rgba(255, 255, 255, 0.055) 42.4% 43%, transparent 43.4% 100%),
+    repeating-linear-gradient(8deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 18px),
+    repeating-linear-gradient(98deg, rgba(255, 255, 255, 0.028) 0 1px, transparent 1px 22px),
+    #050505;
+}
+
+.rondo-phone-frame {
+  box-sizing: border-box;
+  width: min(100vw, 24rem);
+  max-width: 100%;
+  overflow-x: clip;
+  border: 1px solid rgba(255, 255, 255, 0.065);
+  border-radius: 1.75rem;
+  background:
+    radial-gradient(circle at 25% 0%, rgba(255, 250, 152, 0.08), transparent 26%),
+    #050505;
+  box-shadow: 0 22px 80px rgba(0, 0, 0, 0.48);
+}
+
+.rondo-hero-title {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-style: italic;
+  text-transform: uppercase;
+  line-height: 0.9;
+  letter-spacing: 0;
+  text-wrap: balance;
+}
+
+.rondo-kicker {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.46);
+}
+
+.rondo-chip {
+  display: inline-flex;
+  min-height: 2.625rem;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  background: rgba(255, 255, 255, 0.045);
+  padding: 0 0.95rem;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.rondo-chip[data-active="true"] {
+  border-color: color-mix(in oklch, var(--color-rondo-accent) 72%, transparent);
+  background: color-mix(in oklch, var(--color-rondo-accent) 12%, transparent);
+  color: var(--color-rondo-accent);
 }
 
 .rondo-btn {
@@ -224,14 +299,15 @@
   justify-content: center;
   gap: 0.5rem;
   width: 100%;
+  max-width: 100%;
   min-height: 3.25rem;
   padding: 0.875rem 1.25rem;
   font-family: var(--font-heading);
   font-size: 0.8125rem;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  border-radius: 0.75rem;
+  border-radius: 0.72rem;
   transition:
     transform 180ms var(--ease-out-rondo),
     opacity 180ms var(--ease-out-rondo),
@@ -249,8 +325,9 @@
 }
 
 .rondo-btn-primary {
-  background: var(--color-rondo-accent);
-  color: #0a0a0a;
+  background: linear-gradient(180deg, #fff47a 0%, #ffe145 100%);
+  color: #090909;
+  box-shadow: 0 10px 30px rgba(255, 226, 55, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .rondo-btn-secondary {
@@ -273,9 +350,9 @@
 }
 
 .rondo-glass-nav {
-  background: rgba(10, 10, 10, 0.82);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(5, 5, 5, 0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
@@ -286,13 +363,14 @@
   align-items: center;
   gap: 0.25rem;
   flex: 1;
+  min-height: 3rem;
   padding: 0.5rem 0.25rem;
   border-radius: 0.75rem;
   transition: background-color 180ms var(--ease-out-rondo), color 180ms var(--ease-out-rondo);
 }
 
 .rondo-nav-pill[data-active="true"] {
-  background: rgba(255, 250, 152, 0.1);
+  background: transparent;
 }
 
 .rondo-shimmer {
@@ -338,13 +416,19 @@
 
 /* Strip Leaflet's default light background */
 .leaflet-container {
-  background: #0a0a0a !important;
+  background: transparent !important;
   font-family: inherit;
 }
 
-/* Hide Leaflet attribution (keeps it minimal) */
 .leaflet-control-attribution {
-  display: none !important;
+  background: rgba(0, 0, 0, 0.55) !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+  font-size: 9px !important;
+  backdrop-filter: blur(8px);
+}
+
+.leaflet-control-attribution a {
+  color: rgba(255, 250, 152, 0.8) !important;
 }
 
 /* Pulsating node rings */
@@ -365,6 +449,17 @@
 
 .rondo-pulse-ring-2 {
   animation-delay: 1.1s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Remove default Leaflet marker shadow/icon */

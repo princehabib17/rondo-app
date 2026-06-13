@@ -60,4 +60,4 @@ export function RondoSurface({
 }
 
 export const rondoFieldClass =
-  "w-full bg-rondo-elevated border border-white/12 text-white px-4 py-3.5 text-sm rounded-xl placeholder:text-white/30 focus:outline-none focus:border-rondo-accent/60 focus:ring-2 focus:ring-rondo-accent/15 transition-[border-color,box-shadow] duration-200";
+  "w-full max-w-full min-w-0 bg-white/[0.045] border border-white/18 text-white px-4 py-3.5 text-sm rounded-lg placeholder:text-white/30 focus:outline-none focus:border-rondo-accent/70 focus:ring-2 focus:ring-rondo-accent/15 transition-[border-color,box-shadow] duration-200";

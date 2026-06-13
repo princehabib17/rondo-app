@@ -9,6 +9,8 @@ import { z } from "zod";
 import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { getSafeRedirectPath } from "@/lib/auth/safe-redirect";
+import { ContinueAsGuestLink } from "@/components/auth/ContinueAsGuestLink";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
 
@@ -25,33 +27,55 @@ const signupSchema = z
   });
 type SignupForm = z.infer<typeof signupSchema>;
 
+function safeSignupNext(raw: string | null): string {
+  const next = getSafeRedirectPath(raw, "/onboarding/slides");
+  return next === "/login" || next === "/signup" ? "/onboarding/slides" : next;
+}
+
 export default function SignupPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [nextParam, setNextParam] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user || data.user.is_anonymous) return;
-      // Logged-in user with no role still needs to onboard
-      supabase.from("profiles").select("role").eq("id", data.user.id).single().then(({ data: profile }) => {
-        router.replace(profile?.role ? "/feed" : "/onboarding/slides");
-      });
+      supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .single()
+        .then(({ data: profile }) => {
+          router.replace(profile?.role ? "/feed" : "/onboarding/slides");
+        });
     });
   }, [router]);
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignupForm>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<SignupForm>({
     resolver: zodResolver(signupSchema),
   });
 
+  useEffect(() => {
+    setNextParam(new URLSearchParams(window.location.search).get("next"));
+  }, []);
+
   async function onSubmit(formData: SignupForm) {
     setError(null);
-    // Use server-side admin signup to skip email confirmation entirely
+    const next = safeSignupNext(new URLSearchParams(window.location.search).get("next"));
     const res = await fetch("/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: formData.email, password: formData.password, fullName: formData.fullName }),
+      body: JSON.stringify({
+        email: formData.email,
+        password: formData.password,
+        fullName: formData.fullName,
+      }),
     });
     const json = await res.json();
     if (!res.ok) {
@@ -67,43 +91,54 @@ export default function SignupPage() {
       setError(signInError.message);
       return;
     }
-    router.push("/onboarding/slides");
+    router.push(next);
     router.refresh();
   }
-
-  const inputClass =
-    "w-full bg-black/60 border border-white/20 text-white px-4 py-3.5 text-sm placeholder:text-white/30 focus:outline-none focus:border-rondo-accent focus:bg-black/80 rounded-xl transition-colors";
 
   return (
     <>
       <div className="pt-2 mb-8">
-        <Image src="/rondo-logo.png" alt="RONDO" width={40} height={40} className="object-contain" />
+        <Image
+          src="/rondo-logo.png"
+          alt="RONDO"
+          width={40}
+          height={40}
+          className="object-contain"
+          style={{ width: "auto", height: "auto" }}
+        />
       </div>
 
-      <h1 className="font-heading text-white font-black italic text-4xl uppercase tracking-tight mb-2">
-        Join Rondo
-      </h1>
-      <p className="font-body text-white/50 text-sm mb-8">Create your player profile in under a minute.</p>
+      <h1 className="rondo-hero-title text-4xl mb-2">Join Rondo</h1>
+      <p className="font-body text-white/50 text-sm mb-8">
+        Create your player profile in under a minute.
+      </p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div className="space-y-2">
-          <label className="font-body text-white/70 text-xs uppercase tracking-wider">Full name</label>
-          <input {...register("fullName")} placeholder="Juan dela Cruz" className={rondoFieldClass} />
+          <label htmlFor="fullName" className="font-body text-white/70 text-xs uppercase tracking-wider">
+            Full name
+          </label>
+          <input id="fullName" {...register("fullName")} placeholder="Juan dela Cruz" className={rondoFieldClass} />
           {errors.fullName && (
             <p className="text-red-400 text-xs font-body">{errors.fullName.message}</p>
           )}
         </div>
 
         <div className="space-y-2">
-          <label className="font-body text-white/70 text-xs uppercase tracking-wider">Email</label>
-          <input {...register("email")} type="email" placeholder="you@email.com" className={rondoFieldClass} />
+          <label htmlFor="email" className="font-body text-white/70 text-xs uppercase tracking-wider">
+            Email
+          </label>
+          <input id="email" {...register("email")} type="email" placeholder="you@email.com" className={rondoFieldClass} />
           {errors.email && <p className="text-red-400 text-xs font-body">{errors.email.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <label className="font-body text-white/70 text-xs uppercase tracking-wider">Password</label>
+          <label htmlFor="password" className="font-body text-white/70 text-xs uppercase tracking-wider">
+            Password
+          </label>
           <div className="relative">
             <input
+              id="password"
               {...register("password")}
               type={showPassword ? "text" : "password"}
               className={rondoFieldClass}
@@ -123,10 +158,10 @@ export default function SignupPage() {
         </div>
 
         <div className="space-y-2">
-          <label className="font-body text-white/70 text-xs uppercase tracking-wider">
+          <label htmlFor="confirmPassword" className="font-body text-white/70 text-xs uppercase tracking-wider">
             Confirm password
           </label>
-          <input {...register("confirmPassword")} type="password" className={rondoFieldClass} />
+          <input id="confirmPassword" {...register("confirmPassword")} type="password" className={rondoFieldClass} />
           {errors.confirmPassword && (
             <p className="text-red-400 text-xs font-body">{errors.confirmPassword.message}</p>
           )}
@@ -138,21 +173,21 @@ export default function SignupPage() {
           </p>
         )}
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full bg-rondo-accent text-black font-heading font-black uppercase tracking-widest text-sm py-4 rounded-xl disabled:opacity-50 active:scale-[0.98] transition-all"
-        >
-          {isSubmitting ? "Creating..." : "Create Account"}
-        </button>
+        <RondoButton type="submit" variant="secondary" disabled={isSubmitting} className="mt-2">
+          {isSubmitting ? "Creating..." : "Create account"}
+        </RondoButton>
       </form>
 
       <p className="text-center text-white/55 text-sm mt-8">
         Already have an account?{" "}
-        <Link href="/login" className="text-rondo-accent font-semibold hover:underline">
-          Log In
+        <Link
+          href={`/login${nextParam ? `?next=${encodeURIComponent(nextParam)}` : ""}`}
+          className="text-rondo-accent font-semibold hover:underline"
+        >
+          Log in
         </Link>
       </p>
+      <ContinueAsGuestLink />
 
       <div className="mt-8">
         <SocialLoginButtons />

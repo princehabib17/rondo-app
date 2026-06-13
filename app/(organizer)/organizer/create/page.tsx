@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ImagePlus } from "lucide-react";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -137,12 +137,12 @@ export default function CreateGamePage() {
   }
 
   const fieldClass =
-    "w-full bg-secondary border border-border text-white rounded-lg p-3 text-sm focus:border-rondo-yellow focus:outline-none placeholder:text-muted-foreground";
+    "w-full bg-white/[0.045] border border-white/18 text-white rounded-lg p-3 text-sm focus:border-rondo-yellow focus:outline-none placeholder:text-muted-foreground";
   const labelClass = "text-muted-foreground text-xs uppercase tracking-wider";
 
   return (
     <div className="min-h-[100dvh] pb-8">
-      <header className="sticky top-0 bg-background/90 backdrop-blur-md border-b border-border z-40 px-4 py-3 flex items-center gap-3">
+      <header className="sticky top-0 bg-background/90 backdrop-blur-md border-b border-white/10 z-40 px-4 py-3 flex items-center gap-3">
         <button
           onClick={() => router.back()}
           className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white hover:text-rondo-yellow transition-colors cursor-pointer"
@@ -150,29 +150,38 @@ export default function CreateGamePage() {
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-white font-bold text-base">Create Match</h1>
+        <h1 className="rondo-hero-title text-2xl">Create Match</h1>
       </header>
 
       <form onSubmit={handleSubmit(onSubmit)} className="px-4 py-6 space-y-5 max-w-lg mx-auto">
+        <div className="rounded-2xl border border-dashed border-rondo-accent/45 bg-white/[0.025] p-8 text-center">
+          <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-rondo-accent text-black">
+            <ImagePlus size={24} />
+          </div>
+          <p className="mt-4 font-body text-sm text-white">Upload cover photo</p>
+          <p className="mt-1 font-body text-xs italic text-white/45">Recommended 16:9 ratio</p>
+        </div>
+
         <div className="space-y-1.5">
-          <Label className={labelClass}>Match Title *</Label>
-          <Input {...register("title")} placeholder="Thursday Night Futsal" className="bg-secondary border-border text-white" />
+          <Label htmlFor="title" className={labelClass}>Match Title *</Label>
+          <Input id="title" {...register("title")} placeholder="Thursday Night Futsal" className={fieldClass} />
           {errors.title && <p className="text-destructive text-xs">{errors.title.message}</p>}
         </div>
 
         <div className="space-y-1.5">
-          <Label className={labelClass}>Venue Name *</Label>
-          <Input {...register("venue_name")} placeholder="BGC Futsal Court" className="bg-secondary border-border text-white" />
+          <Label htmlFor="venue_name" className={labelClass}>Venue Name *</Label>
+          <Input id="venue_name" {...register("venue_name")} placeholder="BGC Futsal Court" className={fieldClass} />
           {errors.venue_name && <p className="text-destructive text-xs">{errors.venue_name.message}</p>}
         </div>
 
         <div className="space-y-1.5">
-          <Label className={labelClass}>Full Address *</Label>
+          <Label htmlFor="venue_address" className={labelClass}>Full Address *</Label>
           <div className="relative">
             <Input
               {...register("venue_address")}
+              id="venue_address"
               placeholder="9th Ave, Bonifacio Global City, Taguig"
-              className="bg-secondary border-border text-white pr-10"
+              className={`${fieldClass} pr-10`}
               onBlur={async (e) => {
                 const address = e.target.value.trim();
                 if (!address || address.length < 5) return;
@@ -197,22 +206,22 @@ export default function CreateGamePage() {
         </div>
 
         <div className="space-y-1.5">
-          <Label className={labelClass}>Date & Time *</Label>
-          <input {...register("date_time")} type="datetime-local" className={fieldClass} />
+          <Label htmlFor="date_time" className={labelClass}>Date & Time *</Label>
+          <input id="date_time" {...register("date_time")} type="datetime-local" className={fieldClass} />
           {errors.date_time && <p className="text-destructive text-xs">{errors.date_time.message}</p>}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <Label className={labelClass}>Match Type</Label>
-            <select {...register("match_type")} className={fieldClass}>
+            <Label htmlFor="match_type" className={labelClass}>Match Type</Label>
+            <select id="match_type" {...register("match_type")} className={fieldClass}>
               <option value="futsal">Futsal</option>
               <option value="football">Football</option>
             </select>
           </div>
           <div className="space-y-1.5">
-            <Label className={labelClass}>Skill Level</Label>
-            <select {...register("skill_level")} className={fieldClass}>
+            <Label htmlFor="skill_level" className={labelClass}>Skill Level</Label>
+            <select id="skill_level" {...register("skill_level")} className={fieldClass}>
               <option value="">Any / not set</option>
               <option value="beginner">Beginner</option>
               <option value="intermediate">Intermediate</option>
@@ -224,13 +233,13 @@ export default function CreateGamePage() {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <Label className={labelClass}>Price per Player (&#8369;)</Label>
-            <Input {...register("price_per_player")} type="number" min="0" className="bg-secondary border-border text-white" />
+            <Label htmlFor="price_per_player" className={labelClass}>Price per Player (&#8369;)</Label>
+            <Input id="price_per_player" {...register("price_per_player")} type="number" min="0" className={fieldClass} />
             {errors.price_per_player && <p className="text-destructive text-xs">{errors.price_per_player.message}</p>}
           </div>
           <div className="space-y-1.5">
-            <Label className={labelClass}>Max Players</Label>
-            <Input {...register("max_players")} type="number" min="2" max="100" className="bg-secondary border-border text-white" />
+            <Label htmlFor="max_players" className={labelClass}>Max Players</Label>
+            <Input id="max_players" {...register("max_players")} type="number" min="2" max="100" className={fieldClass} />
           </div>
         </div>
 
@@ -295,7 +304,7 @@ export default function CreateGamePage() {
         <label className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
           <input type="checkbox" {...register("is_private")} className="mt-0.5 h-4 w-4 accent-[#E9FF3A]" />
           <span className="text-sm text-white/80 leading-snug">
-            Private match — approval required.
+            Private match - approval required.
             <span className="block text-xs text-white/45 mt-0.5">
               Players request to join; you choose who gets in.
             </span>

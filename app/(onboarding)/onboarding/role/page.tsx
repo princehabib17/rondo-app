@@ -18,13 +18,13 @@ const roles: {
   {
     id: "player",
     title: "PLAYER",
-    subtitle: "JOIN GAMES • ADD FRIENDS • HAVE FUN",
+    subtitle: "JOIN GAMES / ADD FRIENDS / HAVE FUN",
     image: "/roles/player.jpg",
   },
   {
     id: "organizer",
     title: "ORGANIZER",
-    subtitle: "BE A HOST • AVOID FLAKES • BUILD COMMUNITIES",
+    subtitle: "BE A HOST / AVOID FLAKES / BUILD COMMUNITIES",
     image: "/roles/organizer.jpg",
   },
 ];
@@ -47,10 +47,10 @@ export default function RoleSelectionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex flex-col px-6 py-8 max-w-lg mx-auto">
+    <div className="min-h-[100dvh] bg-black flex flex-col px-5 py-7 max-w-sm mx-auto rondo-phone-frame">
       <OnboardingHeader />
 
-      <h1 className="font-heading text-white font-black italic text-3xl uppercase text-center mt-8 mb-6 leading-none">
+      <h1 className="rondo-hero-title text-3xl mt-9 mb-6 leading-none">
         Choose Your Role
       </h1>
 
@@ -63,7 +63,7 @@ export default function RoleSelectionPage() {
               type="button"
               onClick={() => setSelected(role.id)}
               className={cn(
-                "relative h-44 w-full overflow-hidden rounded-2xl border-2 text-left transition-all",
+                "relative h-36 w-full overflow-hidden rounded-xl border text-left transition-all",
                 isSelected ? "border-rondo-accent" : "border-transparent"
               )}
             >
@@ -74,12 +74,12 @@ export default function RoleSelectionPage() {
                 className="object-cover"
                 sizes="400px"
               />
-              <div className="absolute inset-0 bg-black/55" />
-              <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-center">
-                <h2 className="font-heading text-white font-black italic text-4xl uppercase leading-none">
+              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/35 to-transparent" />
+              <div className="relative z-10 flex h-full flex-col justify-end px-4 pb-4">
+                <h2 className="rondo-hero-title text-3xl leading-none">
                   {role.title}
                 </h2>
-                <p className="font-body text-white/90 text-[11px] tracking-wide mt-3 max-w-[260px]">
+                <p className="font-body text-white/75 text-[9px] tracking-wide mt-2 max-w-[260px]">
                   {role.subtitle}
                 </p>
               </div>
@@ -92,7 +92,7 @@ export default function RoleSelectionPage() {
         type="button"
         onClick={handleConfirm}
         disabled={!selected}
-        className="mt-6 w-full bg-rondo-accent text-black font-heading font-black uppercase tracking-widest text-sm py-4 rounded-xl disabled:opacity-40"
+        className="rondo-btn rondo-btn-primary mt-6 disabled:opacity-40"
       >
         Confirm Selection
       </button>
