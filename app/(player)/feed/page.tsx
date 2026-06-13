@@ -40,7 +40,7 @@ function partitionByTab(games: Game[], tab: GamesTab): Game[] {
 export default function FeedPage() {
   const router = useRouter();
   const [games, setGames] = useState<Game[]>([]);
-  const [organizers, setOrganizers] = useState<OrganizerGroup[]>(PLACEHOLDER_ORGANIZERS);
+  const [organizers, setOrganizers] = useState<OrganizerGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<GamesTab>("nearby");
   const [notificationCount, setNotificationCount] = useState(0);
@@ -159,7 +159,7 @@ export default function FeedPage() {
 
       <HeroCarousel slides={DEFAULT_CAROUSEL_SLIDES} />
 
-      <TopOrganizers organizers={organizers} />
+      <TopOrganizers organizers={organizers} loading={loading} />
 
       {loading ? (
         <FeaturedGameSkeleton />

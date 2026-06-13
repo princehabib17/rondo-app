@@ -5,9 +5,10 @@ import { getOrganizerInitials, type OrganizerGroup } from "@/lib/feed/organizers
 
 interface TopOrganizersProps {
   organizers: OrganizerGroup[];
+  loading?: boolean;
 }
 
-export function TopOrganizers({ organizers }: TopOrganizersProps) {
+export function TopOrganizers({ organizers, loading = false }: TopOrganizersProps) {
   return (
     <section className="px-4 pt-6">
       <div className="flex items-center justify-between mb-4">
@@ -27,7 +28,14 @@ export function TopOrganizers({ organizers }: TopOrganizersProps) {
       </div>
 
       <div className="flex gap-4 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1">
-        {organizers.map((organizer) => {
+        {loading
+          ? Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex flex-col items-center gap-2 shrink-0 w-[72px]">
+                <div className="w-14 h-14 rounded-full bg-white/10 animate-pulse" />
+                <div className="h-2.5 w-12 rounded bg-white/10 animate-pulse" />
+              </div>
+            ))
+          : organizers.map((organizer) => {
           const href = `/organizers/${organizer.id}`;
 
           return (
@@ -62,9 +70,9 @@ export function TopOrganizers({ organizers }: TopOrganizersProps) {
               <span className="font-body text-white/80 text-[10px] text-center leading-tight line-clamp-2">
                 {organizer.full_name}
               </span>
-            </Link>
-          );
-        })}
+                </Link>
+              );
+            })}
       </div>
     </section>
   );
