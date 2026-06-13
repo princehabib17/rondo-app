@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { PUBLIC_PROFILE_SELECT } from "@/lib/supabase/profile-select";
 import { formatGameDate, formatPrice, getFlagEmoji } from "@/lib/utils/format";
-import type { Profile } from "@/lib/supabase/types";
+import type { Profile, PlayerReel } from "@/lib/supabase/types";
 
 interface ProfileMatchEntry {
   id: string;
@@ -39,6 +39,7 @@ export default function PublicProfilePage() {
   const [walletRows, setWalletRows] = useState<Array<{ amount: number; direction: "credit" | "debit"; source: string }>>([]);
   const [isGuest, setIsGuest] = useState(false);
   const [locationHidden, setLocationHidden] = useState(false);
+  const [playerReels, setPlayerReels] = useState<PlayerReel[]>([]);
   const [savingLocation, setSavingLocation] = useState(false);
   const [switchingRole, setSwitchingRole] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -142,6 +143,13 @@ export default function PublicProfilePage() {
       const debits = walletRows.filter((row) => row.direction === "debit");
       setWalletPaidCount(debits.length);
       setWalletSpentCentavos(debits.reduce((sum, row) => sum + row.amount, 0));
+      // Fetch player reels
+      const reelsRes = await fetch(`/api/reels?playerId=${id}&limit=6`);
+      if (reelsRes.ok) {
+        const reelsJson = await reelsRes.json();
+        setPlayerReels(reelsJson.reels ?? []);
+      }
+
       setLoading(false);
     }
     load();
@@ -282,6 +290,43 @@ export default function PublicProfilePage() {
           <div className="space-y-2">
             <h3 className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">About</h3>
             <p className="text-white text-sm leading-relaxed">{profile.bio}</p>
+          </div>
+        )}
+
+        {/* Reels */}
+        {playerReels.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">Reels</h3>
+              <Link
+                href={`/reels?player=${id}`}
+                className="text-rondo-accent text-xs font-semibold uppercase tracking-wide"
+              >
+                View All
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {playerReels.slice(0, 4).map((reel) => (
+                <Link
+                  key={reel.id}
+                  href={`/reels?player=${id}`}
+                  className="relative aspect-[9/16] max-h-48 rounded-xl overflow-hidden bg-black border border-border"
+                >
+                  <video
+                    src={reel.video_url}
+                    muted
+                    playsInline
+                    preload="metadata"
+                    className="w-full h-full object-cover"
+                  />
+                  {reel.caption && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 p-2">
+                      <p className="text-white text-[10px] line-clamp-1">{reel.caption}</p>
+                    </div>
+                  )}
+                </Link>
+              ))}
+            </div>
           </div>
         )}
 

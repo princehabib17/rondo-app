@@ -10,6 +10,7 @@ import { PLACEHOLDER_ORGANIZERS, type OrganizerGroup } from "@/lib/feed/organize
 import { FeedHeader } from "@/components/feed/FeedHeader";
 import { HeroCarousel } from "@/components/feed/HeroCarousel";
 import { TopOrganizers } from "@/components/feed/TopOrganizers";
+import { SuggestedProfiles } from "@/components/feed/SuggestedProfiles";
 import { FeaturedGameCard, FeaturedGameSkeleton } from "@/components/feed/FeaturedGameCard";
 import { NearbyGamesSection } from "@/components/feed/NearbyGamesSection";
 
@@ -160,6 +161,8 @@ export default function FeedPage() {
       <HeroCarousel slides={DEFAULT_CAROUSEL_SLIDES} />
 
       <TopOrganizers organizers={organizers} loading={loading} />
+
+      <SuggestedProfiles />
 
       {loading ? (
         <FeaturedGameSkeleton />

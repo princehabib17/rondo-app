@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarDays,
+  Clapperboard,
   CirclePlus,
   Home,
   LayoutDashboard,
@@ -31,6 +32,12 @@ const playerTabs: TabDef[] = [
     isActive: (p) => p === "/feed",
   },
   {
+    href: "/reels",
+    icon: Clapperboard,
+    label: "Reels",
+    isActive: (p) => p === "/reels" || p.startsWith("/reels/"),
+  },
+  {
     href: "/feed/map",
     icon: MapPinned,
     label: "Map",
@@ -41,12 +48,6 @@ const playerTabs: TabDef[] = [
     icon: CalendarDays,
     label: "Matches",
     isActive: (p) => p === "/my-games" || p.startsWith("/my-games/"),
-  },
-  {
-    href: "/organizer/dashboard",
-    icon: CirclePlus,
-    label: "Organize",
-    isActive: (p) => p.startsWith("/organizer"),
   },
   {
     href: "/profile",

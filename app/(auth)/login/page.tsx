@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Phone } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { ContinueAsGuestLink } from "@/components/auth/ContinueAsGuestLink";
+import { GuestScoutLinks } from "@/components/auth/GuestScoutLinks";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
 import { isLikelyPhoneNumber, normalizePhoneNumber } from "@/lib/auth/phone";
@@ -131,7 +131,7 @@ export default function LoginPage() {
           Create account
         </Link>
       </p>
-      <ContinueAsGuestLink />
+      <GuestScoutLinks />
 
       <div className="mt-10">
         <SocialLoginButtons />

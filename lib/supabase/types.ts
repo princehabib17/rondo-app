@@ -321,6 +321,28 @@ export interface PostComment {
   author?: Profile;
 }
 
+export interface PlayerReel {
+  id: string;
+  player_id: string;
+  video_url: string;
+  caption: string | null;
+  position: string | null;
+  skill_level: string | null;
+  created_at: string;
+  // joined
+  player?: Profile;
+  reel_likes?: { user_id: string }[];
+}
+
+export interface ScoutShortlist {
+  id: string;
+  scout_id: string;
+  player_id: string;
+  note: string | null;
+  created_at: string;
+  player?: Profile;
+}
+
 export interface AppNotification {
   id: string;
   user_id: string;
