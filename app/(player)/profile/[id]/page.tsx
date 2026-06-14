@@ -205,6 +205,7 @@ export default function PublicProfilePage() {
 
   const flag = profile.nationality ? getFlagEmoji(profile.nationality) : "";
   const isOwnProfile = currentUserId === id;
+  const isOrganizer = profile.role === "organizer";
   const upcomingMatches = recentMatches
     .filter((entry) => entry.game && new Date(entry.game.date_time) >= new Date())
     .slice(0, 3);
@@ -255,22 +256,37 @@ export default function PublicProfilePage() {
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-white font-black text-xl leading-tight">{profile.full_name}</h2>
-            {profile.nationality && (
+            <div className="flex items-center gap-2">
+              <h2 className="text-white font-black text-xl leading-tight">{profile.full_name}</h2>
+              {isOrganizer && (
+                <span className="rounded-full bg-rondo-accent/15 text-rondo-accent text-[10px] font-black uppercase tracking-wider px-2 py-0.5 border border-rondo-accent/30">
+                  Organizer
+                </span>
+              )}
+            </div>
+            {profile.nationality && !isOrganizer && (
               <p className="text-muted-foreground text-sm flex items-center gap-1.5 mt-1">
                 <MapPin size={12} />
                 {profile.nationality}
               </p>
             )}
+            {isOrganizer && profile.preferred_areas && (
+              <p className="text-muted-foreground text-sm flex items-center gap-1.5 mt-1 truncate">
+                <MapPin size={12} className="shrink-0" />
+                <span className="truncate">{profile.preferred_areas}</span>
+              </p>
+            )}
             <div className="flex items-center gap-1.5 mt-1">
               <Trophy size={12} className="text-rondo-yellow" />
-              <span className="text-muted-foreground text-sm">{gamesPlayed} matches played</span>
+              <span className="text-muted-foreground text-sm">
+                {isOrganizer ? `${gamesPlayed} games hosted` : `${gamesPlayed} matches played`}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Stats row */}
-        {profile.position && (
+        {/* Stats row — player only */}
+        {!isOrganizer && profile.position && (
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-card border border-border rounded-xl p-4">
               <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Position</p>
@@ -285,16 +301,32 @@ export default function PublicProfilePage() {
           </div>
         )}
 
+        {/* Organizer info card */}
+        {isOrganizer && (
+          <Link
+            href={`/organizers/${id}`}
+            className="flex items-center justify-between bg-card border border-border hover:border-rondo-accent/40 rounded-xl p-4 transition-colors"
+          >
+            <div>
+              <p className="text-white text-sm font-bold">View organizer page</p>
+              <p className="text-muted-foreground text-xs mt-0.5">Games, room broadcasts, followers</p>
+            </div>
+            <ChevronRight size={16} className="text-muted-foreground" />
+          </Link>
+        )}
+
         {/* Bio */}
         {profile.bio && (
           <div className="space-y-2">
-            <h3 className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">About</h3>
-            <p className="text-white text-sm leading-relaxed">{profile.bio}</p>
+            <h3 className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">
+              {isOrganizer ? "About this organizer" : "About"}
+            </h3>
+            <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{profile.bio}</p>
           </div>
         )}
 
-        {/* Clips */}
-        {playerReels.length > 0 && (
+        {/* Clips — player only */}
+        {!isOrganizer && playerReels.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">Clips</h3>
@@ -377,45 +409,63 @@ export default function PublicProfilePage() {
               )}
             </section>
 
-            <section className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <CalendarDays size={16} className="text-rondo-accent" />
-                  <h3 className="text-white font-bold text-base">Matches</h3>
+            {!isOrganizer && (
+              <section className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays size={16} className="text-rondo-accent" />
+                    <h3 className="text-white font-bold text-base">Matches</h3>
+                  </div>
+                  <Link href="/my-games" className="text-rondo-accent text-xs font-semibold uppercase tracking-wide">
+                    View All
+                  </Link>
                 </div>
-                <Link href="/my-games" className="text-rondo-accent text-xs font-semibold uppercase tracking-wide">
-                  View All
-                </Link>
-              </div>
 
-              {upcomingMatches.length === 0 ? (
-                <div className="bg-card border border-border rounded-xl p-4">
-                  <p className="text-muted-foreground text-sm">No upcoming matches yet.</p>
+                {upcomingMatches.length === 0 ? (
+                  <div className="bg-card border border-border rounded-xl p-4">
+                    <p className="text-muted-foreground text-sm">No upcoming matches yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {upcomingMatches.map((entry) =>
+                      entry.game ? (
+                        <Link
+                          key={entry.id}
+                          href={`/games/${entry.game.id}`}
+                          className="flex items-center gap-3 bg-card border border-border hover:border-rondo-accent/40 rounded-xl p-3 transition-colors"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="text-white text-sm font-semibold truncate">{entry.game.title}</p>
+                            <p className="text-muted-foreground text-xs truncate">{formatGameDate(entry.game.date_time)}</p>
+                            <p className="text-muted-foreground text-xs truncate">{entry.game.venue_name}</p>
+                          </div>
+                          <span className="text-rondo-accent text-xs font-black shrink-0">
+                            {formatPrice(entry.game.price_per_player)}
+                          </span>
+                          <ChevronRight size={16} className="text-white/40 shrink-0" />
+                        </Link>
+                      ) : null
+                    )}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {isOrganizer && (
+              <Link
+                href="/organizer/dashboard"
+                className="flex items-center justify-between bg-rondo-accent/10 border border-rondo-accent/40 rounded-xl p-4"
+              >
+                <div className="flex items-center gap-2.5">
+                  <CalendarDays size={18} className="text-rondo-accent" />
+                  <div>
+                    <p className="text-white font-bold text-sm">Organizer dashboard</p>
+                    <p className="text-muted-foreground text-xs">Create games, manage payouts</p>
+                  </div>
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  {upcomingMatches.map((entry) =>
-                    entry.game ? (
-                      <Link
-                        key={entry.id}
-                        href={`/games/${entry.game.id}`}
-                        className="flex items-center gap-3 bg-card border border-border hover:border-rondo-accent/40 rounded-xl p-3 transition-colors"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="text-white text-sm font-semibold truncate">{entry.game.title}</p>
-                          <p className="text-muted-foreground text-xs truncate">{formatGameDate(entry.game.date_time)}</p>
-                          <p className="text-muted-foreground text-xs truncate">{entry.game.venue_name}</p>
-                        </div>
-                        <span className="text-rondo-accent text-xs font-black shrink-0">
-                          {formatPrice(entry.game.price_per_player)}
-                        </span>
-                        <ChevronRight size={16} className="text-white/40 shrink-0" />
-                      </Link>
-                    ) : null
-                  )}
-                </div>
-              )}
-            </section>
+                <ChevronRight size={16} className="text-rondo-accent" />
+              </Link>
+            )}
 
             <button
               onClick={() => {
