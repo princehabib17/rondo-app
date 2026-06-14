@@ -21,6 +21,7 @@ const PUBLIC_PREFIXES = [
 
 const PUBLIC_BROWSE_PREFIXES = [
   "/feed",
+  "/scout",
   "/organizers",
 ];
 

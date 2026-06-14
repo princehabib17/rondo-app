@@ -343,6 +343,24 @@ export interface ScoutShortlist {
   player?: Profile;
 }
 
+export type ScoutReactionKind = "like" | "save" | "scout";
+
+export interface ScoutClip {
+  id: string;
+  player_id: string;
+  video_url: string;
+  thumbnail_url: string | null;
+  caption: string;
+  position: string | null;
+  skill_tags: string[];
+  is_public: boolean;
+  created_at: string;
+  updated_at: string;
+  // joined
+  player?: Profile;
+  scout_clip_reactions?: { user_id: string; kind: ScoutReactionKind }[];
+}
+
 export interface AppNotification {
   id: string;
   user_id: string;
