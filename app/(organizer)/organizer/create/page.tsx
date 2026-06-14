@@ -615,11 +615,13 @@ export default function CreateGamePage() {
 
           {/* Description */}
           <div className="space-y-1.5">
-            <Label className={labelClass}>Description (optional)</Label>
+            <Label className={labelClass}>Describe your game or add extra information</Label>
             <textarea
               {...register("description")}
-              placeholder="Any extra details for players…"
-              className={`${fieldClass} h-20 resize-none`}
+              placeholder="Skill range, parking, what to bring, any house rules…"
+              rows={5}
+              maxLength={800}
+              className={`${fieldClass} h-32 resize-none`}
             />
           </div>
 
