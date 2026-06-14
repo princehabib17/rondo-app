@@ -58,7 +58,7 @@ export function ReelUploadModal({ userId, onClose, onUploaded }: ReelUploadModal
         toast.error(json.error ?? "Could not save reel");
         return;
       }
-      toast.success("Reel posted!");
+      toast.success("Clip posted!");
       onUploaded();
       onClose();
     } finally {
@@ -70,7 +70,7 @@ export function ReelUploadModal({ userId, onClose, onUploaded }: ReelUploadModal
     <div className="fixed inset-0 z-[300] bg-black/80 flex items-end sm:items-center justify-center p-4">
       <div className="w-full max-w-sm bg-card border border-border rounded-2xl overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <h2 className="font-heading text-white font-black italic text-base uppercase">Post a Reel</h2>
+          <h2 className="font-heading text-white font-black italic text-base uppercase">Post a Clip</h2>
           <button onClick={onClose} className="text-white/50 hover:text-white transition-colors">
             <X size={20} />
           </button>
@@ -119,7 +119,7 @@ export function ReelUploadModal({ userId, onClose, onUploaded }: ReelUploadModal
             disabled={!file || uploading}
             className="w-full bg-rondo-accent text-black font-bold py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-40"
           >
-            {uploading ? <><Loader2 size={16} className="animate-spin" /> Uploading…</> : "Post Reel"}
+            {uploading ? <><Loader2 size={16} className="animate-spin" /> Uploading…</> : "Post Clip"}
           </button>
         </div>
       </div>

@@ -270,20 +270,20 @@ export default function PublicProfilePage() {
         </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-2 gap-3">
-          {profile.position && (
+        {profile.position && (
+          <div className="grid grid-cols-2 gap-3">
             <div className="bg-card border border-border rounded-xl p-4">
               <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Position</p>
               <p className="text-white font-bold capitalize">{profile.position}</p>
             </div>
-          )}
-          {profile.preferred_foot && (
-            <div className="bg-card border border-border rounded-xl p-4">
-              <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Preferred Foot</p>
-              <p className="text-white font-bold capitalize">{profile.preferred_foot}</p>
-            </div>
-          )}
-        </div>
+            {profile.skill_level && (
+              <div className="bg-card border border-border rounded-xl p-4">
+                <p className="text-muted-foreground text-xs uppercase tracking-wider mb-1">Level</p>
+                <p className="text-white font-bold capitalize">{profile.skill_level}</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Bio */}
         {profile.bio && (
@@ -293,11 +293,11 @@ export default function PublicProfilePage() {
           </div>
         )}
 
-        {/* Reels */}
+        {/* Clips */}
         {playerReels.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">Reels</h3>
+              <h3 className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">Clips</h3>
               <Link
                 href={`/reels?player=${id}`}
                 className="text-rondo-accent text-xs font-semibold uppercase tracking-wide"

@@ -123,16 +123,16 @@ export default function ReelsPage() {
   if (reels.length === 0) {
     return (
       <div className="min-h-[100dvh] bg-black flex flex-col items-center justify-center gap-4 px-8 text-center">
-        <p className="font-heading text-white font-black italic text-2xl uppercase">No Reels Yet</p>
+        <p className="font-heading text-white font-black italic text-2xl uppercase">No Clips Yet</p>
         <p className="font-body text-white/50 text-sm">
-          Players haven&apos;t posted any skill clips yet. Check back soon.
+          No clips posted yet. Check back soon.
         </p>
         {isPlayer && (
           <button
             onClick={() => setShowUpload(true)}
             className="mt-4 bg-rondo-accent text-black font-bold px-6 py-3 rounded-xl"
           >
-            Be the first — post a reel
+            Be the first — post a clip
           </button>
         )}
       </div>
