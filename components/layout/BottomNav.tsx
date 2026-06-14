@@ -3,13 +3,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarDays,
-  Clapperboard,
   CirclePlus,
   Home,
   LayoutDashboard,
   MapPinned,
   Radio,
   User,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
@@ -32,10 +32,10 @@ const playerTabs: TabDef[] = [
     isActive: (p) => p === "/feed",
   },
   {
-    href: "/reels",
-    icon: Clapperboard,
-    label: "Reels",
-    isActive: (p) => p === "/reels" || p.startsWith("/reels/"),
+    href: "/community",
+    icon: Users,
+    label: "Community",
+    isActive: (p) => p === "/community" || p.startsWith("/community/"),
   },
   {
     href: "/feed/map",

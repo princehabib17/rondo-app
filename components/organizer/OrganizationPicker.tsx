@@ -68,7 +68,7 @@ export function OrganizationPicker({ value, onChange, onReady }: OrganizationPic
     if (!logoFile) return null;
     const supabase = createClient();
     const ext = logoFile.name.split(".").pop() ?? "jpg";
-    const path = `org-logos/${userId}/${Date.now()}.${ext}`;
+    const path = `${userId}/org-logos/${Date.now()}.${ext}`;
     const { error } = await supabase.storage
       .from("game-covers")
       .upload(path, logoFile, { upsert: true });

@@ -15,21 +15,19 @@ const baseProfileSchema = z.object({
   age: z.string(),
   gender: z.string(),
   phone: z.string().min(7, "Phone required"),
-  address: z.string().min(2, "Address required"),
+  address: z.string(),
   nationality: z.string().min(1, "Nationality required"),
   position: z.string(),
   skill_level: z.string(),
-  preferred_foot: z.string(),
   preferred_areas: z.string().min(2, "Preferred areas required"),
-  game_preference: z.string().min(1, "Preference required"),
+  game_preference: z.string(),
   bio: z.string(),
 });
 
-// Players register as people (age/gender matter for matchmaking); organizers
-// register as a brand, so those fields are skipped.
 const playerSchema = baseProfileSchema.extend({
   age: z.string().min(1, "Age required"),
   gender: z.string().min(1, "Gender required"),
+  address: z.string().min(2, "Address required"),
 });
 
 type ProfileForm = z.infer<typeof baseProfileSchema>;
@@ -92,7 +90,6 @@ export default function PlayerSetupPage() {
         nationality: profileData?.nationality ?? meta.nationality ?? "Philippines",
         position: profileData?.position ?? "",
         skill_level: profileData?.skill_level ?? "",
-        preferred_foot: profileData?.preferred_foot ?? "",
         preferred_areas: profileData?.preferred_areas ?? meta.preferred_areas ?? "",
         game_preference: profileData?.game_preference ?? meta.game_preference ?? "",
         bio: profileData?.bio ?? "",
@@ -160,7 +157,6 @@ export default function PlayerSetupPage() {
         ...(role === "player" ? {
           position: data.position,
           skill_level: data.skill_level,
-          preferred_foot: data.preferred_foot,
         } : {}),
         ...(avatar_url ? { avatar_url } : {}),
       })
@@ -240,73 +236,63 @@ export default function PlayerSetupPage() {
             {errors.phone && <p className="text-red-400 text-xs font-body">{errors.phone.message}</p>}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          {!isOrganizer && (
             <div className="space-y-2">
               <label className={labelClass}>Address</label>
               <input {...register("address")} placeholder="Taguig City" className={inputClass} />
               {errors.address && <p className="text-red-400 text-xs font-body">{errors.address.message}</p>}
             </div>
-            <div className="space-y-2">
-              <label className={labelClass}>Nationality</label>
-              <select {...register("nationality")} className={inputClass}>
-                {NATIONALITIES.map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-              {errors.nationality && (
-                <p className="text-red-400 text-xs font-body">{errors.nationality.message}</p>
-              )}
-            </div>
-          </div>
-          {userRole === "player" && (
-            <>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <label className={labelClass}>Position</label>
-                  <select {...register("position")} className={inputClass}>
-                    <option value="">Select</option>
-                    <option value="goalkeeper">Goalkeeper</option>
-                    <option value="defender">Defender</option>
-                    <option value="midfielder">Midfielder</option>
-                    <option value="forward">Forward</option>
-                    <option value="any">Any</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className={labelClass}>Skill level</label>
-                  <select {...register("skill_level")} className={inputClass}>
-                    <option value="">Select</option>
-                    <option value="beginner">Beginner</option>
-                    <option value="intermediate">Intermediate</option>
-                    <option value="advanced">Advanced</option>
-                    <option value="pro">Pro</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className={labelClass}>Preferred foot</label>
-                <select {...register("preferred_foot")} className={inputClass}>
-                  <option value="">Select</option>
-                  <option value="left">Left</option>
-                  <option value="right">Right</option>
-                  <option value="both">Both</option>
-                </select>
-              </div>
-            </>
           )}
 
           <div className="space-y-2">
-            <label className={labelClass}>{isOrganizer ? "What do you host?" : "Game preference"}</label>
-            <select {...register("game_preference")} className={inputClass}>
-              <option value="">Select</option>
-              <option value="football">Football</option>
-              <option value="futsal">Futsal</option>
-              <option value="both">Both</option>
+            <label className={labelClass}>Nationality</label>
+            <select {...register("nationality")} className={inputClass}>
+              {NATIONALITIES.map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
             </select>
+            {errors.nationality && (
+              <p className="text-red-400 text-xs font-body">{errors.nationality.message}</p>
+            )}
           </div>
+
+          {userRole === "player" && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <label className={labelClass}>Position</label>
+                <select {...register("position")} className={inputClass}>
+                  <option value="">Select</option>
+                  <option value="goalkeeper">Goalkeeper</option>
+                  <option value="defender">Defender</option>
+                  <option value="midfielder">Midfielder</option>
+                  <option value="forward">Forward</option>
+                  <option value="any">Any</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className={labelClass}>Skill level</label>
+                <select {...register("skill_level")} className={inputClass}>
+                  <option value="">Select</option>
+                  <option value="beginner">Beginner</option>
+                  <option value="intermediate">Intermediate</option>
+                  <option value="advanced">Advanced</option>
+                  <option value="pro">Pro</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {!isOrganizer && (
+            <div className="space-y-2">
+              <label className={labelClass}>Game preference</label>
+              <select {...register("game_preference")} className={inputClass}>
+                <option value="">Select</option>
+                <option value="football">Football</option>
+                <option value="futsal">Futsal</option>
+                <option value="both">Both</option>
+              </select>
+            </div>
+          )}
 
           <div className="space-y-2">
             <label className={labelClass}>{isOrganizer ? "Areas you host games in" : "Preferred areas"}</label>
@@ -315,18 +301,18 @@ export default function PlayerSetupPage() {
 
           <div className="space-y-2">
             <label className={labelClass}>
-              {isOrganizer ? "About your games" : "Bio"}{" "}
-              <span className="text-white/30 normal-case text-[11px]">(optional)</span>
+              {isOrganizer ? "About your games" : "Tell us more about you"}
+              <span className="text-white/30 normal-case text-[11px] ml-1">(optional)</span>
             </label>
             <textarea
               {...register("bio")}
               placeholder={
                 isOrganizer
                   ? "Weekly 5v5 nights, all levels welcome, shirts provided..."
-                  : "Tell the squad about yourself..."
+                  : "Tell the squad about yourself — playing style, favourite position, where you're from..."
               }
-              maxLength={200}
-              rows={3}
+              maxLength={500}
+              rows={4}
               className={`${inputClass} resize-none`}
             />
           </div>
