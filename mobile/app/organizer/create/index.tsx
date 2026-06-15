@@ -12,6 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
 import { colors, font, spacing, radius } from '../../../constants/theme';
+import * as q from '../../../lib/queries';
 
 const { width } = Dimensions.get('window');
 const TOTAL_STEPS = 5;
@@ -94,11 +95,37 @@ export default function CreateGameScreen() {
 
   const handleSubmit = async () => {
     setLoading(true);
-    // POST to Next.js API /api/matches/create
-    await new Promise((r) => setTimeout(r, 1000));
-    setLoading(false);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    router.replace('/organizer/(tabs)/dashboard');
+    try {
+      const priceCentavos = form.paymentType === 'free' ? 0 : Math.round(parseFloat(form.price || '0') * 100);
+      const dateTimeStr = `${form.date} ${form.time}`;
+      const dateTime = new Date(dateTimeStr);
+      const isoDateTime = isNaN(dateTime.getTime()) ? new Date().toISOString() : dateTime.toISOString();
+      const playersPerTeam = parseInt(form.format.split('v')[0] ?? '5', 10);
+      const maxPlayers = playersPerTeam * form.teamCount;
+      await q.createGame({
+        title: form.title,
+        description: form.description || null,
+        venue_name: form.venue,
+        venue_address: form.address,
+        date_time: isoDateTime,
+        format: form.format,
+        num_teams: form.teamCount,
+        max_players: maxPlayers,
+        price_per_player: priceCentavos,
+        payment_type: form.paymentType === 'optional' ? 'venue' : 'online',
+        status: 'open',
+        registration_open: true,
+        is_private: form.isPrivate,
+        round_duration_minutes: 15,
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.replace('/organizer/(tabs)/dashboard');
+    } catch (e: any) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      // Error is surfaced below — set loading false so user can retry
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

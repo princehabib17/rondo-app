@@ -400,3 +400,33 @@ export async function listPlayers(limit = 50): Promise<Profile[]> {
 export async function getOrganization(id: string): Promise<Organization> {
   return unwrap(await supabase.from('organizations').select('*').eq('id', id).single());
 }
+
+// ── Player recent games (for public profile) ──────────────────
+export async function getPlayerRecentGames(playerId: string, limit = 5): Promise<(GamePlayer & { game: Game | null })[]> {
+  return unwrap(
+    await supabase.from('game_players')
+      .select('*, game:games(*)')
+      .eq('user_id', playerId)
+      .order('joined_at', { ascending: false })
+      .limit(limit)
+  ) as unknown as (GamePlayer & { game: Game | null })[];
+}
+
+// ── Scout shortlist check ─────────────────────────────────────
+export async function isOnShortlist(playerId: string): Promise<boolean> {
+  const uid = await getCurrentUserId();
+  if (!uid) return false;
+  const { count } = await supabase.from('scout_shortlists')
+    .select('id', { count: 'exact', head: true })
+    .eq('scout_id', uid).eq('player_id', playerId);
+  return (count ?? 0) > 0;
+}
+
+// ── Tournament match score update ─────────────────────────────
+export async function updateTournamentMatch(matchId: string, homeScore: number, awayScore: number): Promise<TournamentMatch> {
+  return unwrap(
+    await supabase.from('tournament_matches')
+      .update({ home_score: homeScore, away_score: awayScore, status: 'completed' })
+      .eq('id', matchId).select('*').single()
+  );
+}

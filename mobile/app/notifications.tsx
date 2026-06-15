@@ -1,51 +1,89 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, spacing, radius } from '../constants/theme';
 import { ScreenHeader } from '../components/layout/ScreenHeader';
+import { useQuery } from '../hooks/useQuery';
+import * as q from '../lib/queries';
+import type { AppNotification } from '../lib/types';
 
-type NotifType = 'game' | 'payment' | 'chat' | 'system';
+const TYPE_ICONS: Record<string, string> = {
+  game: '⚽',
+  payment: '💰',
+  chat: '💬',
+  system: '🔔',
+  follow: '👤',
+  announcement: '📢',
+};
+const TYPE_COLORS: Record<string, string> = {
+  game: colors.success,
+  payment: colors.yellow,
+  chat: colors.accent,
+  system: colors.textMuted,
+  follow: colors.yellow,
+  announcement: colors.accent,
+};
 
-const MOCK_NOTIFS = [
-  { id: '1', type: 'payment' as NotifType, title: 'Payment confirmed', body: 'Your payment for Friday Night 5v5 was received.', time: '5m ago', read: false, route: '/games/1' },
-  { id: '2', type: 'game' as NotifType, title: 'Game starts in 1 hour', body: 'Friday Night 5v5 at Turf Manila starts at 8:00 PM.', time: '30m ago', read: false, route: '/games/1' },
-  { id: '3', type: 'chat' as NotifType, title: 'New message in Squad Chat', body: 'FC Taguig: "Please arrive 15 mins early!"', time: '1h ago', read: true, route: '/games/1/chat' },
-  { id: '4', type: 'game' as NotifType, title: 'New game near you', body: 'Sunday League is open — 6 spots left.', time: '3h ago', read: true, route: '/games/2' },
-  { id: '5', type: 'system' as NotifType, title: 'Welcome to Rondo!', body: 'Browse games near you and join your first match.', time: 'Yesterday', read: true, route: '/(tabs)/feed' },
-];
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days === 1) return 'Yesterday';
+  return `${days}d ago`;
+}
 
-const TYPE_ICONS: Record<NotifType, string> = { game: '⚽', payment: '💰', chat: '💬', system: '🔔' };
-const TYPE_COLORS: Record<NotifType, string> = { game: colors.success, payment: colors.yellow, chat: colors.accent, system: colors.textMuted };
+function isToday(iso: string): boolean {
+  const diff = Date.now() - new Date(iso).getTime();
+  return diff < 86400000;
+}
 
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
+  const { data, loading, error, refetch } = useQuery(() => q.getNotifications());
 
-  const today = MOCK_NOTIFS.filter((n) => !n.time.includes('Yesterday'));
-  const earlier = MOCK_NOTIFS.filter((n) => n.time.includes('Yesterday'));
+  const handlePress = useCallback(async (n: AppNotification) => {
+    if (!n.read_at) {
+      await q.markNotificationRead(n.id);
+      refetch();
+    }
+    if (n.link) router.push(n.link as any);
+  }, [refetch]);
 
-  const renderGroup = (title: string, items: typeof MOCK_NOTIFS) => (
-    <View style={styles.group}>
+  const notifs = data ?? [];
+  const today = notifs.filter((n) => isToday(n.created_at));
+  const earlier = notifs.filter((n) => !isToday(n.created_at));
+
+  const renderGroup = (title: string, items: AppNotification[]) => (
+    <View style={styles.group} key={title}>
       <Text style={styles.groupTitle}>{title}</Text>
       <View style={styles.groupItems}>
-        {items.map((n, i) => (
-          <TouchableOpacity
-            key={n.id}
-            onPress={() => router.push(n.route as any)}
-            style={[styles.notifRow, !n.read && styles.notifRowUnread, i < items.length - 1 && styles.notifRowBorder]}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.iconBox, { backgroundColor: TYPE_COLORS[n.type] + '22' }]}>
-              <Text style={styles.icon}>{TYPE_ICONS[n.type]}</Text>
-            </View>
-            <View style={styles.notifInfo}>
-              <Text style={[styles.notifTitle, !n.read && styles.notifTitleUnread]}>{n.title}</Text>
-              <Text style={styles.notifBody} numberOfLines={2}>{n.body}</Text>
-              <Text style={styles.notifTime}>{n.time}</Text>
-            </View>
-            {!n.read && <View style={styles.unreadDot} />}
-          </TouchableOpacity>
-        ))}
+        {items.map((n, i) => {
+          const icon = TYPE_ICONS[n.type] ?? '🔔';
+          const color = TYPE_COLORS[n.type] ?? colors.textMuted;
+          return (
+            <TouchableOpacity
+              key={n.id}
+              onPress={() => handlePress(n)}
+              style={[styles.notifRow, !n.read_at && styles.notifRowUnread, i < items.length - 1 && styles.notifRowBorder]}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.iconBox, { backgroundColor: color + '22' }]}>
+                <Text style={styles.icon}>{icon}</Text>
+              </View>
+              <View style={styles.notifInfo}>
+                <Text style={[styles.notifTitle, !n.read_at && styles.notifTitleUnread]}>{n.title}</Text>
+                <Text style={styles.notifBody} numberOfLines={2}>{n.body}</Text>
+                <Text style={styles.notifTime}>{timeAgo(n.created_at)}</Text>
+              </View>
+              {!n.read_at && <View style={styles.unreadDot} />}
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </View>
   );
@@ -53,15 +91,43 @@ export default function NotificationsScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScreenHeader title="Notifications" showBack />
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: spacing.lg, paddingBottom: insets.bottom + spacing.xxl, gap: spacing.xl }}>
-        {today.length > 0 && renderGroup('Today', today)}
-        {earlier.length > 0 && renderGroup('Earlier', earlier)}
-      </ScrollView>
+      {loading && !data ? (
+        <View style={styles.center}>
+          <ActivityIndicator color={colors.yellow} />
+        </View>
+      ) : error ? (
+        <View style={styles.center}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity onPress={() => refetch()} style={styles.retryBtn}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      ) : notifs.length === 0 ? (
+        <View style={styles.center}>
+          <Text style={styles.emptyEmoji}>🔔</Text>
+          <Text style={styles.emptyText}>No notifications yet</Text>
+        </View>
+      ) : (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ padding: spacing.lg, paddingBottom: insets.bottom + spacing.xxl, gap: spacing.xl }}
+        >
+          {today.length > 0 && renderGroup('Today', today)}
+          {earlier.length > 0 && renderGroup('Earlier', earlier)}
+        </ScrollView>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.lg },
+  errorText: { ...font.body, color: colors.error, textAlign: 'center' },
+  retryBtn: { backgroundColor: colors.yellowDim, borderRadius: radius.full, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
+  retryText: { ...font.bodySmMed, color: colors.yellow },
+  emptyEmoji: { fontSize: 48 },
+  emptyText: { ...font.body, color: colors.textMuted },
+
   group: { gap: spacing.sm },
   groupTitle: { ...font.label, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.8 },
   groupItems: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.borderSubtle, overflow: 'hidden' },
