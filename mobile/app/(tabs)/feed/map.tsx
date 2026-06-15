@@ -1,30 +1,49 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  Dimensions, ScrollView, Platform,
+  Dimensions, ScrollView, ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { colors, font, spacing, radius, shadow } from '../../../constants/theme';
 import { Badge } from '../../../components/ui/Badge';
+import { useQuery } from '../../../hooks/useQuery';
+import * as q from '../../../lib/queries';
+import type { Game } from '../../../lib/types';
 
 const { height } = Dimensions.get('window');
 
 const FILTERS = ['All', '3v3', '5v5', '7v7', '11v11', 'Free', '< ₱150', '< ₱300'];
 
-const MOCK_GAMES = [
-  { id: '1', title: 'Friday Night 5v5', venue: 'Turf Manila, BGC', date: 'Fri · 8PM', format: '5v5', price: 150, spots: 2, lat: 14.551, lng: 121.049 },
-  { id: '2', title: 'Weekend Ballers', venue: 'Smoke Futsal, QC', date: 'Sat · 6AM', format: '7v7', price: 200, spots: 6, lat: 14.676, lng: 121.044 },
-];
+function formatDate(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { weekday: 'short' }) +
+    ' · ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+function peso(centavos: number) {
+  return `₱${(centavos / 100).toLocaleString()}`;
+}
+
+const PIN_POSITIONS = [
+  { top: '40%', left: '35%' },
+  { top: '25%', left: '60%' },
+  { top: '55%', left: '55%' },
+  { top: '30%', left: '25%' },
+  { top: '60%', left: '30%' },
+] as const;
 
 export default function MapScreen() {
   const insets = useSafeAreaInsets();
   const [activeFilter, setActiveFilter] = useState('All');
   const [sheetExpanded, setSheetExpanded] = useState(false);
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
+  const { data: games, loading, error, refetch } = useQuery(() => q.listGames({ upcomingOnly: true }), []);
 
   const SHEET_PEEK = 200;
   const SHEET_FULL = height * 0.65;
+
+  const list: Game[] = games ?? [];
 
   return (
     <View style={styles.container}>
@@ -36,17 +55,17 @@ export default function MapScreen() {
         <Text style={styles.mapSubHint}>react-native-maps renders here{'\n'}(requires Expo Go or dev build)</Text>
 
         {/* Pin markers */}
-        {MOCK_GAMES.map((g) => (
+        {list.map((g, i) => (
           <TouchableOpacity
             key={g.id}
             onPress={() => { setSelectedGame(g.id); setSheetExpanded(true); }}
             style={[
               styles.mapPin,
-              g.id === '1' ? { top: '40%', left: '35%' } : { top: '25%', left: '60%' },
+              PIN_POSITIONS[i % PIN_POSITIONS.length],
               selectedGame === g.id && styles.mapPinActive,
             ]}
           >
-            <Text style={styles.mapPinText}>₱{g.price}</Text>
+            <Text style={styles.mapPinText}>{peso(g.price_per_player)}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -80,34 +99,54 @@ export default function MapScreen() {
 
         <View style={styles.sheetHeader}>
           <Text style={styles.sheetTitle}>
-            {sheetExpanded ? `${MOCK_GAMES.length} games nearby` : 'Nearby games'}
+            {sheetExpanded ? `${list.length} games nearby` : 'Nearby games'}
           </Text>
           <TouchableOpacity onPress={() => router.push('/(tabs)/feed')}>
             <Text style={styles.sheetLink}>See list →</Text>
           </TouchableOpacity>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: spacing.md, paddingBottom: spacing.lg }}>
-          {MOCK_GAMES.map((g) => (
-            <TouchableOpacity
-              key={g.id}
-              onPress={() => router.push(`/games/${g.id}`)}
-              activeOpacity={0.88}
-              style={[styles.sheetCard, selectedGame === g.id && styles.sheetCardSelected]}
-            >
-              <View style={styles.sheetCardLeft}>
-                <Text style={styles.sheetGameTitle} numberOfLines={1}>{g.title}</Text>
-                <Text style={styles.sheetGameVenue} numberOfLines={1}>📍 {g.venue}</Text>
-                <Text style={styles.sheetGameDate}>{g.date}</Text>
-              </View>
-              <View style={styles.sheetCardRight}>
-                <Text style={styles.sheetPrice}>₱{g.price}</Text>
-                <Badge color={g.spots > 0 ? 'green' : 'red'}>{g.spots > 0 ? `${g.spots} left` : 'Full'}</Badge>
-                <Badge color="muted">{g.format}</Badge>
-              </View>
+        {loading && !games ? (
+          <View style={styles.centered}>
+            <ActivityIndicator color={colors.yellow} />
+          </View>
+        ) : error ? (
+          <View style={styles.centered}>
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity onPress={refetch} style={styles.retryBtn}>
+              <Text style={styles.retryText}>Retry</Text>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
+          </View>
+        ) : list.length === 0 ? (
+          <View style={styles.centered}>
+            <Text style={styles.emptyText}>No games nearby</Text>
+          </View>
+        ) : (
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: spacing.md, paddingBottom: spacing.lg }}>
+            {list.map((g) => {
+              const isFull = g.status === 'full';
+              return (
+                <TouchableOpacity
+                  key={g.id}
+                  onPress={() => router.push(`/games/${g.id}`)}
+                  activeOpacity={0.88}
+                  style={[styles.sheetCard, selectedGame === g.id && styles.sheetCardSelected]}
+                >
+                  <View style={styles.sheetCardLeft}>
+                    <Text style={styles.sheetGameTitle} numberOfLines={1}>{g.title}</Text>
+                    <Text style={styles.sheetGameVenue} numberOfLines={1}>📍 {g.venue_name}</Text>
+                    <Text style={styles.sheetGameDate}>{formatDate(g.date_time)}</Text>
+                  </View>
+                  <View style={styles.sheetCardRight}>
+                    <Text style={styles.sheetPrice}>{peso(g.price_per_player)}</Text>
+                    <Badge color={isFull ? 'red' : 'green'}>{isFull ? 'Full' : `${g.max_players} left`}</Badge>
+                    <Badge color="muted">{g.format}</Badge>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        )}
       </View>
     </View>
   );
@@ -124,6 +163,12 @@ function LinearGradientFallback() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
+
+  centered: { alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.xl, gap: spacing.md },
+  errorText: { ...font.body, color: colors.error, textAlign: 'center' },
+  retryBtn: { paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radius.full, borderWidth: 1, borderColor: colors.yellow },
+  retryText: { ...font.bodySmMed, color: colors.yellow },
+  emptyText: { ...font.body, color: colors.textSecondary },
 
   mapPlaceholder: {
     flex: 1,

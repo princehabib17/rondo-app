@@ -1,46 +1,58 @@
 import React, { useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput,
-  TouchableOpacity, KeyboardAvoidingView, Platform,
+  TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { colors, font, spacing, radius } from '../../../constants/theme';
+import { useQuery, useMutation } from '../../../hooks/useQuery';
+import { useAuth } from '../../../hooks/useAuth';
+import * as q from '../../../lib/queries';
+import type { Game, Message, Profile } from '../../../lib/types';
 
-type Message = {
-  id: string;
-  sender: string;
-  body: string;
-  time: string;
-  mine: boolean;
-};
+type ChatMessage = Message & { profile: Pick<Profile, 'id' | 'full_name' | 'avatar_url'> | null };
 
-const MOCK_MESSAGES: Message[] = [
-  { id: '1', sender: 'FC Taguig', body: 'Welcome to the squad chat! Game starts at 8PM sharp.', time: '7:30 PM', mine: false },
-  { id: '2', sender: 'Mike Santos', body: "I'll be there! Coming straight from work 🏃", time: '7:31 PM', mine: false },
-  { id: '3', sender: 'You', body: "See you guys there 🔥", time: '7:32 PM', mine: true },
-  { id: '4', sender: 'FC Taguig', body: 'Please arrive 15 mins early for warm-up. Bring ID.', time: '7:45 PM', mine: false },
-];
+function formatTime(iso: string) {
+  return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
 
-function MessageBubble({ msg, prevSender }: { msg: Message; prevSender?: string }) {
-  const showAvatar = !msg.mine && msg.sender !== prevSender;
+function firstChar(name: string | null | undefined) {
+  return (name ?? '?').trim()[0]?.toUpperCase() ?? '?';
+}
 
+function countdownLabel(iso: string | undefined): string | null {
+  if (!iso) return null;
+  const diffMs = new Date(iso).getTime() - Date.now();
+  if (diffMs <= 0) return '⚽ Game in progress';
+  const mins = Math.round(diffMs / 60000);
+  if (mins < 60) return `⚽ Game starts in ${mins} minute${mins !== 1 ? 's' : ''}`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `⚽ Game starts in ${hours} hour${hours !== 1 ? 's' : ''}`;
+  const days = Math.round(hours / 24);
+  return `⚽ Game starts in ${days} day${days !== 1 ? 's' : ''}`;
+}
+
+function MessageBubble({
+  msg, mine, showAvatar, showName,
+}: { msg: ChatMessage; mine: boolean; showAvatar: boolean; showName: boolean }) {
+  const name = msg.profile?.full_name ?? 'Player';
   return (
-    <View style={[styles.messageRow, msg.mine && styles.messageRowMine]}>
-      {!msg.mine && (
+    <View style={[styles.messageRow, mine && styles.messageRowMine]}>
+      {!mine && (
         <View style={[styles.avatar, !showAvatar && styles.avatarHidden]}>
-          <Text style={styles.avatarText}>{showAvatar ? msg.sender[0] : ''}</Text>
+          <Text style={styles.avatarText}>{showAvatar ? firstChar(name) : ''}</Text>
         </View>
       )}
       <View style={styles.bubbleCol}>
-        {showAvatar && !msg.mine && (
-          <Text style={styles.senderName}>{msg.sender}</Text>
+        {showName && !mine && (
+          <Text style={styles.senderName}>{name}</Text>
         )}
-        <View style={[styles.bubble, msg.mine && styles.bubbleMine]}>
-          <Text style={[styles.bubbleText, msg.mine && styles.bubbleTextMine]}>{msg.body}</Text>
+        <View style={[styles.bubble, mine && styles.bubbleMine]}>
+          <Text style={[styles.bubbleText, mine && styles.bubbleTextMine]}>{msg.body}</Text>
         </View>
-        <Text style={[styles.time, msg.mine && styles.timeMine]}>{msg.time}</Text>
+        <Text style={[styles.time, mine && styles.timeMine]}>{formatTime(msg.created_at)}</Text>
       </View>
     </View>
   );
@@ -48,24 +60,31 @@ function MessageBubble({ msg, prevSender }: { msg: Message; prevSender?: string 
 
 export default function ChatScreen() {
   const insets = useSafeAreaInsets();
-  const { id } = useLocalSearchParams();
-  const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
+  const { id: rawId } = useLocalSearchParams<{ id: string }>();
+  const id = rawId ?? '';
+  const { user } = useAuth();
   const [input, setInput] = useState('');
-  const listRef = useRef<FlatList>(null);
+  const listRef = useRef<FlatList<ChatMessage>>(null);
 
-  const sendMessage = () => {
-    if (!input.trim()) return;
+  const { data: messages, loading, error, refetch } = useQuery<ChatMessage[]>(() => q.getGameMessages(id), [id]);
+  const { data: game } = useQuery<Game>(() => q.getGame(id), [id]);
+  const sendMutation = useMutation((body: string) => q.sendGameMessage(id, body));
+
+  const list = messages ?? [];
+  const countdown = countdownLabel(game?.date_time);
+
+  const sendMessage = async () => {
+    const body = input.trim();
+    if (!body || sendMutation.loading) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const msg: Message = {
-      id: Date.now().toString(),
-      sender: 'You',
-      body: input.trim(),
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      mine: true,
-    };
-    setMessages((prev) => [...prev, msg]);
     setInput('');
-    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+    try {
+      await sendMutation.mutate(body);
+      await refetch();
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+    } catch {
+      setInput(body); // restore on failure
+    }
   };
 
   return (
@@ -81,7 +100,7 @@ export default function ChatScreen() {
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>Squad Chat</Text>
-          <Text style={styles.headerSub}>Friday Night 5v5 · {MOCK_MESSAGES.length + 1} people</Text>
+          <Text style={styles.headerSub} numberOfLines={1}>{game?.title ?? 'Game chat'}</Text>
         </View>
         <TouchableOpacity onPress={() => router.push(`/games/${id}`)}>
           <Text style={styles.headerInfo}>ℹ️</Text>
@@ -89,22 +108,46 @@ export default function ChatScreen() {
       </View>
 
       {/* Countdown banner */}
-      <View style={styles.countdownBanner}>
-        <Text style={styles.countdownText}>⚽ Game starts in 22 minutes</Text>
-      </View>
+      {!!countdown && (
+        <View style={styles.countdownBanner}>
+          <Text style={styles.countdownText}>{countdown}</Text>
+        </View>
+      )}
 
       {/* Messages */}
-      <FlatList
-        ref={listRef}
-        data={messages}
-        keyExtractor={(m) => m.id}
-        renderItem={({ item, index }) => (
-          <MessageBubble msg={item} prevSender={messages[index - 1]?.sender} />
-        )}
-        contentContainerStyle={styles.messageList}
-        showsVerticalScrollIndicator={false}
-        onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
-      />
+      {loading && !messages ? (
+        <View style={styles.centered}>
+          <ActivityIndicator color={colors.yellow} />
+        </View>
+      ) : error ? (
+        <View style={styles.centered}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity onPress={refetch} style={styles.retryBtn}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      ) : list.length === 0 ? (
+        <View style={styles.centered}>
+          <Text style={styles.emptyText}>No messages yet. Say hi 👋</Text>
+        </View>
+      ) : (
+        <FlatList
+          ref={listRef}
+          data={list}
+          keyExtractor={(m) => m.id}
+          renderItem={({ item, index }) => {
+            const mine = !!user && item.user_id === user.id;
+            const prev = list[index - 1];
+            const showAvatar = !mine && prev?.user_id !== item.user_id;
+            return (
+              <MessageBubble msg={item} mine={mine} showAvatar={showAvatar} showName={showAvatar} />
+            );
+          }}
+          contentContainerStyle={styles.messageList}
+          showsVerticalScrollIndicator={false}
+          onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
+        />
+      )}
 
       {/* Input */}
       <View style={[styles.inputBar, { paddingBottom: insets.bottom + spacing.sm }]}>
@@ -122,8 +165,8 @@ export default function ChatScreen() {
         />
         <TouchableOpacity
           onPress={sendMessage}
-          disabled={!input.trim()}
-          style={[styles.sendBtn, !input.trim() && styles.sendBtnDisabled]}
+          disabled={!input.trim() || sendMutation.loading}
+          style={[styles.sendBtn, (!input.trim() || sendMutation.loading) && styles.sendBtnDisabled]}
         >
           <Text style={styles.sendIcon}>↑</Text>
         </TouchableOpacity>
@@ -147,6 +190,12 @@ const styles = StyleSheet.create({
   headerTitle: { ...font.h4, color: colors.text },
   headerSub: { ...font.caption, color: colors.textMuted },
   headerInfo: { fontSize: 20, padding: spacing.xs },
+
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.lg },
+  errorText: { ...font.body, color: colors.error, textAlign: 'center' },
+  retryBtn: { paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radius.full, borderWidth: 1, borderColor: colors.yellow },
+  retryText: { ...font.bodySmMed, color: colors.yellow },
+  emptyText: { ...font.body, color: colors.textSecondary },
 
   countdownBanner: {
     backgroundColor: colors.yellowDim,

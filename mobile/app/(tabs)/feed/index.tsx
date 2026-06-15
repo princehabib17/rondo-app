@@ -1,41 +1,33 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  FlatList, RefreshControl, Dimensions,
+  RefreshControl, Dimensions, ActivityIndicator,
 } from 'react-native';
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, spacing, radius, shadow } from '../../../constants/theme';
 import { Badge } from '../../../components/ui/Badge';
+import { useQuery } from '../../../hooks/useQuery';
+import * as q from '../../../lib/queries';
+import type { Game } from '../../../lib/types';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - spacing.lg * 2;
 
-// Mock data — replace with Supabase queries
-const MOCK_ORGANIZERS = [
-  { id: '1', name: 'FC Taguig', avatar: null, verified: true },
-  { id: '2', name: 'Rondo PH', avatar: null, verified: true },
-  { id: '3', name: 'Futsal MNL', avatar: null, verified: false },
-  { id: '4', name: 'Ballers BCG', avatar: null, verified: false },
-  { id: '5', name: 'UP Futsal', avatar: null, verified: true },
-];
+function formatDate(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) +
+    ' · ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
 
-const MOCK_GAMES = [
-  {
-    id: '1', title: 'Friday Night 5v5', venue: 'Turf Manila, BGC', date: 'Fri Jun 20 · 8:00 PM',
-    format: '5v5', price: 150, spots: 2, totalSpots: 10, status: 'open', banner: null, organizer: 'FC Taguig',
-  },
-  {
-    id: '2', title: 'Weekend Ballers', venue: 'Smoke Indoor Futsal, QC', date: 'Sat Jun 21 · 6:00 AM',
-    format: '7v7', price: 200, spots: 6, totalSpots: 14, status: 'open', banner: null, organizer: 'Rondo PH',
-  },
-  {
-    id: '3', title: 'Laro ni Bayan', venue: 'Robinsons Futsaland, Maka', date: 'Sun Jun 22 · 3:00 PM',
-    format: '3v3', price: 100, spots: 0, totalSpots: 6, status: 'full', banner: null, organizer: 'Futsal MNL',
-  },
-];
+function peso(centavos: number) {
+  return `₱${(centavos / 100).toLocaleString()}`;
+}
+
+function spotsLeft(game: Game) {
+  return Math.max(0, game.max_players);
+}
 
 function OrganizerStory({ name, verified }: { name: string; verified: boolean }) {
   return (
@@ -50,7 +42,7 @@ function OrganizerStory({ name, verified }: { name: string; verified: boolean })
   );
 }
 
-function FeaturedCard({ game }: { game: typeof MOCK_GAMES[0] }) {
+function FeaturedCard({ game }: { game: Game }) {
   return (
     <TouchableOpacity
       onPress={() => router.push(`/games/${game.id}`)}
@@ -64,24 +56,25 @@ function FeaturedCard({ game }: { game: typeof MOCK_GAMES[0] }) {
         />
         <Text style={styles.featuredLabel}>⚡ FEATURED GAME</Text>
         <Text style={styles.featuredTitle}>{game.title}</Text>
-        <Text style={styles.featuredVenue}>📍 {game.venue}</Text>
+        <Text style={styles.featuredVenue}>📍 {game.venue_name}</Text>
       </View>
       <View style={styles.featuredFooter}>
         <View style={styles.featuredInfo}>
-          <Text style={styles.featuredDate}>{game.date}</Text>
+          <Text style={styles.featuredDate}>{formatDate(game.date_time)}</Text>
           <Badge color="yellow">{game.format}</Badge>
         </View>
         <View style={styles.featuredRight}>
-          <Text style={styles.featuredPrice}>₱{game.price}</Text>
-          <Text style={styles.featuredSpots}>{game.spots} spots left</Text>
+          <Text style={styles.featuredPrice}>{peso(game.price_per_player)}</Text>
+          <Text style={styles.featuredSpots}>{spotsLeft(game)} spots left</Text>
         </View>
       </View>
     </TouchableOpacity>
   );
 }
 
-function GameCard({ game }: { game: typeof MOCK_GAMES[0] }) {
-  const isFull = game.spots === 0;
+function GameCard({ game }: { game: Game }) {
+  const isFull = game.status === 'full';
+  const left = spotsLeft(game);
   return (
     <TouchableOpacity
       onPress={() => router.push(`/games/${game.id}`)}
@@ -91,17 +84,17 @@ function GameCard({ game }: { game: typeof MOCK_GAMES[0] }) {
       <View style={styles.gameBanner}>
         <LinearGradient colors={['#1A2418', '#0A0A0A']} style={StyleSheet.absoluteFill} />
         <Badge color={isFull ? 'red' : 'green'} style={styles.gameBadge}>
-          {isFull ? 'Full' : `${game.spots} left`}
+          {isFull ? 'Full' : `${left} left`}
         </Badge>
         <Text style={styles.gameFormat}>{game.format}</Text>
       </View>
       <View style={styles.gameBody}>
         <Text style={styles.gameTitle} numberOfLines={1}>{game.title}</Text>
-        <Text style={styles.gameMeta} numberOfLines={1}>📍 {game.venue}</Text>
-        <Text style={styles.gameMeta}>🕐 {game.date}</Text>
+        <Text style={styles.gameMeta} numberOfLines={1}>📍 {game.venue_name}</Text>
+        <Text style={styles.gameMeta}>🕐 {formatDate(game.date_time)}</Text>
         <View style={styles.gameFooter}>
-          <Text style={styles.gameOrganizer}>by {game.organizer}</Text>
-          <Text style={styles.gamePrice}>₱{game.price}</Text>
+          <Text style={styles.gameOrganizer}>by {game.organizer?.full_name ?? 'Organizer'}</Text>
+          <Text style={styles.gamePrice}>{peso(game.price_per_player)}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -110,14 +103,33 @@ function GameCard({ game }: { game: typeof MOCK_GAMES[0] }) {
 
 export default function FeedScreen() {
   const insets = useSafeAreaInsets();
-  const [refreshing, setRefreshing] = useState(false);
   const [tab, setTab] = useState<'nearby' | 'upcoming'>('nearby');
+  const { data: games, loading, error, refetch } = useQuery(() => q.listGames({ upcomingOnly: true }), []);
 
+  const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await new Promise((r) => setTimeout(r, 800));
+    await refetch();
     setRefreshing(false);
-  }, []);
+  }, [refetch]);
+
+  const list = games ?? [];
+  const featured = list[0];
+  const rest = list.slice(1);
+
+  // Unique organizers for the stories row.
+  const stories = (() => {
+    const seen = new Set<string>();
+    const out: { id: string; name: string }[] = [];
+    for (const g of list) {
+      const org = g.organizer;
+      if (org && org.id && !seen.has(org.id)) {
+        seen.add(org.id);
+        out.push({ id: org.id, name: org.full_name ?? 'Organizer' });
+      }
+    }
+    return out;
+  })();
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -133,49 +145,86 @@ export default function FeedScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.yellow} />}
-        contentContainerStyle={{ paddingBottom: spacing.xxl }}
-      >
-        {/* Stories — Organizers */}
-        <View style={styles.storiesSection}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.storiesScroll}>
-            {MOCK_ORGANIZERS.map((o) => (
-              <OrganizerStory key={o.id} name={o.name} verified={o.verified} />
-            ))}
-          </ScrollView>
+      {loading && !games ? (
+        <View style={styles.centered}>
+          <ActivityIndicator color={colors.yellow} />
         </View>
+      ) : error ? (
+        <View style={styles.centered}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity onPress={refetch} style={styles.retryBtn}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.yellow} />}
+          contentContainerStyle={{ paddingBottom: spacing.xxl }}
+        >
+          {/* Stories — Organizers */}
+          {stories.length > 0 && (
+            <View style={styles.storiesSection}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.storiesScroll}>
+                {stories.map((o) => (
+                  <OrganizerStory key={o.id} name={o.name} verified={false} />
+                ))}
+              </ScrollView>
+            </View>
+          )}
 
-        {/* Featured game */}
-        <View style={styles.section}>
-          <FeaturedCard game={MOCK_GAMES[0]} />
-        </View>
+          {list.length === 0 ? (
+            <View style={styles.empty}>
+              <Text style={styles.emptyEmoji}>⚽</Text>
+              <Text style={styles.emptyTitle}>No games yet</Text>
+              <Text style={styles.emptySub}>Check back soon for upcoming games.</Text>
+            </View>
+          ) : (
+            <>
+              {/* Featured game */}
+              {featured && (
+                <View style={styles.section}>
+                  <FeaturedCard game={featured} />
+                </View>
+              )}
 
-        {/* Nearby / Upcoming tabs */}
-        <View style={styles.tabsRow}>
-          {(['nearby', 'upcoming'] as const).map((t) => (
-            <TouchableOpacity key={t} onPress={() => setTab(t)} style={[styles.tab, tab === t && styles.tabActive]}>
-              <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
-                {t === 'nearby' ? '📍 Nearby' : '📅 Upcoming'}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+              {/* Nearby / Upcoming tabs */}
+              <View style={styles.tabsRow}>
+                {(['nearby', 'upcoming'] as const).map((t) => (
+                  <TouchableOpacity key={t} onPress={() => setTab(t)} style={[styles.tab, tab === t && styles.tabActive]}>
+                    <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
+                      {t === 'nearby' ? '📍 Nearby' : '📅 Upcoming'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
 
-        {/* Games list */}
-        <View style={styles.gamesList}>
-          {MOCK_GAMES.map((g) => (
-            <GameCard key={g.id} game={g} />
-          ))}
-        </View>
-      </ScrollView>
+              {/* Games list */}
+              <View style={styles.gamesList}>
+                {rest.map((g) => (
+                  <GameCard key={g.id} game={g} />
+                ))}
+              </View>
+            </>
+          )}
+        </ScrollView>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
+
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.lg },
+  errorText: { ...font.body, color: colors.error, textAlign: 'center' },
+  retryBtn: { paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radius.full, borderWidth: 1, borderColor: colors.yellow },
+  retryText: { ...font.bodySmMed, color: colors.yellow },
+
+  empty: { padding: spacing.xl, alignItems: 'center', gap: spacing.sm },
+  emptyEmoji: { fontSize: 48 },
+  emptyTitle: { ...font.h3, color: colors.text },
+  emptySub: { ...font.body, color: colors.textSecondary, textAlign: 'center' },
 
   header: {
     flexDirection: 'row',

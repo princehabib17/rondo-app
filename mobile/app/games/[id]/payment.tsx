@@ -1,32 +1,91 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Linking } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { colors, font, spacing, radius, shadow } from '../../../constants/theme';
+import { colors, font, spacing, radius } from '../../../constants/theme';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
-
-const MOCK_GAME = { title: 'Friday Night 5v5', price: 150, team: 'Team Red', date: 'Fri Jun 20 · 8PM', venue: 'Turf Manila, BGC' };
-const WALLET_BALANCE = 850;
+import { useQuery } from '../../../hooks/useQuery';
+import * as q from '../../../lib/queries';
+import * as api from '../../../lib/api';
+import { ApiError } from '../../../lib/api';
+import type { Game } from '../../../lib/types';
 
 type Method = 'wallet' | 'online';
 
+function peso(centavos: number) {
+  return `₱${(centavos / 100).toLocaleString()}`;
+}
+
+function formatDateTime(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) +
+    ' · ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
 export default function PaymentScreen() {
   const insets = useSafeAreaInsets();
-  const { id } = useLocalSearchParams();
-  const [method, setMethod] = useState<Method>(WALLET_BALANCE >= MOCK_GAME.price ? 'wallet' : 'online');
+  const { id: rawId, teamId: rawTeamId } = useLocalSearchParams<{ id: string; teamId?: string }>();
+  const id = rawId ?? '';
+  const teamId = rawTeamId ?? null;
+
+  const { data: game, loading: gameLoading, error: gameError, refetch } = useQuery<Game>(() => q.getGame(id), [id]);
+  const { data: balance } = useQuery<number>(() => q.getWalletBalance(), []);
+
+  const price = game?.price_per_player ?? 0;
+  const walletBalance = balance ?? 0;
+  const canPayWallet = walletBalance >= price;
+
+  const [method, setMethod] = useState<Method>('online');
   const [loading, setLoading] = useState(false);
 
-  const canPayWallet = WALLET_BALANCE >= MOCK_GAME.price;
+  // Default to wallet once we know the balance covers it.
+  React.useEffect(() => {
+    if (balance !== null && game && canPayWallet) setMethod('wallet');
+  }, [balance, game, canPayWallet]);
 
   const handlePay = async () => {
+    if (!game) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1200));
-    setLoading(false);
-    router.replace(`/games/${id}/confirmed`);
+    try {
+      if (method === 'wallet') {
+        await api.payGameWithWallet(id, teamId);
+        router.replace(`/games/${id}/confirmed${teamId ? `?teamId=${teamId}` : ''}`);
+      } else {
+        const { checkoutUrl } = await api.startGameCheckout(id, teamId);
+        await Linking.openURL(checkoutUrl);
+      }
+    } catch (e) {
+      if (e instanceof ApiError && (e.code === 'insufficient_balance' || e.code === 'INSUFFICIENT_BALANCE')) {
+        Alert.alert('Insufficient balance', 'Your wallet balance is too low. Top up or pay with card.');
+      } else {
+        Alert.alert('Payment failed', e instanceof Error ? e.message : 'Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (gameLoading && !game) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator color={colors.yellow} />
+      </View>
+    );
+  }
+
+  if (gameError || !game) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.errorText}>{gameError ?? 'Game not found'}</Text>
+        <TouchableOpacity onPress={refetch} style={styles.retryBtn}>
+          <Text style={styles.retryText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom + spacing.xl }]}>
@@ -38,13 +97,12 @@ export default function PaymentScreen() {
       {/* Game summary */}
       <Card style={styles.summaryCard}>
         <Text style={styles.summaryLabel}>You're joining</Text>
-        <Text style={styles.summaryGame}>{MOCK_GAME.title}</Text>
-        <Text style={styles.summaryMeta}>🔴 {MOCK_GAME.team}</Text>
-        <Text style={styles.summaryMeta}>📅 {MOCK_GAME.date}</Text>
-        <Text style={styles.summaryMeta}>📍 {MOCK_GAME.venue}</Text>
+        <Text style={styles.summaryGame}>{game.title}</Text>
+        <Text style={styles.summaryMeta}>📅 {formatDateTime(game.date_time)}</Text>
+        <Text style={styles.summaryMeta}>📍 {game.venue_name}</Text>
         <View style={styles.summaryTotal}>
           <Text style={styles.summaryTotalLabel}>Total</Text>
-          <Text style={styles.summaryTotalAmount}>₱{MOCK_GAME.price}</Text>
+          <Text style={styles.summaryTotalAmount}>{peso(price)}</Text>
         </View>
       </Card>
 
@@ -61,7 +119,7 @@ export default function PaymentScreen() {
             <View>
               <Text style={styles.methodLabel}>Rondo Wallet</Text>
               <Text style={[styles.methodSub, !canPayWallet && { color: colors.error }]}>
-                {canPayWallet ? `Balance: ₱${WALLET_BALANCE}` : `Insufficient — ₱${WALLET_BALANCE} available`}
+                {canPayWallet ? `Balance: ${peso(walletBalance)}` : `Insufficient — ${peso(walletBalance)} available`}
               </Text>
             </View>
           </View>
@@ -91,7 +149,7 @@ export default function PaymentScreen() {
 
       <View style={styles.footer}>
         <Button onPress={handlePay} loading={loading} size="lg" style={styles.payBtn}>
-          Pay ₱{MOCK_GAME.price}
+          Pay {peso(price)}
         </Button>
         <Text style={styles.secureNote}>🔒 Secured by PayMongo</Text>
       </View>
@@ -101,6 +159,11 @@ export default function PaymentScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg },
+
+  centered: { alignItems: 'center', justifyContent: 'center', gap: spacing.md },
+  errorText: { ...font.body, color: colors.error, textAlign: 'center' },
+  retryBtn: { paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radius.full, borderWidth: 1, borderColor: colors.yellow },
+  retryText: { ...font.bodySmMed, color: colors.yellow },
 
   handle: { alignItems: 'center', paddingTop: spacing.md, paddingBottom: spacing.sm },
   handleBar: { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border },

@@ -3,8 +3,18 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import * as q from '../../../lib/queries';
 import { Button } from '../../../components/ui/Button';
 import { colors, font, spacing, radius } from '../../../constants/theme';
+import type { SkillLevel } from '../../../lib/types';
+
+// Map the UI level id to the DB skill_level enum.
+const SKILL_MAP: Record<string, SkillLevel> = {
+  beginner: 'beginner',
+  casual: 'intermediate',
+  intermediate: 'advanced',
+  competitive: 'pro',
+};
 
 const LEVELS = [
   { id: 'beginner', label: 'Beginner', desc: 'Just getting started — learning the basics.', emoji: '🌱' },
@@ -20,6 +30,8 @@ export default function SkillScreen() {
   const params = useLocalSearchParams();
   const [level, setLevel] = useState<string | null>(null);
   const [preferredFormats, setPreferredFormats] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const toggleFormat = (f: string) => {
     Haptics.selectionAsync();
@@ -28,9 +40,18 @@ export default function SkillScreen() {
     );
   };
 
-  const handleFinish = () => {
-    // Save to Supabase profile here
-    router.replace('/(tabs)/feed');
+  const handleFinish = async () => {
+    if (!level) return;
+    setLoading(true);
+    setError('');
+    try {
+      await q.updateProfile({ skill_level: SKILL_MAP[level], game_preference: 'both' });
+      router.replace('/(tabs)/feed');
+    } catch (e: any) {
+      setError(e?.message ?? 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -88,7 +109,8 @@ export default function SkillScreen() {
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
-        <Button onPress={handleFinish} size="lg" style={styles.btn}>
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        <Button onPress={handleFinish} disabled={!level || loading} loading={loading} size="lg" style={styles.btn}>
           Let's Play
         </Button>
       </View>
@@ -150,5 +172,6 @@ const styles = StyleSheet.create({
   formatTextActive: { color: colors.yellow },
 
   footer: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.borderSubtle },
+  errorText: { ...font.caption, color: colors.error, textAlign: 'center', marginBottom: spacing.md },
   btn: {},
 });

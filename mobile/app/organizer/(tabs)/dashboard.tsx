@@ -1,19 +1,21 @@
 import React from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, spacing, radius, shadow } from '../../../constants/theme';
 import { Badge } from '../../../components/ui/Badge';
+import { useQuery } from '../../../hooks/useQuery';
+import { useAuth } from '../../../hooks/useAuth';
+import * as q from '../../../lib/queries';
+import type { Game } from '../../../lib/types';
 
-const MOCK_STATS = { earned: 12400, games: 18, players: 214 };
-const MOCK_GAMES = [
-  { id: '1', title: 'Friday Night 5v5', date: 'Fri Jun 20 · 8PM', players: 8, max: 10, status: 'open', earned: 1200 },
-  { id: '2', title: 'Sunday League', date: 'Sun Jun 22 · 10AM', players: 14, max: 14, status: 'full', earned: 2800 },
-  { id: '3', title: 'BGC Wednesday', date: 'Wed Jun 25 · 7PM', players: 2, max: 10, status: 'open', earned: 300 },
-];
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
 
 function StatCard({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: boolean }) {
   return (
@@ -25,22 +27,22 @@ function StatCard({ label, value, sub, accent }: { label: string; value: string;
   );
 }
 
-function GameItem({ game }: { game: typeof MOCK_GAMES[0] }) {
-  const progress = game.players / game.max;
+function GameItem({ game }: { game: Game }) {
+  const progress = game.max_players > 0 ? Math.min(1, (game as any).player_count != null ? (game as any).player_count / game.max_players : 0) : 0;
   return (
     <View style={styles.gameItem}>
       <View style={styles.gameItemLeft}>
         <Text style={styles.gameItemTitle} numberOfLines={1}>{game.title}</Text>
-        <Text style={styles.gameItemDate}>{game.date}</Text>
+        <Text style={styles.gameItemDate}>{formatDate(game.date_time)}</Text>
         <View style={styles.gameProgress}>
           <View style={styles.gameProgressBar}>
             <View style={[styles.gameProgressFill, { width: `${progress * 100}%` }, progress >= 1 && styles.gameProgressFull]} />
           </View>
-          <Text style={styles.gameProgressLabel}>{game.players}/{game.max} players</Text>
+          <Text style={styles.gameProgressLabel}>{(game as any).player_count ?? 0}/{game.max_players} players</Text>
         </View>
       </View>
       <View style={styles.gameItemRight}>
-        <Text style={styles.gameItemEarned}>₱{game.earned.toLocaleString()}</Text>
+        <Text style={styles.gameItemEarned}>₱{((game.price_per_player ?? 0) / 100).toLocaleString()}</Text>
         <View style={styles.gameActions}>
           <TouchableOpacity
             onPress={() => router.push(`/organizer/games/${game.id}/manage`)}
@@ -56,6 +58,19 @@ function GameItem({ game }: { game: typeof MOCK_GAMES[0] }) {
 
 export default function OrganizerDashboard() {
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
+  const uid = user?.id;
+
+  const gamesQ = useQuery<Game[]>(() => (uid ? q.listGames({ organizerId: uid }) : Promise.resolve([])), [uid]);
+  const earningsQ = useQuery(() => q.getOrganizerEarnings(), [uid]);
+
+  const games = gamesQ.data ?? [];
+  const earned = earningsQ.data?.collected ?? 0;
+
+  const switchToPlayer = async () => {
+    try { await q.updateProfile({ role: 'player' }); } catch {}
+    router.replace('/(tabs)/feed');
+  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -64,7 +79,7 @@ export default function OrganizerDashboard() {
           <Text style={styles.headerLabel}>Organizer Mode</Text>
           <Text style={styles.headerTitle}>Dashboard</Text>
         </View>
-        <TouchableOpacity onPress={() => router.replace('/(tabs)/feed')} style={styles.switchBtn}>
+        <TouchableOpacity onPress={switchToPlayer} style={styles.switchBtn}>
           <Text style={styles.switchText}>← Player</Text>
         </TouchableOpacity>
       </View>
@@ -75,11 +90,11 @@ export default function OrganizerDashboard() {
           <LinearGradient colors={['#001A14', '#0A0A0A']} style={StyleSheet.absoluteFill} />
           <Text style={styles.statsPeriod}>This month</Text>
           <View style={styles.statsRow}>
-            <StatCard label="Earned" value={`₱${MOCK_STATS.earned.toLocaleString()}`} accent />
+            <StatCard label="Earned" value={`₱${(earned / 100).toLocaleString()}`} accent />
             <View style={styles.statDivider} />
-            <StatCard label="Games" value={`${MOCK_STATS.games}`} sub="hosted" />
+            <StatCard label="Games" value={`${games.length}`} sub="hosted" />
             <View style={styles.statDivider} />
-            <StatCard label="Players" value={`${MOCK_STATS.players}`} sub="total" />
+            <StatCard label="Max" value={`${games.reduce((s, g) => s + (g.max_players ?? 0), 0)}`} sub="slots" />
           </View>
         </View>
 
@@ -111,9 +126,27 @@ export default function OrganizerDashboard() {
               <Text style={styles.sectionLink}>See all</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.gamesList}>
-            {MOCK_GAMES.map((g) => <GameItem key={g.id} game={g} />)}
-          </View>
+
+          {gamesQ.loading ? (
+            <View style={styles.centered}>
+              <ActivityIndicator color={colors.accent} />
+            </View>
+          ) : gamesQ.error ? (
+            <View style={styles.centered}>
+              <Text style={styles.errorText}>{gamesQ.error}</Text>
+              <TouchableOpacity onPress={() => gamesQ.refetch()}>
+                <Text style={styles.retryText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          ) : games.length === 0 ? (
+            <View style={styles.centered}>
+              <Text style={styles.emptyText}>No games yet. Create your first one!</Text>
+            </View>
+          ) : (
+            <View style={styles.gamesList}>
+              {games.map((g) => <GameItem key={g.id} game={g} />)}
+            </View>
+          )}
         </View>
       </ScrollView>
     </View>
@@ -183,6 +216,11 @@ const styles = StyleSheet.create({
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
   sectionTitle: { ...font.h4, color: colors.text },
   sectionLink: { ...font.bodySmMed, color: colors.accent },
+
+  centered: { alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.xxl, gap: spacing.sm },
+  errorText: { ...font.body, color: colors.error, textAlign: 'center' },
+  retryText: { ...font.bodySmMed, color: colors.accent },
+  emptyText: { ...font.body, color: colors.textMuted, textAlign: 'center' },
 
   gamesList: {
     backgroundColor: colors.surface,

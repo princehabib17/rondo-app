@@ -1,14 +1,44 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, spacing, radius } from '../../../constants/theme';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
+import { useQuery } from '../../../hooks/useQuery';
+import * as q from '../../../lib/queries';
+import type { Game, Team } from '../../../lib/types';
+
+function peso(centavos: number) {
+  return `₱${(centavos / 100).toLocaleString()}`;
+}
+
+function formatDateTime(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) +
+    ' · ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
 
 export default function ConfirmedScreen() {
   const insets = useSafeAreaInsets();
-  const { id } = useLocalSearchParams();
+  const { id: rawId, teamId: rawTeamId } = useLocalSearchParams<{ id: string; teamId?: string }>();
+  const id = rawId ?? '';
+  const teamId = rawTeamId ?? null;
+
+  const { data: game, loading } = useQuery<Game>(() => q.getGame(id), [id]);
+  const { data: teams } = useQuery<Team[]>(() => q.getGameTeams(id), [id]);
+
+  const team = teamId ? (teams ?? []).find((t) => t.id === teamId) ?? null : null;
+
+  const rows: { label: string; value: string }[] = game
+    ? [
+        { label: 'Game', value: game.title },
+        ...(team ? [{ label: 'Team', value: team.name }] : []),
+        { label: 'Date', value: formatDateTime(game.date_time) },
+        { label: 'Venue', value: game.venue_name },
+        { label: game.payment_type === 'venue' ? 'Amount due (at venue)' : 'Amount paid', value: peso(game.price_per_player) },
+      ]
+    : [];
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom + spacing.xl }]}>
@@ -17,20 +47,18 @@ export default function ConfirmedScreen() {
         <Text style={styles.title}>You're in!</Text>
         <Text style={styles.subtitle}>Your spot is confirmed. See you on the pitch.</Text>
 
-        <Card style={styles.summaryCard}>
-          {[
-            { label: 'Game', value: 'Friday Night 5v5' },
-            { label: 'Team', value: '🔴 Team Red' },
-            { label: 'Date', value: 'Fri Jun 20 · 8:00 PM' },
-            { label: 'Venue', value: 'Turf Manila, BGC' },
-            { label: 'Amount paid', value: '₱150' },
-          ].map((r, i, arr) => (
-            <View key={r.label} style={[styles.row, i < arr.length - 1 && styles.rowBorder]}>
-              <Text style={styles.rowLabel}>{r.label}</Text>
-              <Text style={styles.rowValue}>{r.value}</Text>
-            </View>
-          ))}
-        </Card>
+        {loading && !game ? (
+          <ActivityIndicator color={colors.yellow} />
+        ) : (
+          <Card style={styles.summaryCard}>
+            {rows.map((r, i, arr) => (
+              <View key={r.label} style={[styles.row, i < arr.length - 1 && styles.rowBorder]}>
+                <Text style={styles.rowLabel}>{r.label}</Text>
+                <Text style={styles.rowValue}>{r.value}</Text>
+              </View>
+            ))}
+          </Card>
+        )}
       </View>
 
       <View style={styles.actions}>

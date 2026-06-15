@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -9,37 +9,75 @@ import { colors, font, spacing, radius, shadow } from '../../../constants/theme'
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
+import { useQuery } from '../../../hooks/useQuery';
+import { useAuth } from '../../../hooks/useAuth';
+import * as q from '../../../lib/queries';
+import type { Game, Team, GamePlayerWithProfile } from '../../../lib/types';
 
-const { width, height } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 const HERO_HEIGHT = height * 0.38;
 
-const MOCK_GAME = {
-  id: '1',
-  title: 'Friday Night 5v5',
-  organizer: 'FC Taguig',
-  organizerVerified: true,
-  venue: 'Turf Manila, BGC, Taguig City',
-  date: 'Friday, June 20, 2026',
-  time: '8:00 PM – 10:00 PM',
-  format: '5v5',
-  price: 150,
-  spots: 2,
-  totalSpots: 10,
-  status: 'open',
-  description: 'Competitive 5v5 futsal game at Turf Manila. Teams will be assigned before kickoff. Payment required to confirm your slot. Bring proper footwear — studs not allowed.',
-  teams: [
-    { name: 'Team Red', color: '#EF4444', players: ['Juan', 'Mike', 'Carlo', 'Rico'], max: 5 },
-    { name: 'Team Blue', color: '#3B82F6', players: ['Alex', 'Ben', 'Chris', 'Dave', 'Ed'], max: 5 },
-  ],
-  paymentType: 'required',
-  skillLevel: 'Intermediate',
-};
+const TEAM_FALLBACK_COLORS = ['#EF4444', '#3B82F6', '#22C55E', '#A855F7', '#F59E0B', '#EC4899'];
+
+function peso(centavos: number) {
+  return `₱${(centavos / 100).toLocaleString()}`;
+}
+
+function formatFullDate(iso: string) {
+  return new Date(iso).toLocaleDateString(undefined, {
+    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+  });
+}
+
+function formatTime(iso: string) {
+  return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+function firstChar(name: string | null | undefined) {
+  return (name ?? '?').trim()[0]?.toUpperCase() ?? '?';
+}
 
 export default function GameDetailScreen() {
   const insets = useSafeAreaInsets();
-  const { id } = useLocalSearchParams();
+  const { id: rawId } = useLocalSearchParams<{ id: string }>();
+  const id = rawId ?? '';
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'info' | 'teams'>('info');
-  const isFull = MOCK_GAME.spots === 0;
+
+  const { data: game, loading, error, refetch } = useQuery<Game>(() => q.getGame(id), [id]);
+  const { data: teams } = useQuery<Team[]>(() => q.getGameTeams(id), [id]);
+  const { data: players } = useQuery<GamePlayerWithProfile[]>(() => q.getGamePlayers(id), [id]);
+
+  if (loading && !game) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator color={colors.yellow} />
+      </View>
+    );
+  }
+
+  if (error || !game) {
+    return (
+      <View style={[styles.container, styles.centered, { padding: spacing.lg, gap: spacing.md }]}>
+        <Text style={styles.errorText}>{error ?? 'Game not found'}</Text>
+        <TouchableOpacity onPress={refetch} style={styles.retryBtn}>
+          <Text style={styles.retryText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const playerList = players ?? [];
+  const teamList = teams ?? [];
+  const filledCount = playerList.length;
+  const spotsLeft = Math.max(0, game.max_players - filledCount);
+  const isFull = game.status === 'full' || spotsLeft === 0;
+  const alreadyJoined = !!user && playerList.some((p) => p.user_id === user.id);
+
+  // Per-team slot capacity (even split of max_players across teams).
+  const perTeamMax = game.num_teams > 0
+    ? Math.ceil(game.max_players / game.num_teams)
+    : game.max_players;
 
   return (
     <View style={styles.container}>
@@ -62,13 +100,11 @@ export default function GameDetailScreen() {
         {/* Hero content */}
         <View style={styles.heroContent}>
           <View style={styles.heroTags}>
-            <Badge color="yellow">{MOCK_GAME.format}</Badge>
-            <Badge color={isFull ? 'red' : 'green'}>{isFull ? 'Full' : `${MOCK_GAME.spots} spots left`}</Badge>
+            <Badge color="yellow">{game.format}</Badge>
+            <Badge color={isFull ? 'red' : 'green'}>{isFull ? 'Full' : `${spotsLeft} spots left`}</Badge>
           </View>
-          <Text style={styles.heroTitle}>{MOCK_GAME.title}</Text>
-          <Text style={styles.heroOrganizer}>
-            {MOCK_GAME.organizerVerified ? '✓ ' : ''}{MOCK_GAME.organizer}
-          </Text>
+          <Text style={styles.heroTitle}>{game.title}</Text>
+          <Text style={styles.heroOrganizer}>{game.organizer?.full_name ?? 'Organizer'}</Text>
         </View>
       </View>
 
@@ -81,15 +117,15 @@ export default function GameDetailScreen() {
         <View style={styles.infoStrip}>
           <View style={styles.infoItem}>
             <Text style={styles.infoIcon}>📍</Text>
-            <Text style={styles.infoText}>{MOCK_GAME.venue}</Text>
+            <Text style={styles.infoText}>{game.venue_address || game.venue_name}</Text>
           </View>
           <View style={styles.infoItem}>
             <Text style={styles.infoIcon}>📅</Text>
-            <Text style={styles.infoText}>{MOCK_GAME.date}</Text>
+            <Text style={styles.infoText}>{formatFullDate(game.date_time)}</Text>
           </View>
           <View style={styles.infoItem}>
             <Text style={styles.infoIcon}>🕐</Text>
-            <Text style={styles.infoText}>{MOCK_GAME.time}</Text>
+            <Text style={styles.infoText}>{formatTime(game.date_time)}</Text>
           </View>
         </View>
 
@@ -109,10 +145,10 @@ export default function GameDetailScreen() {
             {/* Stats grid */}
             <View style={styles.statsGrid}>
               {[
-                { label: 'Price', value: `₱${MOCK_GAME.price}` },
-                { label: 'Format', value: MOCK_GAME.format },
-                { label: 'Skill', value: MOCK_GAME.skillLevel },
-                { label: 'Payment', value: 'Required' },
+                { label: 'Price', value: peso(game.price_per_player) },
+                { label: 'Format', value: game.format },
+                { label: 'Spots', value: `${filledCount}/${game.max_players}` },
+                { label: 'Payment', value: game.payment_type === 'venue' ? 'Pay at venue' : 'Pay online' },
               ].map((s) => (
                 <Card key={s.label} style={styles.statCard}>
                   <Text style={styles.statCardLabel}>{s.label}</Text>
@@ -122,27 +158,28 @@ export default function GameDetailScreen() {
             </View>
 
             {/* Description */}
-            <Card style={styles.descCard}>
-              <Text style={styles.descTitle}>About this game</Text>
-              <Text style={styles.descText}>{MOCK_GAME.description}</Text>
-            </Card>
+            {!!game.description && (
+              <Card style={styles.descCard}>
+                <Text style={styles.descTitle}>About this game</Text>
+                <Text style={styles.descText}>{game.description}</Text>
+              </Card>
+            )}
 
             {/* Organizer */}
             <Card style={styles.organizerCard}>
               <View style={styles.organizerRow}>
                 <View style={styles.organizerAvatar}>
-                  <Text style={styles.organizerAvatarText}>{MOCK_GAME.organizer[0]}</Text>
+                  <Text style={styles.organizerAvatarText}>{firstChar(game.organizer?.full_name)}</Text>
                 </View>
                 <View style={styles.organizerInfo}>
-                  <Text style={styles.organizerName}>
-                    {MOCK_GAME.organizer}
-                    {MOCK_GAME.organizerVerified && <Text style={{ color: colors.yellow }}> ✓</Text>}
-                  </Text>
+                  <Text style={styles.organizerName}>{game.organizer?.full_name ?? 'Organizer'}</Text>
                   <Text style={styles.organizerLabel}>Organizer</Text>
                 </View>
-                <TouchableOpacity onPress={() => router.push('/organizers/1')} style={styles.viewOrgBtn}>
-                  <Text style={styles.viewOrgText}>View</Text>
-                </TouchableOpacity>
+                {!!game.organizer?.id && (
+                  <TouchableOpacity onPress={() => router.push(`/profile/${game.organizer!.id}`)} style={styles.viewOrgBtn}>
+                    <Text style={styles.viewOrgText}>View</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </Card>
           </View>
@@ -150,27 +187,36 @@ export default function GameDetailScreen() {
 
         {activeTab === 'teams' && (
           <View style={styles.section}>
-            {MOCK_GAME.teams.map((team) => (
-              <Card key={team.name} style={styles.teamCard}>
-                <View style={styles.teamHeader}>
-                  <View style={[styles.teamColor, { backgroundColor: team.color }]} />
-                  <Text style={styles.teamName}>{team.name}</Text>
-                  <Text style={styles.teamCount}>{team.players.length}/{team.max}</Text>
-                </View>
-                <View style={styles.teamPlayers}>
-                  {team.players.map((p) => (
-                    <View key={p} style={styles.playerChip}>
-                      <Text style={styles.playerChipText}>{p[0]}</Text>
+            {teamList.length === 0 ? (
+              <Text style={styles.emptyTeams}>No teams set up yet.</Text>
+            ) : (
+              teamList.map((team, idx) => {
+                const teamPlayers = playerList.filter((p) => p.team_id === team.id);
+                const emptySlots = Math.max(0, perTeamMax - teamPlayers.length);
+                const color = team.color || TEAM_FALLBACK_COLORS[idx % TEAM_FALLBACK_COLORS.length];
+                return (
+                  <Card key={team.id} style={styles.teamCard}>
+                    <View style={styles.teamHeader}>
+                      <View style={[styles.teamColor, { backgroundColor: color }]} />
+                      <Text style={styles.teamName}>{team.name}</Text>
+                      <Text style={styles.teamCount}>{teamPlayers.length}/{perTeamMax}</Text>
                     </View>
-                  ))}
-                  {Array.from({ length: team.max - team.players.length }).map((_, i) => (
-                    <View key={`empty-${i}`} style={[styles.playerChip, styles.playerChipEmpty]}>
-                      <Text style={styles.playerChipEmptyText}>+</Text>
+                    <View style={styles.teamPlayers}>
+                      {teamPlayers.map((p) => (
+                        <View key={p.id} style={styles.playerChip}>
+                          <Text style={styles.playerChipText}>{firstChar(p.profile?.full_name)}</Text>
+                        </View>
+                      ))}
+                      {Array.from({ length: emptySlots }).map((_, i) => (
+                        <View key={`empty-${i}`} style={[styles.playerChip, styles.playerChipEmpty]}>
+                          <Text style={styles.playerChipEmptyText}>+</Text>
+                        </View>
+                      ))}
                     </View>
-                  ))}
-                </View>
-              </Card>
-            ))}
+                  </Card>
+                );
+              })
+            )}
           </View>
         )}
       </ScrollView>
@@ -178,17 +224,26 @@ export default function GameDetailScreen() {
       {/* Sticky bottom CTA — Airbnb style */}
       <View style={[styles.cta, { paddingBottom: insets.bottom + spacing.md }]}>
         <View style={styles.ctaLeft}>
-          <Text style={styles.ctaPrice}>₱{MOCK_GAME.price}</Text>
+          <Text style={styles.ctaPrice}>{peso(game.price_per_player)}</Text>
           <Text style={styles.ctaPer}>per player</Text>
         </View>
-        <Button
-          onPress={() => router.push(`/games/${id}/join`)}
-          disabled={isFull}
-          size="lg"
-          style={styles.ctaBtn}
-        >
-          {isFull ? 'Join Waitlist' : 'Join Game'}
-        </Button>
+        {alreadyJoined ? (
+          <Button
+            onPress={() => router.push(`/games/${id}/chat`)}
+            size="lg"
+            style={styles.ctaBtn}
+          >
+            View Squad Chat
+          </Button>
+        ) : (
+          <Button
+            onPress={() => router.push(`/games/${id}/join`)}
+            size="lg"
+            style={styles.ctaBtn}
+          >
+            {isFull ? 'Join Waitlist' : 'Join Game'}
+          </Button>
+        )}
       </View>
     </View>
   );
@@ -196,6 +251,11 @@ export default function GameDetailScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
+
+  centered: { alignItems: 'center', justifyContent: 'center' },
+  errorText: { ...font.body, color: colors.error, textAlign: 'center' },
+  retryBtn: { paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radius.full, borderWidth: 1, borderColor: colors.yellow },
+  retryText: { ...font.bodySmMed, color: colors.yellow },
 
   hero: { position: 'relative', justifyContent: 'flex-end' },
   backBtn: {
@@ -251,6 +311,7 @@ const styles = StyleSheet.create({
   viewOrgBtn: { backgroundColor: colors.surfaceElevated, borderRadius: radius.full, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing.md, paddingVertical: 6 },
   viewOrgText: { ...font.bodySmMed, color: colors.textSecondary },
 
+  emptyTeams: { ...font.body, color: colors.textSecondary, textAlign: 'center', paddingVertical: spacing.lg },
   teamCard: { gap: spacing.md },
   teamHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   teamColor: { width: 12, height: 12, borderRadius: 6 },

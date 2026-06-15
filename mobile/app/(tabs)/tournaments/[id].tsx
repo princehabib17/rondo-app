@@ -1,69 +1,23 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions,
+  ActivityIndicator, Alert, Platform, TextInput, Modal,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, spacing, radius, shadow } from '../../../constants/theme';
+import { colors, font, spacing, radius } from '../../../constants/theme';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
+import { useQuery } from '../../../hooks/useQuery';
+import * as q from '../../../lib/queries';
+import type { Tournament, TournamentTeam, TournamentMatch } from '../../../lib/types';
 
 const { height } = Dimensions.get('window');
 const HERO_HEIGHT = height * 0.34;
 
 type Tab = 'overview' | 'bracket' | 'standings' | 'teams';
-
-const MOCK_TOURNAMENT = {
-  id: '1',
-  name: 'BGC Summer Cup',
-  status: 'Open',
-  date: 'Jun 28, 2026',
-  entryFee: 500,
-  format: '5v5 Knockout',
-  teams: 4,
-  maxTeams: 8,
-  organizer: 'FC Taguig',
-  organizerVerified: true,
-  description: 'The biggest summer cup in BGC. 8 teams compete in a single-elimination knockout bracket. Entry includes jersey and post-game food. Open to all skill levels. Team registration required.',
-};
-
-const MOCK_STANDINGS = [
-  { rank: 1, team: 'FC Taguig', w: 3, l: 0, d: 0, pts: 9 },
-  { rank: 2, team: 'BGC Strikers', w: 2, l: 0, d: 1, pts: 7 },
-  { rank: 3, team: 'Ballers United', w: 1, l: 1, d: 1, pts: 4 },
-  { rank: 4, team: 'Manila Kings', w: 1, l: 2, d: 0, pts: 3 },
-];
-
-const MOCK_BRACKET = [
-  {
-    round: 'QF',
-    matches: [
-      { id: 'm1', teamA: 'FC Taguig', teamB: 'Ballers United', scoreA: '3', scoreB: '1', done: true },
-      { id: 'm2', teamA: 'BGC Strikers', teamB: 'Manila Kings', scoreA: '2', scoreB: '0', done: true },
-    ],
-  },
-  {
-    round: 'Semi',
-    matches: [
-      { id: 'm3', teamA: 'FC Taguig', teamB: 'BGC Strikers', scoreA: '', scoreB: '', done: false },
-    ],
-  },
-  {
-    round: 'Final',
-    matches: [
-      { id: 'm4', teamA: 'TBD', teamB: 'TBD', scoreA: '', scoreB: '', done: false },
-    ],
-  },
-];
-
-const MOCK_TEAMS = [
-  { id: 't1', name: 'FC Taguig', players: 5, registeredOn: 'Jun 1' },
-  { id: 't2', name: 'BGC Strikers', players: 5, registeredOn: 'Jun 2' },
-  { id: 't3', name: 'Ballers United', players: 5, registeredOn: 'Jun 3' },
-  { id: 't4', name: 'Manila Kings', players: 5, registeredOn: 'Jun 4' },
-];
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'overview', label: 'Overview' },
@@ -72,11 +26,152 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'teams', label: 'Teams' },
 ];
 
+const STATUS_LABEL: Record<Tournament['status'], string> = {
+  registration: 'Open',
+  active: 'Live',
+  completed: 'Done',
+  cancelled: 'Cancelled',
+};
+
+function formatFormat(format: Tournament['format']): string {
+  return format === 'single_elimination' ? 'Knockout' : 'League';
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function formatShortDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function roundLabel(round: number, maxRound: number): string {
+  if (round === maxRound) return 'Final';
+  if (round === maxRound - 1) return 'Semi';
+  if (round === maxRound - 2) return 'QF';
+  return `R${round}`;
+}
+
+interface Standing {
+  teamId: string;
+  team: string;
+  w: number;
+  l: number;
+  d: number;
+  pts: number;
+}
+
+function computeStandings(teams: TournamentTeam[], matches: TournamentMatch[]): Standing[] {
+  const map = new Map<string, Standing>();
+  for (const t of teams) {
+    map.set(t.id, { teamId: t.id, team: t.name, w: 0, l: 0, d: 0, pts: 0 });
+  }
+  for (const m of matches) {
+    if (m.status !== 'completed' || m.home_team_id == null || m.away_team_id == null) continue;
+    if (m.home_score == null || m.away_score == null) continue;
+    const home = map.get(m.home_team_id);
+    const away = map.get(m.away_team_id);
+    if (!home || !away) continue;
+    if (m.home_score > m.away_score) {
+      home.w += 1; home.pts += 3; away.l += 1;
+    } else if (m.home_score < m.away_score) {
+      away.w += 1; away.pts += 3; home.l += 1;
+    } else {
+      home.d += 1; home.pts += 1; away.d += 1; away.pts += 1;
+    }
+  }
+  return [...map.values()].sort((a, b) => b.pts - a.pts || b.w - a.w);
+}
+
 export default function TournamentDetailScreen() {
   const insets = useSafeAreaInsets();
-  const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
-  const isFull = MOCK_TOURNAMENT.teams >= MOCK_TOURNAMENT.maxTeams;
+  const [registering, setRegistering] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [teamName, setTeamName] = useState('');
+
+  const tournamentQ = useQuery(() => q.getTournament(id), [id]);
+  const teamsQ = useQuery(() => q.getTournamentTeams(id), [id]);
+  const matchesQ = useQuery(() => q.getTournamentMatches(id), [id]);
+
+  const tournament = tournamentQ.data;
+  const teams = teamsQ.data ?? [];
+  const matches = matchesQ.data ?? [];
+
+  const loading = tournamentQ.loading || teamsQ.loading || matchesQ.loading;
+  const error = tournamentQ.error || teamsQ.error || matchesQ.error;
+
+  const refetchAll = () => {
+    tournamentQ.refetch();
+    teamsQ.refetch();
+    matchesQ.refetch();
+  };
+
+  const teamNameById = (tid: string | null): string => {
+    if (!tid) return 'TBD';
+    return teams.find((t) => t.id === tid)?.name ?? 'TBD';
+  };
+
+  async function doRegister(name: string) {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setRegistering(true);
+    try {
+      await q.registerTournamentTeam(id, trimmed);
+      teamsQ.refetch();
+    } catch (e) {
+      Alert.alert('Registration failed', e instanceof Error ? e.message : 'Something went wrong');
+    } finally {
+      setRegistering(false);
+      setModalOpen(false);
+      setTeamName('');
+    }
+  }
+
+  function handleRegisterPress() {
+    if (Platform.OS === 'ios' && Alert.prompt) {
+      Alert.prompt('Register Team', 'Enter your team name', (value) => {
+        if (value) doRegister(value);
+      });
+    } else {
+      setTeamName('');
+      setModalOpen(true);
+    }
+  }
+
+  if (loading && !tournament) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <ActivityIndicator color={colors.yellow} />
+      </View>
+    );
+  }
+
+  if (error || !tournament) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <Text style={styles.errorText}>{error ?? 'Tournament not found'}</Text>
+        <TouchableOpacity onPress={refetchAll} style={styles.retryBtn}>
+          <Text style={styles.retryText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const registeredTeams = teams.filter((t) => t.status === 'registered');
+  const isFull = registeredTeams.length >= tournament.max_teams;
+  const canRegister = tournament.status === 'registration' && !isFull;
+  const standings = computeStandings(teams, matches);
+  const maxRound = matches.reduce((m, x) => Math.max(m, x.round), 0);
+
+  const rounds: { round: number; matches: TournamentMatch[] }[] = [];
+  for (const m of matches) {
+    let entry = rounds.find((r) => r.round === m.round);
+    if (!entry) { entry = { round: m.round, matches: [] }; rounds.push(entry); }
+    entry.matches.push(m);
+  }
+  rounds.sort((a, b) => a.round - b.round);
 
   return (
     <View style={styles.container}>
@@ -94,21 +189,21 @@ export default function TournamentDetailScreen() {
         </TouchableOpacity>
         <View style={styles.heroContent}>
           <View style={styles.heroTags}>
-            <Badge color={MOCK_TOURNAMENT.status === 'Open' ? 'green' : 'yellow'}>
-              {MOCK_TOURNAMENT.status}
+            <Badge color={tournament.status === 'registration' ? 'green' : tournament.status === 'active' ? 'yellow' : 'muted'}>
+              {STATUS_LABEL[tournament.status]}
             </Badge>
-            <Badge color="muted">{MOCK_TOURNAMENT.format}</Badge>
+            <Badge color="muted">{tournament.team_size}v{tournament.team_size} {formatFormat(tournament.format)}</Badge>
           </View>
-          <Text style={styles.heroTitle}>{MOCK_TOURNAMENT.name}</Text>
-          <Text style={styles.heroOrg}>by {MOCK_TOURNAMENT.organizer}</Text>
+          <Text style={styles.heroTitle}>{tournament.name}</Text>
+          {tournament.venue_name ? <Text style={styles.heroOrg}>{tournament.venue_name}</Text> : null}
         </View>
       </View>
 
       <View style={styles.infoStrip}>
         {[
-          { icon: '📅', label: MOCK_TOURNAMENT.date },
-          { icon: '💰', label: `₱${MOCK_TOURNAMENT.entryFee} entry` },
-          { icon: '👥', label: `${MOCK_TOURNAMENT.teams}/${MOCK_TOURNAMENT.maxTeams} teams` },
+          { icon: '📅', label: formatDate(tournament.starts_at) },
+          { icon: '💰', label: `₱${(tournament.entry_fee / 100).toLocaleString()} entry` },
+          { icon: '👥', label: `${registeredTeams.length}/${tournament.max_teams} teams` },
         ].map((item) => (
           <View key={item.label} style={styles.infoItem}>
             <Text style={styles.infoIcon}>{item.icon}</Text>
@@ -136,21 +231,18 @@ export default function TournamentDetailScreen() {
           <>
             <Card style={styles.descCard}>
               <Text style={styles.descTitle}>About</Text>
-              <Text style={styles.descText}>{MOCK_TOURNAMENT.description}</Text>
+              <Text style={styles.descText}>{tournament.description ?? 'No description provided.'}</Text>
             </Card>
             <Card>
               <View style={styles.organizerRow}>
                 <View style={styles.organizerAvatar}>
-                  <Text style={styles.organizerAvatarText}>{MOCK_TOURNAMENT.organizer[0]}</Text>
+                  <Text style={styles.organizerAvatarText}>{(tournament.venue_name ?? 'O')[0]}</Text>
                 </View>
                 <View style={styles.organizerInfo}>
-                  <Text style={styles.organizerName}>
-                    {MOCK_TOURNAMENT.organizer}
-                    {MOCK_TOURNAMENT.organizerVerified && <Text style={{ color: colors.yellow }}> ✓</Text>}
-                  </Text>
+                  <Text style={styles.organizerName}>{tournament.venue_name ?? 'Organizer'}</Text>
                   <Text style={styles.organizerLabel}>Organizer</Text>
                 </View>
-                <TouchableOpacity onPress={() => router.push('/organizers/1')} style={styles.viewOrgBtn}>
+                <TouchableOpacity onPress={() => router.push(`/organizers/${tournament.organizer_id}`)} style={styles.viewOrgBtn}>
                   <Text style={styles.viewOrgText}>View</Text>
                 </TouchableOpacity>
               </View>
@@ -159,88 +251,144 @@ export default function TournamentDetailScreen() {
         )}
 
         {activeTab === 'bracket' && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.bracketScroll}>
-            {MOCK_BRACKET.map((round) => (
-              <View key={round.round} style={styles.bracketRound}>
-                <Text style={styles.roundLabel}>{round.round}</Text>
-                {round.matches.map((match) => (
-                  <View key={match.id} style={styles.matchBox}>
-                    <View style={styles.matchRow}>
-                      <Text style={styles.matchTeam} numberOfLines={1}>{match.teamA}</Text>
-                      <Text style={styles.matchScore}>{match.scoreA || '-'}</Text>
+          rounds.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>No matches scheduled yet.</Text>
+            </View>
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.bracketScroll}>
+              {rounds.map((round) => (
+                <View key={round.round} style={styles.bracketRound}>
+                  <Text style={styles.roundLabel}>{roundLabel(round.round, maxRound)}</Text>
+                  {round.matches.map((match) => (
+                    <View key={match.id} style={styles.matchBox}>
+                      <View style={styles.matchRow}>
+                        <Text style={styles.matchTeam} numberOfLines={1}>{teamNameById(match.home_team_id)}</Text>
+                        <Text style={styles.matchScore}>{match.home_score ?? '-'}</Text>
+                      </View>
+                      <View style={styles.matchDivider} />
+                      <View style={styles.matchRow}>
+                        <Text style={styles.matchTeam} numberOfLines={1}>{teamNameById(match.away_team_id)}</Text>
+                        <Text style={styles.matchScore}>{match.away_score ?? '-'}</Text>
+                      </View>
+                      {match.status === 'completed' && <Badge color="green" style={styles.doneBadge}>Done</Badge>}
                     </View>
-                    <View style={styles.matchDivider} />
-                    <View style={styles.matchRow}>
-                      <Text style={styles.matchTeam} numberOfLines={1}>{match.teamB}</Text>
-                      <Text style={styles.matchScore}>{match.scoreB || '-'}</Text>
-                    </View>
-                    {match.done && <Badge color="green" style={styles.doneBadge}>Done</Badge>}
-                  </View>
-                ))}
-              </View>
-            ))}
-          </ScrollView>
+                  ))}
+                </View>
+              ))}
+            </ScrollView>
+          )
         )}
 
         {activeTab === 'standings' && (
-          <View style={styles.standingsTable}>
-            <View style={[styles.standingsRow, styles.standingsHeaderRow]}>
-              <Text style={[styles.sCol, styles.sColRank, styles.sColHeader]}>#</Text>
-              <Text style={[styles.sCol, styles.sColTeam, styles.sColHeader]}>Team</Text>
-              <Text style={[styles.sCol, styles.sColStat, styles.sColHeader]}>W</Text>
-              <Text style={[styles.sCol, styles.sColStat, styles.sColHeader]}>L</Text>
-              <Text style={[styles.sCol, styles.sColStat, styles.sColHeader]}>D</Text>
-              <Text style={[styles.sCol, styles.sColPts, styles.sColHeader]}>Pts</Text>
+          standings.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>No standings yet.</Text>
             </View>
-            {MOCK_STANDINGS.map((row, i) => (
-              <View
-                key={row.rank}
-                style={[styles.standingsRow, i < MOCK_STANDINGS.length - 1 && styles.standingsRowBorder, row.rank === 1 && styles.standingsRowTop]}
-              >
-                <Text style={[styles.sCol, styles.sColRank, row.rank === 1 && { color: colors.yellow }]}>{row.rank}</Text>
-                <Text style={[styles.sCol, styles.sColTeam]} numberOfLines={1}>{row.team}</Text>
-                <Text style={[styles.sCol, styles.sColStat]}>{row.w}</Text>
-                <Text style={[styles.sCol, styles.sColStat]}>{row.l}</Text>
-                <Text style={[styles.sCol, styles.sColStat]}>{row.d}</Text>
-                <Text style={[styles.sCol, styles.sColPts, { color: colors.yellow }]}>{row.pts}</Text>
+          ) : (
+            <View style={styles.standingsTable}>
+              <View style={[styles.standingsRow, styles.standingsHeaderRow]}>
+                <Text style={[styles.sCol, styles.sColRank, styles.sColHeader]}>#</Text>
+                <Text style={[styles.sCol, styles.sColTeam, styles.sColHeader]}>Team</Text>
+                <Text style={[styles.sCol, styles.sColStat, styles.sColHeader]}>W</Text>
+                <Text style={[styles.sCol, styles.sColStat, styles.sColHeader]}>L</Text>
+                <Text style={[styles.sCol, styles.sColStat, styles.sColHeader]}>D</Text>
+                <Text style={[styles.sCol, styles.sColPts, styles.sColHeader]}>Pts</Text>
               </View>
-            ))}
-          </View>
+              {standings.map((row, i) => {
+                const rank = i + 1;
+                return (
+                  <View
+                    key={row.teamId}
+                    style={[styles.standingsRow, i < standings.length - 1 && styles.standingsRowBorder, rank === 1 && styles.standingsRowTop]}
+                  >
+                    <Text style={[styles.sCol, styles.sColRank, rank === 1 && { color: colors.yellow }]}>{rank}</Text>
+                    <Text style={[styles.sCol, styles.sColTeam]} numberOfLines={1}>{row.team}</Text>
+                    <Text style={[styles.sCol, styles.sColStat]}>{row.w}</Text>
+                    <Text style={[styles.sCol, styles.sColStat]}>{row.l}</Text>
+                    <Text style={[styles.sCol, styles.sColStat]}>{row.d}</Text>
+                    <Text style={[styles.sCol, styles.sColPts, { color: colors.yellow }]}>{row.pts}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          )
         )}
 
         {activeTab === 'teams' && (
-          <View style={styles.teamsList}>
-            {MOCK_TEAMS.map((team) => (
-              <Card key={team.id} style={styles.teamCard}>
-                <View style={styles.teamAvatar}>
-                  <Text style={styles.teamAvatarText}>{team.name[0]}</Text>
-                </View>
-                <View style={styles.teamInfo}>
-                  <Text style={styles.teamName}>{team.name}</Text>
-                  <Text style={styles.teamMeta}>{team.players} players · Joined {team.registeredOn}</Text>
-                </View>
-              </Card>
-            ))}
-          </View>
+          registeredTeams.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>No teams registered yet.</Text>
+            </View>
+          ) : (
+            <View style={styles.teamsList}>
+              {registeredTeams.map((team) => (
+                <Card key={team.id} style={styles.teamCard}>
+                  <View style={styles.teamAvatar}>
+                    <Text style={styles.teamAvatarText}>{team.name[0]}</Text>
+                  </View>
+                  <View style={styles.teamInfo}>
+                    <Text style={styles.teamName}>{team.name}</Text>
+                    <Text style={styles.teamMeta}>{tournament.team_size} players · Joined {formatShortDate(team.created_at)}</Text>
+                  </View>
+                </Card>
+              ))}
+            </View>
+          )
         )}
       </ScrollView>
 
       <View style={[styles.cta, { paddingBottom: insets.bottom + spacing.md }]}>
         <Button
-          onPress={() => {}}
-          disabled={isFull}
+          onPress={handleRegisterPress}
+          disabled={!canRegister || registering}
+          loading={registering}
           size="lg"
           style={{ flex: 1 }}
         >
-          {isFull ? 'Full — Join Waitlist' : 'Register Team'}
+          {tournament.status !== 'registration' ? 'Registration Closed' : isFull ? 'Full' : 'Register Team'}
         </Button>
       </View>
+
+      <Modal visible={modalOpen} transparent animationType="fade" onRequestClose={() => setModalOpen(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Register Team</Text>
+            <Text style={styles.modalLabel}>Team name</Text>
+            <TextInput
+              value={teamName}
+              onChangeText={setTeamName}
+              placeholder="e.g. FC Taguig"
+              placeholderTextColor={colors.textMuted}
+              style={styles.modalInput}
+              autoFocus
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity onPress={() => setModalOpen(false)} style={styles.modalCancel}>
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <Button onPress={() => doRegister(teamName)} disabled={!teamName.trim() || registering} loading={registering}>
+                Register
+              </Button>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
+  center: { alignItems: 'center', justifyContent: 'center', gap: spacing.md },
+  errorText: { ...font.body, color: colors.error, textAlign: 'center', paddingHorizontal: spacing.lg },
+  retryBtn: {
+    backgroundColor: colors.yellowDim,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
+  retryText: { ...font.bodySmMed, color: colors.yellow },
 
   hero: { position: 'relative', justifyContent: 'flex-end' },
   backBtn: {
@@ -288,6 +436,9 @@ const styles = StyleSheet.create({
   organizerLabel: { ...font.caption, color: colors.textMuted },
   viewOrgBtn: { backgroundColor: colors.surfaceElevated, borderRadius: radius.full, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing.md, paddingVertical: 6 },
   viewOrgText: { ...font.bodySmMed, color: colors.textSecondary },
+
+  emptyState: { alignItems: 'center', paddingVertical: spacing.xxl },
+  emptyText: { ...font.body, color: colors.textMuted, textAlign: 'center' },
 
   bracketScroll: { gap: spacing.md, paddingBottom: spacing.sm },
   bracketRound: { width: 148, gap: spacing.sm },
@@ -343,4 +494,30 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
+
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
+  modalCard: {
+    width: '100%',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    gap: spacing.sm,
+  },
+  modalTitle: { ...font.h4, color: colors.text },
+  modalLabel: { ...font.caption, color: colors.textMuted, marginTop: spacing.xs },
+  modalInput: {
+    ...font.body,
+    color: colors.text,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  modalActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: spacing.md, marginTop: spacing.sm },
+  modalCancel: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
+  modalCancelText: { ...font.bodySmMed, color: colors.textSecondary },
 });

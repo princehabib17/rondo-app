@@ -1,54 +1,63 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, font, spacing, radius, shadow } from '../../../constants/theme';
 import { Badge } from '../../../components/ui/Badge';
+import { useQuery } from '../../../hooks/useQuery';
+import * as q from '../../../lib/queries';
+import type { Tournament, TournamentStatus } from '../../../lib/types';
 
 const STATUSES = ['All', 'Open', 'Live', 'Done'] as const;
 type Status = typeof STATUSES[number];
 
-const MOCK_TOURNAMENTS = [
-  {
-    id: '1', name: 'BGC Summer Cup', format: 'Knockout', status: 'Open',
-    teams: 4, maxTeams: 8, entryFee: 500, date: 'Jun 28', organizer: 'FC Taguig',
-    perSide: 5,
-  },
-  {
-    id: '2', name: 'Rondo League Season 3', format: 'League', status: 'Live',
-    teams: 6, maxTeams: 6, entryFee: 300, date: 'Jun 15 – Jul 20', organizer: 'Rondo PH',
-    perSide: 7,
-  },
-  {
-    id: '3', name: 'Futsal Cup Metro', format: 'Knockout', status: 'Done',
-    teams: 8, maxTeams: 8, entryFee: 1000, date: 'Jun 1', organizer: 'Futsal MNL',
-    perSide: 5,
-  },
-];
+const STATUS_MAP: Record<Status, TournamentStatus | null> = {
+  All: null,
+  Open: 'registration',
+  Live: 'active',
+  Done: 'completed',
+};
 
-function TournamentCard({ t }: { t: typeof MOCK_TOURNAMENTS[0] }) {
-  const progress = t.teams / t.maxTeams;
-  const statusColor = t.status === 'Open' ? 'green' : t.status === 'Live' ? 'yellow' : 'muted';
+const STATUS_LABEL: Record<TournamentStatus, string> = {
+  registration: 'Open',
+  active: 'Live',
+  completed: 'Done',
+  cancelled: 'Cancelled',
+};
+
+function formatFormat(format: Tournament['format']): string {
+  return format === 'single_elimination' ? 'Knockout' : 'League';
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function TournamentCard({ t }: { t: Tournament }) {
+  const statusLabel = STATUS_LABEL[t.status] ?? t.status;
+  const teams = 0;
+  const progress = t.max_teams > 0 ? teams / t.max_teams : 0;
+  const statusColor = t.status === 'registration' ? 'green' : t.status === 'active' ? 'yellow' : 'muted';
 
   return (
     <TouchableOpacity
-      onPress={() => router.push(`/tournaments/${t.id}`)}
+      onPress={() => router.push(`/(tabs)/tournaments/${t.id}`)}
       activeOpacity={0.88}
       style={[styles.card, shadow.subtle]}
     >
       {/* Card header with gradient */}
       <View style={styles.cardHeader}>
         <LinearGradient
-          colors={t.status === 'Live' ? ['#1A1400', '#0A0A0A'] : ['#1A1A2A', '#0A0A0A']}
+          colors={t.status === 'active' ? ['#1A1400', '#0A0A0A'] : ['#1A1A2A', '#0A0A0A']}
           style={StyleSheet.absoluteFill}
         />
         <View style={styles.cardHeaderContent}>
-          <Badge color={statusColor}>{t.status === 'Live' ? '🔴 Live' : t.status}</Badge>
-          <Badge color="muted">{t.format}</Badge>
+          <Badge color={statusColor}>{t.status === 'active' ? '🔴 Live' : statusLabel}</Badge>
+          <Badge color="muted">{formatFormat(t.format)}</Badge>
         </View>
         <Text style={styles.cardTitle}>{t.name}</Text>
-        <Text style={styles.cardOrganizer}>by {t.organizer}</Text>
+        {t.venue_name ? <Text style={styles.cardOrganizer}>{t.venue_name}</Text> : null}
       </View>
 
       {/* Card body */}
@@ -58,8 +67,8 @@ function TournamentCard({ t }: { t: typeof MOCK_TOURNAMENTS[0] }) {
           <View style={styles.progressLabelRow}>
             <Text style={styles.progressLabel}>Teams registered</Text>
             <Text style={styles.progressCount}>
-              <Text style={{ color: progress === 1 ? colors.error : colors.yellow }}>{t.teams}</Text>
-              <Text style={{ color: colors.textMuted }}>/{t.maxTeams}</Text>
+              <Text style={{ color: progress === 1 ? colors.error : colors.yellow }}>{teams}</Text>
+              <Text style={{ color: colors.textMuted }}>/{t.max_teams}</Text>
             </Text>
           </View>
           <View style={styles.progressBar}>
@@ -70,15 +79,15 @@ function TournamentCard({ t }: { t: typeof MOCK_TOURNAMENTS[0] }) {
         <View style={styles.infoRow}>
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Format</Text>
-            <Text style={styles.infoValue}>{t.perSide}v{t.perSide}</Text>
+            <Text style={styles.infoValue}>{t.team_size}v{t.team_size}</Text>
           </View>
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Date</Text>
-            <Text style={styles.infoValue}>{t.date}</Text>
+            <Text style={styles.infoValue}>{formatDate(t.starts_at)}</Text>
           </View>
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Entry</Text>
-            <Text style={[styles.infoValue, { color: colors.yellow }]}>₱{t.entryFee}</Text>
+            <Text style={[styles.infoValue, { color: colors.yellow }]}>₱{(t.entry_fee / 100).toLocaleString()}</Text>
           </View>
         </View>
       </View>
@@ -90,7 +99,11 @@ export default function TournamentsScreen() {
   const insets = useSafeAreaInsets();
   const [status, setStatus] = useState<Status>('All');
 
-  const filtered = MOCK_TOURNAMENTS.filter((t) => status === 'All' || t.status === status);
+  const { data, loading, error, refetch } = useQuery(() => q.listTournaments());
+
+  const tournaments = data ?? [];
+  const activeStatus = STATUS_MAP[status];
+  const filtered = tournaments.filter((t) => activeStatus === null || t.status === activeStatus);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -114,20 +127,33 @@ export default function TournamentsScreen() {
         ))}
       </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.list}
-      >
-        {filtered.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={styles.emptyEmoji}>🏆</Text>
-            <Text style={styles.emptyTitle}>No {status} tournaments</Text>
-            <Text style={styles.emptySubtitle}>Check back soon or browse a different status.</Text>
-          </View>
-        ) : (
-          filtered.map((t) => <TournamentCard key={t.id} t={t} />)
-        )}
-      </ScrollView>
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator color={colors.yellow} />
+        </View>
+      ) : error ? (
+        <View style={styles.center}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity onPress={() => refetch()} style={styles.retryBtn}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.list}
+        >
+          {filtered.length === 0 ? (
+            <View style={styles.empty}>
+              <Text style={styles.emptyEmoji}>🏆</Text>
+              <Text style={styles.emptyTitle}>No {status} tournaments</Text>
+              <Text style={styles.emptySubtitle}>Check back soon or browse a different status.</Text>
+            </View>
+          ) : (
+            filtered.map((t) => <TournamentCard key={t.id} t={t} />)
+          )}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -172,6 +198,16 @@ const styles = StyleSheet.create({
   filterTextActive: { color: colors.yellow },
 
   list: { padding: spacing.lg, gap: spacing.md },
+
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
+  errorText: { ...font.body, color: colors.error, textAlign: 'center', paddingHorizontal: spacing.lg },
+  retryBtn: {
+    backgroundColor: colors.yellowDim,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
+  retryText: { ...font.bodySmMed, color: colors.yellow },
 
   card: {
     backgroundColor: colors.surface,

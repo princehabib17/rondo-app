@@ -1,25 +1,40 @@
 import React, { useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, Dimensions, FlatList, TouchableOpacity,
-  ViewToken,
+  ViewToken, ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { colors, font, spacing, radius } from '../constants/theme';
+import { useQuery } from '../hooks/useQuery';
+import * as q from '../lib/queries';
 
 const { width, height } = Dimensions.get('window');
 
-const MOCK_REELS = [
-  { id: '1', creator: 'Carlo Reyes', flag: '🇵🇭', desc: 'That finish though 🔥⚽ #futsal #rondo', likes: 142, bookmarked: false, format: '5v5', skill: 'Competitive' },
-  { id: '2', creator: 'FC Taguig', flag: '🇵🇭', desc: 'Pre-season training highlights 💪', likes: 87, bookmarked: false, format: '7v7', skill: 'All levels' },
-  { id: '3', creator: 'Mike Santos', flag: '🇵🇭', desc: 'Weekend rondo session. Who\'s in? 🟡', likes: 53, bookmarked: true, format: '3v3', skill: 'Casual' },
-];
+type ReelItem = Awaited<ReturnType<typeof q.listReels>>[number];
 
-function Reel({ reel, active }: { reel: typeof MOCK_REELS[0]; active: boolean }) {
-  const [liked, setLiked] = useState(false);
-  const [saved, setSaved] = useState(reel.bookmarked);
+function Reel({ reel, active }: { reel: ReelItem; active: boolean }) {
+  const [liked, setLiked] = useState(reel.liked_by_me);
+  const [likeCount, setLikeCount] = useState(reel.like_count);
+  const [saved, setSaved] = useState(false);
+
+  const toggleLike = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const next = !liked;
+    setLiked(next);
+    setLikeCount((c) => c + (next ? 1 : -1));
+    try {
+      await q.toggleReelLike(reel.id, next);
+    } catch {
+      setLiked(!next);
+      setLikeCount((c) => c + (next ? -1 : 1));
+    }
+  };
+
+  const creatorName = reel.player?.full_name ?? 'Unknown';
+  const tags = [reel.position, reel.skill_level].filter(Boolean) as string[];
 
   return (
     <View style={styles.reel}>
@@ -43,9 +58,9 @@ function Reel({ reel, active }: { reel: typeof MOCK_REELS[0]; active: boolean })
 
       {/* Right actions */}
       <View style={styles.rightActions}>
-        <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setLiked(!liked); }} style={styles.actionBtn}>
+        <TouchableOpacity onPress={toggleLike} style={styles.actionBtn}>
           <Text style={styles.actionIcon}>{liked ? '❤️' : '🤍'}</Text>
-          <Text style={styles.actionCount}>{reel.likes + (liked ? 1 : 0)}</Text>
+          <Text style={styles.actionCount}>{likeCount}</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => { Haptics.selectionAsync(); setSaved(!saved); }} style={styles.actionBtn}>
           <Text style={styles.actionIcon}>{saved ? '🔖' : '📑'}</Text>
@@ -55,22 +70,25 @@ function Reel({ reel, active }: { reel: typeof MOCK_REELS[0]; active: boolean })
           <Text style={styles.actionIcon}>↗️</Text>
           <Text style={styles.actionCount}>Share</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push(`/profile/${reel.id}`)} style={styles.creatorAvatar}>
-          <Text style={styles.creatorAvatarText}>{reel.creator[0]}</Text>
+        <TouchableOpacity onPress={() => reel.player && router.push(`/profile/${reel.player.id}`)} style={styles.creatorAvatar}>
+          <Text style={styles.creatorAvatarText}>{(creatorName[0] ?? '?').toUpperCase()}</Text>
         </TouchableOpacity>
       </View>
 
       {/* Bottom info */}
       <LinearGradient colors={['transparent', 'rgba(0,0,0,0.85)']} style={styles.bottomGradient}>
         <View style={styles.bottomInfo}>
-          <TouchableOpacity onPress={() => router.push(`/profile/${reel.id}`)}>
-            <Text style={styles.creatorName}>{reel.flag} {reel.creator}</Text>
+          <TouchableOpacity onPress={() => reel.player && router.push(`/profile/${reel.player.id}`)}>
+            <Text style={styles.creatorName}>{creatorName}</Text>
           </TouchableOpacity>
-          <Text style={styles.reelDesc}>{reel.desc}</Text>
-          <View style={styles.tagRow}>
-            <View style={styles.tag}><Text style={styles.tagText}>{reel.format}</Text></View>
-            <View style={styles.tag}><Text style={styles.tagText}>{reel.skill}</Text></View>
-          </View>
+          {reel.caption ? <Text style={styles.reelDesc}>{reel.caption}</Text> : null}
+          {tags.length > 0 && (
+            <View style={styles.tagRow}>
+              {tags.map((t) => (
+                <View key={t} style={styles.tag}><Text style={styles.tagText}>{t}</Text></View>
+              ))}
+            </View>
+          )}
         </View>
       </LinearGradient>
     </View>
@@ -78,17 +96,49 @@ function Reel({ reel, active }: { reel: typeof MOCK_REELS[0]; active: boolean })
 }
 
 export default function ReelsScreen() {
-  const insets = useSafeAreaInsets();
   const [activeIndex, setActiveIndex] = useState(0);
+  const { data, loading, error, refetch } = useQuery(() => q.listReels());
 
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
     if (viewableItems[0]) setActiveIndex(viewableItems[0].index ?? 0);
   }).current;
 
+  if (loading && !data) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <ActivityIndicator color={colors.yellow} />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity onPress={() => refetch()} style={styles.retryBtn}>
+          <Text style={styles.retryText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const reels = data ?? [];
+
+  if (reels.length === 0) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Text style={styles.backArrow}>←</Text>
+        </TouchableOpacity>
+        <Text style={styles.errorText}>No reels yet.</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <FlatList
-        data={MOCK_REELS}
+        data={reels}
         keyExtractor={(r) => r.id}
         renderItem={({ item, index }) => <Reel reel={item} active={index === activeIndex} />}
         pagingEnabled
@@ -103,6 +153,15 @@ export default function ReelsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
+  center: { alignItems: 'center', justifyContent: 'center', gap: spacing.md },
+  errorText: { ...font.body, color: colors.textMuted, textAlign: 'center', paddingHorizontal: spacing.lg },
+  retryBtn: {
+    backgroundColor: colors.yellowDim,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
+  retryText: { ...font.bodySmMed, color: colors.yellow },
   reel: { width, height, position: 'relative' },
   playArea: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
   playIcon: { fontSize: 64 },

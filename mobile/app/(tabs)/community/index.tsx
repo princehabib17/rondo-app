@@ -1,58 +1,93 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  FlatList, Dimensions,
+  Dimensions, ActivityIndicator, TextInput,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, spacing, radius } from '../../../constants/theme';
+import { useQuery, useMutation } from '../../../hooks/useQuery';
+import { useAuth } from '../../../hooks/useAuth';
+import * as q from '../../../lib/queries';
+import type { Profile } from '../../../lib/types';
 
 const { width } = Dimensions.get('window');
 
 const TABS = ['Posts', 'Reels', 'Players', 'DMs'] as const;
 type Tab = typeof TABS[number];
 
-const MOCK_POSTS = [
-  { id: '1', author: 'Juan dela Cruz', avatar: null, time: '2h ago', body: 'Great game tonight at Turf Manila! Thanks to everyone who joined 🔥⚽', likes: 14, comments: 3, flag: '🇵🇭' },
-  { id: '2', author: 'Rondo PH', avatar: null, time: '5h ago', body: 'Season 3 bracket is now LIVE! Go check your schedule and prepare. See you on the pitch 💪', likes: 42, comments: 8, flag: '🇵🇭' },
-];
-
-const MOCK_PLAYERS = [
-  { id: '1', name: 'Juan dela Cruz', distance: '0.8km', flag: '🇵🇭', skill: 'Competitive' },
-  { id: '2', name: 'Mike Santos', distance: '1.2km', flag: '🇵🇭', skill: 'Intermediate' },
-  { id: '3', name: 'Carlo Reyes', distance: '2.4km', flag: '🇵🇭', skill: 'Casual' },
-];
-
-const MOCK_DMS = [
-  { id: '1', name: 'Rondo PH', last: 'See you Saturday!', time: '10m', unread: 2 },
-  { id: '2', name: 'Juan dela Cruz', last: 'Can I join your team?', time: '1h', unread: 0 },
-];
-
-const MOCK_REELS = Array.from({ length: 6 }, (_, i) => ({ id: `${i}`, thumb: null }));
 const REEL_SIZE = (width - spacing.lg * 2 - spacing.sm * 2) / 3;
 
-function PostCard({ post }: { post: typeof MOCK_POSTS[0] }) {
-  const [liked, setLiked] = useState(false);
+type PostItem = Awaited<ReturnType<typeof q.listPosts>>[number];
+type ReelItem = Awaited<ReturnType<typeof q.listReels>>[number];
+type ConversationItem = Awaited<ReturnType<typeof q.listConversations>>[number];
+
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'now';
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d`;
+}
+
+function initial(name: string | null | undefined): string {
+  return (name?.trim()?.[0] ?? '?').toUpperCase();
+}
+
+function Centered({ children }: { children: React.ReactNode }) {
+  return <View style={styles.center}>{children}</View>;
+}
+
+function ErrorState({ error, onRetry }: { error: string; onRetry: () => void }) {
+  return (
+    <Centered>
+      <Text style={styles.errorText}>{error}</Text>
+      <TouchableOpacity onPress={onRetry} style={styles.retryBtn}>
+        <Text style={styles.retryText}>Retry</Text>
+      </TouchableOpacity>
+    </Centered>
+  );
+}
+
+function PostCard({ post, onChanged }: { post: PostItem; onChanged: () => void }) {
+  const [liked, setLiked] = useState(post.liked_by_me);
+  const [likeCount, setLikeCount] = useState(post.like_count);
+
+  const toggleLike = async () => {
+    const next = !liked;
+    setLiked(next);
+    setLikeCount((c) => c + (next ? 1 : -1));
+    try {
+      await q.togglePostLike(post.id, next);
+    } catch {
+      setLiked(!next);
+      setLikeCount((c) => c + (next ? -1 : 1));
+    }
+  };
+
   return (
     <View style={styles.postCard}>
       <View style={styles.postHeader}>
         <View style={styles.postAvatar}>
-          <Text style={styles.postAvatarText}>{post.author[0]}</Text>
+          <Text style={styles.postAvatarText}>{initial(post.author?.full_name)}</Text>
         </View>
         <View style={styles.postMeta}>
-          <Text style={styles.postAuthor}>{post.flag} {post.author}</Text>
-          <Text style={styles.postTime}>{post.time}</Text>
+          <Text style={styles.postAuthor}>{post.author?.full_name ?? 'Unknown'}</Text>
+          <Text style={styles.postTime}>{timeAgo(post.created_at)}</Text>
         </View>
       </View>
       <Text style={styles.postBody}>{post.body}</Text>
       <View style={styles.postActions}>
-        <TouchableOpacity onPress={() => setLiked(!liked)} style={styles.postAction}>
+        <TouchableOpacity onPress={toggleLike} style={styles.postAction}>
           <Text style={styles.postActionIcon}>{liked ? '❤️' : '🤍'}</Text>
-          <Text style={[styles.postActionText, liked && { color: colors.error }]}>{post.likes + (liked ? 1 : 0)}</Text>
+          <Text style={[styles.postActionText, liked && { color: colors.error }]}>{likeCount}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.postAction}>
           <Text style={styles.postActionIcon}>💬</Text>
-          <Text style={styles.postActionText}>{post.comments}</Text>
+          <Text style={styles.postActionText}>{post.comment_count}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.postAction}>
           <Text style={styles.postActionIcon}>↗️</Text>
@@ -60,6 +95,189 @@ function PostCard({ post }: { post: typeof MOCK_POSTS[0] }) {
         </TouchableOpacity>
       </View>
     </View>
+  );
+}
+
+function PostsTab() {
+  const { profile } = useAuth();
+  const { data, loading, error, refetch } = useQuery(() => q.listPosts());
+  const createPost = useMutation((body: string) => q.createPost(body));
+  const [composing, setComposing] = useState(false);
+  const [body, setBody] = useState('');
+
+  const submit = async () => {
+    const trimmed = body.trim();
+    if (!trimmed) return;
+    try {
+      await createPost.mutate(trimmed);
+      setBody('');
+      setComposing(false);
+      refetch();
+    } catch {
+      /* error surfaced via createPost.error */
+    }
+  };
+
+  if (loading && !data) return <Centered><ActivityIndicator color={colors.yellow} /></Centered>;
+  if (error) return <ErrorState error={error} onRetry={refetch} />;
+
+  const posts = data ?? [];
+
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      {composing ? (
+        <View style={styles.composerActive}>
+          <TextInput
+            value={body}
+            onChangeText={setBody}
+            placeholder="Share something with the community…"
+            placeholderTextColor={colors.textMuted}
+            style={styles.composerTextInput}
+            multiline
+            autoFocus
+          />
+          <View style={styles.composerActions}>
+            <TouchableOpacity onPress={() => { setComposing(false); setBody(''); }} style={styles.composerCancel}>
+              <Text style={styles.composerCancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={submit}
+              disabled={!body.trim() || createPost.loading}
+              style={[styles.composerPost, (!body.trim() || createPost.loading) && styles.composerPostDisabled]}
+            >
+              <Text style={styles.composerPostText}>{createPost.loading ? 'Posting…' : 'Post'}</Text>
+            </TouchableOpacity>
+          </View>
+          {createPost.error ? <Text style={styles.composerError}>{createPost.error}</Text> : null}
+        </View>
+      ) : (
+        <TouchableOpacity style={styles.composer} onPress={() => setComposing(true)}>
+          <View style={styles.composerAvatar}>
+            <Text style={styles.composerAvatarText}>{initial(profile?.full_name)}</Text>
+          </View>
+          <View style={styles.composerInput}>
+            <Text style={styles.composerPlaceholder}>Share something with the community…</Text>
+          </View>
+          <Text style={styles.composerCamera}>📷</Text>
+        </TouchableOpacity>
+      )}
+
+      {posts.length === 0 ? (
+        <Text style={styles.emptyText}>No posts yet. Be the first to share!</Text>
+      ) : (
+        posts.map((p) => <PostCard key={p.id} post={p} onChanged={refetch} />)
+      )}
+    </ScrollView>
+  );
+}
+
+function ReelsTab() {
+  const { data, loading, error, refetch } = useQuery(() => q.listReels());
+
+  if (loading && !data) return <Centered><ActivityIndicator color={colors.yellow} /></Centered>;
+  if (error) return <ErrorState error={error} onRetry={refetch} />;
+
+  const reels = data ?? [];
+
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.reelsGrid}>
+      {reels.length === 0 ? (
+        <Text style={styles.emptyText}>No reels yet.</Text>
+      ) : (
+        <View style={styles.reelsRow}>
+          {reels.map((r: ReelItem) => (
+            <TouchableOpacity
+              key={r.id}
+              onPress={() => router.push('/reels')}
+              style={[styles.reelThumb, { width: REEL_SIZE, height: REEL_SIZE * 1.4 }]}
+            >
+              <View style={styles.reelPlaceholder}>
+                <Text style={styles.reelIcon}>▶️</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+      <TouchableOpacity style={styles.uploadReelBtn} onPress={() => router.push('/reels')}>
+        <Text style={styles.uploadReelText}>+ Upload a Reel</Text>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+}
+
+function PlayersTab() {
+  const { data, loading, error, refetch } = useQuery(() => q.listPlayers(50));
+
+  if (loading && !data) return <Centered><ActivityIndicator color={colors.yellow} /></Centered>;
+  if (error) return <ErrorState error={error} onRetry={refetch} />;
+
+  const players = data ?? [];
+
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <Text style={styles.sectionHint}>Players near you</Text>
+      {players.length === 0 ? (
+        <Text style={styles.emptyText}>No players found.</Text>
+      ) : (
+        players.map((p: Profile) => (
+          <TouchableOpacity key={p.id} onPress={() => router.push(`/profile/${p.id}`)} style={styles.playerRow}>
+            <View style={styles.playerAvatar}>
+              <Text style={styles.playerAvatarText}>{initial(p.full_name)}</Text>
+            </View>
+            <View style={styles.playerInfo}>
+              <Text style={styles.playerName}>{p.full_name ?? 'Unknown'}</Text>
+              <Text style={styles.playerMeta}>
+                {[p.skill_level, p.preferred_areas].filter(Boolean).join(' · ') || 'Player'}
+              </Text>
+            </View>
+            <TouchableOpacity style={styles.messageBtn} onPress={() => router.push(`/messages/${p.id}`)}>
+              <Text style={styles.messageBtnText}>Message</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        ))
+      )}
+    </ScrollView>
+  );
+}
+
+function DMsTab() {
+  const { data, loading, error, refetch } = useQuery(() => q.listConversations());
+
+  if (loading && !data) return <Centered><ActivityIndicator color={colors.yellow} /></Centered>;
+  if (error) return <ErrorState error={error} onRetry={refetch} />;
+
+  const convos = data ?? [];
+
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      {convos.length === 0 ? (
+        <Text style={styles.emptyText}>No conversations yet.</Text>
+      ) : (
+        convos.map((dm: ConversationItem) => (
+          <TouchableOpacity
+            key={dm.peer.id}
+            onPress={() => router.push(`/messages/${dm.peer.id}`)}
+            style={styles.dmRow}
+          >
+            <View style={styles.dmAvatar}>
+              <Text style={styles.dmAvatarText}>{initial(dm.peer.full_name)}</Text>
+            </View>
+            <View style={styles.dmInfo}>
+              <Text style={[styles.dmName, dm.unread > 0 && styles.dmNameUnread]}>{dm.peer.full_name ?? 'Unknown'}</Text>
+              <Text style={styles.dmLast} numberOfLines={1}>{dm.last.body}</Text>
+            </View>
+            <View style={styles.dmRight}>
+              <Text style={styles.dmTime}>{timeAgo(dm.last.created_at)}</Text>
+              {dm.unread > 0 && (
+                <View style={styles.unreadBadge}>
+                  <Text style={styles.unreadText}>{dm.unread}</Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
+        ))
+      )}
+    </ScrollView>
   );
 }
 
@@ -83,91 +301,10 @@ export default function CommunityScreen() {
       </ScrollView>
 
       {/* Content */}
-      {tab === 'Posts' && (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-          {/* Composer */}
-          <TouchableOpacity style={styles.composer}>
-            <View style={styles.composerAvatar}>
-              <Text style={styles.composerAvatarText}>Y</Text>
-            </View>
-            <View style={styles.composerInput}>
-              <Text style={styles.composerPlaceholder}>Share something with the community…</Text>
-            </View>
-            <Text style={styles.composerCamera}>📷</Text>
-          </TouchableOpacity>
-
-          {MOCK_POSTS.map((p) => <PostCard key={p.id} post={p} />)}
-        </ScrollView>
-      )}
-
-      {tab === 'Reels' && (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.reelsGrid}>
-          <View style={styles.reelsRow}>
-            {MOCK_REELS.map((r) => (
-              <TouchableOpacity
-                key={r.id}
-                onPress={() => router.push('/reels')}
-                style={[styles.reelThumb, { width: REEL_SIZE, height: REEL_SIZE * 1.4 }]}
-              >
-                <View style={styles.reelPlaceholder}>
-                  <Text style={styles.reelIcon}>▶️</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <TouchableOpacity style={styles.uploadReelBtn}>
-            <Text style={styles.uploadReelText}>+ Upload a Reel</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      )}
-
-      {tab === 'Players' && (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-          <Text style={styles.sectionHint}>Players near you</Text>
-          {MOCK_PLAYERS.map((p) => (
-            <TouchableOpacity key={p.id} onPress={() => router.push(`/profile/${p.id}`)} style={styles.playerRow}>
-              <View style={styles.playerAvatar}>
-                <Text style={styles.playerAvatarText}>{p.name[0]}</Text>
-              </View>
-              <View style={styles.playerInfo}>
-                <Text style={styles.playerName}>{p.flag} {p.name}</Text>
-                <Text style={styles.playerMeta}>{p.skill} · {p.distance}</Text>
-              </View>
-              <TouchableOpacity style={styles.messageBtn}>
-                <Text style={styles.messageBtnText}>Message</Text>
-              </TouchableOpacity>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      )}
-
-      {tab === 'DMs' && (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-          {MOCK_DMS.map((dm) => (
-            <TouchableOpacity
-              key={dm.id}
-              onPress={() => router.push(`/messages/${dm.id}`)}
-              style={styles.dmRow}
-            >
-              <View style={styles.dmAvatar}>
-                <Text style={styles.dmAvatarText}>{dm.name[0]}</Text>
-              </View>
-              <View style={styles.dmInfo}>
-                <Text style={[styles.dmName, dm.unread > 0 && styles.dmNameUnread]}>{dm.name}</Text>
-                <Text style={styles.dmLast} numberOfLines={1}>{dm.last}</Text>
-              </View>
-              <View style={styles.dmRight}>
-                <Text style={styles.dmTime}>{dm.time}</Text>
-                {dm.unread > 0 && (
-                  <View style={styles.unreadBadge}>
-                    <Text style={styles.unreadText}>{dm.unread}</Text>
-                  </View>
-                )}
-              </View>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      )}
+      {tab === 'Posts' && <PostsTab />}
+      {tab === 'Reels' && <ReelsTab />}
+      {tab === 'Players' && <PlayersTab />}
+      {tab === 'DMs' && <DMsTab />}
     </View>
   );
 }
@@ -200,6 +337,17 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: spacing.md },
   sectionHint: { ...font.caption, color: colors.textMuted, marginBottom: spacing.sm },
 
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.lg },
+  errorText: { ...font.body, color: colors.error, textAlign: 'center' },
+  retryBtn: {
+    backgroundColor: colors.yellowDim,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
+  retryText: { ...font.bodySmMed, color: colors.yellow },
+  emptyText: { ...font.body, color: colors.textMuted, textAlign: 'center', paddingVertical: spacing.xl },
+
   composer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -210,6 +358,22 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     padding: spacing.md,
   },
+  composerActive: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  composerTextInput: { ...font.body, color: colors.text, minHeight: 60, textAlignVertical: 'top' },
+  composerActions: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: spacing.md },
+  composerCancel: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
+  composerCancelText: { ...font.bodySmMed, color: colors.textSecondary },
+  composerPost: { backgroundColor: colors.yellow, borderRadius: radius.full, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
+  composerPostDisabled: { opacity: 0.4 },
+  composerPostText: { ...font.bodySmMed, color: colors.bg },
+  composerError: { ...font.caption, color: colors.error },
   composerAvatar: {
     width: 36,
     height: 36,

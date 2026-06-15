@@ -1,41 +1,73 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, spacing, radius } from '../constants/theme';
 import { ScreenHeader } from '../components/layout/ScreenHeader';
 import { Badge } from '../components/ui/Badge';
+import { useQuery } from '../hooks/useQuery';
+import * as q from '../lib/queries';
+import type { Game, GamePlayer, GamePlayerStatus } from '../lib/types';
 
 const TABS = ['Upcoming', 'Pending', 'Past'] as const;
 type Tab = typeof TABS[number];
 
-const MOCK_GAMES = {
-  Upcoming: [
-    { id: '1', title: 'Friday Night 5v5', venue: 'Turf Manila, BGC', date: 'Fri Jun 20 · 8PM', format: '5v5', status: 'confirmed', price: 150, team: 'Team Red' },
-    { id: '2', title: 'Sunday League', venue: 'Smoke Indoor Futsal, QC', date: 'Sun Jun 22 · 10AM', format: '7v7', status: 'confirmed', price: 200, team: 'Team Blue' },
-  ],
-  Pending: [
-    { id: '3', title: 'Weekday Rondo', venue: 'BGC Court 3', date: 'Wed Jun 18 · 6PM', format: '3v3', status: 'pending_approval', price: 100, team: 'Team A' },
-  ],
-  Past: [
-    { id: '4', title: 'Ballers Cup QF', venue: 'Robinsons Futsaland', date: 'Sat Jun 14 · 4PM', format: '5v5', status: 'completed', price: 200, team: 'Team Red' },
-    { id: '5', title: 'Friday Rondo', venue: 'Turf Manila, BGC', date: 'Fri Jun 7 · 8PM', format: '5v5', status: 'completed', price: 150, team: 'Team Blue' },
-  ],
-};
+type MyGameRow = GamePlayer & { game: Game | null };
 
-const STATUS_COLOR: Record<string, 'green' | 'yellow' | 'muted'> = {
-  confirmed: 'green',
+const PENDING_STATUSES: GamePlayerStatus[] = ['pending', 'pending_payment', 'reserved', 'pending_approval'];
+const JOINED_STATUSES: GamePlayerStatus[] = ['approved', 'paid', 'venue'];
+
+const STATUS_COLOR: Record<string, 'green' | 'yellow' | 'muted' | 'red'> = {
+  paid: 'green',
+  approved: 'green',
+  venue: 'green',
+  pending: 'yellow',
+  pending_payment: 'yellow',
   pending_approval: 'yellow',
+  reserved: 'yellow',
   completed: 'muted',
+  cancelled: 'red',
+  rejected: 'red',
+  refunded: 'muted',
+  refund_requested: 'yellow',
+  no_show: 'red',
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  confirmed: 'Confirmed',
+  paid: 'Confirmed',
+  approved: 'Confirmed',
+  venue: 'Pay at venue',
+  pending: 'Pending',
+  pending_payment: 'Awaiting payment',
   pending_approval: 'Awaiting approval',
-  completed: 'Completed',
+  reserved: 'Reserved',
+  cancelled: 'Cancelled',
+  rejected: 'Rejected',
+  refunded: 'Refunded',
+  refund_requested: 'Refund requested',
+  no_show: 'No show',
 };
 
-function GameRow({ game }: { game: typeof MOCK_GAMES.Upcoming[0] }) {
+function peso(centavos: number) {
+  return `₱${(centavos / 100).toLocaleString()}`;
+}
+
+function dayNum(iso: string) {
+  return new Date(iso).toLocaleDateString(undefined, { day: 'numeric' });
+}
+function monthShort(iso: string) {
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short' });
+}
+function timeLabel(iso: string) {
+  return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+function GameRow({ row }: { row: MyGameRow }) {
+  const game = row.game;
+  if (!game) return null;
+  const status = row.payment_status;
+  const joined = JOINED_STATUSES.includes(status);
+
   return (
     <TouchableOpacity
       onPress={() => router.push(`/games/${game.id}`)}
@@ -44,23 +76,23 @@ function GameRow({ game }: { game: typeof MOCK_GAMES.Upcoming[0] }) {
     >
       <View style={styles.rowLeft}>
         <View style={styles.dateBox}>
-          <Text style={styles.dateDay}>{game.date.split(' ')[1]}</Text>
-          <Text style={styles.dateMonth}>{game.date.split(' ')[0]}</Text>
+          <Text style={styles.dateDay}>{dayNum(game.date_time)}</Text>
+          <Text style={styles.dateMonth}>{monthShort(game.date_time)}</Text>
         </View>
         <View style={styles.rowInfo}>
           <Text style={styles.rowTitle} numberOfLines={1}>{game.title}</Text>
-          <Text style={styles.rowVenue} numberOfLines={1}>📍 {game.venue}</Text>
-          <Text style={styles.rowTime}>🕐 {game.date.split('·')[1]?.trim()}</Text>
+          <Text style={styles.rowVenue} numberOfLines={1}>📍 {game.venue_name}</Text>
+          <Text style={styles.rowTime}>🕐 {timeLabel(game.date_time)}</Text>
           <View style={styles.rowTags}>
             <Badge color="muted">{game.format}</Badge>
-            <Badge color={STATUS_COLOR[game.status]}>{STATUS_LABEL[game.status]}</Badge>
+            <Badge color={STATUS_COLOR[status] ?? 'muted'}>{STATUS_LABEL[status] ?? status}</Badge>
           </View>
         </View>
       </View>
 
       <View style={styles.rowRight}>
-        <Text style={styles.rowPrice}>₱{game.price}</Text>
-        {game.status === 'confirmed' && (
+        <Text style={styles.rowPrice}>{peso(game.price_per_player)}</Text>
+        {joined && (
           <TouchableOpacity onPress={() => router.push(`/games/${game.id}/chat`)} style={styles.chatBtn}>
             <Text style={styles.chatIcon}>💬</Text>
           </TouchableOpacity>
@@ -73,7 +105,24 @@ function GameRow({ game }: { game: typeof MOCK_GAMES.Upcoming[0] }) {
 export default function MyGamesScreen() {
   const insets = useSafeAreaInsets();
   const [tab, setTab] = useState<Tab>('Upcoming');
-  const games = MOCK_GAMES[tab];
+  const { data, loading, error, refetch } = useQuery<MyGameRow[]>(() => q.getMyGames(), []);
+
+  const grouped = useMemo(() => {
+    const now = Date.now();
+    const rows = (data ?? []).filter((r) => r.game);
+    const upcoming: MyGameRow[] = [];
+    const pending: MyGameRow[] = [];
+    const past: MyGameRow[] = [];
+    for (const r of rows) {
+      const t = new Date(r.game!.date_time).getTime();
+      if (PENDING_STATUSES.includes(r.payment_status)) pending.push(r);
+      else if (t >= now) upcoming.push(r);
+      else past.push(r);
+    }
+    return { Upcoming: upcoming, Pending: pending, Past: past } as Record<Tab, MyGameRow[]>;
+  }, [data]);
+
+  const games = grouped[tab];
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -84,10 +133,10 @@ export default function MyGamesScreen() {
         {TABS.map((t) => (
           <TouchableOpacity key={t} onPress={() => setTab(t)} style={[styles.tab, tab === t && styles.tabActive]}>
             <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>{t}</Text>
-            {MOCK_GAMES[t].length > 0 && (
+            {grouped[t].length > 0 && (
               <View style={[styles.tabCount, tab === t && styles.tabCountActive]}>
                 <Text style={[styles.tabCountText, tab === t && styles.tabCountTextActive]}>
-                  {MOCK_GAMES[t].length}
+                  {grouped[t].length}
                 </Text>
               </View>
             )}
@@ -95,26 +144,44 @@ export default function MyGamesScreen() {
         ))}
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xxl }}>
-        {games.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={styles.emptyEmoji}>📅</Text>
-            <Text style={styles.emptyTitle}>No {tab.toLowerCase()} games</Text>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/feed')}>
-              <Text style={styles.emptyLink}>Browse games →</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View style={styles.list}>
-            {games.map((g) => <GameRow key={g.id} game={g} />)}
-          </View>
-        )}
-      </ScrollView>
+      {loading && !data ? (
+        <View style={styles.centered}>
+          <ActivityIndicator color={colors.yellow} />
+        </View>
+      ) : error ? (
+        <View style={styles.centered}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity onPress={refetch} style={styles.retryBtn}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xxl }}>
+          {games.length === 0 ? (
+            <View style={styles.empty}>
+              <Text style={styles.emptyEmoji}>📅</Text>
+              <Text style={styles.emptyTitle}>No {tab.toLowerCase()} games</Text>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/feed')}>
+                <Text style={styles.emptyLink}>Browse games →</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.list}>
+              {games.map((g) => <GameRow key={g.id} row={g} />)}
+            </View>
+          )}
+        </ScrollView>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.lg },
+  errorText: { ...font.body, color: colors.error, textAlign: 'center' },
+  retryBtn: { paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radius.full, borderWidth: 1, borderColor: colors.yellow },
+  retryText: { ...font.bodySmMed, color: colors.yellow },
+
   tabsRow: {
     flexDirection: 'row',
     paddingHorizontal: spacing.lg,

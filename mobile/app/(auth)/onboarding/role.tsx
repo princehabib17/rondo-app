@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import * as q from '../../../lib/queries';
 import { Button } from '../../../components/ui/Button';
 import { colors, font, spacing, radius } from '../../../constants/theme';
 
@@ -33,15 +34,26 @@ const ROLES = [
 export default function RoleScreen() {
   const insets = useSafeAreaInsets();
   const [selected, setSelected] = useState<Role | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSelect = (role: Role) => {
     Haptics.selectionAsync();
     setSelected(role);
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!selected) return;
-    router.push({ pathname: '/(auth)/onboarding/profile', params: { role: selected } });
+    setLoading(true);
+    setError('');
+    try {
+      await q.updateProfile({ role: selected });
+      router.push({ pathname: '/(auth)/onboarding/profile', params: { role: selected } });
+    } catch (e: any) {
+      setError(e?.message ?? 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -81,7 +93,9 @@ export default function RoleScreen() {
         </View>
       </View>
 
-      <Button onPress={handleContinue} disabled={!selected} size="lg" style={styles.btn}>
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+      <Button onPress={handleContinue} disabled={!selected || loading} loading={loading} size="lg" style={styles.btn}>
         Continue
       </Button>
     </View>
@@ -127,6 +141,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   checkmarkText: { color: colors.bg, fontWeight: '700', fontSize: 14 },
+
+  errorText: { ...font.caption, color: colors.error, textAlign: 'center', marginTop: spacing.md },
 
   btn: { marginTop: spacing.lg },
 });

@@ -12,6 +12,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { supabase } from '../../lib/supabase';
+import * as q from '../../lib/queries';
 import { Button } from '../../components/ui/Button';
 import { colors, font, spacing, radius } from '../../constants/theme';
 
@@ -64,13 +65,25 @@ export default function OTPScreen() {
       token,
       type: 'sms',
     });
-    setLoading(false);
     if (error) {
+      setLoading(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       setError('Incorrect code. Try again.');
       setCode(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
-    } else {
+      return;
+    }
+    try {
+      const profile = await q.getMyProfile();
+      setLoading(false);
+      if (!profile?.full_name) {
+        router.replace('/(auth)/onboarding/role');
+      } else {
+        router.replace('/(tabs)/feed');
+      }
+    } catch {
+      // If profile lookup fails, fall back to onboarding.
+      setLoading(false);
       router.replace('/(auth)/onboarding/role');
     }
   };

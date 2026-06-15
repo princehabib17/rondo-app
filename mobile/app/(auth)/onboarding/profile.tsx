@@ -10,14 +10,20 @@ import * as Haptics from 'expo-haptics';
 import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
 import { colors, font, spacing, radius } from '../../../constants/theme';
+import { useAuth } from '../../../hooks/useAuth';
+import * as q from '../../../lib/queries';
+import { supabase } from '../../../lib/supabase';
 
 export default function ProfileSetupScreen() {
   const insets = useSafeAreaInsets();
   const { role } = useLocalSearchParams<{ role: string }>();
+  const { user } = useAuth();
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
   const [nameError, setNameError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const pickPhoto = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -30,9 +36,41 @@ export default function ProfileSetupScreen() {
     if (!result.canceled) setPhoto(result.assets[0].uri);
   };
 
-  const handleContinue = () => {
+  const uploadAvatar = async (uri: string): Promise<string | null> => {
+    if (!user?.id) return null;
+    try {
+      const res = await fetch(uri);
+      const arrayBuffer = await res.arrayBuffer();
+      const path = `${user.id}/avatar.jpg`;
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, arrayBuffer, { contentType: 'image/jpeg', upsert: true });
+      if (uploadError) return null;
+      const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+      return data.publicUrl ?? null;
+    } catch {
+      // Non-blocking: proceed without an avatar if upload fails.
+      return null;
+    }
+  };
+
+  const handleContinue = async () => {
     if (!name.trim()) { setNameError('Name is required'); return; }
-    router.push({ pathname: '/(auth)/onboarding/location', params: { role, name, username, photo: photo ?? '' } });
+    setLoading(true);
+    setError('');
+    try {
+      const patch: { full_name: string; avatar_url?: string } = { full_name: name.trim() };
+      if (photo) {
+        const avatarUrl = await uploadAvatar(photo);
+        if (avatarUrl) patch.avatar_url = avatarUrl;
+      }
+      await q.updateProfile(patch);
+      router.push({ pathname: '/(auth)/onboarding/location', params: { role, name, username, photo: photo ?? '' } });
+    } catch (e: any) {
+      setError(e?.message ?? 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -91,7 +129,9 @@ export default function ProfileSetupScreen() {
           />
         </View>
 
-        <Button onPress={handleContinue} disabled={!name.trim()} size="lg" style={styles.btn}>
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+        <Button onPress={handleContinue} disabled={!name.trim() || loading} loading={loading} size="lg" style={styles.btn}>
           Continue
         </Button>
       </ScrollView>
@@ -141,6 +181,8 @@ const styles = StyleSheet.create({
   photoEditText: { ...font.captionMed, color: colors.bg },
 
   fields: { gap: spacing.md, marginBottom: spacing.xl },
+
+  errorText: { ...font.caption, color: colors.error, textAlign: 'center', marginBottom: spacing.md },
 
   btn: {},
 });

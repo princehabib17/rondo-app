@@ -1,22 +1,33 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, spacing, radius } from '../../constants/theme';
 import { ScreenHeader } from '../../components/layout/ScreenHeader';
+import { useQuery } from '../../hooks/useQuery';
+import * as q from '../../lib/queries';
 
-const MOCK_DMS = [
-  { id: '1', name: 'FC Taguig', last: 'Please arrive 15 mins early!', time: '10m', unread: 2, isOrg: true },
-  { id: '2', name: 'Carlo Reyes', last: 'Can I join your team next week?', time: '1h', unread: 1, isOrg: false },
-  { id: '3', name: 'Mike Santos', last: "Sure, I'll be there 👍", time: '3h', unread: 0, isOrg: false },
-  { id: '4', name: 'Rondo PH', last: 'Tournament bracket is live!', time: 'Yesterday', unread: 0, isOrg: true },
-];
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'now';
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h`;
+  const days = Math.floor(hrs / 24);
+  if (days === 1) return 'Yesterday';
+  return `${days}d`;
+}
 
 export default function MessagesScreen() {
   const insets = useSafeAreaInsets();
   const [search, setSearch] = useState('');
+  const { data, loading, error, refetch } = useQuery(q.listConversations);
 
-  const filtered = MOCK_DMS.filter((d) => d.name.toLowerCase().includes(search.toLowerCase()));
+  const conversations = data ?? [];
+  const filtered = conversations.filter((d) =>
+    (d.peer.full_name ?? '').toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -31,33 +42,49 @@ export default function MessagesScreen() {
           onChangeText={setSearch}
         />
       </View>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xxl }}>
-        {filtered.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={styles.emptyEmoji}>💬</Text>
-            <Text style={styles.emptyTitle}>No messages yet</Text>
-            <Text style={styles.emptySub}>Message players from their profile.</Text>
-          </View>
-        ) : filtered.map((dm) => (
-          <TouchableOpacity key={dm.id} onPress={() => router.push(`/messages/${dm.id}`)} style={styles.row} activeOpacity={0.8}>
-            <View style={[styles.avatar, dm.isOrg && styles.avatarOrg]}>
-              <Text style={[styles.avatarText, dm.isOrg && styles.avatarTextOrg]}>{dm.name[0]}</Text>
-            </View>
-            <View style={styles.info}>
-              <View style={styles.infoTop}>
-                <Text style={[styles.name, dm.unread > 0 && styles.nameUnread]}>{dm.name}</Text>
-                <Text style={styles.time}>{dm.time}</Text>
-              </View>
-              <Text style={[styles.last, dm.unread > 0 && styles.lastUnread]} numberOfLines={1}>{dm.last}</Text>
-            </View>
-            {dm.unread > 0 && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{dm.unread}</Text>
-              </View>
-            )}
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator color={colors.yellow} />
+        </View>
+      ) : error ? (
+        <View style={styles.center}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity onPress={refetch} style={styles.retryBtn}>
+            <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
-        ))}
-      </ScrollView>
+        </View>
+      ) : (
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xxl }}>
+          {filtered.length === 0 ? (
+            <View style={styles.empty}>
+              <Text style={styles.emptyEmoji}>💬</Text>
+              <Text style={styles.emptyTitle}>No messages yet</Text>
+              <Text style={styles.emptySub}>Message players from their profile.</Text>
+            </View>
+          ) : filtered.map((dm) => {
+            const name = dm.peer.full_name ?? 'Player';
+            return (
+              <TouchableOpacity key={dm.peer.id} onPress={() => router.push(`/messages/${dm.peer.id}`)} style={styles.row} activeOpacity={0.8}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>{name[0]}</Text>
+                </View>
+                <View style={styles.info}>
+                  <View style={styles.infoTop}>
+                    <Text style={[styles.name, dm.unread > 0 && styles.nameUnread]}>{name}</Text>
+                    <Text style={styles.time}>{timeAgo(dm.last.created_at)}</Text>
+                  </View>
+                  <Text style={[styles.last, dm.unread > 0 && styles.lastUnread]} numberOfLines={1}>{dm.last.body}</Text>
+                </View>
+                {dm.unread > 0 && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{dm.unread}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -66,15 +93,17 @@ const styles = StyleSheet.create({
   searchBar: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, margin: spacing.lg, marginBottom: spacing.sm, backgroundColor: colors.surface, borderRadius: radius.full, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing.md, height: 44 },
   searchIcon: { fontSize: 16 },
   searchInput: { flex: 1, ...font.body, color: colors.text },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
+  errorText: { ...font.body, color: colors.error, textAlign: 'center', paddingHorizontal: spacing.lg },
+  retryBtn: { paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
+  retryText: { ...font.bodyMed, color: colors.yellow },
   empty: { padding: spacing.xl, alignItems: 'center', gap: spacing.md },
   emptyEmoji: { fontSize: 48 },
   emptyTitle: { ...font.h3, color: colors.text },
   emptySub: { ...font.body, color: colors.textMuted },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.borderSubtle },
   avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.surfaceElevated, alignItems: 'center', justifyContent: 'center' },
-  avatarOrg: { backgroundColor: colors.yellowDim, borderWidth: 1.5, borderColor: colors.yellow },
   avatarText: { ...font.h4, color: colors.text },
-  avatarTextOrg: { color: colors.yellow },
   info: { flex: 1, gap: 4 },
   infoTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   name: { ...font.bodyMed, color: colors.textSecondary },

@@ -1,17 +1,36 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, spacing, radius } from '../../../constants/theme';
 import { Badge } from '../../../components/ui/Badge';
+import { useQuery } from '../../../hooks/useQuery';
+import { useAuth } from '../../../hooks/useAuth';
+import * as q from '../../../lib/queries';
+import type { Tournament } from '../../../lib/types';
 
-const MOCK = [
-  { id: '1', name: 'BGC Summer Cup', format: 'Knockout', status: 'Open', teams: 4, maxTeams: 8, date: 'Jun 28' },
-  { id: '2', name: 'Rondo League S3', format: 'League', status: 'Live', teams: 6, maxTeams: 6, date: 'Jun 15' },
-];
+const STATUS_LABEL: Record<string, string> = {
+  registration: 'Open',
+  active: 'Live',
+  completed: 'Done',
+  cancelled: 'Cancelled',
+};
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
 
 export default function OrganizerTournamentsScreen() {
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
+  const uid = user?.id;
+
+  const tournamentsQ = useQuery<Tournament[]>(
+    () => (uid ? q.listTournaments({ organizerId: uid }) : Promise.resolve([])),
+    [uid],
+  );
+  const tournaments = tournamentsQ.data ?? [];
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
@@ -20,22 +39,39 @@ export default function OrganizerTournamentsScreen() {
           <Text style={styles.newBtnText}>+ New</Text>
         </TouchableOpacity>
       </View>
-      <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}>
-        {MOCK.map((t) => (
-          <TouchableOpacity key={t.id} onPress={() => router.push(`/organizer/tournaments/${t.id}/manage`)} style={styles.card} activeOpacity={0.85}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardName}>{t.name}</Text>
-              <Badge color={t.status === 'Live' ? 'yellow' : 'green'}>{t.status}</Badge>
-            </View>
-            <View style={styles.cardMeta}>
-              <Text style={styles.metaText}>🏆 {t.format}</Text>
-              <Text style={styles.metaText}>📅 {t.date}</Text>
-              <Text style={styles.metaText}>👥 {t.teams}/{t.maxTeams} teams</Text>
-            </View>
-            <View style={styles.progressBar}><View style={[styles.progressFill, { width: `${(t.teams / t.maxTeams) * 100}%` }]} /></View>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+
+      {tournamentsQ.loading ? (
+        <View style={styles.centered}><ActivityIndicator color={colors.yellow} /></View>
+      ) : tournamentsQ.error ? (
+        <View style={styles.centered}>
+          <Text style={styles.errorText}>{tournamentsQ.error}</Text>
+          <TouchableOpacity onPress={() => tournamentsQ.refetch()}><Text style={styles.retryText}>Retry</Text></TouchableOpacity>
+        </View>
+      ) : tournaments.length === 0 ? (
+        <View style={styles.centered}>
+          <Text style={styles.emptyText}>No tournaments yet. Tap “+ New” to create one.</Text>
+        </View>
+      ) : (
+        <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}>
+          {tournaments.map((t) => {
+            const status = STATUS_LABEL[t.status] ?? t.status;
+            return (
+              <TouchableOpacity key={t.id} onPress={() => router.push(`/organizer/tournaments/${t.id}/manage`)} style={styles.card} activeOpacity={0.85}>
+                <View style={styles.cardHeader}>
+                  <Text style={styles.cardName}>{t.name}</Text>
+                  <Badge color={t.status === 'active' ? 'yellow' : 'green'}>{status}</Badge>
+                </View>
+                <View style={styles.cardMeta}>
+                  <Text style={styles.metaText}>🏆 {t.format === 'single_elimination' ? 'Knockout' : 'League'}</Text>
+                  <Text style={styles.metaText}>📅 {formatDate(t.starts_at)}</Text>
+                  <Text style={styles.metaText}>👥 0/{t.max_teams} teams</Text>
+                </View>
+                <View style={styles.progressBar}><View style={[styles.progressFill, { width: '0%' }]} /></View>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -46,6 +82,10 @@ const styles = StyleSheet.create({
   headerTitle: { ...font.h3, color: colors.text },
   newBtn: { backgroundColor: colors.yellowDim, borderRadius: radius.full, borderWidth: 1, borderColor: colors.yellow, paddingHorizontal: spacing.md, paddingVertical: 6 },
   newBtnText: { ...font.bodySmMed, color: colors.yellow },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.lg, gap: spacing.sm },
+  errorText: { ...font.body, color: colors.error, textAlign: 'center' },
+  retryText: { ...font.bodySmMed, color: colors.accent },
+  emptyText: { ...font.body, color: colors.textMuted, textAlign: 'center' },
   card: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.borderSubtle, padding: spacing.md, gap: spacing.sm },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   cardName: { ...font.h4, color: colors.text, flex: 1, marginRight: spacing.sm },
