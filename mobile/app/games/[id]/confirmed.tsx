@@ -43,9 +43,21 @@ export default function ConfirmedScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom + spacing.xl }]}>
       <View style={styles.content}>
-        <Text style={styles.checkmark}>✅</Text>
-        <Text style={styles.title}>You're in!</Text>
-        <Text style={styles.subtitle}>Your spot is confirmed. See you on the pitch.</Text>
+        {/* Confetti dots */}
+        <View style={[styles.confettiDot, { backgroundColor: colors.yellow, top: 20, left: 30 }]} />
+        <View style={[styles.confettiDot, { backgroundColor: colors.success, top: 50, right: 40 }]} />
+        <View style={[styles.confettiDot, { backgroundColor: colors.accent, top: 10, right: 80 }]} />
+        <View style={[styles.confettiDot, { backgroundColor: colors.error, top: 80, left: 60 }]} />
+        <View style={[styles.confettiDot, { backgroundColor: colors.yellow, top: 30, left: 120 }]} />
+        <View style={[styles.confettiDot, { backgroundColor: colors.success, top: 70, right: 120 }]} />
+
+        {/* Big checkmark circle */}
+        <View style={styles.checkCircle}>
+          <Text style={styles.checkText}>✓</Text>
+        </View>
+
+        <Text style={styles.title}>{"You're In!"}</Text>
+        <Text style={styles.subtitle}>Your spot is confirmed.</Text>
 
         {loading && !game ? (
           <ActivityIndicator color={colors.yellow} />
@@ -79,8 +91,22 @@ export default function ConfirmedScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg },
   content: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: spacing.lg },
-  checkmark: { fontSize: 80 },
-  title: { ...font.h1, color: colors.text, textAlign: 'center' },
+  confettiDot: {
+    position: 'absolute',
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+  },
+  checkCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: colors.success,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkText: { fontSize: 48, color: '#FFFFFF', fontWeight: '700', lineHeight: 56 },
+  title: { ...font.h1, color: colors.yellow, textAlign: 'center' },
   subtitle: { ...font.body, color: colors.textSecondary, textAlign: 'center', lineHeight: 24 },
   summaryCard: { width: '100%', gap: 0, padding: 0, overflow: 'hidden' },
   row: { flexDirection: 'row', justifyContent: 'space-between', padding: spacing.md },

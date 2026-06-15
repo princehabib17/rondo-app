@@ -24,7 +24,7 @@ export function useQuery<T>(
   const [error, setError] = useState<string | null>(null);
   const mounted = useRef(true);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps,react-hooks/use-memo
   const stableFetcher = useCallback(fetcher, deps);
 
   const run = useCallback(async () => {

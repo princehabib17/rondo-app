@@ -65,6 +65,7 @@ export default function CreateGameScreen() {
   const [form, setForm] = useState<FormData>(INITIAL);
   const [loading, setLoading] = useState(false);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const update = (key: keyof FormData, value: any) => setForm((f) => ({ ...f, [key]: value }));
 
   const pickCover = async () => {
@@ -120,7 +121,7 @@ export default function CreateGameScreen() {
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace('/organizer/(tabs)/dashboard');
-    } catch (e: any) {
+    } catch {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       // Error is surfaced below — set loading false so user can retry
     } finally {

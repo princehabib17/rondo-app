@@ -59,7 +59,12 @@ export default function OrganizerTournamentsScreen() {
               <TouchableOpacity key={t.id} onPress={() => router.push(`/organizer/tournaments/${t.id}/manage`)} style={styles.card} activeOpacity={0.85}>
                 <View style={styles.cardHeader}>
                   <Text style={styles.cardName}>{t.name}</Text>
-                  <Badge color={t.status === 'active' ? 'yellow' : 'green'}>{status}</Badge>
+                  <View style={styles.cardBadges}>
+                    <Badge color={t.status === 'active' ? 'yellow' : 'green'}>{status}</Badge>
+                    {t.entry_fee > 0 && (
+                      <Badge color="muted">₱{(t.entry_fee / 100).toLocaleString()}/team</Badge>
+                    )}
+                  </View>
                 </View>
                 <View style={styles.cardMeta}>
                   <Text style={styles.metaText}>🏆 {t.format === 'single_elimination' ? 'Knockout' : 'League'}</Text>
@@ -87,7 +92,8 @@ const styles = StyleSheet.create({
   retryText: { ...font.bodySmMed, color: colors.accent },
   emptyText: { ...font.body, color: colors.textMuted, textAlign: 'center' },
   card: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.borderSubtle, padding: spacing.md, gap: spacing.sm },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: spacing.sm },
+  cardBadges: { flexDirection: 'row', gap: spacing.xs, flexWrap: 'wrap', justifyContent: 'flex-end' },
   cardName: { ...font.h4, color: colors.text, flex: 1, marginRight: spacing.sm },
   cardMeta: { flexDirection: 'row', gap: spacing.md, flexWrap: 'wrap' },
   metaText: { ...font.caption, color: colors.textSecondary },

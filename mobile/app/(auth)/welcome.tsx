@@ -13,6 +13,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { Button } from '../../components/ui/Button';
 import { colors, font, spacing, radius } from '../../constants/theme';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const welcomeBg = require('../../assets/icon.png');
 
 const { width, height } = Dimensions.get('window');
 
@@ -35,51 +37,37 @@ export default function WelcomeScreen() {
   return (
     <View style={styles.container}>
       <ImageBackground
-        source={require('../../assets/icon.png')}
+        source={welcomeBg}
         style={styles.bg}
         resizeMode="cover"
       >
         <LinearGradient
-          colors={['rgba(10,10,10,0.2)', 'rgba(10,10,10,0.5)', 'rgba(10,10,10,0.98)']}
-          locations={[0, 0.4, 0.85]}
+          colors={['rgba(10,10,10,0.15)', 'rgba(10,10,10,0.45)', 'rgba(10,10,10,0.97)']}
+          locations={[0, 0.5, 0.88]}
           style={StyleSheet.absoluteFill}
         />
       </ImageBackground>
 
-      {/* Logo */}
-      <View style={[styles.logoArea, { paddingTop: insets.top + spacing.xl }]}>
+      {/* Logo — top third */}
+      <View style={[styles.logoArea, { paddingTop: insets.top + spacing.xxl }]}>
         <View style={styles.logoGlow}>
           <Text style={styles.logoText}>rondo</Text>
         </View>
         <Text style={styles.tagline}>Find your game. Play your way.</Text>
       </View>
 
-      {/* Bottom CTAs */}
+      {/* Single CTA — bottom */}
       <View style={[styles.bottom, { paddingBottom: insets.bottom + spacing.xl }]}>
-        <View style={styles.statsRow}>
-          <View style={styles.stat}>
-            <Text style={styles.statNum}>2.4k+</Text>
-            <Text style={styles.statLabel}>Games hosted</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.stat}>
-            <Text style={styles.statNum}>18k+</Text>
-            <Text style={styles.statLabel}>Players</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.stat}>
-            <Text style={styles.statNum}>340+</Text>
-            <Text style={styles.statLabel}>Organizers</Text>
-          </View>
-        </View>
-
         <Button onPress={handleGetStarted} size="lg" style={styles.primaryBtn}>
           Get Started
         </Button>
 
-        <Button onPress={handleSignIn} variant="secondary" size="lg" style={styles.secondaryBtn}>
-          Sign In
-        </Button>
+        <TouchableOpacity onPress={handleSignIn} style={styles.signInRow}>
+          <Text style={styles.signInText}>
+            Already have an account?{' '}
+            <Text style={styles.signInLink}>Sign in</Text>
+          </Text>
+        </TouchableOpacity>
 
         <TouchableOpacity onPress={handleGuest} style={styles.guestBtn}>
           <Text style={styles.guestText}>Continue as guest</Text>
@@ -102,11 +90,11 @@ const styles = StyleSheet.create({
   logoGlow: {
     shadowColor: colors.yellow,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 32,
+    shadowOpacity: 0.7,
+    shadowRadius: 40,
   },
   logoText: {
-    fontSize: 56,
+    fontSize: 64,
     fontWeight: '800',
     color: colors.yellow,
     letterSpacing: -2,
@@ -122,24 +110,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     gap: spacing.sm,
   },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-    gap: spacing.md,
-  },
-  stat: { alignItems: 'center', flex: 1 },
-  statNum: { ...font.h3, color: colors.yellow },
-  statLabel: { ...font.caption, color: colors.textMuted, marginTop: 2 },
-  statDivider: { width: 1, height: 32, backgroundColor: colors.border },
-
   primaryBtn: { width: '100%' },
-  secondaryBtn: { width: '100%' },
+
+  signInRow: {
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+  },
+  signInText: { ...font.bodySm, color: colors.textMuted },
+  signInLink: { color: colors.yellow, fontWeight: '600' },
 
   guestBtn: {
     alignItems: 'center',
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
   },
-  guestText: { ...font.bodySmMed, color: colors.textMuted },
+  guestText: { ...font.caption, color: colors.textFaint },
 });

@@ -13,7 +13,6 @@ import * as q from '../../../lib/queries';
 import type { Game } from '../../../lib/types';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = width - spacing.lg * 2;
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -29,6 +28,7 @@ function spotsLeft(game: Game) {
   return Math.max(0, game.max_players);
 }
 
+/* Instagram-style organizer story bubble */
 function OrganizerStory({ name, verified }: { name: string; verified: boolean }) {
   return (
     <TouchableOpacity style={styles.story} activeOpacity={0.8}>
@@ -42,36 +42,54 @@ function OrganizerStory({ name, verified }: { name: string; verified: boolean })
   );
 }
 
+/* Spotify-style featured card: large with gradient overlay on image area */
 function FeaturedCard({ game }: { game: Game }) {
+  const isFull = game.status === 'full';
+  const left = spotsLeft(game);
   return (
     <TouchableOpacity
       onPress={() => router.push(`/games/${game.id}`)}
       activeOpacity={0.92}
       style={styles.featuredCard}
     >
-      <View style={styles.featuredBanner}>
+      {/* Photo area with gradient overlay */}
+      <View style={styles.featuredPhoto}>
         <LinearGradient
-          colors={['#1A2A1A', '#0D1A0D']}
+          colors={['#0D2010', '#1A3A1A', '#0D1A0D']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
         />
-        <Text style={styles.featuredLabel}>⚡ FEATURED GAME</Text>
-        <Text style={styles.featuredTitle}>{game.title}</Text>
-        <Text style={styles.featuredVenue}>📍 {game.venue_name}</Text>
+        {/* Gradient overlay from bottom */}
+        <LinearGradient
+          colors={['transparent', 'rgba(10,10,10,0.9)']}
+          style={[StyleSheet.absoluteFill, { top: '40%' }]}
+        />
+        <View style={styles.featuredSportIcon}>
+          <Text style={styles.featuredSportEmoji}>⚽</Text>
+        </View>
+        <View style={styles.featuredOverlay}>
+          <Badge color="yellow" style={styles.featuredBadge}>⚡ FEATURED</Badge>
+          <Text style={styles.featuredTitle} numberOfLines={2}>{game.title}</Text>
+          <Text style={styles.featuredVenue} numberOfLines={1}>📍 {game.venue_name}</Text>
+        </View>
       </View>
+      {/* Info strip — Eventbrite style */}
       <View style={styles.featuredFooter}>
         <View style={styles.featuredInfo}>
           <Text style={styles.featuredDate}>{formatDate(game.date_time)}</Text>
-          <Badge color="yellow">{game.format}</Badge>
+          <Badge color="muted">{game.format}</Badge>
         </View>
         <View style={styles.featuredRight}>
           <Text style={styles.featuredPrice}>{peso(game.price_per_player)}</Text>
-          <Text style={styles.featuredSpots}>{spotsLeft(game)} spots left</Text>
+          <Text style={styles.featuredSpots}>{isFull ? 'Full' : `${left} spots left`}</Text>
         </View>
       </View>
     </TouchableOpacity>
   );
 }
 
+/* Eventbrite-style game card: photo + title + date + price + distance */
 function GameCard({ game }: { game: Game }) {
   const isFull = game.status === 'full';
   const left = spotsLeft(game);
@@ -81,19 +99,27 @@ function GameCard({ game }: { game: Game }) {
       activeOpacity={0.88}
       style={[styles.gameCard, shadow.subtle]}
     >
-      <View style={styles.gameBanner}>
-        <LinearGradient colors={['#1A2418', '#0A0A0A']} style={StyleSheet.absoluteFill} />
-        <Badge color={isFull ? 'red' : 'green'} style={styles.gameBadge}>
-          {isFull ? 'Full' : `${left} left`}
-        </Badge>
-        <Text style={styles.gameFormat}>{game.format}</Text>
+      {/* Photo area */}
+      <View style={styles.gamePhoto}>
+        <LinearGradient
+          colors={['#111A11', '#1A1A0D', '#0A0A0A']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        <Text style={styles.gamePhotoEmoji}>⚽</Text>
+        <View style={styles.gamePhotoBadges}>
+          <Badge color={isFull ? 'red' : 'green'}>{isFull ? 'Full' : `${left} left`}</Badge>
+          <Badge color="muted">{game.format}</Badge>
+        </View>
       </View>
+      {/* Card body */}
       <View style={styles.gameBody}>
         <Text style={styles.gameTitle} numberOfLines={1}>{game.title}</Text>
         <Text style={styles.gameMeta} numberOfLines={1}>📍 {game.venue_name}</Text>
-        <Text style={styles.gameMeta}>🕐 {formatDate(game.date_time)}</Text>
+        <Text style={styles.gameMeta}>🗓 {formatDate(game.date_time)}</Text>
         <View style={styles.gameFooter}>
-          <Text style={styles.gameOrganizer}>by {game.organizer?.full_name ?? 'Organizer'}</Text>
+          <Text style={styles.gameOrganizer} numberOfLines={1}>by {game.organizer?.full_name ?? 'Organizer'}</Text>
           <Text style={styles.gamePrice}>{peso(game.price_per_player)}</Text>
         </View>
       </View>
@@ -117,7 +143,6 @@ export default function FeedScreen() {
   const featured = list[0];
   const rest = list.slice(1);
 
-  // Unique organizers for the stories row.
   const stories = (() => {
     const seen = new Set<string>();
     const out: { id: string; name: string }[] = [];
@@ -162,7 +187,7 @@ export default function FeedScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.yellow} />}
           contentContainerStyle={{ paddingBottom: spacing.xxl }}
         >
-          {/* Stories — Organizers */}
+          {/* Stories row — Instagram style */}
           {stories.length > 0 && (
             <View style={styles.storiesSection}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.storiesScroll}>
@@ -181,7 +206,7 @@ export default function FeedScreen() {
             </View>
           ) : (
             <>
-              {/* Featured game */}
+              {/* Featured game — Spotify large card */}
               {featured && (
                 <View style={styles.section}>
                   <FeaturedCard game={featured} />
@@ -199,7 +224,7 @@ export default function FeedScreen() {
                 ))}
               </View>
 
-              {/* Games list */}
+              {/* Games list — Eventbrite cards */}
               <View style={styles.gamesList}>
                 {rest.map((g) => (
                   <GameCard key={g.id} game={g} />
@@ -276,22 +301,34 @@ const styles = StyleSheet.create({
 
   section: { paddingHorizontal: spacing.lg, marginBottom: spacing.lg },
 
+  /* Spotify-style featured card */
   featuredCard: {
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    borderRadius: radius.xl,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: colors.border,
     ...shadow.card,
   },
-  featuredBanner: {
-    height: 140,
-    padding: spacing.md,
+  featuredPhoto: {
+    height: 200,
     justifyContent: 'flex-end',
+    position: 'relative',
   },
-  featuredLabel: { ...font.captionMed, color: colors.yellow, letterSpacing: 1, marginBottom: spacing.xs },
-  featuredTitle: { ...font.h2, color: colors.text, marginBottom: spacing.xs },
-  featuredVenue: { ...font.bodySm, color: colors.textSecondary },
+  featuredSportIcon: {
+    position: 'absolute',
+    top: 24,
+    right: 24,
+    opacity: 0.15,
+  },
+  featuredSportEmoji: { fontSize: 80 },
+  featuredOverlay: {
+    padding: spacing.md,
+    gap: spacing.xs,
+  },
+  featuredBadge: { alignSelf: 'flex-start', marginBottom: spacing.xs },
+  featuredTitle: { ...font.h2, color: colors.white },
+  featuredVenue: { ...font.bodySm, color: 'rgba(255,255,255,0.75)' },
   featuredFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -302,7 +339,7 @@ const styles = StyleSheet.create({
   },
   featuredInfo: { gap: spacing.xs },
   featuredDate: { ...font.bodySmMed, color: colors.text },
-  featuredRight: { alignItems: 'flex-end' },
+  featuredRight: { alignItems: 'flex-end', gap: 2 },
   featuredPrice: { ...font.h3, color: colors.yellow },
   featuredSpots: { ...font.caption, color: colors.textMuted },
 
@@ -325,6 +362,8 @@ const styles = StyleSheet.create({
   tabTextActive: { color: colors.yellow },
 
   gamesList: { paddingHorizontal: spacing.lg, gap: spacing.md },
+
+  /* Eventbrite-style game card */
   gameCard: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
@@ -332,19 +371,24 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderSubtle,
   },
-  gameBanner: {
-    height: 80,
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    padding: spacing.sm,
+  gamePhoto: {
+    height: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
   },
-  gameBadge: {},
-  gameFormat: { ...font.captionMed, color: colors.textSecondary },
+  gamePhotoEmoji: { fontSize: 48, opacity: 0.25 },
+  gamePhotoBadges: {
+    position: 'absolute',
+    bottom: spacing.sm,
+    left: spacing.sm,
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
   gameBody: { padding: spacing.md, gap: spacing.xs },
   gameTitle: { ...font.h4, color: colors.text },
   gameMeta: { ...font.bodySm, color: colors.textSecondary },
   gameFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.xs },
-  gameOrganizer: { ...font.caption, color: colors.textMuted },
+  gameOrganizer: { ...font.caption, color: colors.textMuted, flex: 1 },
   gamePrice: { ...font.h4, color: colors.yellow },
 });

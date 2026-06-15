@@ -14,6 +14,19 @@ import type { DirectMessage, Profile } from '../../lib/types';
 
 type DisplayMsg = DirectMessage & { mine: boolean };
 
+function dayLabel(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000);
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  return d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+}
+
+function isSameDay(a: string, b: string): boolean {
+  return new Date(a).toDateString() === new Date(b).toDateString();
+}
+
 function MessageBubble({ msg, prevSenderId, peerName }: { msg: DisplayMsg; prevSenderId?: string; peerName: string }) {
   const showAvatar = !msg.mine && msg.sender_id !== prevSenderId;
   const timeStr = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -107,13 +120,24 @@ export default function DirectMessageScreen() {
           ref={listRef}
           data={messages}
           keyExtractor={(m) => m.id}
-          renderItem={({ item, index }) => (
-            <MessageBubble
-              msg={item}
-              prevSenderId={messages[index - 1]?.sender_id}
-              peerName={peerName}
-            />
-          )}
+          renderItem={({ item, index }) => {
+            const prev = messages[index - 1];
+            const showDateSep = !prev || !isSameDay(prev.created_at, item.created_at);
+            return (
+              <>
+                {showDateSep && (
+                  <View style={styles.dateSep}>
+                    <Text style={styles.dateSepText}>{dayLabel(item.created_at)}</Text>
+                  </View>
+                )}
+                <MessageBubble
+                  msg={item}
+                  prevSenderId={prev?.sender_id}
+                  peerName={peerName}
+                />
+              </>
+            );
+          }}
           contentContainerStyle={styles.messageList}
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
@@ -228,4 +252,14 @@ const styles = StyleSheet.create({
   },
   sendBtnDisabled: { backgroundColor: colors.surfaceElevated },
   sendIcon: { color: colors.bg, fontSize: 18, fontWeight: '700' },
+
+  dateSep: { alignItems: 'center', paddingVertical: spacing.md },
+  dateSepText: {
+    ...font.caption,
+    color: colors.textMuted,
+    backgroundColor: colors.surfaceElevated,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+  },
 });

@@ -293,12 +293,12 @@ export async function listPosts(): Promise<(Post & { author: Pick<Profile, 'id' 
     await supabase.from('posts')
       .select('*, author:profiles!posts_author_id_fkey(id, full_name, avatar_url), post_likes(user_id), post_comments(id)')
       .order('created_at', { ascending: false })
-  ) as any[];
+  ) as any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
   return posts.map((p) => ({
     ...p,
     like_count: p.post_likes?.length ?? 0,
     comment_count: p.post_comments?.length ?? 0,
-    liked_by_me: uid ? (p.post_likes ?? []).some((l: any) => l.user_id === uid) : false,
+    liked_by_me: uid ? (p.post_likes ?? []).some((l: any) => l.user_id === uid) : false, // eslint-disable-line @typescript-eslint/no-explicit-any
   }));
 }
 
@@ -339,11 +339,11 @@ export async function listReels(): Promise<(PlayerReel & { player: Pick<Profile,
     await supabase.from('player_reels')
       .select('*, player:profiles!player_reels_player_id_fkey(id, full_name, avatar_url, nationality), reel_likes(user_id)')
       .order('created_at', { ascending: false })
-  ) as any[];
+  ) as any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
   return reels.map((r) => ({
     ...r,
     like_count: r.reel_likes?.length ?? 0,
-    liked_by_me: uid ? (r.reel_likes ?? []).some((l: any) => l.user_id === uid) : false,
+    liked_by_me: uid ? (r.reel_likes ?? []).some((l: any) => l.user_id === uid) : false, // eslint-disable-line @typescript-eslint/no-explicit-any
   }));
 }
 

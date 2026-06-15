@@ -7,6 +7,7 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL ?? '';
  * Call a Next.js API route with the current Supabase access token as a Bearer.
  * The web `createClient()` reads this header to authenticate mobile requests.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function apiFetch<T = any>(path: string, init: RequestInit = {}): Promise<T> {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
@@ -31,7 +32,9 @@ export async function apiFetch<T = any>(path: string, init: RequestInit = {}): P
 export class ApiError extends Error {
   status: number;
   code?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(message: string, status: number, code?: string, payload?: any) {
     super(message);
     this.name = 'ApiError';

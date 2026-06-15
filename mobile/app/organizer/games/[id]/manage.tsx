@@ -168,6 +168,7 @@ export default function ManageGameScreen() {
           <Text style={styles.headerSub}>Manage Game</Text>
         </View>
         <TouchableOpacity
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           onPress={() => router.push(`/organizer/games/${id}/payments` as any)}
           style={styles.paymentsBtn}
         >

@@ -66,8 +66,8 @@ export default function ProfileSetupScreen() {
       }
       await q.updateProfile(patch);
       router.push({ pathname: '/(auth)/onboarding/location', params: { role, name, username, photo: photo ?? '' } });
-    } catch (e: any) {
-      setError(e?.message ?? 'Something went wrong. Please try again.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }

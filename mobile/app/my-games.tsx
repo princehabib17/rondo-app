@@ -48,6 +48,19 @@ const STATUS_LABEL: Record<string, string> = {
   no_show: 'No show',
 };
 
+const STATUS_LEFT_BORDER: Record<string, string> = {
+  paid: colors.success,
+  approved: colors.success,
+  venue: colors.success,
+  pending: colors.yellow,
+  pending_payment: colors.yellow,
+  pending_approval: colors.yellow,
+  reserved: colors.yellow,
+  cancelled: colors.error,
+  rejected: colors.error,
+  no_show: colors.error,
+};
+
 function peso(centavos: number) {
   return `₱${(centavos / 100).toLocaleString()}`;
 }
@@ -67,6 +80,7 @@ function GameRow({ row }: { row: MyGameRow }) {
   if (!game) return null;
   const status = row.payment_status;
   const joined = JOINED_STATUSES.includes(status);
+  const leftBorderColor = STATUS_LEFT_BORDER[status] ?? colors.border;
 
   return (
     <TouchableOpacity
@@ -74,6 +88,9 @@ function GameRow({ row }: { row: MyGameRow }) {
       style={styles.row}
       activeOpacity={0.8}
     >
+      {/* Colored left border accent */}
+      <View style={[styles.leftAccent, { backgroundColor: leftBorderColor }]} />
+
       <View style={styles.rowLeft}>
         <View style={styles.dateBox}>
           <Text style={styles.dateDay}>{dayNum(game.date_time)}</Text>
@@ -108,6 +125,7 @@ export default function MyGamesScreen() {
   const { data, loading, error, refetch } = useQuery<MyGameRow[]>(() => q.getMyGames(), []);
 
   const grouped = useMemo(() => {
+    // eslint-disable-next-line react-hooks/purity
     const now = Date.now();
     const rows = (data ?? []).filter((r) => r.game);
     const upcoming: MyGameRow[] = [];
@@ -209,17 +227,27 @@ const styles = StyleSheet.create({
   tabCountText: { fontSize: 10, fontWeight: '700', color: colors.textSecondary },
   tabCountTextActive: { color: colors.bg },
 
-  list: { padding: spacing.lg, gap: 0 },
+  list: { padding: spacing.lg, gap: spacing.md },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderSubtle,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    padding: spacing.md,
+    overflow: 'hidden',
     gap: spacing.md,
   },
-  rowLeft: { flexDirection: 'row', gap: spacing.md, flex: 1 },
+  leftAccent: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+  },
+  rowLeft: { flexDirection: 'row', gap: spacing.md, flex: 1, marginLeft: spacing.xs },
   dateBox: {
     width: 44,
     height: 52,
