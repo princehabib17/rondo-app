@@ -73,8 +73,8 @@ export default function WalletScreen() {
       const { checkoutUrl } = await api.startWalletTopup(amountPHP * 100);
       await Linking.openURL(checkoutUrl);
       refetch();
-    } catch (e: any) {
-      Alert.alert('Top-up failed', e?.message ?? 'Something went wrong');
+    } catch (e) {
+      Alert.alert('Top-up failed', e instanceof Error ? e.message : 'Something went wrong');
     } finally {
       setLoadingTopUp(null);
     }

@@ -55,6 +55,7 @@ export default function NotificationsScreen() {
       await q.markNotificationRead(n.id);
       refetch();
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (n.link) router.push(n.link as any);
   }, [refetch]);
 

@@ -100,7 +100,7 @@ export default function ScoutScreen() {
               const skillKey = p.skill_level ?? 'beginner';
               const skillLabel = SKILL_LABELS[skillKey] ?? skillKey;
               const posKey = p.position ?? '';
-              const posLabel = POS_LABELS[posKey] ?? posKey.charAt(0).toUpperCase() + posKey.slice(1) || 'Player';
+              const posLabel = (POS_LABELS[posKey] ?? posKey.charAt(0).toUpperCase() + posKey.slice(1)) || 'Player';
               const gradientColors = SKILL_GRADIENTS[skillKey] ?? SKILL_GRADIENTS.beginner;
               const accentColor = SKILL_COLORS[skillKey] ?? colors.yellow;
               return (
@@ -121,7 +121,7 @@ export default function ScoutScreen() {
                     <View style={[styles.skillBadge, { backgroundColor: accentColor + '22', borderColor: accentColor + '55' }]}>
                       <Text style={[styles.skillText, { color: accentColor }]}>{skillLabel}</Text>
                     </View>
-                    {item.note ? <Text style={styles.note} numberOfLines={2}>"{item.note}"</Text> : null}
+                    {item.note ? <Text style={styles.note} numberOfLines={2}>{'"'}{item.note}{'"'}</Text> : null}
                   </TouchableOpacity>
 
                   {/* Actions */}

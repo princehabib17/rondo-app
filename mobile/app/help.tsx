@@ -58,7 +58,7 @@ export default function HelpScreen() {
             {/* Step 1: Category picker */}
             {step === 1 && (
               <>
-                <Text style={styles.stepTitle}>What's the issue?</Text>
+                <Text style={styles.stepTitle}>{"What's the issue?"}</Text>
                 <Text style={styles.stepSubtitle}>Choose a category</Text>
                 <View style={styles.typeRow}>
                   {TICKET_TYPES.map((t) => (
@@ -96,7 +96,7 @@ export default function HelpScreen() {
                   <Text style={styles.checkMark}>✓</Text>
                 </View>
                 <Text style={styles.successTitle}>Ticket submitted</Text>
-                <Text style={styles.successSub}>We'll get back to you within 24 hours</Text>
+                <Text style={styles.successSub}>{"We'll get back to you within 24 hours"}</Text>
                 <Button onPress={handleDone}>Done</Button>
               </View>
             )}
@@ -109,7 +109,7 @@ export default function HelpScreen() {
               <View style={styles.empty}>
                 <Text style={styles.emptyEmoji}>✉️</Text>
                 <Text style={styles.emptyTitle}>No tickets yet</Text>
-                <Text style={styles.emptySub}>Tap "+ New" to contact support.</Text>
+                <Text style={styles.emptySub}>{'Tap "+ New" to contact support.'}</Text>
               </View>
             ) : (
               <View style={styles.tickets}>

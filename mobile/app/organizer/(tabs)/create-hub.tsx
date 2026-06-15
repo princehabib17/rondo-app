@@ -25,6 +25,7 @@ export default function CreateHubScreen() {
         {options.map((o) => (
           <TouchableOpacity
             key={o.title}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push(o.route as any); }}
             activeOpacity={0.85}
             style={[styles.option, shadow.card]}

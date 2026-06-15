@@ -13,6 +13,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { Button } from '../../components/ui/Button';
 import { colors, font, spacing, radius } from '../../constants/theme';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const welcomeBg = require('../../assets/icon.png');
 
 const { width, height } = Dimensions.get('window');
 
@@ -35,7 +37,7 @@ export default function WelcomeScreen() {
   return (
     <View style={styles.container}>
       <ImageBackground
-        source={require('../../assets/icon.png')}
+        source={welcomeBg}
         style={styles.bg}
         resizeMode="cover"
       >

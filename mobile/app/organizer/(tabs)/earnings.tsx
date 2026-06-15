@@ -87,7 +87,7 @@ export default function EarningsScreen() {
                 <Text style={styles.upcomingBank}>BDO • ••••1234</Text>
               </View>
             </View>
-            <Button style={styles.earlyPayoutBtn}>Request Early Payout</Button>
+            <Button style={styles.earlyPayoutBtn} onPress={() => {}}>Request Early Payout</Button>
           </View>
         </View>
 

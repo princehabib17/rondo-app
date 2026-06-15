@@ -125,6 +125,7 @@ export default function MyGamesScreen() {
   const { data, loading, error, refetch } = useQuery<MyGameRow[]>(() => q.getMyGames(), []);
 
   const grouped = useMemo(() => {
+    // eslint-disable-next-line react-hooks/purity
     const now = Date.now();
     const rows = (data ?? []).filter((r) => r.game);
     const upcoming: MyGameRow[] = [];

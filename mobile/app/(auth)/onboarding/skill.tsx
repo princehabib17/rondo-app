@@ -45,8 +45,8 @@ export default function SkillScreen() {
     try {
       await q.updateProfile({ skill_level: SKILL_MAP[level], game_preference: 'both' });
       router.replace('/(tabs)/feed');
-    } catch (e: any) {
-      setError(e?.message ?? 'Something went wrong. Please try again.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -109,7 +109,7 @@ export default function SkillScreen() {
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
         <Button onPress={handleFinish} disabled={!level || loading} loading={loading} size="lg">
-          Let's Play
+          {"Let's Play"}
         </Button>
       </View>
     </View>

@@ -136,7 +136,7 @@ export default function JoinScreen() {
       </View>
 
       <Text style={styles.title}>Choose your team</Text>
-      <Text style={styles.subtitle}>Pick a team with an open slot. You can't switch after joining.</Text>
+      <Text style={styles.subtitle}>{"Pick a team with an open slot. You can't switch after joining."}</Text>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.teams}>
         {teamList.length === 0 ? (

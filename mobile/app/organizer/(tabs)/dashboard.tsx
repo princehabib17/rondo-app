@@ -29,6 +29,7 @@ function StatCard({ label, value, sub, accent }: { label: string; value: string;
 }
 
 function GameItem({ game }: { game: Game }) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerCount = (game as any).player_count ?? 0;
   const progress = game.max_players > 0 ? Math.min(1, playerCount / game.max_players) : 0;
   const isFull = progress >= 1;

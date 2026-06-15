@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, Dimensions, FlatList, TouchableOpacity,
   TouchableWithoutFeedback, ViewToken, ActivityIndicator,
@@ -122,9 +122,9 @@ export default function ReelsScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
   const { data, loading, error, refetch } = useQuery(() => q.listReels());
 
-  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+  const onViewableItemsChanged = useCallback(({ viewableItems }: { viewableItems: ViewToken[] }) => {
     if (viewableItems[0]) setActiveIndex(viewableItems[0].index ?? 0);
-  }).current;
+  }, []);
 
   if (loading && !data) {
     return (

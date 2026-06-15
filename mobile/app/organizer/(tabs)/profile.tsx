@@ -49,6 +49,7 @@ export default function OrganizerProfileScreen() {
         ].map((item) => (
           <TouchableOpacity
             key={item.label}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onPress={() => router.push(item.route as any)}
             style={styles.menuItem}
           >

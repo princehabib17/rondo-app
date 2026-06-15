@@ -56,7 +56,7 @@ export default function ConfirmedScreen() {
           <Text style={styles.checkText}>✓</Text>
         </View>
 
-        <Text style={styles.title}>You're In!</Text>
+        <Text style={styles.title}>{"You're In!"}</Text>
         <Text style={styles.subtitle}>Your spot is confirmed.</Text>
 
         {loading && !game ? (

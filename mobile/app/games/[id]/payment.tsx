@@ -96,7 +96,7 @@ export default function PaymentScreen() {
 
       {/* Game summary */}
       <Card style={styles.summaryCard}>
-        <Text style={styles.summaryLabel}>You're joining</Text>
+        <Text style={styles.summaryLabel}>{"You're joining"}</Text>
         <Text style={styles.summaryGame}>{game.title}</Text>
         <Text style={styles.summaryMeta}>📅 {formatDateTime(game.date_time)}</Text>
         <Text style={styles.summaryMeta}>📍 {game.venue_name}</Text>

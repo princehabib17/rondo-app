@@ -74,6 +74,7 @@ export default function ProfileScreen() {
       router.replace('/organizer/(tabs)/dashboard');
       return;
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     router.push(item.route as any);
   };
 

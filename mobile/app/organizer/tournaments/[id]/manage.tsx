@@ -64,8 +64,8 @@ function BracketTab({ tournamentId }: { tournamentId: string }) {
       await q.updateTournamentMatch(match.id, homeScore, awayScore);
       setEditing(null);
       matchesQuery.refetch();
-    } catch (e: any) {
-      Alert.alert('Error', e?.message ?? 'Failed to save score');
+    } catch (e) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Failed to save score');
     } finally {
       setSaving(false);
     }
