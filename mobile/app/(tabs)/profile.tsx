@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,21 +8,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { colors, font, spacing, radius } from '../../constants/theme';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
+import { useQuery } from '../../hooks/useQuery';
+import { useAuth } from '../../hooks/useAuth';
+import * as q from '../../lib/queries';
 
 const { width } = Dimensions.get('window');
 const REEL_SIZE = (width - spacing.lg * 2 - spacing.sm * 2) / 3;
-
-const MOCK_USER = {
-  name: 'Juan dela Cruz',
-  username: 'juandc',
-  flag: '🇵🇭',
-  skill: 'Competitive',
-  bio: 'Futsal player based in BGC. 5v5 and 7v7. Always down for a game ⚽',
-  games: 48,
-  following: 12,
-  followers: 34,
-  wallet: 850,
-};
 
 const MENU_ITEMS = [
   { icon: '💰', label: 'Wallet', route: '/wallet' },
@@ -35,13 +26,63 @@ const MENU_ITEMS = [
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const { user, profile, signOut } = useAuth();
+
+  const statsQuery = useQuery(() => q.getPlayerStats(user!.id), [user?.id]);
+  const walletQuery = useQuery(() => q.getWalletBalance(), []);
+  const reelsQuery = useQuery(() => q.listReelsByPlayer(user!.id), [user?.id]);
+
+  const loading =
+    !profile || statsQuery.loading || walletQuery.loading || reelsQuery.loading;
+  const error = statsQuery.error ?? walletQuery.error ?? reelsQuery.error;
+
+  const refetch = () => {
+    statsQuery.refetch();
+    walletQuery.refetch();
+    reelsQuery.refetch();
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.center, { paddingTop: insets.top }]}>
+        <ActivityIndicator color={colors.yellow} />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, styles.center, { paddingTop: insets.top }]}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity onPress={refetch} style={styles.retryBtn}>
+          <Text style={styles.retryText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const username = profile.email ? profile.email.split('@')[0] : (profile.full_name ?? '');
+  const name = profile.full_name ?? '';
+  const avatarInitial = profile.full_name?.[0] ?? '?';
+  const stats = statsQuery.data ?? { games: 0, following: 0, followers: 0 };
+  const balance = walletQuery.data ?? 0;
+  const reels = reelsQuery.data ?? [];
+
+  const onMenuPress = async (item: (typeof MENU_ITEMS)[number]) => {
+    if (item.label === 'Switch to Organizer') {
+      await q.updateProfile({ role: 'organizer' });
+      router.replace('/organizer/(tabs)/dashboard');
+      return;
+    }
+    router.push(item.route as any);
+  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.xxl }}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.username}>@{MOCK_USER.username}</Text>
+          <Text style={styles.username}>@{username}</Text>
           <TouchableOpacity style={styles.settingsBtn}>
             <Text style={styles.settingsIcon}>⚙️</Text>
           </TouchableOpacity>
@@ -50,13 +91,13 @@ export default function ProfileScreen() {
         {/* Avatar + stats */}
         <View style={styles.profileRow}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{MOCK_USER.name[0]}</Text>
+            <Text style={styles.avatarText}>{avatarInitial}</Text>
           </View>
           <View style={styles.statsRow}>
             {[
-              { label: 'Games', value: MOCK_USER.games },
-              { label: 'Following', value: MOCK_USER.following },
-              { label: 'Followers', value: MOCK_USER.followers },
+              { label: 'Games', value: stats.games },
+              { label: 'Following', value: stats.following },
+              { label: 'Followers', value: stats.followers },
             ].map((s) => (
               <View key={s.label} style={styles.stat}>
                 <Text style={styles.statValue}>{s.value}</Text>
@@ -68,9 +109,11 @@ export default function ProfileScreen() {
 
         {/* Bio */}
         <View style={styles.bio}>
-          <Text style={styles.bioName}>{MOCK_USER.flag} {MOCK_USER.name}</Text>
-          <Badge color="yellow" style={{ alignSelf: 'flex-start', marginBottom: spacing.xs }}>{MOCK_USER.skill}</Badge>
-          <Text style={styles.bioText}>{MOCK_USER.bio}</Text>
+          <Text style={styles.bioName}>🇵🇭 {name}</Text>
+          {profile.skill_level && (
+            <Badge color="yellow" style={{ alignSelf: 'flex-start', marginBottom: spacing.xs }}>{profile.skill_level}</Badge>
+          )}
+          {profile.bio && <Text style={styles.bioText}>{profile.bio}</Text>}
         </View>
 
         {/* Edit profile */}
@@ -84,7 +127,7 @@ export default function ProfileScreen() {
           <LinearGradient colors={['#1A1400', '#0A0A0A']} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} />
           <View style={styles.walletLeft}>
             <Text style={styles.walletLabel}>💰 Wallet Balance</Text>
-            <Text style={styles.walletAmount}>₱{MOCK_USER.wallet.toLocaleString()}</Text>
+            <Text style={styles.walletAmount}>₱{(balance / 100).toLocaleString()}</Text>
           </View>
           <Text style={styles.walletArrow}>→</Text>
         </TouchableOpacity>
@@ -97,15 +140,19 @@ export default function ProfileScreen() {
               <Text style={styles.sectionLink}>See all</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.reelsGrid}>
-            {Array.from({ length: 3 }, (_, i) => (
-              <View key={i} style={[styles.reelThumb, { width: REEL_SIZE, height: REEL_SIZE * 1.4 }]}>
-                <View style={styles.reelPlaceholder}>
-                  <Text style={styles.reelIcon}>▶️</Text>
+          {reels.length === 0 ? (
+            <Text style={styles.reelsEmpty}>No reels yet</Text>
+          ) : (
+            <View style={styles.reelsGrid}>
+              {reels.slice(0, 3).map((reel) => (
+                <View key={reel.id} style={[styles.reelThumb, { width: REEL_SIZE, height: REEL_SIZE * 1.4 }]}>
+                  <View style={styles.reelPlaceholder}>
+                    <Text style={styles.reelIcon}>▶️</Text>
+                  </View>
                 </View>
-              </View>
-            ))}
-          </View>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Menu */}
@@ -113,7 +160,7 @@ export default function ProfileScreen() {
           {MENU_ITEMS.map((item) => (
             <TouchableOpacity
               key={item.label}
-              onPress={() => router.push(item.route as any)}
+              onPress={() => onMenuPress(item)}
               style={styles.menuItem}
               activeOpacity={0.7}
             >
@@ -124,7 +171,13 @@ export default function ProfileScreen() {
           ))}
         </View>
 
-        <TouchableOpacity style={styles.signOutBtn}>
+        <TouchableOpacity
+          style={styles.signOutBtn}
+          onPress={async () => {
+            await signOut();
+            router.replace('/(auth)/welcome');
+          }}
+        >
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -134,6 +187,11 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
+  center: { alignItems: 'center' as const, justifyContent: 'center' as const, flex: 1 },
+  errorText: { ...font.body, color: colors.error, textAlign: 'center' as const, paddingHorizontal: spacing.lg },
+  retryBtn: { backgroundColor: colors.yellowDim, borderRadius: radius.full, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, marginTop: spacing.sm },
+  retryText: { ...font.bodySmMed, color: colors.yellow },
+  reelsEmpty: { ...font.body, color: colors.textMuted, paddingHorizontal: spacing.lg },
 
   header: {
     flexDirection: 'row',

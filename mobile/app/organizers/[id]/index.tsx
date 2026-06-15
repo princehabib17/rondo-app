@@ -1,82 +1,71 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
-import { colors, font, spacing, radius, shadow } from '../../../constants/theme';
+import { colors, font, spacing, radius } from '../../../constants/theme';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
-import { Card } from '../../../components/ui/Card';
+import { useQuery } from '../../../hooks/useQuery';
+import * as q from '../../../lib/queries';
+import type { Game } from '../../../lib/types';
 
 const { width } = Dimensions.get('window');
 const GAME_CARD_WIDTH = (width - spacing.lg * 2 - spacing.sm) / 2;
 const BANNER_HEIGHT = 160;
 
-const MOCK_ORGANIZER = {
-  id: '1',
-  name: 'FC Taguig',
-  verified: true,
-  bio: 'Premier futsal organizer in BGC. Weekly games, monthly cups, seasonal leagues.',
-  gamesHosted: 84,
-  playersTotal: 620,
-  followers: 312,
-};
-
-const MOCK_UPCOMING = [
-  { id: '1', title: 'Friday Night 5v5', date: 'Jun 20', format: '5v5', spots: 2, price: 150 },
-  { id: '2', title: 'Sunday League', date: 'Jun 22', format: '7v7', spots: 5, price: 200 },
-  { id: '3', title: 'Weekday Rondo', date: 'Jun 25', format: '3v3', spots: 0, price: 100 },
-  { id: '4', title: 'Ballers Cup QF', date: 'Jun 28', format: '5v5', spots: 4, price: 300 },
-];
-
-const MOCK_ANNOUNCEMENTS = [
-  { id: 'a1', body: 'New venue available from July — Smoke Indoor Futsal, QC. Bigger courts, same rates.', time: '2h ago' },
-  { id: 'a2', body: 'BGC Summer Cup bracket is now live! Check the tournament page for your team\'s first match.', time: '1d ago' },
-  { id: 'a3', body: 'Weekly games will be suspended on Jun 19 (holiday). We\'ll see you on Jun 20!', time: '3d ago' },
-];
-
-function GameCard({ game }: { game: typeof MOCK_UPCOMING[0] }) {
-  const isFull = game.spots === 0;
-  return (
-    <TouchableOpacity
-      onPress={() => router.push(`/games/${game.id}`)}
-      activeOpacity={0.85}
-      style={styles.gameCard}
-    >
-      <View style={styles.gameCardHeader}>
-        <LinearGradient colors={['#1A1400', '#0A0A0A']} style={StyleSheet.absoluteFill} />
-        <Badge color={isFull ? 'red' : 'green'} style={styles.gameCardBadge}>
-          {isFull ? 'Full' : `${game.spots} left`}
-        </Badge>
-        <Text style={styles.gameCardFormat}>{game.format}</Text>
-      </View>
-      <View style={styles.gameCardBody}>
-        <Text style={styles.gameCardTitle} numberOfLines={2}>{game.title}</Text>
-        <Text style={styles.gameCardDate}>📅 {game.date}</Text>
-        <Text style={styles.gameCardPrice}>₱{game.price}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-export default function OrganizerProfileScreen() {
-  const insets = useSafeAreaInsets();
-  const { id } = useLocalSearchParams();
-  const [following, setFollowing] = useState(false);
+function spotsLeft(game: Game): number {
+  return game.max_players; // accurate spot count needs join with game_players; approximate here
+}
 
-  const toggleFollow = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setFollowing((f) => !f);
-  };
+export default function OrganizerPublicProfileScreen() {
+  const insets = useSafeAreaInsets();
+  const { id } = useLocalSearchParams<{ id: string }>();
+
+  const profileQuery = useQuery(() => q.getProfile(id!), [id]);
+  const gamesQuery = useQuery(() => q.listGames({ organizerId: id!, upcomingOnly: true }), [id]);
+  const statsQuery = useQuery(() => q.getPlayerStats(id!), [id]);
+
+  const loading = profileQuery.loading;
+  const error = profileQuery.error;
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <ActivityIndicator color={colors.accent} />
+      </View>
+    );
+  }
+
+  if (error || !profileQuery.data) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <Text style={styles.errorText}>{error ?? 'Organizer not found'}</Text>
+        <TouchableOpacity onPress={() => router.back()} style={styles.retryBtn}>
+          <Text style={styles.retryText}>Go back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const profile = profileQuery.data;
+  const games = gamesQuery.data ?? [];
+  const stats = statsQuery.data ?? { games: 0, following: 0, followers: 0 };
+  const name = profile.full_name ?? 'Organizer';
+  const initial = name[0]?.toUpperCase() ?? '?';
 
   return (
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xxl }}>
-        <View style={styles.banner}>
-          <LinearGradient colors={['#1A2840', '#0D2A0D', '#0A0A0A']} style={StyleSheet.absoluteFill} />
+        {/* Banner */}
+        <View style={[styles.banner, { height: BANNER_HEIGHT }]}>
+          <LinearGradient colors={['#001A0A', '#0A0A1A', '#0A0A0A']} style={StyleSheet.absoluteFill} />
           <TouchableOpacity
             onPress={() => router.back()}
             style={[styles.backBtn, { top: insets.top + spacing.sm }]}
@@ -85,27 +74,29 @@ export default function OrganizerProfileScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Profile card */}
         <View style={styles.profileSection}>
           <View style={styles.avatarWrap}>
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{MOCK_ORGANIZER.name[0]}</Text>
+              <Text style={styles.avatarText}>{initial}</Text>
             </View>
           </View>
+
           <View style={styles.nameRow}>
-            <Text style={styles.name}>{MOCK_ORGANIZER.name}</Text>
-            {MOCK_ORGANIZER.verified && (
+            <Text style={styles.name}>{name}</Text>
+            {profile.role === 'organizer' && (
               <View style={styles.verifiedBadge}>
-                <Text style={styles.verifiedText}>✓ Verified</Text>
+                <Text style={styles.verifiedText}>Organizer</Text>
               </View>
             )}
           </View>
-          <Text style={styles.bio}>{MOCK_ORGANIZER.bio}</Text>
+
+          {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
 
           <View style={styles.statsRow}>
             {[
-              { label: 'Games', value: MOCK_ORGANIZER.gamesHosted },
-              { label: 'Players', value: MOCK_ORGANIZER.playersTotal },
-              { label: 'Followers', value: MOCK_ORGANIZER.followers + (following ? 1 : 0) },
+              { label: 'Games hosted', value: games.length },
+              { label: 'Followers', value: stats.followers },
             ].map((s) => (
               <View key={s.label} style={styles.statItem}>
                 <Text style={styles.statValue}>{s.value.toLocaleString()}</Text>
@@ -115,45 +106,36 @@ export default function OrganizerProfileScreen() {
           </View>
 
           <View style={styles.ctaRow}>
-            <Button
-              onPress={toggleFollow}
-              variant={following ? 'secondary' : 'primary'}
-              style={styles.ctaBtn}
-            >
-              {following ? 'Following' : 'Follow'}
-            </Button>
-            <Button
-              onPress={() => router.push(`/messages/${id}`)}
-              variant="secondary"
-              style={styles.ctaBtn}
-            >
-              Message
-            </Button>
+            <Button variant="secondary" onPress={() => {}} style={styles.ctaBtn}>Follow</Button>
+            <Button variant="secondary" onPress={() => router.push(`/messages/${id}`)} style={styles.ctaBtn}>Message</Button>
           </View>
         </View>
 
+        {/* Upcoming games */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Upcoming Games</Text>
-          <View style={styles.gamesGrid}>
-            {MOCK_UPCOMING.map((game) => (
-              <GameCard key={game.id} game={game} />
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Announcements</Text>
-          <View style={styles.announcements}>
-            {MOCK_ANNOUNCEMENTS.map((a, i) => (
-              <View
-                key={a.id}
-                style={[styles.announcement, i < MOCK_ANNOUNCEMENTS.length - 1 && styles.announcementBorder]}
-              >
-                <Text style={styles.announcementBody}>{a.body}</Text>
-                <Text style={styles.announcementTime}>{a.time}</Text>
-              </View>
-            ))}
-          </View>
+          {gamesQuery.loading ? (
+            <ActivityIndicator color={colors.accent} />
+          ) : games.length === 0 ? (
+            <Text style={styles.emptyText}>No upcoming games</Text>
+          ) : (
+            <View style={styles.gamesGrid}>
+              {games.map((g) => (
+                <TouchableOpacity
+                  key={g.id}
+                  onPress={() => router.push(`/games/${g.id}`)}
+                  style={[styles.gameCard, { width: GAME_CARD_WIDTH }]}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient colors={['#001A0A', '#0A0A1A']} style={StyleSheet.absoluteFill} />
+                  <Text style={styles.gameFormat}>{g.format}</Text>
+                  <Text style={styles.gameTitle} numberOfLines={2}>{g.title}</Text>
+                  <Text style={styles.gameDate}>{formatDate(g.date_time)}</Text>
+                  <Text style={styles.gamePrice}>₱{(g.price_per_player / 100).toLocaleString()}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </View>
       </ScrollView>
     </View>
@@ -162,92 +144,54 @@ export default function OrganizerProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
+  center: { alignItems: 'center', justifyContent: 'center', gap: spacing.md },
+  errorText: { ...font.body, color: colors.error, textAlign: 'center', paddingHorizontal: spacing.lg },
+  retryBtn: { backgroundColor: colors.accentDim, borderRadius: radius.full, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
+  retryText: { ...font.bodySmMed, color: colors.accent },
 
-  banner: { height: BANNER_HEIGHT, position: 'relative' },
+  banner: { position: 'relative' },
   backBtn: {
-    position: 'absolute',
-    left: spacing.md,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    position: 'absolute', left: spacing.md,
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center',
   },
   backArrow: { color: colors.white, fontSize: 20 },
 
   profileSection: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
-    gap: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderSubtle,
+    paddingHorizontal: spacing.lg, paddingBottom: spacing.lg,
+    gap: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.borderSubtle,
   },
   avatarWrap: { marginTop: -(48 + spacing.sm) },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.yellowDim,
-    borderWidth: 3,
-    borderColor: colors.bg,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 88, height: 88, borderRadius: 44,
+    backgroundColor: colors.accentDim, borderWidth: 3, borderColor: colors.bg,
+    alignItems: 'center', justifyContent: 'center',
   },
-  avatarText: { ...font.h2, color: colors.yellow },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },
+  avatarText: { ...font.h1, color: colors.accent },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.xs },
   name: { ...font.h2, color: colors.text },
-  verifiedBadge: {
-    backgroundColor: colors.yellowDim,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: 'rgba(245,197,24,0.3)',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-  },
-  verifiedText: { ...font.captionMed, color: colors.yellow },
+  verifiedBadge: { backgroundColor: colors.accentDim, borderRadius: radius.full, paddingHorizontal: spacing.sm, paddingVertical: 3, borderWidth: 1, borderColor: colors.accent + '44' },
+  verifiedText: { ...font.captionMed, color: colors.accent },
   bio: { ...font.body, color: colors.textSecondary, lineHeight: 22 },
-  statsRow: { flexDirection: 'row', gap: spacing.xl },
+  statsRow: { flexDirection: 'row', gap: spacing.xl, marginTop: spacing.sm },
   statItem: { alignItems: 'center', gap: 2 },
   statValue: { ...font.h3, color: colors.text },
   statLabel: { ...font.caption, color: colors.textMuted },
-  ctaRow: { flexDirection: 'row', gap: spacing.sm },
+  ctaRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
   ctaBtn: { flex: 1 },
 
   section: { padding: spacing.lg, gap: spacing.md, borderTopWidth: 1, borderTopColor: colors.borderSubtle },
   sectionTitle: { ...font.h4, color: colors.text },
+  emptyText: { ...font.body, color: colors.textMuted },
 
   gamesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   gameCard: {
-    width: GAME_CARD_WIDTH,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    overflow: 'hidden',
+    borderRadius: radius.lg, overflow: 'hidden',
+    borderWidth: 1, borderColor: colors.borderSubtle,
+    padding: spacing.md, gap: spacing.xs, minHeight: 110,
   },
-  gameCardHeader: {
-    height: 60,
-    justifyContent: 'flex-end',
-    padding: spacing.sm,
-    gap: spacing.xs,
-  },
-  gameCardBadge: { alignSelf: 'flex-start' },
-  gameCardFormat: { ...font.captionMed, color: colors.textMuted },
-  gameCardBody: { padding: spacing.sm, gap: spacing.xs },
-  gameCardTitle: { ...font.bodySmMed, color: colors.text },
-  gameCardDate: { ...font.caption, color: colors.textMuted },
-  gameCardPrice: { ...font.bodySmMed, color: colors.yellow },
-
-  announcements: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    overflow: 'hidden',
-  },
-  announcement: { padding: spacing.md, gap: spacing.xs },
-  announcementBorder: { borderBottomWidth: 1, borderBottomColor: colors.borderSubtle },
-  announcementBody: { ...font.body, color: colors.text, lineHeight: 22 },
-  announcementTime: { ...font.caption, color: colors.textMuted },
+  gameFormat: { ...font.captionMed, color: colors.accent },
+  gameTitle: { ...font.bodyMed, color: colors.text },
+  gameDate: { ...font.caption, color: colors.textMuted },
+  gamePrice: { ...font.bodySmMed, color: colors.yellow },
 });

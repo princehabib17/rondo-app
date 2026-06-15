@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -9,55 +9,111 @@ import * as Haptics from 'expo-haptics';
 import { colors, font, spacing, radius } from '../../constants/theme';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
+import { useQuery, useMutation } from '../../hooks/useQuery';
+import { useAuth } from '../../hooks/useAuth';
+import * as q from '../../lib/queries';
+import type { GamePlayer, Game } from '../../lib/types';
 
 const { width } = Dimensions.get('window');
 const REEL_SIZE = (width - spacing.lg * 2 - spacing.sm * 2) / 3;
 const BANNER_HEIGHT = 150;
 
-const MOCK_PLAYER = {
-  id: '1',
-  name: 'Carlo Reyes',
-  username: 'carloreyes',
-  flag: '🇵🇭',
-  skill: 'Competitive',
-  position: 'Midfielder',
-  bio: 'Box-to-box midfielder. 5v5 specialist. BGC & Makati. Always up for a run ⚽',
-  games: 132,
-  following: 48,
-  followers: 210,
-  reels: 4,
+const SKILL_LABELS: Record<string, string> = {
+  beginner: 'Beginner',
+  intermediate: 'Intermediate',
+  advanced: 'Advanced',
+  pro: 'Competitive',
 };
 
-// W = win, L = loss, D = draw — most recent first
-const MOCK_FORM = ['W', 'W', 'L', 'D', 'W'];
-
-const MOCK_RECENT = [
-  { id: '1', title: 'Friday Night 5v5', org: 'FC Taguig', date: 'Jun 13', result: 'W' },
-  { id: '2', title: 'Sunday League', org: 'BGC Strikers', date: 'Jun 8', result: 'L' },
-  { id: '3', title: 'Weekday Rondo', org: 'FC Taguig', date: 'Jun 4', result: 'D' },
-];
-
-const FORM_COLOR: Record<string, string> = {
-  W: colors.success,
-  L: colors.error,
-  D: colors.textMuted,
+const POS_LABELS: Record<string, string> = {
+  goalkeeper: 'Goalkeeper',
+  defender: 'Defender',
+  midfielder: 'Midfielder',
+  forward: 'Forward',
+  any: 'Any Position',
 };
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
 
 export default function PlayerProfileScreen() {
   const insets = useSafeAreaInsets();
-  const { id } = useLocalSearchParams();
-  const [following, setFollowing] = useState(false);
-  const [shortlisted, setShortlisted] = useState(false);
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { user } = useAuth();
 
-  const toggleFollow = () => {
+  const profileQuery = useQuery(() => q.getProfile(id!), [id]);
+  const statsQuery = useQuery(() => q.getPlayerStats(id!), [id]);
+  const reelsQuery = useQuery(() => q.listReelsByPlayer(id!), [id]);
+  const gamesQuery = useQuery(() => q.getPlayerRecentGames(id!, 5), [id]);
+  const followingQuery = useQuery(() => q.isFollowing(id!), [id]);
+  const shortlistQuery = useQuery(() => q.isOnShortlist(id!), [id]);
+
+  const [followOverride, setFollowOverride] = useState<boolean | null>(null);
+  const [shortlistOverride, setShortlistOverride] = useState<boolean | null>(null);
+
+  const isFollowing = followOverride ?? followingQuery.data ?? false;
+  const isShortlisted = shortlistOverride ?? shortlistQuery.data ?? false;
+
+  const loading = profileQuery.loading || statsQuery.loading;
+  const error = profileQuery.error;
+
+  const toggleFollow = async () => {
+    if (!user) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setFollowing((f) => !f);
+    const next = !isFollowing;
+    setFollowOverride(next);
+    try {
+      await q.toggleFollow(id!, next);
+    } catch {
+      setFollowOverride(!next);
+    }
   };
 
-  const toggleShortlist = () => {
+  const toggleShortlist = async () => {
     Haptics.selectionAsync();
-    setShortlisted((s) => !s);
+    const next = !isShortlisted;
+    setShortlistOverride(next);
+    try {
+      if (next) await q.addToShortlist(id!);
+      else await q.removeFromShortlist(id!);
+    } catch {
+      setShortlistOverride(!next);
+    }
   };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <ActivityIndicator color={colors.yellow} />
+      </View>
+    );
+  }
+
+  if (error || !profileQuery.data) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <Text style={styles.errorText}>{error ?? 'Player not found'}</Text>
+        <TouchableOpacity onPress={() => router.back()} style={styles.retryBtn}>
+          <Text style={styles.retryText}>Go back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const profile = profileQuery.data;
+  const stats = statsQuery.data ?? { games: 0, following: 0, followers: 0 };
+  const reels = reelsQuery.data ?? [];
+  const recentGames = gamesQuery.data ?? [];
+
+  const name = profile.full_name ?? 'Unknown';
+  const username = profile.email?.split('@')[0] ?? name.toLowerCase().replace(/\s+/g, '');
+  const avatarInitial = name[0]?.toUpperCase() ?? '?';
+  const skillLabel = profile.skill_level ? (SKILL_LABELS[profile.skill_level] ?? profile.skill_level) : null;
+  const posLabel = profile.position ? (POS_LABELS[profile.position] ?? profile.position) : null;
+  const followerCount = stats.followers + (followOverride === true ? 1 : followOverride === false ? -1 : 0);
+
+  const isOwnProfile = user?.id === id;
 
   return (
     <View style={styles.container}>
@@ -70,38 +126,40 @@ export default function PlayerProfileScreen() {
           >
             <Text style={styles.backArrow}>←</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={toggleShortlist}
-            style={[styles.bookmarkBtn, { top: insets.top + spacing.sm }]}
-          >
-            <Text style={styles.bookmarkIcon}>{shortlisted ? '🔖' : '📑'}</Text>
-          </TouchableOpacity>
+          {!isOwnProfile && (
+            <TouchableOpacity
+              onPress={toggleShortlist}
+              style={[styles.bookmarkBtn, { top: insets.top + spacing.sm }]}
+            >
+              <Text style={styles.bookmarkIcon}>{isShortlisted ? '🔖' : '📑'}</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.profileSection}>
           <View style={styles.avatarWrap}>
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{MOCK_PLAYER.name[0]}</Text>
+              <Text style={styles.avatarText}>{avatarInitial}</Text>
             </View>
           </View>
 
           <View style={styles.nameRow}>
-            <Text style={styles.name}>{MOCK_PLAYER.flag} {MOCK_PLAYER.name}</Text>
+            <Text style={styles.name}>{profile.nationality ? `${profile.nationality} ` : ''}{name}</Text>
           </View>
-          <Text style={styles.username}>@{MOCK_PLAYER.username}</Text>
+          <Text style={styles.username}>@{username}</Text>
 
           <View style={styles.tagRow}>
-            <Badge color="yellow">{MOCK_PLAYER.skill}</Badge>
-            <Badge color="muted">{MOCK_PLAYER.position}</Badge>
+            {skillLabel && <Badge color="yellow">{skillLabel}</Badge>}
+            {posLabel && <Badge color="muted">{posLabel}</Badge>}
           </View>
 
-          <Text style={styles.bio}>{MOCK_PLAYER.bio}</Text>
+          {profile.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
 
           <View style={styles.statsRow}>
             {[
-              { label: 'Games', value: MOCK_PLAYER.games },
-              { label: 'Following', value: MOCK_PLAYER.following },
-              { label: 'Followers', value: MOCK_PLAYER.followers + (following ? 1 : 0) },
+              { label: 'Games', value: stats.games },
+              { label: 'Following', value: stats.following },
+              { label: 'Followers', value: followerCount },
             ].map((s) => (
               <View key={s.label} style={styles.statItem}>
                 <Text style={styles.statValue}>{s.value.toLocaleString()}</Text>
@@ -110,35 +168,24 @@ export default function PlayerProfileScreen() {
             ))}
           </View>
 
-          <View style={styles.ctaRow}>
-            <Button
-              onPress={toggleFollow}
-              variant={following ? 'secondary' : 'primary'}
-              style={styles.ctaBtn}
-            >
-              {following ? 'Following' : 'Follow'}
-            </Button>
-            <Button
-              onPress={() => router.push(`/messages/${id}`)}
-              variant="secondary"
-              style={styles.ctaBtn}
-            >
-              Message
-            </Button>
-          </View>
-        </View>
-
-        {/* Recent form */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Form</Text>
-          <View style={styles.formRow}>
-            {MOCK_FORM.map((r, i) => (
-              <View key={i} style={[styles.formChip, { backgroundColor: FORM_COLOR[r] + '22', borderColor: FORM_COLOR[r] + '55' }]}>
-                <Text style={[styles.formText, { color: FORM_COLOR[r] }]}>{r}</Text>
-              </View>
-            ))}
-            <Text style={styles.formHint}>Last 5 games</Text>
-          </View>
+          {!isOwnProfile && (
+            <View style={styles.ctaRow}>
+              <Button
+                onPress={toggleFollow}
+                variant={isFollowing ? 'secondary' : 'primary'}
+                style={styles.ctaBtn}
+              >
+                {isFollowing ? 'Following' : 'Follow'}
+              </Button>
+              <Button
+                onPress={() => router.push(`/messages/${id}`)}
+                variant="secondary"
+                style={styles.ctaBtn}
+              >
+                Message
+              </Button>
+            </View>
+          )}
         </View>
 
         {/* Reels grid */}
@@ -149,43 +196,53 @@ export default function PlayerProfileScreen() {
               <Text style={styles.sectionLink}>See all</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.reelsGrid}>
-            {Array.from({ length: 3 }, (_, i) => (
-              <TouchableOpacity
-                key={i}
-                onPress={() => router.push('/reels')}
-                style={[styles.reelThumb, { width: REEL_SIZE, height: REEL_SIZE * 1.4 }]}
-              >
-                <LinearGradient colors={['#0D2A0D', '#0A0A1A']} style={StyleSheet.absoluteFill} />
-                <Text style={styles.reelIcon}>▶️</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          {reels.length === 0 ? (
+            <Text style={styles.emptyText}>No reels yet</Text>
+          ) : (
+            <View style={styles.reelsGrid}>
+              {reels.slice(0, 3).map((reel) => (
+                <TouchableOpacity
+                  key={reel.id}
+                  onPress={() => router.push('/reels')}
+                  style={[styles.reelThumb, { width: REEL_SIZE, height: REEL_SIZE * 1.4 }]}
+                >
+                  <LinearGradient colors={['#0D2A0D', '#0A0A1A']} style={StyleSheet.absoluteFill} />
+                  <Text style={styles.reelIcon}>▶️</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Recent games */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Games</Text>
-          <View style={styles.gamesList}>
-            {MOCK_RECENT.map((g, i) => (
-              <TouchableOpacity
-                key={g.id}
-                onPress={() => router.push(`/games/${g.id}`)}
-                style={[styles.gameRow, i < MOCK_RECENT.length - 1 && styles.gameRowBorder]}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.resultDot, { backgroundColor: FORM_COLOR[g.result] }]}>
-                  <Text style={styles.resultDotText}>{g.result}</Text>
-                </View>
-                <View style={styles.gameInfo}>
-                  <Text style={styles.gameTitle}>{g.title}</Text>
-                  <Text style={styles.gameMeta}>{g.org} · {g.date}</Text>
-                </View>
-                <Text style={styles.gameArrow}>›</Text>
-              </TouchableOpacity>
-            ))}
+        {recentGames.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Recent Games</Text>
+            <View style={styles.gamesList}>
+              {recentGames.map((gp: GamePlayer & { game: Game | null }, i) => {
+                const game = gp.game;
+                if (!game) return null;
+                return (
+                  <TouchableOpacity
+                    key={gp.id}
+                    onPress={() => router.push(`/games/${game.id}`)}
+                    style={[styles.gameRow, i < recentGames.length - 1 && styles.gameRowBorder]}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.statusDot, { backgroundColor: colors.success }]}>
+                      <Text style={styles.statusDotText}>✓</Text>
+                    </View>
+                    <View style={styles.gameInfo}>
+                      <Text style={styles.gameTitle}>{game.title}</Text>
+                      <Text style={styles.gameMeta}>{game.venue_name} · {formatDate(game.date_time)}</Text>
+                    </View>
+                    <Text style={styles.gameArrow}>›</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
-        </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -193,48 +250,35 @@ export default function PlayerProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
+  center: { alignItems: 'center', justifyContent: 'center', gap: spacing.md },
+  errorText: { ...font.body, color: colors.error, textAlign: 'center', paddingHorizontal: spacing.lg },
+  retryBtn: { backgroundColor: colors.yellowDim, borderRadius: radius.full, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
+  retryText: { ...font.bodySmMed, color: colors.yellow },
+  emptyText: { ...font.body, color: colors.textMuted },
 
   banner: { height: BANNER_HEIGHT, position: 'relative' },
   backBtn: {
-    position: 'absolute',
-    left: spacing.md,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    position: 'absolute', left: spacing.md,
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center',
   },
   backArrow: { color: colors.white, fontSize: 20 },
   bookmarkBtn: {
-    position: 'absolute',
-    right: spacing.md,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    position: 'absolute', right: spacing.md,
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center',
   },
   bookmarkIcon: { fontSize: 18 },
 
   profileSection: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
-    gap: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderSubtle,
+    paddingHorizontal: spacing.lg, paddingBottom: spacing.lg,
+    gap: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.borderSubtle,
   },
   avatarWrap: { marginTop: -(48 + spacing.sm) },
   avatar: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: colors.yellowDim,
-    borderWidth: 3,
-    borderColor: colors.bg,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 88, height: 88, borderRadius: 44,
+    backgroundColor: colors.yellowDim, borderWidth: 3, borderColor: colors.bg,
+    alignItems: 'center', justifyContent: 'center',
   },
   avatarText: { ...font.h1, color: colors.yellow },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap', marginTop: spacing.xs },
@@ -254,11 +298,6 @@ const styles = StyleSheet.create({
   sectionTitle: { ...font.h4, color: colors.text },
   sectionLink: { ...font.bodySm, color: colors.yellow },
 
-  formRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  formChip: { width: 34, height: 34, borderRadius: 17, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  formText: { ...font.bodySmMed, fontWeight: '700' },
-  formHint: { ...font.caption, color: colors.textMuted, marginLeft: spacing.xs },
-
   reelsGrid: { flexDirection: 'row', gap: spacing.sm },
   reelThumb: { borderRadius: radius.sm, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   reelIcon: { fontSize: 24 },
@@ -266,8 +305,8 @@ const styles = StyleSheet.create({
   gamesList: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.borderSubtle, overflow: 'hidden' },
   gameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md },
   gameRowBorder: { borderBottomWidth: 1, borderBottomColor: colors.borderSubtle },
-  resultDot: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  resultDotText: { ...font.captionMed, color: colors.bg, fontWeight: '700' },
+  statusDot: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  statusDotText: { ...font.captionMed, color: colors.bg, fontWeight: '700' },
   gameInfo: { flex: 1, gap: 2 },
   gameTitle: { ...font.bodyMed, color: colors.text },
   gameMeta: { ...font.caption, color: colors.textMuted },

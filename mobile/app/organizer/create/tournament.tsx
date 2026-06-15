@@ -6,6 +6,7 @@ import * as Haptics from 'expo-haptics';
 import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
 import { colors, font, spacing, radius } from '../../../constants/theme';
+import * as q from '../../../lib/queries';
 
 const TOTAL_STEPS = 4;
 const STEP_LABELS = ['Name & Format', 'Schedule & Venue', 'Teams & Entry', 'Review'];
@@ -35,10 +36,30 @@ export default function CreateTournamentScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (step < TOTAL_STEPS) { setStep((s) => s + 1); return; }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setLoading(false);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    router.replace('/organizer/(tabs)/tournaments');
+    try {
+      const dateTimeStr = `${form.date} ${form.time}`;
+      const startsAt = new Date(dateTimeStr);
+      const isoStartsAt = isNaN(startsAt.getTime()) ? new Date().toISOString() : startsAt.toISOString();
+      const entryFeeCentavos = form.entryFee ? Math.round(parseFloat(form.entryFee) * 100) : 0;
+      await q.createTournament({
+        name: form.name,
+        description: form.description || null,
+        format: form.format === 'knockout' ? 'single_elimination' : 'round_robin',
+        venue_name: form.venue,
+        venue_address: form.address || null,
+        starts_at: isoStartsAt,
+        max_teams: parseInt(form.maxTeams, 10),
+        team_size: parseInt(form.perSide, 10),
+        entry_fee: entryFeeCentavos,
+        status: 'registration',
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.replace('/organizer/(tabs)/tournaments');
+    } catch {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

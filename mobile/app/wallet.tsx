@@ -1,72 +1,98 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { colors, font, spacing, radius, shadow } from '../constants/theme';
+import { Linking } from 'react-native';
+import { colors, font, spacing, radius } from '../constants/theme';
 import { ScreenHeader } from '../components/layout/ScreenHeader';
 import { Button } from '../components/ui/Button';
+import { useQuery } from '../hooks/useQuery';
+import * as q from '../lib/queries';
+import * as api from '../lib/api';
+import type { WalletTransaction } from '../lib/types';
 
-const BALANCE = 850;
 const TOP_UP_PRESETS = [100, 200, 500, 1000, 2000, 5000];
 
-const MOCK_TRANSACTIONS = [
-  { id: '1', type: 'credit', label: 'Top-up via GCash', amount: 500, date: 'Jun 12', icon: '⬆️' },
-  { id: '2', type: 'debit', label: 'Friday Night 5v5', amount: -150, date: 'Jun 10', icon: '⚽' },
-  { id: '3', type: 'credit', label: 'Refund — Cancelled game', amount: 200, date: 'Jun 8', icon: '↩️' },
-  { id: '4', type: 'debit', label: 'Weekend Ballers', amount: -200, date: 'Jun 5', icon: '⚽' },
-  { id: '5', type: 'debit', label: 'BGC Summer Cup entry', amount: -300, date: 'Jun 1', icon: '🏆' },
-];
+const TX_ICONS: Record<string, string> = {
+  payment: '⚽',
+  refund: '↩️',
+  payout: '🏦',
+  adjustment: '⚙️',
+};
 
-const MOCK_PAYOUTS = [
-  { id: '1', amount: 1000, status: 'paid', date: 'May 30', bank: 'GCash' },
-  { id: '2', amount: 500, status: 'pending', date: 'Jun 8', bank: 'BDO' },
-];
+function txLabel(t: WalletTransaction): string {
+  return t.note ?? (t.source === 'payment' ? 'Game payment' : t.source === 'refund' ? 'Refund' : t.source === 'payout' ? 'Payout' : 'Adjustment');
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
 
 export default function WalletScreen() {
   const insets = useSafeAreaInsets();
-  const [showCashOut, setShowCashOut] = useState(false);
   const [loadingTopUp, setLoadingTopUp] = useState<number | null>(null);
 
-  const handleTopUp = async (amount: number) => {
+  const balanceQuery = useQuery(() => q.getWalletBalance(), []);
+  const txQuery = useQuery(() => q.getWalletTransactions(), []);
+
+  const balance = balanceQuery.data ?? 0;
+  const txns = txQuery.data ?? [];
+  const loading = (balanceQuery.loading && !balanceQuery.data) || (txQuery.loading && !txQuery.data);
+  const error = balanceQuery.error ?? txQuery.error;
+
+  const refetch = () => { balanceQuery.refetch(); txQuery.refetch(); };
+
+  const handleTopUp = async (amountPHP: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setLoadingTopUp(amount);
-    // Trigger PayMongo checkout
-    await new Promise((r) => setTimeout(r, 800));
-    setLoadingTopUp(null);
+    setLoadingTopUp(amountPHP);
+    try {
+      const { checkoutUrl } = await api.startWalletTopup(amountPHP * 100);
+      await Linking.openURL(checkoutUrl);
+      refetch();
+    } catch (e: any) {
+      Alert.alert('Top-up failed', e?.message ?? 'Something went wrong');
+    } finally {
+      setLoadingTopUp(null);
+    }
   };
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <ScreenHeader title="Wallet" showBack />
+        <View style={styles.center}><ActivityIndicator color={colors.yellow} /></View>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <ScreenHeader title="Wallet" showBack />
+        <View style={styles.center}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity onPress={refetch} style={styles.retryBtn}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScreenHeader title="Wallet" showBack />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xxl }}>
-        {/* Balance hero — Cash App style */}
+        {/* Balance hero */}
         <View style={styles.balanceHero}>
           <LinearGradient colors={['#1A1400', '#0A0A0A']} style={StyleSheet.absoluteFill} />
           <Text style={styles.balanceLabel}>Available Balance</Text>
-          <Text style={styles.balanceAmount}>₱{BALANCE.toLocaleString()}</Text>
+          <Text style={styles.balanceAmount}>₱{(balance / 100).toLocaleString()}</Text>
           <Text style={styles.balanceSub}>Updated just now</Text>
-
-          <View style={styles.heroActions}>
-            <Button
-              onPress={() => { }}
-              variant="primary"
-              style={styles.heroBtn}
-            >
-              Top Up
-            </Button>
-            <Button
-              onPress={() => { Haptics.selectionAsync(); setShowCashOut(true); }}
-              variant="secondary"
-              style={styles.heroBtn}
-            >
-              Cash Out
-            </Button>
-          </View>
         </View>
 
         {/* Top up presets */}
@@ -77,75 +103,45 @@ export default function WalletScreen() {
               <TouchableOpacity
                 key={amt}
                 onPress={() => handleTopUp(amt)}
+                disabled={loadingTopUp !== null}
                 style={[styles.preset, loadingTopUp === amt && styles.presetLoading]}
                 activeOpacity={0.75}
               >
-                <Text style={[styles.presetText, loadingTopUp === amt && { color: colors.textMuted }]}>
-                  ₱{amt.toLocaleString()}
-                </Text>
+                {loadingTopUp === amt ? (
+                  <ActivityIndicator size="small" color={colors.yellow} />
+                ) : (
+                  <Text style={styles.presetText}>₱{amt.toLocaleString()}</Text>
+                )}
               </TouchableOpacity>
             ))}
           </View>
         </View>
 
-        {/* Cash out (collapsed by default) */}
-        {showCashOut && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Cash Out</Text>
-              <TouchableOpacity onPress={() => setShowCashOut(false)}>
-                <Text style={styles.closeBtn}>✕</Text>
-              </TouchableOpacity>
+        {/* Recent Activity */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Recent Activity</Text>
+          {txns.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyText}>No transactions yet</Text>
             </View>
-            <View style={styles.payoutForm}>
-              <Text style={styles.payoutInfo}>
-                Payout requests are processed within 3–5 business days. Minimum payout is ₱100.
-              </Text>
-              <Button onPress={() => router.push('/organizer/earnings')} variant="secondary">
-                Request Payout →
-              </Button>
-            </View>
-
-            {/* Payout history */}
-            <View style={styles.payoutHistory}>
-              <Text style={styles.payoutHistoryTitle}>Payout History</Text>
-              {MOCK_PAYOUTS.map((p) => (
-                <View key={p.id} style={styles.payoutRow}>
-                  <View>
-                    <Text style={styles.payoutLabel}>{p.bank}</Text>
-                    <Text style={styles.payoutDate}>{p.date}</Text>
+          ) : (
+            <View style={styles.transactions}>
+              {txns.map((tx, i) => (
+                <View key={tx.id} style={[styles.txRow, i < txns.length - 1 && styles.txRowBorder]}>
+                  <View style={styles.txIcon}>
+                    <Text>{TX_ICONS[tx.source] ?? '💳'}</Text>
                   </View>
-                  <View style={styles.payoutRight}>
-                    <Text style={styles.payoutAmount}>₱{p.amount.toLocaleString()}</Text>
-                    <Text style={[styles.payoutStatus, { color: p.status === 'paid' ? colors.success : colors.warning }]}>
-                      {p.status}
-                    </Text>
+                  <View style={styles.txInfo}>
+                    <Text style={styles.txLabel}>{txLabel(tx)}</Text>
+                    <Text style={styles.txDate}>{formatDate(tx.created_at)}</Text>
                   </View>
+                  <Text style={[styles.txAmount, tx.direction === 'credit' ? styles.txCredit : styles.txDebit]}>
+                    {tx.direction === 'credit' ? '+' : '-'}₱{(tx.amount / 100).toLocaleString()}
+                  </Text>
                 </View>
               ))}
             </View>
-          </View>
-        )}
-
-        {/* Transactions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
-          <View style={styles.transactions}>
-            {MOCK_TRANSACTIONS.map((tx, i) => (
-              <View key={tx.id} style={[styles.txRow, i < MOCK_TRANSACTIONS.length - 1 && styles.txRowBorder]}>
-                <View style={styles.txIcon}>
-                  <Text>{tx.icon}</Text>
-                </View>
-                <View style={styles.txInfo}>
-                  <Text style={styles.txLabel}>{tx.label}</Text>
-                  <Text style={styles.txDate}>{tx.date}</Text>
-                </View>
-                <Text style={[styles.txAmount, tx.type === 'credit' ? styles.txCredit : styles.txDebit]}>
-                  {tx.amount > 0 ? '+' : ''}₱{Math.abs(tx.amount).toLocaleString()}
-                </Text>
-              </View>
-            ))}
-          </View>
+          )}
         </View>
       </ScrollView>
     </View>
@@ -153,6 +149,11 @@ export default function WalletScreen() {
 }
 
 const styles = StyleSheet.create({
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.lg },
+  errorText: { ...font.body, color: colors.error, textAlign: 'center' },
+  retryBtn: { backgroundColor: colors.yellowDim, borderRadius: radius.full, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
+  retryText: { ...font.bodySmMed, color: colors.yellow },
+
   balanceHero: {
     overflow: 'hidden',
     padding: spacing.xl,
@@ -163,13 +164,9 @@ const styles = StyleSheet.create({
   balanceLabel: { ...font.label, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.8 },
   balanceAmount: { fontSize: 56, fontWeight: '800', color: colors.yellow, letterSpacing: -2 },
   balanceSub: { ...font.caption, color: colors.textFaint },
-  heroActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.lg },
-  heroBtn: { flex: 1 },
 
   section: { padding: spacing.lg, gap: spacing.md, borderTopWidth: 1, borderTopColor: colors.borderSubtle },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionTitle: { ...font.label, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.8 },
-  closeBtn: { color: colors.textMuted, fontSize: 18 },
 
   presetsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   preset: {
@@ -181,21 +178,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
   },
   presetLoading: { backgroundColor: colors.surfaceElevated },
   presetText: { ...font.bodyMed, color: colors.text },
 
-  payoutForm: { gap: spacing.md },
-  payoutInfo: { ...font.body, color: colors.textSecondary, lineHeight: 22 },
-
-  payoutHistory: { gap: spacing.sm },
-  payoutHistoryTitle: { ...font.bodySmMed, color: colors.textMuted },
-  payoutRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: spacing.xs },
-  payoutLabel: { ...font.bodyMed, color: colors.text },
-  payoutDate: { ...font.caption, color: colors.textMuted },
-  payoutRight: { alignItems: 'flex-end', gap: 2 },
-  payoutAmount: { ...font.bodyMed, color: colors.text },
-  payoutStatus: { ...font.captionMed },
+  emptyCard: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.borderSubtle, padding: spacing.lg, alignItems: 'center' },
+  emptyText: { ...font.body, color: colors.textMuted },
 
   transactions: {
     backgroundColor: colors.surface,

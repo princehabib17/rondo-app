@@ -1,49 +1,57 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, spacing, radius } from '../../../../constants/theme';
 import { Badge } from '../../../../components/ui/Badge';
 import { Card } from '../../../../components/ui/Card';
+import { useQuery } from '../../../../hooks/useQuery';
+import * as q from '../../../../lib/queries';
+import type { GamePlayerWithProfile, GamePlayerStatus } from '../../../../lib/types';
 
-type PayStatus = 'paid' | 'unpaid' | 'reserved';
 type Filter = 'All' | 'Paid' | 'Unpaid';
 
-const MOCK_PLAYERS = [
-  { id: 'p1', name: 'Juan Dela Cruz', status: 'paid' as PayStatus, amount: 150 },
-  { id: 'p2', name: 'Mike Santos', status: 'paid' as PayStatus, amount: 150 },
-  { id: 'p3', name: 'Carlo Reyes', status: 'unpaid' as PayStatus, amount: 150 },
-  { id: 'p4', name: 'Rico Manalo', status: 'paid' as PayStatus, amount: 150 },
-  { id: 'p5', name: 'Alex Tan', status: 'reserved' as PayStatus, amount: 150 },
-  { id: 'p6', name: 'Ben Cruz', status: 'unpaid' as PayStatus, amount: 150 },
-  { id: 'p7', name: 'Chris Valle', status: 'paid' as PayStatus, amount: 150 },
-  { id: 'p8', name: 'Dave Pascual', status: 'reserved' as PayStatus, amount: 150 },
-];
+const PAID_STATUSES: GamePlayerStatus[] = ['paid', 'approved', 'venue'];
+const UNPAID_STATUSES: GamePlayerStatus[] = ['pending', 'pending_payment', 'reserved', 'pending_approval'];
+
+const STATUS_BADGE: Record<GamePlayerStatus, { color: 'green' | 'red' | 'yellow' | 'muted'; label: string }> = {
+  paid: { color: 'green', label: 'Paid' },
+  approved: { color: 'green', label: 'Approved' },
+  venue: { color: 'green', label: 'Pay at Venue' },
+  pending: { color: 'yellow', label: 'Pending' },
+  pending_payment: { color: 'yellow', label: 'Pending Payment' },
+  reserved: { color: 'yellow', label: 'Reserved' },
+  pending_approval: { color: 'yellow', label: 'Pending Approval' },
+  rejected: { color: 'red', label: 'Rejected' },
+  cancelled: { color: 'red', label: 'Cancelled' },
+  no_show: { color: 'red', label: 'No Show' },
+  refund_requested: { color: 'yellow', label: 'Refund Req.' },
+  refunded: { color: 'muted', label: 'Refunded' },
+};
 
 const FILTER_TABS: Filter[] = ['All', 'Paid', 'Unpaid'];
 
-const STATUS_COLOR: Record<PayStatus, 'green' | 'red' | 'yellow'> = {
-  paid: 'green',
-  unpaid: 'red',
-  reserved: 'yellow',
-};
-
 export default function PaymentsScreen() {
   const insets = useSafeAreaInsets();
-  const { id } = useLocalSearchParams();
+  const { id: gameId } = useLocalSearchParams<{ id: string }>();
   const [filter, setFilter] = useState<Filter>('All');
 
-  const paid = MOCK_PLAYERS.filter((p) => p.status === 'paid');
-  const unpaid = MOCK_PLAYERS.filter((p) => p.status === 'unpaid');
-  const reserved = MOCK_PLAYERS.filter((p) => p.status === 'reserved');
-  const collected = paid.reduce((sum, p) => sum + p.amount, 0);
-  const expected = MOCK_PLAYERS.length * 150;
+  const gameQuery = useQuery(() => q.getGame(gameId!), [gameId]);
+  const playersQuery = useQuery(() => q.getGamePlayers(gameId!), [gameId]);
 
-  const filtered = filter === 'All'
-    ? MOCK_PLAYERS
-    : filter === 'Paid'
-    ? paid
-    : unpaid;
+  const game = gameQuery.data;
+  const players = playersQuery.data ?? [];
+  const loading = gameQuery.loading || (playersQuery.loading && !playersQuery.data);
+
+  const filtered = useMemo(() => {
+    if (filter === 'Paid') return players.filter((p) => PAID_STATUSES.includes(p.payment_status));
+    if (filter === 'Unpaid') return players.filter((p) => UNPAID_STATUSES.includes(p.payment_status));
+    return players;
+  }, [players, filter]);
+
+  const paidCount = players.filter((p) => PAID_STATUSES.includes(p.payment_status)).length;
+  const totalExpected = game ? game.price_per_player * players.length : 0;
+  const totalCollected = game ? game.price_per_player * paidCount : 0;
 
   return (
     <View style={styles.container}>
@@ -52,158 +60,127 @@ export default function PaymentsScreen() {
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Friday Night 5v5</Text>
-          <Text style={styles.headerSub}>Payments</Text>
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            {gameQuery.loading ? 'Loading…' : (game?.title ?? 'Payments')}
+          </Text>
+          <Text style={styles.headerSub}>Payment Tracker</Text>
         </View>
-        <View style={styles.headerRight} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        <View style={styles.statsStrip}>
-          {[
-            { label: 'Paid', value: paid.length, color: colors.success },
-            { label: 'Unpaid', value: unpaid.length, color: colors.error },
-            { label: 'Reserved', value: reserved.length, color: colors.warning },
-          ].map((s) => (
-            <Card key={s.label} style={styles.statCard}>
-              <Text style={[styles.statValue, { color: s.color }]}>{s.value}</Text>
-              <Text style={styles.statLabel}>{s.label}</Text>
-            </Card>
-          ))}
-        </View>
-
-        <Card style={styles.totalsCard}>
-          <View style={styles.totalsRow}>
-            <View style={styles.totalsItem}>
-              <Text style={styles.totalsLabel}>Expected</Text>
-              <Text style={styles.totalsValue}>₱{expected.toLocaleString()}</Text>
+      {loading ? (
+        <View style={styles.center}><ActivityIndicator color={colors.yellow} /></View>
+      ) : (
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xxl }}>
+          {/* Summary card */}
+          <View style={styles.summary}>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryValue}>{paidCount}/{players.length}</Text>
+              <Text style={styles.summaryLabel}>Players Paid</Text>
             </View>
-            <View style={styles.totalsDivider} />
-            <View style={styles.totalsItem}>
-              <Text style={styles.totalsLabel}>Collected</Text>
-              <Text style={[styles.totalsValue, { color: colors.success }]}>₱{collected.toLocaleString()}</Text>
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryItem}>
+              <Text style={[styles.summaryValue, { color: colors.success }]}>
+                ₱{(totalCollected / 100).toLocaleString()}
+              </Text>
+              <Text style={styles.summaryLabel}>Collected</Text>
             </View>
-            <View style={styles.totalsDivider} />
-            <View style={styles.totalsItem}>
-              <Text style={styles.totalsLabel}>Remaining</Text>
-              <Text style={[styles.totalsValue, { color: colors.error }]}>₱{(expected - collected).toLocaleString()}</Text>
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryValue}>₱{(totalExpected / 100).toLocaleString()}</Text>
+              <Text style={styles.summaryLabel}>Expected</Text>
             </View>
           </View>
-          <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: `${(collected / expected) * 100}%` }]} />
+
+          {/* Filter tabs */}
+          <View style={styles.filterRow}>
+            {FILTER_TABS.map((f) => (
+              <TouchableOpacity
+                key={f}
+                onPress={() => setFilter(f)}
+                style={[styles.filterTab, filter === f && styles.filterTabActive]}
+              >
+                <Text style={[styles.filterTabText, filter === f && styles.filterTabTextActive]}>{f}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
-        </Card>
 
-        <View style={styles.filterRow}>
-          {FILTER_TABS.map((f) => (
-            <TouchableOpacity
-              key={f}
-              onPress={() => setFilter(f)}
-              style={[styles.filterPill, filter === f && styles.filterPillActive]}
-            >
-              <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>{f}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={styles.playerList}>
-          {filtered.map((player, i) => (
-            <View
-              key={player.id}
-              style={[styles.playerRow, i < filtered.length - 1 && styles.playerRowBorder]}
-            >
-              <View style={styles.playerAvatar}>
-                <Text style={styles.playerAvatarText}>{player.name[0]}</Text>
+          {/* Player list */}
+          <View style={styles.list}>
+            {filtered.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>No players in this category</Text>
               </View>
-              <View style={styles.playerInfo}>
-                <Text style={styles.playerName}>{player.name}</Text>
-                <Text style={styles.playerAmount}>₱{player.amount}</Text>
-              </View>
-              <Badge color={STATUS_COLOR[player.status]}>
-                {player.status.charAt(0).toUpperCase() + player.status.slice(1)}
-              </Badge>
-            </View>
-          ))}
-        </View>
-      </ScrollView>
+            ) : filtered.map((gp: GamePlayerWithProfile, i) => {
+              const badgeInfo = STATUS_BADGE[gp.payment_status] ?? { color: 'muted' as const, label: gp.payment_status };
+              return (
+                <View
+                  key={gp.id}
+                  style={[styles.playerRow, i < filtered.length - 1 && styles.playerRowBorder]}
+                >
+                  <View style={styles.playerAvatar}>
+                    <Text style={styles.playerAvatarText}>
+                      {(gp.profile?.full_name?.[0] ?? '?').toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={styles.playerInfo}>
+                    <Text style={styles.playerName}>{gp.profile?.full_name ?? 'Player'}</Text>
+                    {game && (
+                      <Text style={styles.playerAmount}>₱{(game.price_per_player / 100).toLocaleString()}</Text>
+                    )}
+                  </View>
+                  <Badge color={badgeInfo.color}>{badgeInfo.label}</Badge>
+                </View>
+              );
+            })}
+          </View>
+        </ScrollView>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderSubtle,
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: spacing.md, paddingBottom: spacing.md,
+    borderBottomWidth: 1, borderBottomColor: colors.borderSubtle, gap: spacing.sm,
   },
-  backBtn: { padding: spacing.xs, marginRight: spacing.sm },
+  backBtn: { padding: spacing.xs },
   backArrow: { fontSize: 22, color: colors.yellow },
   headerCenter: { flex: 1 },
   headerTitle: { ...font.h4, color: colors.text },
   headerSub: { ...font.caption, color: colors.textMuted },
-  headerRight: { width: 40 },
 
-  scroll: { padding: spacing.md, gap: spacing.md, paddingBottom: spacing.xxl },
-
-  statsStrip: { flexDirection: 'row', gap: spacing.sm },
-  statCard: { flex: 1, alignItems: 'center', gap: spacing.xs, padding: spacing.md },
-  statValue: { ...font.h2 },
-  statLabel: { ...font.caption, color: colors.textMuted },
-
-  totalsCard: { gap: spacing.md },
-  totalsRow: { flexDirection: 'row', alignItems: 'center' },
-  totalsItem: { flex: 1, alignItems: 'center', gap: spacing.xs },
-  totalsLabel: { ...font.caption, color: colors.textMuted },
-  totalsValue: { ...font.h4, color: colors.text },
-  totalsDivider: { width: 1, height: 36, backgroundColor: colors.borderSubtle },
-  progressBar: { height: 6, backgroundColor: colors.surfaceElevated, borderRadius: radius.full, overflow: 'hidden' },
-  progressFill: { height: '100%', backgroundColor: colors.success, borderRadius: radius.full },
+  summary: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.borderSubtle,
+    padding: spacing.lg,
+  },
+  summaryItem: { flex: 1, alignItems: 'center', gap: 4 },
+  summaryValue: { ...font.h3, color: colors.text },
+  summaryLabel: { ...font.caption, color: colors.textMuted },
+  summaryDivider: { width: 1, height: 36, backgroundColor: colors.borderSubtle },
 
   filterRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
+    flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: colors.borderSubtle,
   },
-  filterPill: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: 6,
-    borderRadius: radius.full,
-    backgroundColor: colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  filterPillActive: { backgroundColor: colors.yellowDim, borderColor: colors.yellow },
-  filterText: { ...font.bodySmMed, color: colors.textSecondary },
-  filterTextActive: { color: colors.yellow },
+  filterTab: { flex: 1, paddingVertical: spacing.md, alignItems: 'center' },
+  filterTabActive: { borderBottomWidth: 2, borderBottomColor: colors.yellow },
+  filterTabText: { ...font.bodySmMed, color: colors.textMuted },
+  filterTabTextActive: { color: colors.yellow },
 
-  playerList: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    overflow: 'hidden',
-  },
-  playerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    padding: spacing.md,
-  },
+  list: { backgroundColor: colors.surface, marginHorizontal: spacing.lg, marginTop: spacing.lg, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.borderSubtle, overflow: 'hidden' },
+  playerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md },
   playerRowBorder: { borderBottomWidth: 1, borderBottomColor: colors.borderSubtle },
-  playerAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.yellowDim,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  playerAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.yellowDim, alignItems: 'center', justifyContent: 'center' },
   playerAvatarText: { ...font.bodySmMed, color: colors.yellow },
   playerInfo: { flex: 1, gap: 2 },
   playerName: { ...font.bodyMed, color: colors.text },
   playerAmount: { ...font.caption, color: colors.textMuted },
+
+  emptyState: { padding: spacing.xl, alignItems: 'center' },
+  emptyText: { ...font.body, color: colors.textMuted },
 });
