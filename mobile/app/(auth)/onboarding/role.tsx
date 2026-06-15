@@ -17,7 +17,6 @@ const ROLES = [
     id: 'player' as Role,
     emoji: '⚽',
     title: 'Player',
-    description: 'Find games, join teams, track your stats.',
     gradient: ['#1A2A1A', '#0A0A0A'] as [string, string],
     accent: colors.success,
   },
@@ -25,7 +24,6 @@ const ROLES = [
     id: 'organizer' as Role,
     emoji: '🏟️',
     title: 'Organizer',
-    description: 'Host games, run tournaments, grow your community.',
     gradient: ['#1A1A2A', '#0A0A0A'] as [string, string],
     accent: colors.accent,
   },
@@ -68,7 +66,6 @@ export default function RoleScreen() {
       <View style={styles.content}>
         <Text style={styles.stepLabel}>Step 1 of 4</Text>
         <Text style={styles.title}>What brings you here?</Text>
-        <Text style={styles.subtitle}>You can switch roles anytime from your profile.</Text>
 
         <View style={styles.cards}>
           {ROLES.map((role) => (
@@ -81,7 +78,6 @@ export default function RoleScreen() {
               <LinearGradient colors={role.gradient} style={styles.cardGradient}>
                 <Text style={styles.cardEmoji}>{role.emoji}</Text>
                 <Text style={styles.cardTitle}>{role.title}</Text>
-                <Text style={styles.cardDesc}>{role.description}</Text>
                 {selected === role.id && (
                   <View style={[styles.checkmark, { backgroundColor: role.accent }]}>
                     <Text style={styles.checkmarkText}>✓</Text>
@@ -116,20 +112,19 @@ const styles = StyleSheet.create({
 
   content: { flex: 1 },
   stepLabel: { ...font.captionMed, color: colors.yellow, letterSpacing: 1, textTransform: 'uppercase', marginBottom: spacing.sm },
-  title: { ...font.h1, color: colors.text, marginBottom: spacing.sm },
-  subtitle: { ...font.body, color: colors.textSecondary, lineHeight: 24, marginBottom: spacing.xl },
+  title: { ...font.h1, color: colors.text, marginBottom: spacing.xl },
 
-  cards: { gap: spacing.md },
+  cards: { flexDirection: 'row', gap: spacing.md },
   card: {
+    flex: 1,
     borderRadius: radius.lg,
     overflow: 'hidden',
     borderWidth: 1.5,
     borderColor: colors.border,
   },
-  cardGradient: { padding: spacing.lg, minHeight: 140 },
-  cardEmoji: { fontSize: 36, marginBottom: spacing.sm },
-  cardTitle: { ...font.h3, color: colors.text, marginBottom: spacing.xs },
-  cardDesc: { ...font.body, color: colors.textSecondary, lineHeight: 22 },
+  cardGradient: { padding: spacing.lg, minHeight: 180, alignItems: 'center', justifyContent: 'center' },
+  cardEmoji: { fontSize: 48, marginBottom: spacing.md },
+  cardTitle: { ...font.h2, color: colors.text, textAlign: 'center' },
   checkmark: {
     position: 'absolute',
     top: spacing.md,

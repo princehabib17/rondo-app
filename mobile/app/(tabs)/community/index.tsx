@@ -91,7 +91,6 @@ function PostCard({ post, onChanged }: { post: PostItem; onChanged: () => void }
         </TouchableOpacity>
         <TouchableOpacity style={styles.postAction}>
           <Text style={styles.postActionIcon}>↗️</Text>
-          <Text style={styles.postActionText}>Share</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -388,17 +387,18 @@ const styles = StyleSheet.create({
   composerCamera: { fontSize: 20 },
 
   postCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
+    backgroundColor: 'transparent',
+    borderRadius: 0,
+    borderWidth: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderSubtle,
     padding: spacing.md,
     gap: spacing.sm,
   },
   postHeader: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
   postAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surfaceElevated, alignItems: 'center', justifyContent: 'center' },
   postAvatarText: { ...font.bodySmMed, color: colors.yellow },
-  postMeta: { gap: 2 },
+  postMeta: { flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   postAuthor: { ...font.bodySmMed, color: colors.text },
   postTime: { ...font.caption, color: colors.textMuted },
   postBody: { ...font.body, color: colors.textSecondary, lineHeight: 22 },

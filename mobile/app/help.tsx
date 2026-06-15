@@ -18,59 +18,116 @@ const STATUS_COLOR: Record<string, 'yellow' | 'green'> = { open: 'yellow', resol
 export default function HelpScreen() {
   const insets = useSafeAreaInsets();
   const [showForm, setShowForm] = useState(false);
+  const [step, setStep] = useState(1);
   const [ticketType, setTicketType] = useState('');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
 
+  function openForm() {
+    setStep(1);
+    setTicketType('');
+    setSubject('');
+    setBody('');
+    setShowForm(true);
+  }
+
+  function closeForm() {
+    setShowForm(false);
+    setStep(1);
+  }
+
+  function handleDone() {
+    setTicketType('');
+    setSubject('');
+    setBody('');
+    setStep(1);
+    setShowForm(false);
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScreenHeader title="Help & Support" showBack right={
-        <TouchableOpacity onPress={() => setShowForm(!showForm)}>
+        <TouchableOpacity onPress={showForm ? closeForm : openForm}>
           <Text style={{ color: colors.yellow, ...font.bodySmMed }}>{showForm ? 'Cancel' : '+ New'}</Text>
         </TouchableOpacity>
       } />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: spacing.lg, paddingBottom: insets.bottom + spacing.xxl, gap: spacing.lg }}>
-        {showForm && (
+        {showForm ? (
           <View style={styles.form}>
-            <Text style={styles.formTitle}>New Ticket</Text>
-            <Text style={styles.fieldLabel}>Category</Text>
-            <View style={styles.typeRow}>
-              {TICKET_TYPES.map((t) => (
-                <TouchableOpacity key={t} onPress={() => setTicketType(t)} style={[styles.typePill, ticketType === t && styles.typePillActive]}>
-                  <Text style={[styles.typePillText, ticketType === t && styles.typePillTextActive]}>{t}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            <Input label="Subject" placeholder="Brief description of the issue" value={subject} onChangeText={setSubject} />
-            <Input label="Details" placeholder="Describe what happened in detail…" value={body} onChangeText={setBody} multiline numberOfLines={5} />
-            <Button onPress={() => setShowForm(false)} disabled={!ticketType || !subject || !body}>Submit Ticket</Button>
-          </View>
-        )}
+            {/* Step 1: Category picker */}
+            {step === 1 && (
+              <>
+                <Text style={styles.stepTitle}>What's the issue?</Text>
+                <Text style={styles.stepSubtitle}>Choose a category</Text>
+                <View style={styles.typeRow}>
+                  {TICKET_TYPES.map((t) => (
+                    <TouchableOpacity key={t} onPress={() => setTicketType(t)} style={[styles.typePill, ticketType === t && styles.typePillActive]}>
+                      <Text style={[styles.typePillText, ticketType === t && styles.typePillTextActive]}>{t}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <Button onPress={() => setStep(2)} disabled={!ticketType}>Next →</Button>
+              </>
+            )}
 
-        <Text style={styles.sectionTitle}>My Tickets</Text>
+            {/* Step 2: Subject + description */}
+            {step === 2 && (
+              <>
+                <Text style={styles.stepTitle}>Describe the issue</Text>
+                <Text style={styles.stepSubtitle}>{ticketType}</Text>
+                <Input label="Subject" placeholder="Brief description of the issue" value={subject} onChangeText={setSubject} />
+                <Input label="Details" placeholder="Describe what happened in detail…" value={body} onChangeText={setBody} multiline numberOfLines={5} />
+                <View style={styles.stepButtons}>
+                  <TouchableOpacity onPress={() => setStep(1)} style={styles.backBtn}>
+                    <Text style={styles.backBtnText}>← Back</Text>
+                  </TouchableOpacity>
+                  <View style={styles.submitBtnWrapper}>
+                    <Button onPress={() => setStep(3)} disabled={!subject || !body}>Submit</Button>
+                  </View>
+                </View>
+              </>
+            )}
 
-        {MOCK_TICKETS.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={styles.emptyEmoji}>✉️</Text>
-            <Text style={styles.emptyTitle}>No tickets yet</Text>
-            <Text style={styles.emptySub}>Tap "+ New" to contact support.</Text>
+            {/* Step 3: Success */}
+            {step === 3 && (
+              <View style={styles.successContent}>
+                <View style={styles.checkCircle}>
+                  <Text style={styles.checkMark}>✓</Text>
+                </View>
+                <Text style={styles.successTitle}>Ticket submitted</Text>
+                <Text style={styles.successSub}>We'll get back to you within 24 hours</Text>
+                <Button onPress={handleDone}>Done</Button>
+              </View>
+            )}
           </View>
         ) : (
-          <View style={styles.tickets}>
-            {MOCK_TICKETS.map((t, i) => (
-              <TouchableOpacity key={t.id} style={[styles.ticket, i < MOCK_TICKETS.length - 1 && styles.ticketBorder]} activeOpacity={0.8}>
-                <View style={styles.ticketHeader}>
-                  <View style={styles.ticketLeft}>
-                    <Text style={styles.ticketSubject}>{t.subject}</Text>
-                    <Text style={styles.ticketType}>{t.type} · {t.date}</Text>
-                  </View>
-                  <Badge color={STATUS_COLOR[t.status]}>{t.status}</Badge>
-                </View>
-                <Text style={styles.ticketReply} numberOfLines={1}>{t.lastReply}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <>
+            <Text style={styles.sectionTitle}>My Tickets</Text>
+
+            {MOCK_TICKETS.length === 0 ? (
+              <View style={styles.empty}>
+                <Text style={styles.emptyEmoji}>✉️</Text>
+                <Text style={styles.emptyTitle}>No tickets yet</Text>
+                <Text style={styles.emptySub}>Tap "+ New" to contact support.</Text>
+              </View>
+            ) : (
+              <View style={styles.tickets}>
+                {MOCK_TICKETS.map((t, i) => (
+                  <TouchableOpacity key={t.id} style={[styles.ticket, i < MOCK_TICKETS.length - 1 && styles.ticketBorder]} activeOpacity={0.8}>
+                    <View style={styles.ticketHeader}>
+                      <View style={styles.ticketLeft}>
+                        <Text style={styles.ticketSubject}>{t.subject}</Text>
+                        <Text style={styles.ticketType}>{t.type} · {t.date}</Text>
+                      </View>
+                      <Badge color={STATUS_COLOR[t.status]}>{t.status}</Badge>
+                    </View>
+                    <Text style={styles.ticketReply} numberOfLines={1}>{t.lastReply}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </>
         )}
       </ScrollView>
     </View>
@@ -78,14 +135,28 @@ export default function HelpScreen() {
 }
 
 const styles = StyleSheet.create({
-  form: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: spacing.lg, gap: spacing.md },
-  formTitle: { ...font.h3, color: colors.text },
-  fieldLabel: { ...font.label, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.6 },
+  form: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: spacing.lg, gap: spacing.lg },
+
+  stepTitle: { ...font.h3, color: colors.text },
+  stepSubtitle: { ...font.body, color: colors.textSecondary, marginTop: -spacing.sm },
+
   typeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   typePill: { paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radius.full, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.border },
   typePillActive: { backgroundColor: colors.yellowDim, borderColor: colors.yellow },
   typePillText: { ...font.bodySmMed, color: colors.textSecondary },
   typePillTextActive: { color: colors.yellow },
+
+  stepButtons: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  backBtn: { paddingVertical: spacing.sm, paddingHorizontal: spacing.xs },
+  backBtnText: { ...font.bodySmMed, color: colors.textSecondary },
+  submitBtnWrapper: { flex: 1 },
+
+  successContent: { alignItems: 'center', paddingVertical: spacing.xl, gap: spacing.md },
+  checkCircle: { width: 64, height: 64, borderRadius: 32, backgroundColor: colors.success + '22', borderWidth: 2, borderColor: colors.success, alignItems: 'center', justifyContent: 'center' },
+  checkMark: { fontSize: 28, color: colors.success, fontWeight: '700' },
+  successTitle: { ...font.h3, color: colors.text },
+  successSub: { ...font.body, color: colors.textSecondary, textAlign: 'center' },
+
   sectionTitle: { ...font.label, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.8 },
   tickets: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.borderSubtle, overflow: 'hidden' },
   ticket: { padding: spacing.md, gap: spacing.xs },
