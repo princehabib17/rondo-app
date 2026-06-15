@@ -12,7 +12,7 @@ import { Card } from '../../../components/ui/Card';
 import { useQuery } from '../../../hooks/useQuery';
 import { useAuth } from '../../../hooks/useAuth';
 import * as q from '../../../lib/queries';
-import type { Game, Team, GamePlayerWithProfile } from '../../../lib/types';
+import type { GameWithOrganizer, Team, GamePlayerWithProfile } from '../../../lib/types';
 
 const { height } = Dimensions.get('window');
 const HERO_HEIGHT = height * 0.38;
@@ -44,7 +44,10 @@ export default function GameDetailScreen() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'info' | 'teams'>('info');
 
-  const { data: game, loading, error, refetch } = useQuery<Game>(() => q.getGame(id), [id]);
+  const { data: game, loading, error, refetch } = useQuery<GameWithOrganizer>(
+    () => q.getGame(id) as Promise<GameWithOrganizer>,
+    [id]
+  );
   const { data: teams } = useQuery<Team[]>(() => q.getGameTeams(id), [id]);
   const { data: players } = useQuery<GamePlayerWithProfile[]>(() => q.getGamePlayers(id), [id]);
 

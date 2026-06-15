@@ -1,27 +1,88 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, spacing, radius } from '../../../constants/theme';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
+import { useQuery, useMutation } from '../../../hooks/useQuery';
+import * as q from '../../../lib/queries';
+import type { PayoutRequest, WalletTransaction } from '../../../lib/types';
 
-const MOCK_PAYOUTS = [
-  { id: '1', amount: 2400, status: 'paid', date: 'Jun 1', bank: 'GCash' },
-  { id: '2', amount: 1800, status: 'pending', date: 'Jun 10', bank: 'BDO' },
-];
-
-const MOCK_BREAKDOWN = [
-  { game: 'Friday Night 5v5', date: 'Jun 20', collected: 1200, expected: 1500 },
-  { game: 'Sunday League', date: 'Jun 22', collected: 2800, expected: 2800 },
-  { game: 'BGC Wednesday', date: 'Jun 25', collected: 300, expected: 1500 },
-];
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
 
 export default function EarningsScreen() {
   const insets = useSafeAreaInsets();
   const [showPayoutForm, setShowPayoutForm] = useState(false);
-  const total = MOCK_BREAKDOWN.reduce((s, g) => s + g.collected, 0);
+  const [amount, setAmount] = useState('');
+  const [accountName, setAccountName] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+
+  const earnings = useQuery(() => q.getOrganizerEarnings(), []);
+  const payouts = useQuery(() => q.getPayoutRequests(), []);
+  const submitPayout = useMutation(() =>
+    q.requestPayout({
+      amount: Math.round(parseFloat(amount) * 100),
+      bank_account_name: accountName || undefined,
+      bank_name: bankName || undefined,
+      bank_account_number: accountNumber || undefined,
+    })
+  );
+
+  const collected = earnings.data?.collected ?? 0;
+  const txns = earnings.data?.txns ?? [];
+
+  // Per-game breakdown from txns: sum credited amounts by game_id
+  const breakdown = useMemo(() => {
+    const byGame = new Map<string, number>();
+    for (const t of txns) {
+      if (!t.game_id) continue;
+      const delta = t.direction === 'credit' ? t.amount : -t.amount;
+      byGame.set(t.game_id, (byGame.get(t.game_id) ?? 0) + delta);
+    }
+    return [...byGame.entries()].map(([gameId, total]) => ({ gameId, total }));
+  }, [txns]);
+
+  const handleSubmit = async () => {
+    try {
+      await submitPayout.mutate(undefined);
+      setShowPayoutForm(false);
+      setAmount('');
+      setAccountName('');
+      setBankName('');
+      setAccountNumber('');
+      payouts.refetch();
+      earnings.refetch();
+    } catch {
+      // error surfaced via submitPayout.error
+    }
+  };
+
+  const loading = earnings.loading || payouts.loading;
+  const error = earnings.error || payouts.error;
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.center, { paddingTop: insets.top }]}>
+        <ActivityIndicator color={colors.accent} />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, styles.center, { paddingTop: insets.top }]}>
+        <Text style={styles.errorText}>{error}</Text>
+        <Button onPress={() => { earnings.refetch(); payouts.refetch(); }} style={{ marginTop: spacing.md }}>Retry</Button>
+      </View>
+    );
+  }
+
+  const payoutList = payouts.data ?? [];
+  const validAmount = !!amount && !isNaN(parseFloat(amount)) && parseFloat(amount) >= 100;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -33,9 +94,9 @@ export default function EarningsScreen() {
         {/* Balance hero */}
         <View style={styles.hero}>
           <LinearGradient colors={['#001A0A', '#0A0A0A']} style={StyleSheet.absoluteFill} />
-          <Text style={styles.heroLabel}>This month's earnings</Text>
-          <Text style={styles.heroAmount}>₱{total.toLocaleString()}</Text>
-          <Text style={styles.heroSub}>Across {MOCK_BREAKDOWN.length} games</Text>
+          <Text style={styles.heroLabel}>Total earnings collected</Text>
+          <Text style={styles.heroAmount}>₱{(collected / 100).toLocaleString()}</Text>
+          <Text style={styles.heroSub}>Across {breakdown.length} game{breakdown.length === 1 ? '' : 's'}</Text>
           <Button onPress={() => setShowPayoutForm(!showPayoutForm)} style={styles.payoutBtn}>
             {showPayoutForm ? 'Cancel' : 'Request Payout'}
           </Button>
@@ -46,11 +107,40 @@ export default function EarningsScreen() {
           <View style={styles.section}>
             <View style={styles.payoutForm}>
               <Text style={styles.payoutInfo}>Minimum payout ₱100. Processed in 3–5 business days.</Text>
-              <TouchableOpacity style={styles.bankRow}>
-                <Text style={styles.bankLabel}>💳 Select bank / e-wallet</Text>
-                <Text style={styles.bankArrow}>›</Text>
-              </TouchableOpacity>
-              <Button onPress={() => setShowPayoutForm(false)}>Submit Payout Request</Button>
+              <TextInput
+                style={styles.input}
+                placeholder="Amount (₱)"
+                placeholderTextColor={colors.textMuted}
+                value={amount}
+                onChangeText={setAmount}
+                keyboardType="numeric"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Account name"
+                placeholderTextColor={colors.textMuted}
+                value={accountName}
+                onChangeText={setAccountName}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Bank / e-wallet"
+                placeholderTextColor={colors.textMuted}
+                value={bankName}
+                onChangeText={setBankName}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Account number"
+                placeholderTextColor={colors.textMuted}
+                value={accountNumber}
+                onChangeText={setAccountNumber}
+                keyboardType="numeric"
+              />
+              {submitPayout.error && <Text style={styles.formError}>{submitPayout.error}</Text>}
+              <Button onPress={handleSubmit} disabled={!validAmount} loading={submitPayout.loading}>
+                Submit Payout Request
+              </Button>
             </View>
           </View>
         )}
@@ -58,40 +148,46 @@ export default function EarningsScreen() {
         {/* Payout history */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Payout History</Text>
-          <View style={styles.card}>
-            {MOCK_PAYOUTS.map((p, i) => (
-              <View key={p.id} style={[styles.payoutRow, i < MOCK_PAYOUTS.length - 1 && styles.payoutRowBorder]}>
-                <View>
-                  <Text style={styles.payoutBank}>{p.bank}</Text>
-                  <Text style={styles.payoutDate}>{p.date}</Text>
+          {payoutList.length === 0 ? (
+            <View style={styles.card}>
+              <Text style={styles.emptyText}>No payout requests yet</Text>
+            </View>
+          ) : (
+            <View style={styles.card}>
+              {payoutList.map((p: PayoutRequest, i: number) => (
+                <View key={p.id} style={[styles.payoutRow, i < payoutList.length - 1 && styles.payoutRowBorder]}>
+                  <View>
+                    <Text style={styles.payoutBank}>{p.bank_name || 'Bank transfer'}</Text>
+                    <Text style={styles.payoutDate}>{formatDate(p.created_at)}</Text>
+                  </View>
+                  <View style={styles.payoutRight}>
+                    <Text style={styles.payoutAmount}>₱{(p.amount / 100).toLocaleString()}</Text>
+                    <Badge color={p.status === 'paid' ? 'green' : p.status === 'rejected' ? 'red' : 'yellow'}>{p.status}</Badge>
+                  </View>
                 </View>
-                <View style={styles.payoutRight}>
-                  <Text style={styles.payoutAmount}>₱{p.amount.toLocaleString()}</Text>
-                  <Badge color={p.status === 'paid' ? 'green' : 'yellow'}>{p.status}</Badge>
-                </View>
-              </View>
-            ))}
-          </View>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Per-game breakdown */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Game Breakdown</Text>
-          <View style={styles.card}>
-            {MOCK_BREAKDOWN.map((g, i) => (
-              <View key={g.game} style={[styles.gameRow, i < MOCK_BREAKDOWN.length - 1 && styles.gameRowBorder]}>
-                <View style={styles.gameLeft}>
-                  <Text style={styles.gameName}>{g.game}</Text>
-                  <Text style={styles.gameDate}>{g.date}</Text>
+        {breakdown.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Game Breakdown</Text>
+            <View style={styles.card}>
+              {breakdown.map((g, i) => (
+                <View key={g.gameId} style={[styles.gameRow, i < breakdown.length - 1 && styles.gameRowBorder]}>
+                  <View style={styles.gameLeft}>
+                    <Text style={styles.gameName} numberOfLines={1}>Game {g.gameId.slice(0, 8)}</Text>
+                  </View>
+                  <View style={styles.gameRight}>
+                    <Text style={styles.gameCollected}>₱{(g.total / 100).toLocaleString()}</Text>
+                  </View>
                 </View>
-                <View style={styles.gameRight}>
-                  <Text style={styles.gameCollected}>₱{g.collected.toLocaleString()}</Text>
-                  <Text style={styles.gameExpected}>/ ₱{g.expected.toLocaleString()}</Text>
-                </View>
-              </View>
-            ))}
+              ))}
+            </View>
           </View>
-        </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -99,6 +195,9 @@ export default function EarningsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
+  center: { alignItems: 'center', justifyContent: 'center' },
+  errorText: { ...font.body, color: colors.error, textAlign: 'center', paddingHorizontal: spacing.lg },
+  emptyText: { ...font.body, color: colors.textMuted, textAlign: 'center', padding: spacing.lg },
   header: { paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.borderSubtle },
   headerTitle: { ...font.h3, color: colors.text },
   hero: { overflow: 'hidden', padding: spacing.xl, alignItems: 'center', gap: spacing.xs },
@@ -111,9 +210,8 @@ const styles = StyleSheet.create({
   card: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.borderSubtle, overflow: 'hidden' },
   payoutForm: { backgroundColor: colors.surfaceElevated, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: spacing.lg, gap: spacing.md },
   payoutInfo: { ...font.body, color: colors.textSecondary, lineHeight: 22 },
-  bankRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, padding: spacing.md },
-  bankLabel: { ...font.bodyMed, color: colors.textSecondary },
-  bankArrow: { fontSize: 20, color: colors.textMuted },
+  input: { ...font.body, color: colors.text, backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
+  formError: { ...font.caption, color: colors.error },
   payoutRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: spacing.md },
   payoutRowBorder: { borderBottomWidth: 1, borderBottomColor: colors.borderSubtle },
   payoutBank: { ...font.bodyMed, color: colors.text },
@@ -122,7 +220,7 @@ const styles = StyleSheet.create({
   payoutAmount: { ...font.bodyMed, color: colors.text },
   gameRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: spacing.md },
   gameRowBorder: { borderBottomWidth: 1, borderBottomColor: colors.borderSubtle },
-  gameLeft: { gap: 2 },
+  gameLeft: { gap: 2, flex: 1 },
   gameName: { ...font.bodySmMed, color: colors.text },
   gameDate: { ...font.caption, color: colors.textMuted },
   gameRight: { alignItems: 'flex-end' },
