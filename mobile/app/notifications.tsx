@@ -37,9 +37,13 @@ function timeAgo(iso: string): string {
   return `${days}d ago`;
 }
 
-function isToday(iso: string): boolean {
+type Group = 'Today' | 'Yesterday' | 'Earlier';
+
+function groupOf(iso: string): Group {
   const diff = Date.now() - new Date(iso).getTime();
-  return diff < 86400000;
+  if (diff < 86400000) return 'Today';
+  if (diff < 172800000) return 'Yesterday';
+  return 'Earlier';
 }
 
 export default function NotificationsScreen() {
@@ -55,38 +59,46 @@ export default function NotificationsScreen() {
   }, [refetch]);
 
   const notifs = data ?? [];
-  const today = notifs.filter((n) => isToday(n.created_at));
-  const earlier = notifs.filter((n) => !isToday(n.created_at));
+  const today = notifs.filter((n) => groupOf(n.created_at) === 'Today');
+  const yesterday = notifs.filter((n) => groupOf(n.created_at) === 'Yesterday');
+  const earlier = notifs.filter((n) => groupOf(n.created_at) === 'Earlier');
 
-  const renderGroup = (title: string, items: AppNotification[]) => (
-    <View style={styles.group} key={title}>
-      <Text style={styles.groupTitle}>{title}</Text>
-      <View style={styles.groupItems}>
-        {items.map((n, i) => {
-          const icon = TYPE_ICONS[n.type] ?? '🔔';
-          const color = TYPE_COLORS[n.type] ?? colors.textMuted;
-          return (
-            <TouchableOpacity
-              key={n.id}
-              onPress={() => handlePress(n)}
-              style={[styles.notifRow, !n.read_at && styles.notifRowUnread, i < items.length - 1 && styles.notifRowBorder]}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.iconBox, { backgroundColor: color + '22' }]}>
-                <Text style={styles.icon}>{icon}</Text>
-              </View>
-              <View style={styles.notifInfo}>
-                <Text style={[styles.notifTitle, !n.read_at && styles.notifTitleUnread]}>{n.title}</Text>
-                <Text style={styles.notifBody} numberOfLines={2}>{n.body}</Text>
-                <Text style={styles.notifTime}>{timeAgo(n.created_at)}</Text>
-              </View>
-              {!n.read_at && <View style={styles.unreadDot} />}
-            </TouchableOpacity>
-          );
-        })}
+  const renderGroup = (title: string, items: AppNotification[]) => {
+    if (items.length === 0) return null;
+    return (
+      <View style={styles.group} key={title}>
+        <Text style={styles.groupTitle}>{title}</Text>
+        <View style={styles.groupItems}>
+          {items.map((n, i) => {
+            const icon = TYPE_ICONS[n.type] ?? '🔔';
+            const color = TYPE_COLORS[n.type] ?? colors.textMuted;
+            return (
+              <TouchableOpacity
+                key={n.id}
+                onPress={() => handlePress(n)}
+                style={[
+                  styles.notifRow,
+                  !n.read_at && styles.notifRowUnread,
+                  i < items.length - 1 && styles.notifRowBorder,
+                ]}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.iconBox, { backgroundColor: color + '22' }]}>
+                  <Text style={styles.icon}>{icon}</Text>
+                </View>
+                <View style={styles.notifInfo}>
+                  <Text style={[styles.notifTitle, !n.read_at && styles.notifTitleUnread]}>{n.title}</Text>
+                  <Text style={styles.notifBody} numberOfLines={2}>{n.body}</Text>
+                  <Text style={styles.notifTime}>{timeAgo(n.created_at)}</Text>
+                </View>
+                {!n.read_at && <View style={styles.unreadDot} />}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -112,8 +124,10 @@ export default function NotificationsScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ padding: spacing.lg, paddingBottom: insets.bottom + spacing.xxl, gap: spacing.xl }}
         >
-          {today.length > 0 && renderGroup('Today', today)}
-          {earlier.length > 0 && renderGroup('Earlier', earlier)}
+          {/* Slack-style: Today · Yesterday · Earlier */}
+          {renderGroup('Today', today)}
+          {renderGroup('Yesterday', yesterday)}
+          {renderGroup('Earlier', earlier)}
         </ScrollView>
       )}
     </View>

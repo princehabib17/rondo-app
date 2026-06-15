@@ -17,40 +17,44 @@ function formatDate(iso: string): string {
   return d.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
+/* Shopify-style individual stat card */
 function StatCard({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: boolean }) {
   return (
-    <View style={[styles.statCard, accent && styles.statCardAccent]}>
+    <View style={[styles.statCard, shadow.subtle]}>
       <Text style={styles.statLabel}>{label}</Text>
-      <Text style={[styles.statValue, accent && { color: colors.yellow }]}>{value}</Text>
+      <Text style={[styles.statValue, accent && styles.statValueAccent]}>{value}</Text>
       {sub && <Text style={styles.statSub}>{sub}</Text>}
     </View>
   );
 }
 
 function GameItem({ game }: { game: Game }) {
-  const progress = game.max_players > 0 ? Math.min(1, (game as any).player_count != null ? (game as any).player_count / game.max_players : 0) : 0;
+  const playerCount = (game as any).player_count ?? 0;
+  const progress = game.max_players > 0 ? Math.min(1, playerCount / game.max_players) : 0;
+  const isFull = progress >= 1;
   return (
     <View style={styles.gameItem}>
       <View style={styles.gameItemLeft}>
-        <Text style={styles.gameItemTitle} numberOfLines={1}>{game.title}</Text>
+        <View style={styles.gameItemTop}>
+          <Text style={styles.gameItemTitle} numberOfLines={1}>{game.title}</Text>
+          <Badge color={isFull ? 'red' : 'green'}>{isFull ? 'Full' : `${game.max_players - playerCount} left`}</Badge>
+        </View>
         <Text style={styles.gameItemDate}>{formatDate(game.date_time)}</Text>
         <View style={styles.gameProgress}>
           <View style={styles.gameProgressBar}>
-            <View style={[styles.gameProgressFill, { width: `${progress * 100}%` }, progress >= 1 && styles.gameProgressFull]} />
+            <View style={[styles.gameProgressFill, { width: `${progress * 100}%` }, isFull && styles.gameProgressFull]} />
           </View>
-          <Text style={styles.gameProgressLabel}>{(game as any).player_count ?? 0}/{game.max_players} players</Text>
+          <Text style={styles.gameProgressLabel}>{playerCount}/{game.max_players} players</Text>
         </View>
       </View>
       <View style={styles.gameItemRight}>
         <Text style={styles.gameItemEarned}>₱{((game.price_per_player ?? 0) / 100).toLocaleString()}</Text>
-        <View style={styles.gameActions}>
-          <TouchableOpacity
-            onPress={() => router.push(`/organizer/games/${game.id}/manage`)}
-            style={styles.actionBtn}
-          >
-            <Text style={styles.actionBtnText}>Manage</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          onPress={() => router.push(`/organizer/games/${game.id}/manage`)}
+          style={styles.manageBtn}
+        >
+          <Text style={styles.manageBtnText}>Manage</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -66,6 +70,7 @@ export default function OrganizerDashboard() {
 
   const games = gamesQ.data ?? [];
   const earned = earningsQ.data?.collected ?? 0;
+  const totalSlots = games.reduce((s, g) => s + (g.max_players ?? 0), 0);
 
   const switchToPlayer = async () => {
     try { await q.updateProfile({ role: 'player' }); } catch {}
@@ -85,17 +90,12 @@ export default function OrganizerDashboard() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.xxl }}>
-        {/* Stats strip */}
-        <View style={styles.statsStrip}>
-          <LinearGradient colors={['#001A14', '#0A0A0A']} style={StyleSheet.absoluteFill} />
-          <Text style={styles.statsPeriod}>This month</Text>
-          <View style={styles.statsRow}>
-            <StatCard label="Earned" value={`₱${(earned / 100).toLocaleString()}`} accent />
-            <View style={styles.statDivider} />
-            <StatCard label="Games" value={`${games.length}`} sub="hosted" />
-            <View style={styles.statDivider} />
-            <StatCard label="Max" value={`${games.reduce((s, g) => s + (g.max_players ?? 0), 0)}`} sub="slots" />
-          </View>
+
+        {/* Shopify-style: 3 separate stat cards */}
+        <View style={styles.statCards}>
+          <StatCard label="Revenue" value={`₱${(earned / 100).toLocaleString()}`} sub="this month" accent />
+          <StatCard label="Games" value={`${games.length}`} sub="hosted" />
+          <StatCard label="Capacity" value={`${totalSlots}`} sub="total slots" />
         </View>
 
         {/* Quick actions */}
@@ -122,9 +122,7 @@ export default function OrganizerDashboard() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>My Games</Text>
-            <TouchableOpacity>
-              <Text style={styles.sectionLink}>See all</Text>
-            </TouchableOpacity>
+            <Text style={styles.sectionPeriod}>All time</Text>
           </View>
 
           {gamesQ.loading ? (
@@ -176,20 +174,26 @@ const styles = StyleSheet.create({
   },
   switchText: { ...font.bodySmMed, color: colors.textSecondary },
 
-  statsStrip: {
-    overflow: 'hidden',
+  /* Shopify 3-card stats */
+  statCards: {
+    flexDirection: 'row',
+    gap: spacing.sm,
     padding: spacing.lg,
-    paddingBottom: spacing.xl,
-    gap: spacing.md,
   },
-  statsPeriod: { ...font.caption, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.6 },
-  statsRow: { flexDirection: 'row', alignItems: 'center' },
-  statCard: { flex: 1, alignItems: 'center', gap: spacing.xs },
-  statCardAccent: {},
-  statLabel: { ...font.caption, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.4 },
-  statValue: { fontSize: 28, fontWeight: '800', color: colors.text, letterSpacing: -0.5 },
+  statCard: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    padding: spacing.md,
+    gap: spacing.xs,
+    alignItems: 'center',
+  },
+  statLabel: { ...font.caption, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.4, textAlign: 'center' },
+  statValue: { fontSize: 24, fontWeight: '800', color: colors.text, letterSpacing: -0.5 },
+  statValueAccent: { color: colors.yellow },
   statSub: { ...font.caption, color: colors.textFaint },
-  statDivider: { width: 1, height: 48, backgroundColor: colors.border },
 
   quickActions: {
     flexDirection: 'row',
@@ -215,7 +219,7 @@ const styles = StyleSheet.create({
   section: { paddingHorizontal: spacing.lg },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
   sectionTitle: { ...font.h4, color: colors.text },
-  sectionLink: { ...font.bodySmMed, color: colors.accent },
+  sectionPeriod: { ...font.caption, color: colors.textMuted },
 
   centered: { alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.xxl, gap: spacing.sm },
   errorText: { ...font.body, color: colors.error, textAlign: 'center' },
@@ -232,14 +236,15 @@ const styles = StyleSheet.create({
   gameItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     padding: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderSubtle,
     gap: spacing.md,
   },
   gameItemLeft: { flex: 1, gap: spacing.xs },
-  gameItemTitle: { ...font.bodyMed, color: colors.text },
+  gameItemTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
+  gameItemTitle: { ...font.bodyMed, color: colors.text, flex: 1 },
   gameItemDate: { ...font.caption, color: colors.textMuted },
   gameProgress: { gap: 4 },
   gameProgressBar: { height: 4, backgroundColor: colors.surfaceHigh, borderRadius: 2, overflow: 'hidden' },
@@ -249,8 +254,7 @@ const styles = StyleSheet.create({
 
   gameItemRight: { alignItems: 'flex-end', gap: spacing.xs },
   gameItemEarned: { ...font.bodyMed, color: colors.success },
-  gameActions: {},
-  actionBtn: {
+  manageBtn: {
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
     borderRadius: radius.full,
@@ -258,5 +262,5 @@ const styles = StyleSheet.create({
     borderColor: colors.accent + '66',
     backgroundColor: colors.accentDim,
   },
-  actionBtnText: { ...font.captionMed, color: colors.accent },
+  manageBtnText: { ...font.captionMed, color: colors.accent },
 });
