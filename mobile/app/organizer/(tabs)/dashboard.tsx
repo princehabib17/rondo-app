@@ -72,7 +72,7 @@ export default function OrganizerDashboard() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.xxl }}>
         {/* Stats strip */}
         <View style={styles.statsStrip}>
-          <LinearGradient colors={['#001A14', '#0A0A0A']} style={StyleSheet.absoluteFillObject} />
+          <LinearGradient colors={['#001A14', '#0A0A0A']} style={StyleSheet.absoluteFill} />
           <Text style={styles.statsPeriod}>This month</Text>
           <View style={styles.statsRow}>
             <StatCard label="Earned" value={`₱${MOCK_STATS.earned.toLocaleString()}`} accent />

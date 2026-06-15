@@ -116,7 +116,7 @@ export default function MapScreen() {
 function LinearGradientFallback() {
   return (
     <View style={{
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       backgroundColor: '#0D1A0D',
     }} />
   );

@@ -23,7 +23,7 @@ function Reel({ reel, active }: { reel: typeof MOCK_REELS[0]; active: boolean })
 
   return (
     <View style={styles.reel}>
-      <LinearGradient colors={['#0D2A0D', '#0A0A1A', '#1A0A0A']} style={StyleSheet.absoluteFillObject} />
+      <LinearGradient colors={['#0D2A0D', '#0A0A1A', '#1A0A0A']} style={StyleSheet.absoluteFill} />
 
       {/* Play icon placeholder */}
       <View style={styles.playArea}>

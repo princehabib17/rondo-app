@@ -81,10 +81,10 @@ export default function TournamentDetailScreen() {
   return (
     <View style={styles.container}>
       <View style={[styles.hero, { height: HERO_HEIGHT }]}>
-        <LinearGradient colors={['#0D1A2D', '#1A2840', '#0A0A0A']} style={StyleSheet.absoluteFillObject} />
+        <LinearGradient colors={['#0D1A2D', '#1A2840', '#0A0A0A']} style={StyleSheet.absoluteFill} />
         <LinearGradient
           colors={['rgba(10,10,10,0)', 'rgba(10,10,10,0.97)']}
-          style={[StyleSheet.absoluteFillObject, { top: HERO_HEIGHT * 0.35 }]}
+          style={[StyleSheet.absoluteFill, { top: HERO_HEIGHT * 0.35 }]}
         />
         <TouchableOpacity
           onPress={() => router.back()}

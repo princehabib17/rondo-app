@@ -60,7 +60,7 @@ function FeaturedCard({ game }: { game: typeof MOCK_GAMES[0] }) {
       <View style={styles.featuredBanner}>
         <LinearGradient
           colors={['#1A2A1A', '#0D1A0D']}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
         />
         <Text style={styles.featuredLabel}>⚡ FEATURED GAME</Text>
         <Text style={styles.featuredTitle}>{game.title}</Text>
@@ -89,7 +89,7 @@ function GameCard({ game }: { game: typeof MOCK_GAMES[0] }) {
       style={[styles.gameCard, shadow.subtle]}
     >
       <View style={styles.gameBanner}>
-        <LinearGradient colors={['#1A2418', '#0A0A0A']} style={StyleSheet.absoluteFillObject} />
+        <LinearGradient colors={['#1A2418', '#0A0A0A']} style={StyleSheet.absoluteFill} />
         <Badge color={isFull ? 'red' : 'green'} style={styles.gameBadge}>
           {isFull ? 'Full' : `${game.spots} left`}
         </Badge>

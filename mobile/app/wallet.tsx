@@ -46,7 +46,7 @@ export default function WalletScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xxl }}>
         {/* Balance hero — Cash App style */}
         <View style={styles.balanceHero}>
-          <LinearGradient colors={['#1A1400', '#0A0A0A']} style={StyleSheet.absoluteFillObject} />
+          <LinearGradient colors={['#1A1400', '#0A0A0A']} style={StyleSheet.absoluteFill} />
           <Text style={styles.balanceLabel}>Available Balance</Text>
           <Text style={styles.balanceAmount}>₱{BALANCE.toLocaleString()}</Text>
           <Text style={styles.balanceSub}>Updated just now</Text>

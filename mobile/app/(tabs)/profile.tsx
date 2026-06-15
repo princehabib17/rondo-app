@@ -81,7 +81,7 @@ export default function ProfileScreen() {
 
         {/* Wallet balance strip */}
         <TouchableOpacity onPress={() => router.push('/wallet')} style={styles.walletStrip}>
-          <LinearGradient colors={['#1A1400', '#0A0A0A']} style={StyleSheet.absoluteFillObject} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} />
+          <LinearGradient colors={['#1A1400', '#0A0A0A']} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} />
           <View style={styles.walletLeft}>
             <Text style={styles.walletLabel}>💰 Wallet Balance</Text>
             <Text style={styles.walletAmount}>₱{MOCK_USER.wallet.toLocaleString()}</Text>

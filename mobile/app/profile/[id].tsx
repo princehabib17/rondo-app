@@ -63,7 +63,7 @@ export default function PlayerProfileScreen() {
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xxl }}>
         <View style={styles.banner}>
-          <LinearGradient colors={['#1A1400', '#0D2A0D', '#0A0A0A']} style={StyleSheet.absoluteFillObject} />
+          <LinearGradient colors={['#1A1400', '#0D2A0D', '#0A0A0A']} style={StyleSheet.absoluteFill} />
           <TouchableOpacity
             onPress={() => router.back()}
             style={[styles.backBtn, { top: insets.top + spacing.sm }]}
@@ -156,7 +156,7 @@ export default function PlayerProfileScreen() {
                 onPress={() => router.push('/reels')}
                 style={[styles.reelThumb, { width: REEL_SIZE, height: REEL_SIZE * 1.4 }]}
               >
-                <LinearGradient colors={['#0D2A0D', '#0A0A1A']} style={StyleSheet.absoluteFillObject} />
+                <LinearGradient colors={['#0D2A0D', '#0A0A1A']} style={StyleSheet.absoluteFill} />
                 <Text style={styles.reelIcon}>▶️</Text>
               </TouchableOpacity>
             ))}

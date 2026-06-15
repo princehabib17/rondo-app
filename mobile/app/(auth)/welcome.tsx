@@ -42,7 +42,7 @@ export default function WelcomeScreen() {
         <LinearGradient
           colors={['rgba(10,10,10,0.2)', 'rgba(10,10,10,0.5)', 'rgba(10,10,10,0.98)']}
           locations={[0, 0.4, 0.85]}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
         />
       </ImageBackground>
 
@@ -91,7 +91,7 @@ export default function WelcomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  bg: { ...StyleSheet.absoluteFillObject },
+  bg: { ...StyleSheet.absoluteFill },
 
   logoArea: {
     flex: 1,

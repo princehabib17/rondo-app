@@ -47,7 +47,7 @@ function GameCard({ game }: { game: typeof MOCK_UPCOMING[0] }) {
       style={styles.gameCard}
     >
       <View style={styles.gameCardHeader}>
-        <LinearGradient colors={['#1A1400', '#0A0A0A']} style={StyleSheet.absoluteFillObject} />
+        <LinearGradient colors={['#1A1400', '#0A0A0A']} style={StyleSheet.absoluteFill} />
         <Badge color={isFull ? 'red' : 'green'} style={styles.gameCardBadge}>
           {isFull ? 'Full' : `${game.spots} left`}
         </Badge>
@@ -76,7 +76,7 @@ export default function OrganizerProfileScreen() {
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xxl }}>
         <View style={styles.banner}>
-          <LinearGradient colors={['#1A2840', '#0D2A0D', '#0A0A0A']} style={StyleSheet.absoluteFillObject} />
+          <LinearGradient colors={['#1A2840', '#0D2A0D', '#0A0A0A']} style={StyleSheet.absoluteFill} />
           <TouchableOpacity
             onPress={() => router.back()}
             style={[styles.backBtn, { top: insets.top + spacing.sm }]}

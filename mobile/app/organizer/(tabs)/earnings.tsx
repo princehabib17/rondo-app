@@ -32,7 +32,7 @@ export default function EarningsScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xxl }}>
         {/* Balance hero */}
         <View style={styles.hero}>
-          <LinearGradient colors={['#001A0A', '#0A0A0A']} style={StyleSheet.absoluteFillObject} />
+          <LinearGradient colors={['#001A0A', '#0A0A0A']} style={StyleSheet.absoluteFill} />
           <Text style={styles.heroLabel}>This month's earnings</Text>
           <Text style={styles.heroAmount}>₱{total.toLocaleString()}</Text>
           <Text style={styles.heroSub}>Across {MOCK_BREAKDOWN.length} games</Text>

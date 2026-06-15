@@ -45,10 +45,10 @@ export default function GameDetailScreen() {
     <View style={styles.container}>
       {/* Full-bleed hero */}
       <View style={[styles.hero, { height: HERO_HEIGHT }]}>
-        <LinearGradient colors={['#0D2A0D', '#1A3A1A']} style={StyleSheet.absoluteFillObject} />
+        <LinearGradient colors={['#0D2A0D', '#1A3A1A']} style={StyleSheet.absoluteFill} />
         <LinearGradient
           colors={['rgba(10,10,10,0)', 'rgba(10,10,10,0.95)']}
-          style={[StyleSheet.absoluteFillObject, { top: HERO_HEIGHT * 0.4 }]}
+          style={[StyleSheet.absoluteFill, { top: HERO_HEIGHT * 0.4 }]}
         />
 
         {/* Back button */}

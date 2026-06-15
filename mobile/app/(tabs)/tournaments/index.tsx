@@ -41,7 +41,7 @@ function TournamentCard({ t }: { t: typeof MOCK_TOURNAMENTS[0] }) {
       <View style={styles.cardHeader}>
         <LinearGradient
           colors={t.status === 'Live' ? ['#1A1400', '#0A0A0A'] : ['#1A1A2A', '#0A0A0A']}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
         />
         <View style={styles.cardHeaderContent}>
           <Badge color={statusColor}>{t.status === 'Live' ? '🔴 Live' : t.status}</Badge>
