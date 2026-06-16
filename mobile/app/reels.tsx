@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, Dimensions, FlatList, TouchableOpacity,
-  TouchableWithoutFeedback, ViewToken, ActivityIndicator,
+  TouchableWithoutFeedback, ViewToken, ActivityIndicator, Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -68,7 +68,7 @@ function Reel({ reel, active }: { reel: ReelItem; active: boolean }) {
       </TouchableOpacity>
 
       {/* Upload FAB */}
-      <TouchableOpacity style={[styles.uploadFab, { top: insets.top + spacing.sm }]}>
+      <TouchableOpacity style={[styles.uploadFab, { top: insets.top + spacing.sm }]} onPress={() => Alert.alert('Upload Reel', 'Reel uploads coming soon!')}>
         <Text style={styles.uploadIcon}>+</Text>
       </TouchableOpacity>
 
@@ -82,7 +82,7 @@ function Reel({ reel, active }: { reel: ReelItem; active: boolean }) {
           <Text style={styles.actionIcon}>{saved ? '🔖' : '📑'}</Text>
           <Text style={styles.actionCount}>{saved ? 'Saved' : 'Save'}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionBtn}>
+        <TouchableOpacity style={styles.actionBtn} onPress={() => Alert.alert('Share', 'Sharing coming soon!')}>
           <Text style={styles.actionIcon}>↗️</Text>
           <Text style={styles.actionCount}>Share</Text>
         </TouchableOpacity>

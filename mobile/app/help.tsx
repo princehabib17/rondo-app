@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, spacing, radius } from '../constants/theme';
 import { ScreenHeader } from '../components/layout/ScreenHeader';
@@ -114,7 +114,7 @@ export default function HelpScreen() {
             ) : (
               <View style={styles.tickets}>
                 {MOCK_TICKETS.map((t, i) => (
-                  <TouchableOpacity key={t.id} style={[styles.ticket, i < MOCK_TICKETS.length - 1 && styles.ticketBorder]} activeOpacity={0.8}>
+                  <TouchableOpacity key={t.id} style={[styles.ticket, i < MOCK_TICKETS.length - 1 && styles.ticketBorder]} activeOpacity={0.8} onPress={() => Alert.alert(t.subject, t.lastReply)}>
                     <View style={styles.ticketHeader}>
                       <View style={styles.ticketLeft}>
                         <Text style={styles.ticketSubject}>{t.subject}</Text>

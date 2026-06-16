@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput,
-  TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator,
+  TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -151,7 +151,7 @@ export default function ChatScreen() {
 
       {/* Input */}
       <View style={[styles.inputBar, { paddingBottom: insets.bottom + spacing.sm }]}>
-        <TouchableOpacity style={styles.attachBtn}>
+        <TouchableOpacity style={styles.attachBtn} onPress={() => Alert.alert('Attach Photo', 'Photo sharing coming soon!')}>
           <Text style={styles.attachIcon}>📷</Text>
         </TouchableOpacity>
         <TextInput

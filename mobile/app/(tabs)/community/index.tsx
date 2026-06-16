@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Dimensions, ActivityIndicator, TextInput,
+  Dimensions, ActivityIndicator, TextInput, Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -85,11 +85,11 @@ function PostCard({ post, onChanged }: { post: PostItem; onChanged: () => void }
           <Text style={styles.postActionIcon}>{liked ? '❤️' : '🤍'}</Text>
           <Text style={[styles.postActionText, liked && { color: colors.error }]}>{likeCount}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.postAction}>
+        <TouchableOpacity style={styles.postAction} onPress={() => Alert.alert('Comments', 'Comments coming soon!')}>
           <Text style={styles.postActionIcon}>💬</Text>
           <Text style={styles.postActionText}>{post.comment_count}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.postAction}>
+        <TouchableOpacity style={styles.postAction} onPress={() => Alert.alert('Share', 'Sharing coming soon!')}>
           <Text style={styles.postActionIcon}>↗️</Text>
         </TouchableOpacity>
       </View>

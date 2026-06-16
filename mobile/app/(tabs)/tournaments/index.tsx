@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -109,7 +109,7 @@ export default function TournamentsScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Tournaments</Text>
-        <TouchableOpacity style={styles.headerBadge}>
+        <TouchableOpacity style={styles.headerBadge} onPress={() => Alert.alert('Leaderboard', 'Coming soon!')}>
           <Text style={styles.headerBadgeText}>🏆 Leaderboard</Text>
         </TouchableOpacity>
       </View>

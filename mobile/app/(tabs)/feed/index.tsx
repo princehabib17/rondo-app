@@ -29,9 +29,9 @@ function spotsLeft(game: Game) {
 }
 
 /* Instagram-style organizer story bubble */
-function OrganizerStory({ name, verified }: { name: string; verified: boolean }) {
+function OrganizerStory({ id, name, verified }: { id: string; name: string; verified: boolean }) {
   return (
-    <TouchableOpacity style={styles.story} activeOpacity={0.8}>
+    <TouchableOpacity style={styles.story} activeOpacity={0.8} onPress={() => router.push(`/organizers/${id}`)}>
       <View style={[styles.storyRing, verified && styles.storyRingVerified]}>
         <View style={styles.storyAvatar}>
           <Text style={styles.storyInitial}>{name[0]}</Text>
@@ -192,7 +192,7 @@ export default function FeedScreen() {
             <View style={styles.storiesSection}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.storiesScroll}>
                 {stories.map((o) => (
-                  <OrganizerStory key={o.id} name={o.name} verified={false} />
+                  <OrganizerStory key={o.id} id={o.id} name={o.name} verified={false} />
                 ))}
               </ScrollView>
             </View>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, spacing, radius } from '../../../constants/theme';
@@ -87,7 +87,7 @@ export default function EarningsScreen() {
                 <Text style={styles.upcomingBank}>BDO • ••••1234</Text>
               </View>
             </View>
-            <Button style={styles.earlyPayoutBtn} onPress={() => {}}>Request Early Payout</Button>
+            <Button style={styles.earlyPayoutBtn} onPress={() => Alert.alert('Early Payout', 'Early payout requests will be available soon. Payouts are processed every Monday.')}>Request Early Payout</Button>
           </View>
         </View>
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,7 +19,7 @@ const MENU_ITEMS = [
   { icon: '💰', label: 'Wallet', route: '/wallet' },
   { icon: '📅', label: 'My Games', route: '/my-games' },
   { icon: '🔖', label: 'Scout Shortlist', route: '/scout' },
-  { icon: '🏟️', label: 'Switch to Organizer', route: '/organizer/dashboard', accent: true },
+  { icon: '🏟️', label: 'Switch to Organizer', route: '/organizer/(tabs)/dashboard', accent: true },
   { icon: '🔔', label: 'Notifications', route: '/notifications' },
   { icon: '❓', label: 'Help & Support', route: '/help' },
 ];
@@ -84,7 +84,7 @@ export default function ProfileScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.username}>@{username}</Text>
-          <TouchableOpacity style={styles.settingsBtn}>
+          <TouchableOpacity style={styles.settingsBtn} onPress={() => router.push('/help')}>
             <Text style={styles.settingsIcon}>⚙️</Text>
           </TouchableOpacity>
         </View>
@@ -119,8 +119,8 @@ export default function ProfileScreen() {
 
         {/* Edit profile */}
         <View style={styles.actions}>
-          <Button variant="secondary" onPress={() => {}} style={{ flex: 1 }}>Edit Profile</Button>
-          <Button variant="secondary" onPress={() => router.push('/organizers/1')} style={{ flex: 1 }}>Share</Button>
+          <Button variant="secondary" onPress={() => Alert.alert('Coming Soon', 'Profile editing will be available soon.')} style={{ flex: 1 }}>Edit Profile</Button>
+          <Button variant="secondary" onPress={() => user && router.push(`/organizers/${user.id}`)} style={{ flex: 1 }}>Share</Button>
         </View>
 
         {/* Wallet balance strip */}

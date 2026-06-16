@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -106,7 +106,7 @@ export default function OrganizerPublicProfileScreen() {
           </View>
 
           <View style={styles.ctaRow}>
-            <Button variant="secondary" onPress={() => {}} style={styles.ctaBtn}>Follow</Button>
+            <Button variant="secondary" onPress={() => Alert.alert('Follow', 'Follow feature coming soon!')} style={styles.ctaBtn}>Follow</Button>
             <Button variant="secondary" onPress={() => router.push(`/messages/${id}`)} style={styles.ctaBtn}>Message</Button>
           </View>
         </View>

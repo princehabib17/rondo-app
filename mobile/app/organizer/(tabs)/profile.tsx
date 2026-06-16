@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, spacing, radius } from '../../../constants/theme';
@@ -41,7 +41,7 @@ export default function OrganizerProfileScreen() {
           <Text style={styles.name}>{name}</Text>
           {username ? <Text style={styles.handle}>@{username} · Organizer</Text> : null}
           {profile?.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
-          <Button onPress={() => {}} variant="secondary" style={styles.editBtn}>Edit Profile</Button>
+          <Button onPress={() => Alert.alert('Coming Soon', 'Profile editing will be available soon.')} variant="secondary" style={styles.editBtn}>Edit Profile</Button>
         </View>
         {[
           { label: 'Notifications', icon: '🔔', route: '/notifications' },
