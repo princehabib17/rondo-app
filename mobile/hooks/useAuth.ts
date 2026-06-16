@@ -23,6 +23,8 @@ export function useAuth() {
       setUser(session?.user ?? null);
       await loadProfile(session?.user?.id);
       setLoading(false);
+    }).catch(() => {
+      setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
