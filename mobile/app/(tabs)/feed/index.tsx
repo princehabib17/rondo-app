@@ -10,7 +10,7 @@ import { colors, font, spacing, radius, shadow } from '../../../constants/theme'
 import { Badge } from '../../../components/ui/Badge';
 import { useQuery } from '../../../hooks/useQuery';
 import * as q from '../../../lib/queries';
-import type { Game } from '../../../lib/types';
+import type { GameWithOrganizer } from '../../../lib/types';
 
 const { width } = Dimensions.get('window');
 
@@ -24,7 +24,7 @@ function peso(centavos: number) {
   return `₱${(centavos / 100).toLocaleString()}`;
 }
 
-function spotsLeft(game: Game) {
+function spotsLeft(game: GameWithOrganizer) {
   return Math.max(0, game.max_players);
 }
 
@@ -43,7 +43,7 @@ function OrganizerStory({ name, verified }: { name: string; verified: boolean })
 }
 
 /* Spotify-style featured card: large with gradient overlay on image area */
-function FeaturedCard({ game }: { game: Game }) {
+function FeaturedCard({ game }: { game: GameWithOrganizer }) {
   const isFull = game.status === 'full';
   const left = spotsLeft(game);
   return (
@@ -90,7 +90,7 @@ function FeaturedCard({ game }: { game: Game }) {
 }
 
 /* Eventbrite-style game card: photo + title + date + price + distance */
-function GameCard({ game }: { game: Game }) {
+function GameCard({ game }: { game: GameWithOrganizer }) {
   const isFull = game.status === 'full';
   const left = spotsLeft(game);
   return (
