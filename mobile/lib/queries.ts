@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import type {
-  Profile, Game, Team, GamePlayer, GamePlayerWithProfile, Announcement,
+  Profile, Game, GameWithOrganizer, Team, GamePlayer, GamePlayerWithProfile, Announcement,
   WalletTransaction, PayoutRequest, AppNotification, Message, DirectMessage,
   Tournament, TournamentTeam, TournamentMatch, Post, PostComment,
   PlayerReel, ScoutShortlist, Organization,
@@ -71,17 +71,17 @@ export async function toggleFollow(targetId: string, follow: boolean): Promise<v
 // ── Games ─────────────────────────────────────────────────────
 const GAME_WITH_ORG = '*, organizer:profiles!games_organizer_id_fkey(id, full_name, avatar_url)';
 
-export async function listGames(opts: { status?: string; organizerId?: string; upcomingOnly?: boolean } = {}): Promise<Game[]> {
+export async function listGames(opts: { status?: string; organizerId?: string; upcomingOnly?: boolean } = {}): Promise<GameWithOrganizer[]> {
   let q = supabase.from('games').select(GAME_WITH_ORG).eq('is_private', false);
   if (opts.status) q = q.eq('status', opts.status);
   if (opts.organizerId) q = q.eq('organizer_id', opts.organizerId);
   if (opts.upcomingOnly) q = q.gte('date_time', new Date().toISOString());
   q = q.order('date_time', { ascending: true });
-  return unwrap(await q) as unknown as Game[];
+  return unwrap(await q) as unknown as GameWithOrganizer[];
 }
 
-export async function getGame(id: string): Promise<Game> {
-  return unwrap(await supabase.from('games').select(GAME_WITH_ORG).eq('id', id).single()) as unknown as Game;
+export async function getGame(id: string): Promise<GameWithOrganizer> {
+  return unwrap(await supabase.from('games').select(GAME_WITH_ORG).eq('id', id).single()) as unknown as GameWithOrganizer;
 }
 
 export async function getGameTeams(gameId: string): Promise<Team[]> {

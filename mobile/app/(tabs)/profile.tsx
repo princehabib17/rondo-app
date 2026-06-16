@@ -19,7 +19,7 @@ const MENU_ITEMS = [
   { icon: '💰', label: 'Wallet', route: '/wallet' },
   { icon: '📅', label: 'My Games', route: '/my-games' },
   { icon: '🔖', label: 'Scout Shortlist', route: '/scout' },
-  { icon: '🏟️', label: 'Switch to Organizer', route: '/organizer/dashboard', accent: true },
+  { icon: '🏟️', label: 'Switch to Organizer', route: '/organizer/(tabs)/dashboard', accent: true },
   { icon: '🔔', label: 'Notifications', route: '/notifications' },
   { icon: '❓', label: 'Help & Support', route: '/help' },
 ];

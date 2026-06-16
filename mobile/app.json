@@ -8,9 +8,6 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0A0A0A",
-    "splash": {
-      "backgroundColor": "#0A0A0A"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.rondo.app"
@@ -24,7 +21,12 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      ["expo-splash-screen", {
+        "backgroundColor": "#0A0A0A",
+        "image": "./assets/splash-icon.png",
+        "resizeMode": "contain"
+      }]
     ],
     "experiments": {
       "typedRoutes": true
