@@ -84,7 +84,7 @@ export function CountdownTimer({ roundStartTime, roundDurationMinutes, status, c
   return (
     <div className={cn("tabular-nums font-black tracking-tighter", className)}>
       <span className={cn(
-        "transition-colors text-lg",
+        "block leading-none transition-colors",
         isUrgent ? "text-destructive animate-pulse" : "text-primary-foreground"
       )}>
         {mins}:{secs}

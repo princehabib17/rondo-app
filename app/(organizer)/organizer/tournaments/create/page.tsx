@@ -1,12 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, MapPin } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarDays,
+  Check,
+  ChevronRight,
+  ImagePlus,
+  MapPin,
+  ShieldCheck,
+  Trophy,
+  Users,
+  X,
+} from "lucide-react";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { parse, isValid, isBefore, addYears, format as fnsFormat } from "date-fns";
+import { addYears, format as fnsFormat, isBefore, isValid, parse } from "date-fns";
+import { createClient } from "@/lib/supabase/client";
 import { Label } from "@/components/ui/label";
 import { DrumRollPicker } from "@/components/ui/drum-roll-picker";
 import { OrganizationPicker } from "@/components/organizer/OrganizationPicker";
@@ -23,7 +35,9 @@ const schema = z.object({
   team_size: z.coerce.number().min(1).max(11),
   entry_fee: z.coerce.number().min(0),
 });
+
 type CreateTournamentForm = z.infer<typeof schema>;
+type StepId = "identity" | "venue" | "structure" | "review";
 
 interface NominatimResult {
   display_name: string;
@@ -31,14 +45,24 @@ interface NominatimResult {
   lon: string;
 }
 
+const STEPS: { id: StepId; label: string }[] = [
+  { id: "identity", label: "Identity" },
+  { id: "venue", label: "Venue" },
+  { id: "structure", label: "Structure" },
+  { id: "review", label: "Review" },
+];
+
+const fieldClass =
+  "w-full rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3 text-sm text-white outline-none transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] placeholder:text-white/30 focus:border-rondo-accent";
+const labelClass = "text-[10px] font-black uppercase tracking-[0.18em] text-white/45";
+
 function parsersToDate(input: string): Date | null {
   const trimmed = input.trim();
   if (!trimmed) return null;
   const ref = new Date();
   const formats = [
     "MMMM d yyyy", "MMMM d, yyyy", "MMM d yyyy", "MMM d, yyyy",
-    "MMMM d", "MMM d",
-    "M/d/yyyy", "M/d",
+    "MMMM d", "MMM d", "M/d/yyyy", "M/d",
     "d MMMM yyyy", "d MMM yyyy", "d MMMM", "d MMM",
   ];
   for (const fmt of formats) {
@@ -46,12 +70,12 @@ function parsersToDate(input: string): Date | null {
       const parsed = parse(trimmed, fmt, ref);
       if (isValid(parsed)) {
         const needsYear = !fmt.includes("yyyy");
-        if (needsYear && isBefore(parsed, new Date())) {
-          return addYears(parsed, 1);
-        }
+        if (needsYear && isBefore(parsed, new Date())) return addYears(parsed, 1);
         return parsed;
       }
-    } catch { /* next */ }
+    } catch {
+      // Try the next accepted date shape.
+    }
   }
   return null;
 }
@@ -63,7 +87,9 @@ async function searchAddress(query: string): Promise<NominatimResult[]> {
       { headers: { "Accept-Language": "en" } }
     );
     return await res.json();
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 
 function formatTime12h(hhmm: string): string {
@@ -73,67 +99,72 @@ function formatTime12h(hhmm: string): string {
   return `${h12}:${String(m).padStart(2, "0")} ${period}`;
 }
 
-const fieldClass =
-  "w-full bg-white/[0.045] border border-white/18 text-white rounded-xl p-3 text-sm focus:border-rondo-accent focus:outline-none placeholder:text-white/30";
-const labelClass = "text-white/50 text-xs uppercase tracking-wider font-semibold";
-
 export default function CreateTournamentPage() {
   const router = useRouter();
+  const [step, setStep] = useState<StepId>("identity");
   const [error, setError] = useState<string | null>(null);
   const [organizationId, setOrganizationId] = useState("");
   const [organizationsReady, setOrganizationsReady] = useState(false);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
-  // Address autocomplete
   const [addressInput, setAddressInput] = useState("");
   const [suggestions, setSuggestions] = useState<NominatimResult[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const addressDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
-  // Date smart input
   const [dateInput, setDateInput] = useState("");
   const [parsedDate, setParsedDate] = useState<Date | null>(null);
-
-  // Time drum roll
   const [startTime, setStartTime] = useState("19:00");
   const [showTimePicker, setShowTimePicker] = useState(false);
 
-  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } =
-    useForm<CreateTournamentForm>({
-      resolver: zodResolver(schema) as Resolver<CreateTournamentForm>,
-      defaultValues: {
-        format: "single_elimination",
-        max_teams: 8,
-        team_size: 5,
-        entry_fee: 0,
-        starts_date: "",
-        starts_time: "19:00",
-      },
-    });
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    trigger,
+    formState: { errors, isSubmitting },
+  } = useForm<CreateTournamentForm>({
+    resolver: zodResolver(schema) as Resolver<CreateTournamentForm>,
+    defaultValues: {
+      format: "single_elimination",
+      max_teams: 8,
+      team_size: 5,
+      entry_fee: 0,
+      starts_date: "",
+      starts_time: "19:00",
+    },
+  });
 
+  const values = watch();
+  const currentIndex = STEPS.findIndex((item) => item.id === step);
   const format = watch("format");
+  const maxTeams = Number(watch("max_teams") || 0);
+  const teamSize = Number(watch("team_size") || 0);
+  const entryFee = Number(watch("entry_fee") || 0);
+  const totalPlayers = maxTeams * teamSize;
 
-  // ── address autocomplete ─────────────────────────────────────────────────
+  const formatLabel = format === "single_elimination" ? "Knockout" : "League";
+  const prizePoolHint = useMemo(() => entryFee * maxTeams, [entryFee, maxTeams]);
+
   const handleAddressChange = useCallback((val: string) => {
     setAddressInput(val);
     setValue("venue_address", val);
     if (addressDebounce.current) clearTimeout(addressDebounce.current);
-    if (val.length < 3) { setSuggestions([]); setShowSuggestions(false); return; }
+    if (val.length < 3) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
     addressDebounce.current = setTimeout(async () => {
       const results = await searchAddress(val);
       setSuggestions(results);
       setShowSuggestions(results.length > 0);
     }, 600);
   }, [setValue]);
-
-  function selectSuggestion(result: NominatimResult) {
-    const parts = result.display_name.split(",");
-    const shortAddress = parts.slice(0, 4).join(",").trim();
-    setAddressInput(shortAddress);
-    setValue("venue_address", shortAddress);
-    setSuggestions([]);
-    setShowSuggestions(false);
-  }
 
   useEffect(() => {
     function handle(e: MouseEvent) {
@@ -145,13 +176,20 @@ export default function CreateTournamentPage() {
     return () => document.removeEventListener("mousedown", handle);
   }, []);
 
-  // ── date smart input ─────────────────────────────────────────────────────
+  function selectSuggestion(result: NominatimResult) {
+    const parts = result.display_name.split(",");
+    const shortAddress = parts.slice(0, 4).join(",").trim();
+    setAddressInput(shortAddress);
+    setValue("venue_address", shortAddress);
+    setSuggestions([]);
+    setShowSuggestions(false);
+  }
+
   function handleDateChange(val: string) {
     setDateInput(val);
     const d = parsersToDate(val);
     setParsedDate(d);
-    if (d) setValue("starts_date", fnsFormat(d, "yyyy-MM-dd"));
-    else setValue("starts_date", "");
+    setValue("starts_date", d ? fnsFormat(d, "yyyy-MM-dd") : "");
   }
 
   function handleTimeChange(val: string) {
@@ -159,31 +197,67 @@ export default function CreateTournamentPage() {
     setValue("starts_time", val);
   }
 
-  async function onSubmit(values: CreateTournamentForm) {
+  function handleCoverFile(file: File) {
+    setCoverFile(file);
+    setCoverPreview(URL.createObjectURL(file));
+  }
+
+  async function goNext() {
+    setError(null);
+    if (step === "identity") {
+      const ok = await trigger(["name", "description"]);
+      if (!ok || !organizationId) {
+        setError(!organizationId ? "Choose or create an organization first." : "Finish the tournament identity.");
+        return;
+      }
+    }
+    if (step === "venue") {
+      const ok = await trigger(["venue_name", "starts_date", "starts_time"]);
+      if (!ok || !parsedDate) {
+        setError("Add a valid venue, date, and start time.");
+        return;
+      }
+    }
+    if (step === "structure") {
+      const ok = await trigger(["format", "max_teams", "team_size", "entry_fee"]);
+      if (!ok) return;
+    }
+    setStep(STEPS[Math.min(currentIndex + 1, STEPS.length - 1)].id);
+  }
+
+  function goBack() {
+    if (currentIndex === 0) {
+      router.back();
+      return;
+    }
+    setStep(STEPS[currentIndex - 1].id);
+  }
+
+  async function onSubmit(input: CreateTournamentForm) {
     setError(null);
     if (!organizationId) {
       setError("Choose or create an organization first.");
       return;
     }
     if (!parsedDate) {
-      setError("Enter a valid start date (e.g. September 4).");
+      setError("Enter a valid start date.");
       return;
     }
-    const startsAt = new Date(`${values.starts_date}T${values.starts_time}:00`).toISOString();
 
+    const startsAt = new Date(`${input.starts_date}T${input.starts_time}:00`).toISOString();
     const res = await fetch("/api/tournaments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name: values.name,
-        description: values.description || undefined,
-        format: values.format,
+        name: input.name,
+        description: input.description || undefined,
+        format: input.format,
         startsAt,
-        venueName: values.venue_name,
-        venueAddress: values.venue_address || undefined,
-        maxTeams: values.max_teams,
-        teamSize: values.team_size,
-        entryFee: Math.round(values.entry_fee * 100),
+        venueName: input.venue_name,
+        venueAddress: input.venue_address || undefined,
+        maxTeams: input.max_teams,
+        teamSize: input.team_size,
+        entryFee: Math.round(input.entry_fee * 100),
         organizationId,
       }),
     });
@@ -192,207 +266,366 @@ export default function CreateTournamentPage() {
       setError(json.error ?? "Could not create tournament");
       return;
     }
+
+    if (coverFile && json.tournamentId) {
+      const supabase = createClient();
+      const { data: userData } = await supabase.auth.getUser();
+      const ext = coverFile.name.split(".").pop() ?? "jpg";
+      const path = `tournaments/${userData.user?.id ?? "organizer"}/${json.tournamentId}-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("game-covers")
+        .upload(path, coverFile, { upsert: true });
+      if (!uploadError) {
+        const { data } = supabase.storage.from("game-covers").getPublicUrl(path);
+        await supabase.from("tournaments").update({ banner_url: data.publicUrl }).eq("id", json.tournamentId);
+      }
+    }
+
     router.push(`/organizer/tournaments/${json.tournamentId}/manage`);
   }
 
   return (
-    <div className="min-h-[100dvh] rondo-page pb-20">
-      <header className="sticky top-0 bg-background/90 backdrop-blur-md border-b border-white/10 z-40 px-4 py-3 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white hover:text-rondo-accent transition-colors"
-          aria-label="Back"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <h1 className="rondo-hero-title text-2xl">Create Tournament</h1>
+    <div className="min-h-[100dvh] rondo-page pb-28">
+      <header className="sticky top-0 z-40 border-b border-white/5 bg-[#050505]/90 px-4 py-3 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-lg items-center gap-3">
+          <button
+            type="button"
+            onClick={goBack}
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-white/70 hover:bg-white/5 hover:text-white"
+            aria-label="Back"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-rondo-accent">
+              Tournament builder
+            </p>
+            <h1 className="rondo-hero-title truncate text-2xl text-white">Create Cup</h1>
+          </div>
+          <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-black text-white">
+            {currentIndex + 1}/{STEPS.length}
+          </div>
+        </div>
       </header>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="px-4 py-6 space-y-5 max-w-lg mx-auto">
-
-        <div className="space-y-1.5">
-          <Label className={labelClass}>Tournament Name *</Label>
-          <input {...register("name")} placeholder="Rondo Summer Cup" className={fieldClass} />
-          {errors.name && <p className="text-destructive text-xs">{errors.name.message}</p>}
-        </div>
-
-        <OrganizationPicker
-          value={organizationId}
-          onChange={setOrganizationId}
-          onReady={setOrganizationsReady}
-        />
-
-        {/* ── Format ── */}
-        <div className="space-y-2 rounded-2xl border border-white/10 bg-white/[0.025] p-4">
-          <p className="font-heading text-sm font-black uppercase text-white">Format</p>
-          <div className="grid grid-cols-2 gap-2">
-            {([
-              { value: "single_elimination", title: "Knockout", note: "Lose once, you're out" },
-              { value: "round_robin", title: "League", note: "Everyone plays everyone" },
-            ] as const).map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => setValue("format", option.value)}
-                className={`rounded-xl border p-3 text-left transition-colors ${
-                  format === option.value
-                    ? "border-rondo-accent/60 bg-rondo-accent/10"
-                    : "border-white/10 bg-white/[0.03]"
+      <div className="mx-auto max-w-lg px-4 pt-4">
+        <div className="mb-4 grid grid-cols-4 gap-2">
+          {STEPS.map((item, index) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => index <= currentIndex && setStep(item.id)}
+              className="space-y-1 text-left"
+              disabled={index > currentIndex}
+            >
+              <span
+                className={`block h-1.5 rounded-full ${
+                  index <= currentIndex ? "bg-rondo-accent" : "bg-white/10"
                 }`}
-              >
-                <p className="text-white text-sm font-bold">{option.title}</p>
-                <p className="text-white/45 text-xs mt-0.5">{option.note}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Location ── */}
-        <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.025] p-4">
-          <div className="flex items-center gap-2">
-            <MapPin size={16} className="text-rondo-accent" />
-            <p className="font-heading text-sm font-black uppercase text-white">Location</p>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className={labelClass}>Venue Name *</Label>
-            <input {...register("venue_name")} placeholder="Sparta Futsal Arena" className={fieldClass} />
-            {errors.venue_name && <p className="text-destructive text-xs">{errors.venue_name.message}</p>}
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className={labelClass}>Address (optional)</Label>
-            <div className="relative" ref={suggestionsRef}>
-              <input
-                value={addressInput}
-                onChange={(e) => handleAddressChange(e.target.value)}
-                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-                placeholder="Start typing an address…"
-                className={fieldClass}
               />
-              {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-[#1a1a1a] border border-white/15 rounded-xl overflow-hidden shadow-2xl">
-                  {suggestions.map((s, i) => {
-                    const parts = s.display_name.split(",");
-                    const primary = parts.slice(0, 2).join(",").trim();
-                    const secondary = parts.slice(2, 4).join(",").trim();
-                    return (
-                      <button
-                        key={i}
-                        type="button"
-                        className="w-full text-left px-4 py-3 hover:bg-white/[0.06] flex items-start gap-3 border-b border-white/[0.06] last:border-0"
-                        onMouseDown={() => selectSuggestion(s)}
-                      >
-                        <MapPin size={14} className="text-rondo-accent shrink-0 mt-0.5" />
-                        <div>
-                          <p className="text-white text-sm font-medium">{primary}</p>
-                          {secondary && <p className="text-white/40 text-xs mt-0.5">{secondary}</p>}
-                        </div>
-                      </button>
-                    );
-                  })}
+              <span className="block truncate text-[10px] font-bold uppercase tracking-wide text-white/45">
+                {item.label}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          {step === "identity" && (
+            <section className="space-y-5">
+              <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04] p-1.5">
+                <button
+                  type="button"
+                  onClick={() => coverInputRef.current?.click()}
+                  className="relative flex aspect-[16/10] w-full overflow-hidden rounded-[calc(2rem-0.375rem)] bg-[#111] text-left"
+                >
+                  {coverPreview ? (
+                    <img src={coverPreview} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full flex-col justify-end bg-[radial-gradient(circle_at_70%_20%,rgba(245,197,24,0.28),transparent_22%),linear-gradient(135deg,#171717,#050505)] p-5">
+                      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-rondo-accent text-rondo-black">
+                        <Trophy size={32} />
+                      </div>
+                      <p className="rondo-hero-title text-4xl text-white">Build the stage</p>
+                      <p className="mt-1 text-sm text-white/50">Add a cover from the organizer library.</p>
+                    </div>
+                  )}
+                  <span className="absolute bottom-4 right-4 inline-flex items-center gap-2 rounded-full bg-rondo-accent px-4 py-2 text-xs font-black uppercase tracking-wide text-rondo-black">
+                    <ImagePlus size={14} />
+                    {coverPreview ? "Change" : "Add cover"}
+                  </span>
+                  {coverPreview && (
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCoverFile(null);
+                        setCoverPreview(null);
+                      }}
+                      className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white"
+                    >
+                      <X size={16} />
+                    </span>
+                  )}
+                </button>
+                <input
+                  ref={coverInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleCoverFile(file);
+                    e.target.value = "";
+                  }}
+                />
+              </div>
+
+              <OrganizationPicker value={organizationId} onChange={setOrganizationId} onReady={setOrganizationsReady} />
+
+              <div className="space-y-2">
+                <Label className={labelClass}>Tournament name</Label>
+                <input {...register("name")} placeholder="Rondo Summer Cup" className={fieldClass} />
+                {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label className={labelClass}>Story and rules</Label>
+                <textarea
+                  {...register("description")}
+                  rows={5}
+                  maxLength={2000}
+                  placeholder="Prizes, registration rules, schedule flow, refund policy..."
+                  className={`${fieldClass} min-h-32 resize-none`}
+                />
+              </div>
+            </section>
+          )}
+
+          {step === "venue" && (
+            <section className="space-y-5">
+              <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-1.5">
+                <div className="rounded-[calc(2rem-0.375rem)] bg-[#090909] p-5">
+                  <div className="mb-4 flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-rondo-accent">Schedule</p>
+                      <h2 className="rondo-hero-title mt-1 text-4xl text-white">Where it happens</h2>
+                    </div>
+                    <MapPin className="text-rondo-accent" size={30} />
+                  </div>
+                  <div className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_25%_35%,rgba(245,197,24,0.18),transparent_12%),radial-gradient(circle_at_68%_62%,rgba(245,197,24,0.14),transparent_10%),linear-gradient(135deg,#111,#050505)] p-5">
+                    <p className="text-xs font-bold uppercase tracking-wide text-white/45">Venue preview</p>
+                    <p className="mt-2 text-lg font-black text-white">{values.venue_name || "Pick a venue"}</p>
+                    <p className="mt-1 text-sm text-white/45">{addressInput || "Address will appear here"}</p>
+                  </div>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className={labelClass}>Venue name</Label>
+                <input {...register("venue_name")} placeholder="Sparta Futsal Arena" className={fieldClass} />
+                {errors.venue_name && <p className="text-xs text-destructive">{errors.venue_name.message}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label className={labelClass}>Address</Label>
+                <div className="relative" ref={suggestionsRef}>
+                  <input
+                    value={addressInput}
+                    onChange={(e) => handleAddressChange(e.target.value)}
+                    onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                    placeholder="Start typing an address..."
+                    className={fieldClass}
+                  />
+                  {showSuggestions && suggestions.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-white/15 bg-[#141414] shadow-2xl">
+                      {suggestions.map((s, i) => {
+                        const parts = s.display_name.split(",");
+                        return (
+                          <button
+                            key={i}
+                            type="button"
+                            className="flex w-full items-start gap-3 border-b border-white/[0.06] px-4 py-3 text-left last:border-0 hover:bg-white/[0.06]"
+                            onMouseDown={() => selectSuggestion(s)}
+                          >
+                            <MapPin size={14} className="mt-0.5 shrink-0 text-rondo-accent" />
+                            <span>
+                              <span className="block text-sm font-semibold text-white">{parts.slice(0, 2).join(",").trim()}</span>
+                              <span className="mt-0.5 block text-xs text-white/40">{parts.slice(2, 4).join(",").trim()}</span>
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label className={labelClass}>Start date</Label>
+                  <input
+                    value={dateInput}
+                    onChange={(e) => handleDateChange(e.target.value)}
+                    placeholder="September 4"
+                    className={fieldClass}
+                    autoComplete="off"
+                  />
+                  <input type="hidden" {...register("starts_date")} />
+                </div>
+                <div className="space-y-2">
+                  <Label className={labelClass}>Start time</Label>
+                  <button
+                    type="button"
+                    onClick={() => setShowTimePicker((value) => !value)}
+                    className="flex min-h-[46px] w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3 text-left text-sm font-black text-white"
+                  >
+                    {formatTime12h(startTime)}
+                    <CalendarDays size={16} className="text-rondo-accent" />
+                  </button>
+                  <input type="hidden" {...register("starts_time")} />
+                </div>
+              </div>
+
+              {dateInput && (
+                <p className={`text-xs font-semibold ${parsedDate ? "text-rondo-accent" : "text-white/35"}`}>
+                  {parsedDate ? fnsFormat(parsedDate, "EEEE, MMMM d, yyyy") : "Try Sep 4, 9/4, or September 4 2026."}
+                </p>
               )}
-            </div>
-          </div>
-        </div>
+              {showTimePicker && <DrumRollPicker value={startTime} onChange={handleTimeChange} />}
+            </section>
+          )}
 
-        {/* ── Start Date & Time ── */}
-        <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.025] p-4">
-          <p className="font-heading text-sm font-black uppercase text-white">Starts</p>
+          {step === "structure" && (
+            <section className="space-y-5">
+              <div className="grid gap-3">
+                {([
+                  {
+                    value: "single_elimination",
+                    title: "Knockout cup",
+                    note: "Fast bracket, high pressure, clear champion.",
+                  },
+                  {
+                    value: "round_robin",
+                    title: "League table",
+                    note: "More games, fairer ranking, better for groups.",
+                  },
+                ] as const).map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setValue("format", option.value)}
+                    className={`rounded-[1.5rem] border p-4 text-left transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                      format === option.value
+                        ? "border-rondo-accent bg-rondo-accent/10"
+                        : "border-white/10 bg-white/[0.035]"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-base font-black text-white">{option.title}</p>
+                        <p className="mt-1 text-sm text-white/45">{option.note}</p>
+                      </div>
+                      {format === option.value && <Check size={20} className="text-rondo-accent" />}
+                    </div>
+                  </button>
+                ))}
+              </div>
 
-          <div className="space-y-1.5">
-            <Label className={labelClass}>Date *</Label>
-            <input
-              value={dateInput}
-              onChange={(e) => handleDateChange(e.target.value)}
-              placeholder="e.g. September 4 or Sep 4 2026"
-              className={fieldClass}
-              autoComplete="off"
-            />
-            {dateInput && (
-              <p className={`text-xs font-medium ${parsedDate ? "text-green-400" : "text-white/30"}`}>
-                {parsedDate
-                  ? fnsFormat(parsedDate, "EEEE, MMMM d, yyyy")
-                  : "Keep typing… (try Sep 4, 9/4, September 4 2026)"}
-              </p>
-            )}
-            <input type="hidden" {...register("starts_date")} />
-          </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-2">
+                  <Label className={labelClass}>Teams</Label>
+                  <input {...register("max_teams")} type="number" min={2} max={64} className={fieldClass} />
+                </div>
+                <div className="space-y-2">
+                  <Label className={labelClass}>Per side</Label>
+                  <input {...register("team_size")} type="number" min={1} max={11} className={fieldClass} />
+                </div>
+                <div className="space-y-2">
+                  <Label className={labelClass}>Fee</Label>
+                  <input {...register("entry_fee")} type="number" min={0} step="50" className={fieldClass} />
+                </div>
+              </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className={labelClass}>Time *</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
+                  <Users size={18} className="text-rondo-accent" />
+                  <p className="mt-3 text-3xl font-black text-white">{totalPlayers || 0}</p>
+                  <p className="text-xs font-bold uppercase tracking-wide text-white/40">Max players</p>
+                </div>
+                <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
+                  <ShieldCheck size={18} className="text-rondo-accent" />
+                  <p className="mt-3 text-3xl font-black text-white">P{prizePoolHint || 0}</p>
+                  <p className="text-xs font-bold uppercase tracking-wide text-white/40">Gross entry</p>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {step === "review" && (
+            <section className="space-y-5">
+              <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04] p-1.5">
+                <div className="relative min-h-64 rounded-[calc(2rem-0.375rem)] bg-[#080808]">
+                  {coverPreview ? (
+                    <img src={coverPreview} alt="" className="absolute inset-0 h-full w-full rounded-[calc(2rem-0.375rem)] object-cover" />
+                  ) : (
+                    <div className="absolute inset-0 rounded-[calc(2rem-0.375rem)] bg-[radial-gradient(circle_at_70%_25%,rgba(245,197,24,0.24),transparent_22%),linear-gradient(135deg,#181818,#050505)]" />
+                  )}
+                  <div className="absolute inset-0 rounded-[calc(2rem-0.375rem)] bg-gradient-to-t from-black via-black/55 to-transparent" />
+                  <div className="relative flex min-h-64 flex-col justify-end p-5">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-rondo-accent">{formatLabel}</p>
+                    <h2 className="rondo-hero-title mt-1 text-5xl text-white">{values.name || "Tournament"}</h2>
+                    <p className="mt-2 text-sm text-white/60">
+                      {parsedDate ? fnsFormat(parsedDate, "MMM d") : "Date"} at {formatTime12h(startTime)} - {values.venue_name || "Venue"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
+                {[
+                  ["Organization", organizationId ? "Selected" : "Missing"],
+                  ["Teams", `${maxTeams || 0} teams`],
+                  ["Squad size", `${teamSize || 0} per side`],
+                  ["Entry", entryFee > 0 ? `P${entryFee} per team` : "Free"],
+                  ["Address", addressInput || "Not added"],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex items-center justify-between gap-4 border-b border-white/[0.06] py-3 last:border-0">
+                    <span className="text-sm text-white/45">{label}</span>
+                    <span className="text-right text-sm font-bold text-white">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {error && <p className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</p>}
+
+          <div className="fixed bottom-16 left-0 right-0 z-30 mx-auto max-w-lg px-4 pb-2">
+            {step === "review" ? (
+              <button
+                type="submit"
+                disabled={isSubmitting || !organizationsReady}
+                className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-rondo-accent px-5 py-4 text-sm font-black uppercase tracking-widest text-rondo-black shadow-[0_18px_55px_rgba(245,197,24,0.16)] disabled:opacity-50"
+              >
+                {isSubmitting ? "Publishing..." : "Publish tournament"}
+                <ChevronRight size={18} />
+              </button>
+            ) : (
               <button
                 type="button"
-                onClick={() => setShowTimePicker((v) => !v)}
-                className="text-rondo-accent text-xs font-semibold"
+                onClick={goNext}
+                disabled={!organizationsReady}
+                className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-rondo-accent px-5 py-4 text-sm font-black uppercase tracking-widest text-rondo-black shadow-[0_18px_55px_rgba(245,197,24,0.16)] disabled:opacity-50"
               >
-                {showTimePicker ? "Done" : formatTime12h(startTime)}
-              </button>
-            </div>
-
-            {!showTimePicker && (
-              <button
-                type="button"
-                onClick={() => setShowTimePicker(true)}
-                className="w-full rounded-xl bg-white/[0.04] border border-white/10 py-3 text-center text-white font-semibold text-lg"
-              >
-                {formatTime12h(startTime)}
+                Continue
+                <ChevronRight size={18} />
               </button>
             )}
-
-            {showTimePicker && (
-              <DrumRollPicker value={startTime} onChange={handleTimeChange} />
-            )}
-
-            <input type="hidden" {...register("starts_time")} />
           </div>
-        </div>
-
-        {/* ── Setup ── */}
-        <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.025] p-4">
-          <p className="font-heading text-sm font-black uppercase text-white">Setup</p>
-
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1.5">
-              <Label className={labelClass}>Max Teams</Label>
-              <input {...register("max_teams")} type="number" min={2} max={64} className={fieldClass} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className={labelClass}>Per Side</Label>
-              <input {...register("team_size")} type="number" min={1} max={11} className={fieldClass} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className={labelClass}>Fee (₱)</Label>
-              <input {...register("entry_fee")} type="number" min={0} step="50" className={fieldClass} />
-            </div>
-          </div>
-        </div>
-
-        {/* ── Description ── */}
-        <div className="space-y-1.5">
-          <Label className={labelClass}>Describe your tournament or add extra information</Label>
-          <textarea
-            {...register("description")}
-            rows={5}
-            maxLength={2000}
-            placeholder="Rules, prizes, schedule, group stage details, refund policy…"
-            className={`${fieldClass} h-32 resize-none`}
-          />
-        </div>
-
-        {error && <p className="text-destructive text-sm">{error}</p>}
-
-        <button
-          type="submit"
-          disabled={isSubmitting || !organizationsReady}
-          className="w-full bg-rondo-accent text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-xl active:scale-[0.98] transition-all min-h-[52px] disabled:opacity-50"
-        >
-          {isSubmitting ? "Creating…" : "Create Tournament"}
-        </button>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }
