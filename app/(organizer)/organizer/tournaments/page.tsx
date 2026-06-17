@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Trophy } from "lucide-react";
+import { ArrowLeft, Plus, Trophy, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Tournament } from "@/lib/supabase/types";
 import { TournamentCard } from "@/components/tournament/TournamentCard";
@@ -53,20 +53,57 @@ export default function OrganizerTournamentsPage() {
         </div>
       </header>
 
-      <div className="px-4 py-5 space-y-3 max-w-lg mx-auto">
+      <div className="px-4 py-5 space-y-4 max-w-lg mx-auto">
+        <section className="overflow-hidden rounded-2xl border border-rondo-accent/20 bg-rondo-accent/10 p-5">
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-rondo-accent">
+            Tournament studio
+          </p>
+          <h2 className="mt-2 font-heading text-3xl font-black uppercase italic leading-none text-white">
+            Build brackets teams can see.
+          </h2>
+          <p className="mt-2 text-sm leading-5 text-white/55">
+            Separate from one-off games: set the cover, registration window, team size, fee, venue, and bracket format.
+          </p>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <div className="rounded-xl bg-black/25 p-3">
+              <Trophy size={15} className="mb-1 text-rondo-accent" />
+              <p className="font-heading text-xl font-black uppercase italic text-white">
+                {loading ? "--" : tournaments.length}
+              </p>
+              <p className="text-[10px] uppercase tracking-wider text-white/40">Tournaments</p>
+            </div>
+            <div className="rounded-xl bg-black/25 p-3">
+              <Users size={15} className="mb-1 text-rondo-accent" />
+              <p className="font-heading text-xl font-black uppercase italic text-white">
+                {loading
+                  ? "--"
+                  : tournaments.reduce(
+                      (sum, tournament) =>
+                        sum + (tournament.tournament_teams?.filter((team) => team.status === "registered").length ?? 0),
+                      0
+                    )}
+              </p>
+              <p className="text-[10px] uppercase tracking-wider text-white/40">Teams</p>
+            </div>
+          </div>
+        </section>
+
         {loading ? (
           [0, 1].map((i) => (
-            <div key={i} className="h-28 bg-card border border-border rounded-xl animate-pulse" />
+            <div key={i} className="h-36 animate-pulse rounded-2xl border border-white/10 bg-white/[0.04]" />
           ))
         ) : tournaments.length === 0 ? (
-          <div className="rondo-surface p-6 text-center space-y-3">
-            <p className="text-white/70 text-sm font-semibold">No tournaments yet</p>
-            <p className="text-muted-foreground text-xs">
-              Launch a knockout cup or a league and let teams register.
+          <div className="rounded-2xl border border-dashed border-white/14 bg-white/[0.025] p-6 text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/8">
+              <Trophy size={24} className="text-white/45" />
+            </div>
+            <p className="font-heading text-lg font-black uppercase italic text-white">No tournaments yet</p>
+            <p className="mx-auto mt-2 max-w-xs text-sm text-muted-foreground">
+              Launch a knockout cup or a league with a dedicated registration page.
             </p>
             <Link
               href="/organizer/tournaments/create"
-              className="inline-flex items-center gap-1.5 rounded-full bg-rondo-accent text-black px-4 py-2 text-xs font-bold"
+              className="mt-5 inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-rondo-accent px-4 text-xs font-black uppercase tracking-wider text-black"
             >
               <Plus size={13} />
               Create tournament

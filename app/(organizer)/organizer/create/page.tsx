@@ -282,7 +282,7 @@ export default function CreateGamePage() {
   // ─── render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-[100dvh] pb-12">
+    <div className="min-h-[100dvh] bg-[#050505] pb-12">
       {/* header */}
       <header className="sticky top-0 bg-background/90 backdrop-blur-md border-b border-white/10 z-40 px-4 py-3 flex items-center gap-3">
         <button
@@ -292,10 +292,29 @@ export default function CreateGamePage() {
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="rondo-hero-title text-2xl">Create Match</h1>
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-rondo-yellow">
+            Match builder
+          </p>
+          <h1 className="rondo-hero-title text-2xl">Create Match</h1>
+        </div>
       </header>
 
       <form onSubmit={handleSubmit(onSubmit)} className="max-w-lg mx-auto space-y-0">
+
+        <div className="px-4 py-5">
+          <div className="rounded-2xl border border-rondo-yellow/15 bg-rondo-yellow/10 p-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-rondo-yellow">
+              Step 1 of 5
+            </p>
+            <h2 className="mt-1 font-heading text-2xl font-black uppercase italic leading-none text-white">
+              Start with the match page players will see.
+            </h2>
+            <p className="mt-2 text-sm leading-5 text-white/55">
+              Add the cover, venue, format, payment rule, and team shape before publishing.
+            </p>
+          </div>
+        </div>
 
         {/* ── cover photo ── */}
         <div className="relative">

@@ -2,12 +2,10 @@
 
 import { useEffect, useRef, useState, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, CreditCard, Loader2, MapPin, Shield, Zap } from "lucide-react";
+import { ArrowLeft, CreditCard, Loader2, MapPin, Zap } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { isGuestUser } from "@/lib/auth/is-guest";
 import { formatPrice } from "@/lib/utils/format";
-import { pushInAppNotification } from "@/lib/notifications";
 import type { Game } from "@/lib/supabase/types";
 
 function payIdempotencyKey(gameId: string) {
@@ -28,7 +26,7 @@ function PaymentForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const teamIdFromUrl = searchParams.get("teamId");
-  const [teamId, setTeamId] = useState<string | null>(teamIdFromUrl);
+  const [teamId] = useState<string | null>(teamIdFromUrl);
   const [game, setGame] = useState<Game | null>(null);
   const [balanceCentavos, setBalanceCentavos] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -107,42 +105,6 @@ function PaymentForm() {
     }
   }
 
-  async function handlePayAtVenue() {
-    if (!game || paying) return;
-    const supabase = createClient();
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return;
-    if (userData.user.is_anonymous) {
-      router.push(`/signup?next=/games/${id}/payment`);
-      return;
-    }
-    setPaying(true);
-    setError(null);
-    try {
-      const { error: joinError } = await supabase.from("game_players").upsert(
-        {
-          game_id: id,
-          user_id: userData.user.id,
-          team_id: teamId,
-          payment_status: "venue",
-        },
-        { onConflict: "game_id,user_id" }
-      );
-      if (joinError) throw new Error(joinError.message);
-      await pushInAppNotification({
-        userId: userData.user.id,
-        type: "join_confirmed",
-        title: "Joined with pay-at-venue",
-        body: `You're in ${game.title}.`,
-        link: `/games/${id}`,
-      });
-      router.push(`/games/${id}/invite`);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Could not join. Please try again.");
-      setPaying(false);
-    }
-  }
-
   if (redirecting) {
     return (
       <div className="min-h-[100dvh] flex flex-col items-center justify-center gap-5 px-6 text-center">
@@ -167,6 +129,7 @@ function PaymentForm() {
   if (!game) return null;
 
   const price = game.price_per_player;
+  const hasEnoughBalance = balanceCentavos >= price;
 
   return (
     <div className="min-h-[100dvh] pb-8 rondo-page">
@@ -196,23 +159,29 @@ function PaymentForm() {
           </div>
         </div>
 
-        {/* Payment options */}
         <div className="space-y-3">
-          <h2 className="text-white font-bold text-base">Select Payment Method</h2>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-rondo-yellow">
+              Payment decision
+            </p>
+            <h2 className="font-heading text-2xl font-black uppercase italic text-white">
+              Confirm your spot
+            </h2>
+          </div>
 
           <button
             onClick={handlePayOnline}
             disabled={paying}
-            className="w-full bg-card border border-border hover:border-rondo-yellow/40 rounded-xl p-4 text-left transition-all cursor-pointer active:scale-[0.98] disabled:opacity-50 min-h-[44px]"
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-left transition-all hover:border-rondo-yellow/40 active:scale-[0.98] disabled:opacity-50"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-rondo-yellow/10 flex items-center justify-center">
                 <CreditCard size={18} className="text-rondo-yellow" />
               </div>
               <div className="flex-1">
-                <p className="text-white font-semibold text-sm">Pay Online</p>
+                <p className="text-white font-semibold text-sm">Top up then pay</p>
                 <p className="text-muted-foreground text-xs">
-                  GCash, Maya, credit/debit card via PayMongo
+                  GCash, Maya, and card checkout through PayMongo.
                 </p>
               </div>
               {paying && (
@@ -221,14 +190,27 @@ function PaymentForm() {
             </div>
           </button>
 
-          <div className="rondo-surface p-4 flex items-center gap-3">
-            <div className="flex-1 min-w-0">
-              <p className="font-body text-white/50 text-xs uppercase">You have</p>
-              <p className="font-heading text-white font-black text-2xl">{formatPrice(balanceCentavos)}</p>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="font-body text-white/50 text-xs uppercase">Wallet balance</p>
+                <p className="font-heading text-white font-black text-2xl">{formatPrice(balanceCentavos)}</p>
+              </div>
+              <Link href={`/wallet?next=/games/${id}/payment?teamId=${teamId ?? ""}`} className="text-rondo-accent text-xs font-semibold uppercase shrink-0">
+                Top up
+              </Link>
             </div>
-            <Link href={`/wallet?next=/games/${id}/payment?teamId=${teamId ?? ""}`} className="text-rondo-accent text-xs font-semibold uppercase shrink-0">
-              Top up
-            </Link>
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+              <div
+                className="h-full rounded-full bg-rondo-yellow"
+                style={{ width: `${Math.min(100, Math.round((balanceCentavos / Math.max(price, 1)) * 100))}%` }}
+              />
+            </div>
+            <p className={`mt-2 text-xs ${hasEnoughBalance ? "text-emerald-300" : "text-white/45"}`}>
+              {hasEnoughBalance
+                ? "Your wallet covers this match."
+                : `${formatPrice(Math.max(price - balanceCentavos, 0))} more needed before wallet payment.`}
+            </p>
           </div>
         </div>
 
@@ -242,7 +224,7 @@ function PaymentForm() {
         <button
           type="button"
           onClick={handlePayWithWallet}
-          disabled={paying}
+          disabled={paying || !hasEnoughBalance}
           className="w-full bg-rondo-accent text-black font-heading font-black uppercase tracking-widest text-sm py-4 rounded-xl disabled:opacity-40 flex items-center justify-center gap-2 min-h-[52px]"
         >
           {!paying && (
@@ -260,7 +242,7 @@ function PaymentForm() {
         )}
 
         <p className="font-body text-white/35 text-xs text-center leading-relaxed">
-          Match fees come from your Rondo Wallet. Top-ups use PayMongo (GCash, Maya, card) — that money lands in your wallet, not straight to the organizer.
+          Match fees come from your Rondo Wallet. Top-ups use PayMongo for GCash, Maya, and cards; that money lands in your wallet before it is applied to the match.
         </p>
       </div>
     </div>
