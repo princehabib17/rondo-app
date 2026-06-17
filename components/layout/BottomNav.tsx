@@ -3,7 +3,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarDays,
-  CirclePlus,
   Home,
   LayoutDashboard,
   MapPinned,
@@ -112,27 +111,39 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 rondo-glass-nav z-[200] pb-[env(safe-area-inset-bottom)]">
-      <div className="mx-auto flex h-16 w-full max-w-[430px] items-center justify-around overflow-hidden px-2">
+      <div className="mx-auto flex h-[60px] w-full max-w-[430px] items-center justify-around px-1">
         {tabs.map(({ href, icon: Icon, label, isActive }) => {
           const active = isActive(pathname);
           return (
             <Link
               key={href}
               href={href}
-              className="flex min-w-0 flex-1 flex-col items-center gap-0.5 py-2 transition-all active:scale-90"
+              className="flex min-w-0 flex-1 flex-col items-center gap-[3px] py-2 transition-all active:scale-[0.88]"
             >
-              <Icon
-                size={25}
-                strokeWidth={active ? 2 : 1.75}
-                className={cn(
-                  "transition-colors duration-200",
-                  active ? "text-rondo-accent" : "text-white/45"
+              {/* Active pill behind icon */}
+              <div className={cn(
+                "relative flex items-center justify-center w-11 h-7 rounded-full transition-all duration-200",
+                active
+                  ? "bg-rondo-accent/[0.14]"
+                  : "bg-transparent"
+              )}>
+                <Icon
+                  size={22}
+                  strokeWidth={active ? 2.25 : 1.6}
+                  className={cn(
+                    "transition-all duration-200",
+                    active ? "text-rondo-accent" : "text-white/40"
+                  )}
+                />
+                {/* Glow dot for active */}
+                {active && (
+                  <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-rondo-accent" />
                 )}
-              />
+              </div>
               <span
                 className={cn(
-                  "max-w-full truncate font-body text-[11px] font-medium transition-colors duration-200",
-                  active ? "text-rondo-accent" : "text-white/45"
+                  "max-w-full truncate font-body text-[10px] transition-all duration-200",
+                  active ? "text-rondo-accent font-semibold" : "text-white/35 font-medium"
                 )}
               >
                 {label}
