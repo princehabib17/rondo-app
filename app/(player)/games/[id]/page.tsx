@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Calendar, ChevronRight, MapPin, Megaphone, Users } from "lucide-react";
+import { ArrowLeft, Calendar, ChevronRight, MapPin, Megaphone, Timer, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { MatchTeamsRoster } from "@/components/match/MatchTeamsRoster";
@@ -219,6 +219,22 @@ export default function MatchDetailPage() {
 
         <MatchTeamsRoster game={game} />
 
+        <Link
+          href={`/games/${game.id}/timer`}
+          className="rondo-surface flex items-center gap-4 p-4 active:scale-[0.98] transition-transform"
+        >
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-rondo-accent text-rondo-black">
+            <Timer size={22} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-white text-sm font-bold">Live match timer</p>
+            <p className="text-white/45 text-xs">
+              Open the round clock, current matchup, and next rotation.
+            </p>
+          </div>
+          <ChevronRight size={18} className="text-white/30 shrink-0" />
+        </Link>
+
         {myEntry && (
           <div className="rondo-surface border-rondo-accent/30 p-4 text-center">
             <p className="text-rondo-accent font-semibold text-sm">You have a spot in this match</p>
@@ -256,10 +272,11 @@ export default function MatchDetailPage() {
       <div className="fixed bottom-16 left-0 right-0 max-w-lg mx-auto px-4 pb-2 z-30 flex gap-2">
         <Link
           href={`/games/${game.id}/room`}
-          className="min-w-[52px] min-h-[52px] rondo-surface flex items-center justify-center text-white hover:text-rondo-accent transition-colors"
+          className="min-w-[72px] min-h-[52px] rondo-surface flex flex-col items-center justify-center gap-0.5 text-white hover:text-rondo-accent transition-colors"
           aria-label="Organizer room"
         >
           <Megaphone size={18} />
+          <span className="text-[10px] font-bold uppercase tracking-wide">Room</span>
         </Link>
 
         {cta.action === "disabled" ? (

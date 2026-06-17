@@ -57,7 +57,7 @@ function DrumColumn({ items, selectedIndex, onSelect }: DrumColumnProps) {
         className="pointer-events-none absolute inset-x-0 top-0 z-20"
         style={{
           height: ITEM_H,
-          background: "linear-gradient(to bottom, hsl(var(--background)) 30%, transparent)",
+          background: "linear-gradient(to bottom, #050505 30%, transparent)",
         }}
       />
       {/* bottom fade */}
@@ -65,7 +65,7 @@ function DrumColumn({ items, selectedIndex, onSelect }: DrumColumnProps) {
         className="pointer-events-none absolute inset-x-0 bottom-0 z-20"
         style={{
           height: ITEM_H,
-          background: "linear-gradient(to top, hsl(var(--background)) 30%, transparent)",
+          background: "linear-gradient(to top, #050505 30%, transparent)",
         }}
       />
 
