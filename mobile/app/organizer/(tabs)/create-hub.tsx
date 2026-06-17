@@ -6,64 +6,36 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { colors, font, spacing, radius, shadow } from '../../../constants/theme';
 
-const OPTIONS = [
-  {
-    mark: '5V5',
-    title: 'Host a match',
-    desc: 'A fast setup for one game: cover, venue, teams, pricing, then publish.',
-    route: '/organizer/create/index',
-    colors: ['#20220B', '#070707'] as [string, string],
-    accent: colors.yellow,
-  },
-  {
-    mark: 'CUP',
-    title: 'Build a tournament',
-    desc: 'A guided cup builder with bracket format, venue story, team size, and review.',
-    route: '/organizer/create/tournament',
-    colors: ['#101F1A', '#050505'] as [string, string],
-    accent: colors.accent,
-  },
-];
-
 export default function CreateHubScreen() {
   const insets = useSafeAreaInsets();
+
+  const options = [
+    { icon: '⚽', title: 'New Game', desc: 'Set up a futsal or football match', route: '/organizer/create/index', gradient: ['#1A2A1A', '#0A1A0A'] as [string, string], accent: colors.success },
+    { icon: '🏆', title: 'New Tournament', desc: 'Run a knockout or league tournament', route: '/organizer/create/tournament', gradient: ['#1A1400', '#0A0A00'] as [string, string], accent: colors.yellow },
+  ];
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Text style={styles.kicker}>Organizer studio</Text>
-        <Text style={styles.title}>What are you launching?</Text>
-        <Text style={styles.subtitle}>Choose the journey first. Details come after the concept is clear.</Text>
+        <Text style={styles.headerTitle}>Create</Text>
+        <Text style={styles.headerSub}>What are you hosting?</Text>
       </View>
 
-      <View style={styles.stack}>
-        {OPTIONS.map((item, index) => (
+      <View style={styles.options}>
+        {options.map((o) => (
           <TouchableOpacity
-            key={item.title}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              router.push(item.route as any);
-            }}
-            activeOpacity={0.86}
-            style={[styles.shell, index === 0 && styles.heroShell, shadow.card]}
+            key={o.title}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push(o.route as any); }}
+            activeOpacity={0.85}
+            style={[styles.option, shadow.card]}
           >
-            <LinearGradient colors={item.colors} style={styles.card}>
-              <View style={styles.cardTop}>
-                <View style={[styles.mark, { borderColor: item.accent + '66' }]}>
-                  <Text style={[styles.markText, { color: item.accent }]}>{item.mark}</Text>
-                </View>
-                <View style={[styles.signal, { backgroundColor: item.accent }]} />
-              </View>
-
-              <View style={styles.pitch}>
-                <Text style={styles.cardTitle}>{item.title}</Text>
-                <Text style={styles.cardDesc}>{item.desc}</Text>
-              </View>
-
-              <View style={[styles.action, { backgroundColor: item.accent }]}>
-                <Text style={styles.actionText}>Start</Text>
-                <Text style={styles.actionIcon}>→</Text>
+            <LinearGradient colors={o.gradient} style={styles.optionGradient}>
+              <Text style={styles.optionIcon}>{o.icon}</Text>
+              <Text style={styles.optionTitle}>{o.title}</Text>
+              <Text style={styles.optionDesc}>{o.desc}</Text>
+              <View style={[styles.optionArrow, { backgroundColor: o.accent + '22', borderColor: o.accent + '44' }]}>
+                <Text style={[styles.optionArrowText, { color: o.accent }]}>Get started →</Text>
               </View>
             </LinearGradient>
           </TouchableOpacity>
@@ -75,79 +47,15 @@ export default function CreateHubScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  header: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.lg,
-    gap: spacing.sm,
-  },
-  kicker: {
-    ...font.captionMed,
-    color: colors.yellow,
-    textTransform: 'uppercase',
-    letterSpacing: 1.6,
-  },
-  title: {
-    fontSize: 36,
-    fontWeight: '900',
-    color: colors.text,
-    letterSpacing: -0.5,
-    lineHeight: 38,
-    textTransform: 'uppercase',
-  },
-  subtitle: {
-    ...font.bodySm,
-    color: colors.textSecondary,
-    lineHeight: 20,
-    maxWidth: 310,
-  },
-  stack: { paddingHorizontal: spacing.lg, gap: spacing.md },
-  shell: {
-    borderRadius: radius.xl,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    backgroundColor: colors.surface,
-  },
-  heroShell: { minHeight: 244 },
-  card: {
-    minHeight: 220,
-    padding: spacing.lg,
-    justifyContent: 'space-between',
-  },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  mark: {
-    borderWidth: 1,
-    borderRadius: radius.full,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 7,
-    backgroundColor: colors.glass,
-  },
-  markText: { ...font.captionMed, letterSpacing: 1.2 },
-  signal: { width: 10, height: 10, borderRadius: 5 },
-  pitch: { gap: spacing.sm },
-  cardTitle: {
-    fontSize: 32,
-    fontWeight: '900',
-    color: colors.text,
-    letterSpacing: -0.4,
-    textTransform: 'uppercase',
-    lineHeight: 34,
-  },
-  cardDesc: { ...font.bodySm, color: colors.textSecondary, lineHeight: 20 },
-  action: {
-    height: 48,
-    borderRadius: radius.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-  },
-  actionText: {
-    ...font.bodySmMed,
-    color: colors.bg,
-    textTransform: 'uppercase',
-    letterSpacing: 1.4,
-  },
-  actionIcon: { color: colors.bg, fontSize: 18, fontWeight: '900' },
+  header: { paddingHorizontal: spacing.lg, paddingVertical: spacing.xl, gap: spacing.xs },
+  headerTitle: { ...font.h1, color: colors.text },
+  headerSub: { ...font.body, color: colors.textSecondary },
+  options: { paddingHorizontal: spacing.lg, gap: spacing.md },
+  option: { borderRadius: radius.xl, overflow: 'hidden', borderWidth: 1, borderColor: colors.border },
+  optionGradient: { padding: spacing.xl, gap: spacing.md },
+  optionIcon: { fontSize: 48 },
+  optionTitle: { ...font.h2, color: colors.text },
+  optionDesc: { ...font.body, color: colors.textSecondary, lineHeight: 22 },
+  optionArrow: { alignSelf: 'flex-start', borderRadius: radius.full, borderWidth: 1, paddingHorizontal: spacing.md, paddingVertical: spacing.xs + 2, marginTop: spacing.xs },
+  optionArrowText: { ...font.bodySmMed },
 });
