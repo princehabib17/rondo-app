@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarDays, MapPin, Trophy, Users } from "lucide-react";
+import { CalendarDays, ChevronRight, MapPin, Trophy, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Tournament } from "@/lib/supabase/types";
 import { formatGameDate, formatPrice } from "@/lib/utils/format";
@@ -26,22 +26,25 @@ interface TournamentCardProps {
 export function TournamentCard({ tournament, href }: TournamentCardProps) {
   const status = statusStyles[tournament.status];
   const teamCount = tournament.tournament_teams?.filter((t) => t.status === "registered").length ?? 0;
+  const capacity = Math.min(100, Math.round((teamCount / Math.max(tournament.max_teams, 1)) * 100));
 
   return (
     <Link
       href={href}
-      className="block rondo-surface p-4 space-y-2.5 hover:border-rondo-accent/40 border border-transparent transition-colors"
+      className="block overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 transition hover:border-rondo-accent/40"
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <Trophy size={16} className="text-rondo-accent shrink-0" />
-          <h3 className="text-white font-heading font-bold text-base uppercase truncate">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rondo-accent/15 text-rondo-accent">
+            <Trophy size={16} />
+          </div>
+          <h3 className="truncate font-heading text-base font-bold uppercase text-white">
             {tournament.name}
           </h3>
         </div>
         <span
           className={cn(
-            "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide shrink-0",
+            "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
             status.className
           )}
         >
@@ -49,7 +52,7 @@ export function TournamentCard({ tournament, href }: TournamentCardProps) {
         </span>
       </div>
 
-      <div className="space-y-1 text-xs text-white/60">
+      <div className="mt-3 space-y-1 text-xs text-white/60">
         <p className="flex items-center gap-1.5">
           <CalendarDays size={12} className="text-white/30" />
           {formatGameDate(tournament.starts_at)}
@@ -62,10 +65,17 @@ export function TournamentCard({ tournament, href }: TournamentCardProps) {
         )}
         <p className="flex items-center gap-1.5">
           <Users size={12} className="text-white/30" />
-          {teamCount}/{tournament.max_teams} teams · {formatLabels[tournament.format]} ·{" "}
+          {teamCount}/{tournament.max_teams} teams - {formatLabels[tournament.format]} -{" "}
           {tournament.team_size}-a-side
-          {tournament.entry_fee > 0 && ` · ${formatPrice(tournament.entry_fee)} per team`}
+          {tournament.entry_fee > 0 && ` - ${formatPrice(tournament.entry_fee)} per team`}
         </p>
+      </div>
+
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
+          <div className="h-full rounded-full bg-rondo-accent" style={{ width: `${capacity}%` }} />
+        </div>
+        <ChevronRight size={16} className="text-white/35" />
       </div>
     </Link>
   );

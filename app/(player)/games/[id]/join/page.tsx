@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Check, Users } from "lucide-react";
+import { ArrowLeft, Calendar, Check, MapPin, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
@@ -231,13 +231,41 @@ export default function JoinMatchPage() {
       </header>
 
       <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
-        <p className="font-body text-white/50 text-sm">
-          {waitlistOnly
-            ? "No order — when a spot opens, everyone on the waitlist gets notified. First to accept gets in."
-            : claimSpot
-              ? "A spot opened. Pick a team and claim it before someone else does."
-              : "Pick your team. The organizer can move players later."}
-        </p>
+        <section className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04]">
+          {game.banner_url && (
+            <div className="relative h-36">
+              <img src={game.banner_url} alt="" className="h-full w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 to-transparent" />
+            </div>
+          )}
+          <div className="space-y-3 p-4">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-rondo-yellow">
+                Team selection
+              </p>
+              <h2 className="mt-1 font-heading text-2xl font-black uppercase italic leading-none text-white">
+                {game.title}
+              </h2>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs text-white/55">
+              <div className="rounded-xl bg-black/25 p-3">
+                <Calendar size={14} className="mb-1 text-rondo-yellow" />
+                <p>{new Date(game.date_time).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</p>
+              </div>
+              <div className="rounded-xl bg-black/25 p-3">
+                <MapPin size={14} className="mb-1 text-rondo-yellow" />
+                <p className="truncate">{game.venue_name}</p>
+              </div>
+            </div>
+            <p className="font-body text-sm leading-5 text-white/55">
+              {waitlistOnly
+                ? "Everyone on the waitlist gets notified when a spot opens. First to accept gets in."
+                : claimSpot
+                  ? "A spot opened. Pick a team and claim it before someone else does."
+                  : "Pick your preferred team. The organizer can still adjust teams before kick-off."}
+            </p>
+          </div>
+        </section>
 
         <div className="grid grid-cols-2 gap-3">
           {teams.map((team) => {
