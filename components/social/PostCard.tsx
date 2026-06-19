@@ -140,14 +140,19 @@ export function PostCard({ post, currentUserId, onDeleted }: PostCardProps) {
       <p className="text-white/85 text-sm whitespace-pre-wrap break-words">{post.body}</p>
 
       {post.media_url && (
-        <a href={post.media_url} target="_blank" rel="noopener noreferrer" className="block">
+        <a
+          href={post.media_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="relative block aspect-video max-h-72 overflow-hidden rounded-xl border border-white/10"
+        >
           <Image
             src={post.media_url}
             alt="Post media"
-            width={800}
-            height={450}
+            fill
             unoptimized
-            className="w-full rounded-xl border border-white/10 object-cover max-h-72"
+            className="object-cover"
+            sizes="(max-width: 512px) 100vw, 512px"
           />
         </a>
       )}
