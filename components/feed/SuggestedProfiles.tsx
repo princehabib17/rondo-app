@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronRight, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { getFlagEmoji } from "@/lib/utils/format";
@@ -60,6 +61,7 @@ export function SuggestedProfiles() {
               <div key={i} className="flex flex-col items-center gap-2 shrink-0 w-[72px]">
                 <div className="w-14 h-14 rounded-full bg-white/10 animate-pulse" />
                 <div className="h-2.5 w-12 rounded bg-white/10 animate-pulse" />
+                <div className="h-2 w-9 rounded bg-white/10 animate-pulse" />
               </div>
             ))
           : players.map((player) => {
@@ -71,9 +73,9 @@ export function SuggestedProfiles() {
                   className="flex flex-col items-center gap-2 shrink-0 w-[72px] group"
                 >
                   <div className="relative">
-                    <div className="w-14 h-14 rounded-full bg-secondary border border-white/10 flex items-center justify-center overflow-hidden group-hover:border-rondo-accent/50 transition-colors">
+                    <div className="w-14 h-14 relative rounded-full bg-secondary border border-white/10 flex items-center justify-center overflow-hidden group-hover:border-rondo-accent/50 transition-colors">
                       {player.avatar_url ? (
-                        <img src={player.avatar_url} alt="" className="w-full h-full object-cover" />
+                        <Image src={player.avatar_url} alt="" fill className="object-cover" sizes="56px" />
                       ) : (
                         <span className="font-heading text-white font-black text-sm">
                           {(player.full_name ?? "?")[0]}
@@ -84,7 +86,7 @@ export function SuggestedProfiles() {
                       <span className="absolute -bottom-0.5 -right-0.5 text-base leading-none">{flag}</span>
                     )}
                   </div>
-                  <div className="text-center">
+                  <div className="text-center min-h-[26px]">
                     <p className="font-body text-white/80 text-[10px] leading-tight line-clamp-1">
                       {player.full_name}
                     </p>

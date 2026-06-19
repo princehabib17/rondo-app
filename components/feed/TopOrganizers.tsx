@@ -32,7 +32,10 @@ export function TopOrganizers({ organizers, loading = false }: TopOrganizersProp
           ? Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex flex-col items-center gap-2 shrink-0 w-[72px]">
                 <div className="w-14 h-14 rounded-full bg-white/10 animate-pulse" />
-                <div className="h-2.5 w-12 rounded bg-white/10 animate-pulse" />
+                <div className="flex flex-col items-center gap-1">
+                  <div className="h-2.5 w-12 rounded bg-white/10 animate-pulse" />
+                  <div className="h-2.5 w-8 rounded bg-white/10 animate-pulse" />
+                </div>
               </div>
             ))
           : organizers.map((organizer) => {
@@ -67,7 +70,7 @@ export function TopOrganizers({ organizers, loading = false }: TopOrganizersProp
                   />
                 )}
               </div>
-              <span className="font-body text-white/80 text-[10px] text-center leading-tight line-clamp-2">
+              <span className="font-body text-white/80 text-[10px] text-center leading-tight line-clamp-2 min-h-[28px] flex items-start justify-center">
                 {organizer.full_name}
               </span>
                 </Link>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -119,7 +120,7 @@ export default function GameMap({ games }: GameMapProps) {
           <div className="grid grid-cols-[38%_1fr] gap-0 p-3 pt-1">
             <div className="relative min-h-[160px] overflow-hidden rounded-l-2xl bg-zinc-900">
               {selected.banner_url ? (
-                <img src={selected.banner_url} alt="" className="h-full w-full object-cover" />
+                <Image src={selected.banner_url} alt="" fill className="object-cover" sizes="38vw" />
               ) : (
                 <div className="h-full w-full bg-gradient-to-br from-zinc-900 to-zinc-800 flex items-center justify-center">
                   <MapPin size={28} className="text-white/15" />

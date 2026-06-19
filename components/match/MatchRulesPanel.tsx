@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { HelpCircle, Lock, Shield, Wallet } from "lucide-react";
 import type { Game, Profile } from "@/lib/supabase/types";
 import { GameBadges } from "@/components/feed/GameBadges";
@@ -42,9 +43,9 @@ export function MatchRulesPanel({
 
       {organizer && (
         <div className="rondo-surface p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+          <div className="w-10 h-10 relative rounded-xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
             {organizer.avatar_url ? (
-              <img src={organizer.avatar_url} alt="" className="w-full h-full object-cover" />
+              <Image src={organizer.avatar_url} alt="" fill className="object-cover" sizes="40px" />
             ) : (
               <span className="text-rondo-accent font-black text-sm">
                 {(organizer.full_name ?? "O").slice(0, 1)}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Calendar, MapPin, Users, Trophy } from "lucide-react";
 import { formatGameDate, formatPrice } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
@@ -24,11 +25,12 @@ export function GameCard({ game, index = 0 }: GameCardProps) {
         {/* Banner */}
         <div className="relative h-32 w-full overflow-hidden bg-muted">
           {game.banner_url ? (
-            <img
+            <Image
               src={game.banner_url}
               alt={game.title}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-              loading="lazy"
+              fill
+              className="object-cover group-hover:scale-110 transition-transform duration-300"
+              sizes="(max-width: 512px) 100vw, 512px"
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border-b border-border">
