@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, MessageCircle, Bookmark } from "lucide-react";
 import { getFlagEmoji } from "@/lib/utils/format";
 import type { ScoutShortlist } from "@/lib/supabase/types";
@@ -74,9 +75,9 @@ export default function ScoutShortlistPage() {
                 className="bg-card border border-border rounded-xl p-3 flex items-center gap-3"
               >
                 <Link href={`/profile/${entry.player_id}`} className="relative shrink-0">
-                  <div className="w-12 h-12 rounded-full bg-secondary border border-border overflow-hidden flex items-center justify-center">
+                  <div className="w-12 h-12 relative rounded-full bg-secondary border border-border overflow-hidden flex items-center justify-center">
                     {player?.avatar_url ? (
-                      <img src={player.avatar_url} alt="" className="w-full h-full object-cover" />
+                      <Image src={player.avatar_url} alt="" fill className="object-cover" sizes="48px" />
                     ) : (
                       <span className="text-white font-black">
                         {(player?.full_name ?? "?")[0]}

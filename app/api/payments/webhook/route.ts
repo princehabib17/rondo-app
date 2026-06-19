@@ -8,10 +8,12 @@ import {
   topUpNote,
 } from "@/lib/wallet/ledger";
 
+const WEBHOOK_SECRET = process.env.PAYMONGO_WEBHOOK_SECRET_KEY;
+
 export async function POST(request: Request) {
   const rawBody = await request.text();
   const signature = request.headers.get("paymongo-signature");
-  const webhookSecret = process.env.PAYMONGO_WEBHOOK_SECRET_KEY;
+  const webhookSecret = WEBHOOK_SECRET;
 
   if (!webhookSecret) {
     logPayment({ event: "webhook_skipped", level: "warn", message: "No PAYMONGO_WEBHOOK_SECRET_KEY" });

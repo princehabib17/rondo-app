@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Plus, ClipboardList, ImagePlus, Trophy, Users, ChevronRight, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -268,7 +269,7 @@ export default function OrganizerDashboardPage() {
               <div key={game.id} className="bg-card border border-border rounded-xl overflow-hidden hover:border-rondo-yellow/40 transition-all">
                 {game.banner_url ? (
                   <div className="relative h-24">
-                    <img src={game.banner_url} alt="" className="w-full h-full object-cover" />
+                    <Image src={game.banner_url} alt="" fill className="object-cover" sizes="(max-width: 512px) 100vw, 512px" />
                     <label
                       className="absolute bottom-2 right-2 inline-flex items-center gap-1 rounded-full bg-black/70 text-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide cursor-pointer"
                       onClick={(e) => e.stopPropagation()}

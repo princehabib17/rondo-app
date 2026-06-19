@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { isGuestUser } from "@/lib/auth/is-guest";
@@ -76,12 +76,15 @@ export async function POST(request: Request) {
       );
     }
 
-    await service.from("notifications").insert({
-      user_id: userData.user.id,
-      type: "payment_success",
-      title: "Payment successful",
-      body: "Your spot is confirmed. See you on the pitch!",
-      link: `/games/${gameId}/confirmed`,
+    const payerId = userData.user.id;
+    after(async () => {
+      await service.from("notifications").insert({
+        user_id: payerId,
+        type: "payment_success",
+        title: "Payment successful",
+        body: "Your spot is confirmed. See you on the pitch!",
+        link: `/games/${gameId}/confirmed`,
+      });
     });
 
     return NextResponse.json({

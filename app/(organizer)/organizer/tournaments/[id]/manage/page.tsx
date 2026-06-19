@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Play, Shield, Trophy } from "lucide-react";
+import { ArrowLeft, Loader2, Play, Shield, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { subscribeToTournament } from "@/lib/realtime";
@@ -159,6 +159,12 @@ export default function ManageTournamentPage() {
         toast.error(json.error ?? "Could not start tournament");
         return;
       }
+      if (res.status === 202) {
+        toast.success("Generating fixtures — this takes a moment…");
+        // Realtime subscription will reload the page when status becomes 'active'.
+        await load();
+        return;
+      }
       toast.success("Fixtures generated — game on!");
       await load();
     } finally {
@@ -207,11 +213,22 @@ export default function ManageTournamentPage() {
               className="inline-flex items-center justify-center gap-1.5 w-full rounded-xl bg-rondo-accent text-black px-4 py-3 text-sm font-bold disabled:opacity-40"
             >
               <Play size={15} />
-              {starting ? "Generating fixtures…" : "Start tournament"}
+              {starting ? "Queuing…" : "Start tournament"}
             </button>
             {teams.length < 2 && (
               <p className="text-muted-foreground text-xs">Need at least 2 teams to start.</p>
             )}
+          </section>
+        )}
+
+        {tournament.status === "generating" && (
+          <section className="rondo-surface p-4">
+            <div className="flex items-center gap-3">
+              <Loader2 size={18} className="text-rondo-accent animate-spin shrink-0" />
+              <p className="text-white/70 text-sm">
+                Generating fixtures — the bracket will appear here shortly.
+              </p>
+            </div>
           </section>
         )}
 

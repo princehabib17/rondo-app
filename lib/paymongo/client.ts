@@ -1,9 +1,13 @@
+let _authHeader: string | null = null;
+
 export function getPaymongoAuthHeader(): string {
+  if (_authHeader) return _authHeader;
   const secretKey = process.env.PAYMONGO_SECRET_KEY;
   if (!secretKey) {
     throw new Error("PAYMONGO_SECRET_KEY is not set");
   }
-  return `Basic ${Buffer.from(`${secretKey}:`).toString("base64")}`;
+  _authHeader = `Basic ${Buffer.from(`${secretKey}:`).toString("base64")}`;
+  return _authHeader;
 }
 
 export async function retrieveCheckoutSession(sessionId: string) {

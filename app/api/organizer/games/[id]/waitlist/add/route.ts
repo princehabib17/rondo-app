@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -83,12 +83,15 @@ export async function POST(
 
     await service.from("game_waitlist").delete().eq("id", wl.id);
 
-    await service.from("notifications").insert({
-      user_id: wl.user_id,
-      type: "waitlist_added",
-      title: "Added to match",
-      body: "The organizer added you from the waitlist.",
-      link: `/games/${gameId}`,
+    const notifyUserId = wl.user_id;
+    after(async () => {
+      await service.from("notifications").insert({
+        user_id: notifyUserId,
+        type: "waitlist_added",
+        title: "Added to match",
+        body: "The organizer added you from the waitlist.",
+        link: `/games/${gameId}`,
+      });
     });
 
     return NextResponse.json({ status: "added", paymentStatus });

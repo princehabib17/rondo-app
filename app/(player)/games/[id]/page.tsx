@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, Calendar, ChevronRight, MapPin, Megaphone, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
@@ -151,7 +152,7 @@ export default function MatchDetailPage() {
 
       <div className="relative h-48 bg-[#1c1c1c]">
         {game.banner_url ? (
-          <img src={game.banner_url} alt="" className="w-full h-full object-cover" />
+          <Image src={game.banner_url} alt="" fill className="object-cover" sizes="(max-width: 512px) 100vw, 512px" />
         ) : null}
         <div className="absolute inset-0 bg-gradient-to-t from-rondo-page via-rondo-page/40 to-transparent" />
         <span className="absolute bottom-3 left-4 font-heading text-white/90 text-2xl font-black italic uppercase">

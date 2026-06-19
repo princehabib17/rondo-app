@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, UserPlus, UserMinus, MapPin, Trophy, Wallet, CalendarDays, ChevronRight, ArrowUpRight, ArrowDownLeft, MessageCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -242,9 +243,9 @@ export default function PublicProfilePage() {
         {/* Avatar + name */}
         <div className="flex items-center gap-4">
           <div className="relative shrink-0">
-            <div className="w-20 h-20 rounded-full bg-secondary border-2 border-border overflow-hidden flex items-center justify-center">
+            <div className="w-20 h-20 relative rounded-full bg-secondary border-2 border-border overflow-hidden flex items-center justify-center">
               {profile.avatar_url ? (
-                <img src={profile.avatar_url} alt={profile.full_name ?? ""} className="w-full h-full object-cover" />
+                <Image src={profile.avatar_url} alt={profile.full_name ?? ""} fill className="object-cover" sizes="80px" />
               ) : (
                 <span className="text-white font-black text-2xl">
                   {(profile.full_name ?? "?").slice(0, 1)}

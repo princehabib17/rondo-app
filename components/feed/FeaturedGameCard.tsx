@@ -36,7 +36,7 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
         <div className="flex gap-0">
           <div className="relative w-[42%] min-h-[205px] shrink-0 bg-[#1c1c1c]">
             {game.banner_url ? (
-              <img src={game.banner_url} alt="" className="w-full h-full object-cover" />
+              <Image src={game.banner_url} alt="" fill className="object-cover" sizes="(max-width: 512px) 42vw, 215px" />
             ) : (
               <Image src="/feed/hero-soccer.jpg" alt="" fill className="object-cover" sizes="160px" />
             )}
@@ -112,7 +112,7 @@ export function FeaturedGameSkeleton() {
   return (
     <section className="px-4 pt-6">
       <div className="h-4 w-32 bg-white/10 rounded animate-pulse mb-3" />
-      <div className="h-[180px] bg-card border border-white/10 rounded-2xl animate-pulse" />
+      <div className="h-[205px] bg-card border border-white/10 rounded-2xl animate-pulse" />
     </section>
   );
 }

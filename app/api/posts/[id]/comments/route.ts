@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { isGuestUser } from "@/lib/auth/is-guest";
@@ -60,18 +60,21 @@ export async function POST(
     }
 
     if (post.author_id !== userId) {
-      const { data: actor } = await supabase
-        .from("profiles")
-        .select("full_name")
-        .eq("id", userId)
-        .single();
-      const service = createServiceClient();
-      await service.from("notifications").insert({
-        user_id: post.author_id,
-        type: "post_commented",
-        title: "New comment on your post",
-        body: `${actor?.full_name ?? "Someone"}: ${parsed.data.body.slice(0, 80)}`,
-        link: "/community",
+      const commentBody = parsed.data.body;
+      after(async () => {
+        const { data: actor } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", userId)
+          .single();
+        const service = createServiceClient();
+        await service.from("notifications").insert({
+          user_id: post.author_id,
+          type: "post_commented",
+          title: "New comment on your post",
+          body: `${actor?.full_name ?? "Someone"}: ${commentBody.slice(0, 80)}`,
+          link: "/community",
+        });
       });
     }
 

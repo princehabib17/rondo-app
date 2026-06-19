@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -131,27 +131,32 @@ export async function POST(
       await service.from("tournaments").update({ status: "completed" }).eq("id", tournamentId);
     }
 
-    // Tell both captains the score went up.
-    const { data: matchTeams } = await service
-      .from("tournament_teams")
-      .select("id, captain_id, name")
-      .in("id", [match.home_team_id, match.away_team_id]);
+    // Tell both captains the score went up (fire-and-forget).
+    const captureHome = match.home_team_id;
+    const captureAway = match.away_team_id;
+    const tournamentName = tournament.name;
+    after(async () => {
+      const { data: matchTeams } = await service
+        .from("tournament_teams")
+        .select("id, captain_id, name")
+        .in("id", [captureHome, captureAway]);
 
-    if (matchTeams && matchTeams.length === 2) {
-      const home = matchTeams.find((t) => t.id === match.home_team_id);
-      const away = matchTeams.find((t) => t.id === match.away_team_id);
-      if (home && away) {
-        await service.from("notifications").insert(
-          matchTeams.map((team) => ({
-            user_id: team.captain_id,
-            type: "tournament_result",
-            title: "Result posted",
-            body: `${home.name} ${homeScore} - ${awayScore} ${away.name} (${tournament.name})`,
-            link: `/tournaments/${tournamentId}`,
-          }))
-        );
+      if (matchTeams && matchTeams.length === 2) {
+        const home = matchTeams.find((t) => t.id === captureHome);
+        const away = matchTeams.find((t) => t.id === captureAway);
+        if (home && away) {
+          await service.from("notifications").insert(
+            matchTeams.map((team) => ({
+              user_id: team.captain_id,
+              type: "tournament_result",
+              title: "Result posted",
+              body: `${home.name} ${homeScore} - ${awayScore} ${away.name} (${tournamentName})`,
+              link: `/tournaments/${tournamentId}`,
+            }))
+          );
+        }
       }
-    }
+    });
 
     return NextResponse.json({ ok: true, tournamentCompleted });
   } catch (e: unknown) {

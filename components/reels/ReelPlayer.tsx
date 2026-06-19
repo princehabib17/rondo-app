@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Heart, Bookmark, Volume2, VolumeX } from "lucide-react";
 import { getFlagEmoji } from "@/lib/utils/format";
 import type { PlayerReel } from "@/lib/supabase/types";
@@ -93,9 +94,9 @@ export function ReelPlayer({
           <div className="flex-1 min-w-0">
             <Link href={`/profile/${player?.id}`} className="flex items-center gap-2 mb-2">
               <div className="relative shrink-0">
-                <div className="w-10 h-10 rounded-full bg-secondary border border-white/20 overflow-hidden flex items-center justify-center">
+                <div className="w-10 h-10 relative rounded-full bg-secondary border border-white/20 overflow-hidden flex items-center justify-center">
                   {player?.avatar_url ? (
-                    <img src={player.avatar_url} alt="" className="w-full h-full object-cover" />
+                    <Image src={player.avatar_url} alt="" fill className="object-cover" sizes="40px" />
                   ) : (
                     <span className="text-white font-black text-sm">
                       {(player?.full_name ?? "?")[0]}

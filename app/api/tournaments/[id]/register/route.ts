@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -80,12 +80,16 @@ export async function POST(
       return NextResponse.json({ error: insertError.message }, { status: 500 });
     }
 
-    await service.from("notifications").insert({
-      user_id: tournament.organizer_id,
-      type: "tournament_team_registered",
-      title: "New team registered",
-      body: `"${parsed.data.teamName}" joined ${tournament.name}`,
-      link: `/organizer/tournaments/${tournamentId}/manage`,
+    const { organizer_id, name: tournamentName } = tournament;
+    const teamName = parsed.data.teamName;
+    after(async () => {
+      await service.from("notifications").insert({
+        user_id: organizer_id,
+        type: "tournament_team_registered",
+        title: "New team registered",
+        body: `"${teamName}" joined ${tournamentName}`,
+        link: `/organizer/tournaments/${tournamentId}/manage`,
+      });
     });
 
     return NextResponse.json({ ok: true, teamId: team?.id });

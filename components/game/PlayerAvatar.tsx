@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getFlagEmoji } from "@/lib/utils/format";
 import type { Profile } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
@@ -39,14 +40,16 @@ export function PlayerAvatar({ profile, size = "md", showFlag = true, linkable =
       <div
         className={cn(
           sizeClasses[size],
-          "rounded-full bg-secondary border border-border flex items-center justify-center overflow-hidden cursor-pointer hover:border-rondo-yellow/60 transition-colors"
+          "relative rounded-full bg-secondary border border-border flex items-center justify-center overflow-hidden cursor-pointer hover:border-rondo-yellow/60 transition-colors"
         )}
       >
         {profile.avatar_url ? (
-          <img
+          <Image
             src={profile.avatar_url}
             alt={profile.full_name ?? "Player"}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            sizes="64px"
           />
         ) : (
           <span className="text-muted-foreground font-semibold">{initials}</span>

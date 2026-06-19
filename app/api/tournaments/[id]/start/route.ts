@@ -2,15 +2,11 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { isGuestUser } from "@/lib/auth/is-guest";
-import {
-  generateRoundRobin,
-  generateSingleElimination,
-} from "@/lib/tournament/bracket";
+import { enqueueJob } from "@/lib/jobs/queue";
 
 /**
- * Closes registration and generates the full fixture list:
- * - single_elimination: seeded bracket (registration order), byes pre-advanced
- * - round_robin: circle-method matchdays
+ * Closes registration and enqueues fixture generation as a background job.
+ * Returns 202 immediately; the bracket appears via realtime once the job runs.
  */
 export async function POST(
   request: Request,
@@ -42,64 +38,25 @@ export async function POST(
       return NextResponse.json({ error: "Tournament has already started" }, { status: 409 });
     }
 
-    const { data: teams } = await service
+    const { count } = await service
       .from("tournament_teams")
-      .select("id, captain_id, name")
+      .select("id", { count: "exact", head: true })
       .eq("tournament_id", tournamentId)
-      .eq("status", "registered")
-      .order("created_at", { ascending: true });
+      .eq("status", "registered");
 
-    if (!teams || teams.length < 2) {
+    if ((count ?? 0) < 2) {
       return NextResponse.json({ error: "Need at least 2 registered teams" }, { status: 409 });
     }
 
-    const teamIds = teams.map((t) => t.id);
-    const fixtures =
-      tournament.format === "single_elimination"
-        ? generateSingleElimination(teamIds)
-        : generateRoundRobin(teamIds);
-
-    // Seeds follow registration order.
-    await Promise.all(
-      teams.map((team, i) =>
-        service.from("tournament_teams").update({ seed: i + 1 }).eq("id", team.id)
-      )
-    );
-
-    const { error: insertError } = await service.from("tournament_matches").insert(
-      fixtures.map((f) => ({
-        tournament_id: tournamentId,
-        round: f.round,
-        position: f.position,
-        home_team_id: f.homeTeamId,
-        away_team_id: f.awayTeamId,
-        status: f.isBye ? "bye" : "scheduled",
-      }))
-    );
-
-    if (insertError) {
-      if (insertError.code === "23505") {
-        return NextResponse.json({ error: "Fixtures were already generated" }, { status: 409 });
-      }
-      return NextResponse.json({ error: insertError.message }, { status: 500 });
-    }
-
+    // Mark as generating to prevent double-starts and update the UI immediately.
     await service
       .from("tournaments")
-      .update({ status: "active" })
+      .update({ status: "generating" })
       .eq("id", tournamentId);
 
-    await service.from("notifications").insert(
-      teams.map((team) => ({
-        user_id: team.captain_id,
-        type: "tournament_started",
-        title: "Tournament started",
-        body: `${tournament.name} is underway — check your fixtures`,
-        link: `/tournaments/${tournamentId}`,
-      }))
-    );
+    const jobId = await enqueueJob("tournament.start", { tournamentId });
 
-    return NextResponse.json({ ok: true, matchCount: fixtures.length });
+    return NextResponse.json({ queued: true, jobId }, { status: 202 });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Start failed";
     return NextResponse.json({ error: message }, { status: 500 });
