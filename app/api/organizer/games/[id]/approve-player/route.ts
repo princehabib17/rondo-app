@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -87,12 +87,16 @@ export async function POST(
         });
       }
 
-      await service.from("notifications").insert({
-        user_id: playerRow.user_id,
-        type: "approval_accepted",
-        title: "Approved",
-        body: `You're approved for ${game.title}.`,
-        link: `/games/${gameId}/confirmed`,
+      const approvedUserId = playerRow.user_id;
+      const gameTitle = game.title;
+      after(async () => {
+        await service.from("notifications").insert({
+          user_id: approvedUserId,
+          type: "approval_accepted",
+          title: "Approved",
+          body: `You're approved for ${gameTitle}.`,
+          link: `/games/${gameId}/confirmed`,
+        });
       });
     }
 
