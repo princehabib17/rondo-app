@@ -17,10 +17,11 @@ const bodySchema = z.object({
   returnPath: z.string().optional(),
 });
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
 export async function POST(request: Request) {
   try {
-    const secretKey = process.env.PAYMONGO_SECRET_KEY;
-    if (!secretKey) {
+    if (!process.env.PAYMONGO_SECRET_KEY) {
       return NextResponse.json({ error: "Payment not configured" }, { status: 500 });
     }
 
@@ -60,7 +61,6 @@ export async function POST(request: Request) {
       });
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const amountPhp = (amountCentavos / 100).toLocaleString("en-PH");
     const safeReturn =
       returnPath && returnPath.startsWith("/") && !returnPath.startsWith("//")
@@ -81,8 +81,8 @@ export async function POST(request: Request) {
             send_email_receipt: true,
             show_description: true,
             show_line_items: true,
-            cancel_url: `${appUrl}/wallet?topup=cancelled${returnQuery}`,
-            success_url: `${appUrl}/wallet?topup=success${returnQuery}`,
+            cancel_url: `${APP_URL}/wallet?topup=cancelled${returnQuery}`,
+            success_url: `${APP_URL}/wallet?topup=success${returnQuery}`,
             line_items: [
               {
                 currency: "PHP",

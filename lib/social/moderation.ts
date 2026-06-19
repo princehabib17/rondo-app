@@ -54,11 +54,14 @@ export interface ModerationResult {
   matched?: string;
 }
 
+const BLOCKED_PATTERNS = BLOCKED_WORDS.map((word) => new RegExp(`\\b${word}\\b`));
+
 export function moderateContent(text: string): ModerationResult {
   const spaced = normalize(text);
   const collapsed = spaced.replace(/ /g, "");
-  for (const word of BLOCKED_WORDS) {
-    if (new RegExp(`\\b${word}\\b`).test(spaced)) {
+  for (let i = 0; i < BLOCKED_WORDS.length; i++) {
+    const word = BLOCKED_WORDS[i];
+    if (BLOCKED_PATTERNS[i].test(spaced)) {
       return { ok: false, matched: word };
     }
     // Substring match on collapsed text catches "f.u.c.k.i.n.g"-style

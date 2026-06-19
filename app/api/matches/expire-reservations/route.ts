@@ -9,11 +9,12 @@ import { notifyWaitlistSpotOpen } from "@/lib/match/waitlist";
  * Release expired unpaid reservations (reserved / pending_payment).
  * Callable by signed-in users on app open; optional CRON_SECRET for scheduled jobs.
  */
+const CRON_SECRET = process.env.CRON_SECRET;
+
 export async function POST(request: Request) {
   try {
-    const cronSecret = process.env.CRON_SECRET;
     const authHeader = request.headers.get("authorization");
-    const isCron = Boolean(cronSecret && authHeader === `Bearer ${cronSecret}`);
+    const isCron = Boolean(CRON_SECRET && authHeader === `Bearer ${CRON_SECRET}`);
 
     if (!isCron) {
       const supabase = await createClient();
