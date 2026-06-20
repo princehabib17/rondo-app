@@ -1,25 +1,55 @@
-# Rondo App
+# Rondo
 
-Rondo is a mobile-first football/futsal coordination app built with Next.js App Router + Supabase.
+Rondo has two separate apps in this repository:
+
+- `.`: the Next.js web app and API routes.
+- `mobile/`: the Expo / React Native app.
+
+The two apps have separate `package.json` files, separate lockfiles, and separate install commands. The mobile app can call the deployed or LAN-hosted Next.js API, but it is not part of the Next.js build.
+
+Rondo is a football/futsal coordination product built with Next.js, Expo, and Supabase.
 It supports player and organizer journeys: discovery, join/payment, match chat, organizer operations, help tickets, wallet ledger records, notifications, and live timer screens.
 
 ## Stack
 
-- Next.js 16 App Router (Turbopack build)
-- React + TypeScript
+- Web: Next.js 16 App Router, React, TypeScript, Tailwind CSS
+- Mobile: Expo 56, React Native, Expo Router
 - Supabase (Auth, Postgres, Storage, Realtime)
-- Tailwind CSS
 - PayMongo checkout integration
 
-## Local Setup
+## Web Setup
 
 1. Install dependencies:
    - `npm install`
-2. Configure `.env.local` (copy from `.env.example` and fill values).
-3. Run the app:
+2. Configure web env:
+   - copy `.env.example` to `.env.local` and fill values.
+3. Run the Next.js app:
    - `npm run dev`
 4. Open:
    - `http://localhost:3000`
+
+Equivalent explicit web commands:
+
+- `npm run web:dev`
+- `npm run web:lint`
+- `npm run web:test`
+- `npm run web:build`
+
+## Mobile Setup
+
+1. Install mobile dependencies:
+   - `npm run mobile:install`
+2. Configure mobile env:
+   - copy `mobile/.env.example` to `mobile/.env` and fill values.
+3. Start Expo:
+   - `npm run mobile:start`
+
+Mobile-only checks:
+
+- `npm run mobile:typecheck`
+- `npm run mobile:doctor`
+
+See `mobile/SETUP.md` for Expo-specific setup notes.
 
 ## Environment Variables
 

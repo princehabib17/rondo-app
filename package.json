@@ -1,8 +1,14 @@
 {
-  "name": "rondo-app",
+  "name": "rondo-web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "web:dev": "node ./node_modules/next/dist/bin/next dev --webpack -p 3000",
+    "web:dev:turbo": "node ./node_modules/next/dist/bin/next dev -p 3000",
+    "web:build": "node ./node_modules/next/dist/bin/next build",
+    "web:start": "node ./node_modules/next/dist/bin/next start",
+    "web:lint": "eslint",
+    "web:test": "vitest run",
     "dev": "node ./node_modules/next/dist/bin/next dev --webpack -p 3000",
     "dev:turbo": "node ./node_modules/next/dist/bin/next dev -p 3000",
     "build": "node ./node_modules/next/dist/bin/next build",
@@ -10,6 +16,13 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "mobile:install": "npm --prefix mobile install --legacy-peer-deps",
+    "mobile:start": "npm --prefix mobile start",
+    "mobile:android": "npm --prefix mobile run android",
+    "mobile:ios": "npm --prefix mobile run ios",
+    "mobile:web": "npm --prefix mobile run web",
+    "mobile:typecheck": "npm --prefix mobile run typecheck",
+    "mobile:doctor": "npm --prefix mobile run doctor",
     "db:types": "supabase gen types typescript --local > lib/supabase/database.types.ts"
   },
   "dependencies": {
