@@ -231,9 +231,9 @@ export default function JoinMatchPage() {
       </header>
 
       <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
-        <section className="rondo-poster overflow-hidden">
+        <section className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04]">
           {game.banner_url && (
-            <div className="relative h-44">
+            <div className="relative h-36">
               <img src={game.banner_url} alt="" className="h-full w-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 to-transparent" />
             </div>
@@ -243,7 +243,7 @@ export default function JoinMatchPage() {
               <p className="text-[10px] font-black uppercase tracking-[0.22em] text-rondo-yellow">
                 Team selection
               </p>
-              <h2 className="rondo-hero-title mt-1 text-[2.65rem] text-white">
+              <h2 className="mt-1 font-heading text-2xl font-black uppercase italic leading-none text-white">
                 {game.title}
               </h2>
             </div>
@@ -281,11 +281,11 @@ export default function JoinMatchPage() {
                 disabled={full && !waitlistOnly}
                 onClick={() => setSelectedTeamId(team.id)}
                 className={cn(
-                  "relative rounded-2xl border p-4 text-left transition-all min-h-[10rem]",
+                  "relative rounded-xl border-2 p-4 text-left transition-all min-h-[44px]",
                   full && !waitlistOnly && "opacity-45 cursor-not-allowed",
                   isSelected
-                    ? "border-rondo-accent bg-rondo-accent/12"
-                    : "border-white/12 bg-white/[0.045] hover:border-white/25"
+                    ? "border-rondo-accent bg-rondo-accent/10"
+                    : "border-white/12 bg-white/5 hover:border-white/25"
                 )}
               >
                 {isSelected && (
@@ -293,9 +293,9 @@ export default function JoinMatchPage() {
                     <Check size={14} className="text-black" />
                   </div>
                 )}
-                <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center gap-2 mb-2">
                   <div className="w-4 h-4 rounded-full shrink-0" style={{ backgroundColor: team.color }} />
-                  <span className="font-heading text-white font-black italic uppercase text-lg leading-none truncate">{team.name}</span>
+                  <span className="text-white font-bold text-sm truncate">{team.name}</span>
                 </div>
                 <div className="flex flex-wrap gap-1 mb-2">
                   {players?.map((gp) =>
@@ -310,7 +310,7 @@ export default function JoinMatchPage() {
                     ) : null
                   )}
                 </div>
-                <div className="mt-auto flex items-center gap-1.5 text-white/50 text-xs">
+                <div className="flex items-center gap-1.5 text-white/50 text-xs">
                   <Users size={11} />
                   <span>{full ? "Full" : `${left} spot${left === 1 ? "" : "s"} left`}</span>
                 </div>
@@ -322,7 +322,7 @@ export default function JoinMatchPage() {
         {error && <p className="text-red-400 text-sm text-center">{error}</p>}
       </div>
 
-      <div className="fixed bottom-[5.25rem] left-0 right-0 max-w-lg mx-auto px-4 pb-3 pt-3 rondo-glass-nav z-30 space-y-2">
+      <div className="fixed bottom-16 left-0 right-0 max-w-lg mx-auto px-4 pb-6 pt-3 rondo-glass-nav z-30 space-y-2">
         <button
           type="button"
           onClick={onPrimary}

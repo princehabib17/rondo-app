@@ -23,7 +23,7 @@ export function MatchRulesPanel({
     <div className="space-y-4">
       <GameBadges game={game} showStatus />
 
-      <div className="grid grid-cols-3 gap-2 text-sm">
+      <div className="rondo-surface p-4 space-y-3 text-sm">
         <RuleRow icon={<Lock size={14} />} label="Access" value={getVisibilityLabel(game)} />
         <RuleRow icon={<Shield size={14} />} label="Join" value={getJoinRuleLabel(game)} />
         <RuleRow
@@ -31,15 +31,14 @@ export function MatchRulesPanel({
           label="Payment"
           value={getPaymentRuleLabel(game)}
         />
+        {usesWallet(game) && (
+          <p className="text-white/40 text-xs leading-relaxed">
+            {canPayLater(game)
+              ? "Pay now to secure your spot, or reserve and pay later if the organizer allows it."
+              : "You must pay through your Rondo Wallet to reserve a spot."}
+          </p>
+        )}
       </div>
-
-      {usesWallet(game) && (
-        <p className="rounded-xl border border-rondo-accent/20 bg-rondo-accent/8 px-3 py-2 text-white/48 text-xs leading-relaxed">
-          {canPayLater(game)
-            ? "Pay now to secure your spot, or reserve and pay later if the organizer allows it."
-            : "You must pay through your Rondo Wallet to reserve a spot."}
-        </p>
-      )}
 
       {organizer && (
         <div className="rondo-surface p-4 flex items-center gap-3">
@@ -84,11 +83,11 @@ function RuleRow({
   value: string;
 }) {
   return (
-    <div className="rondo-surface min-w-0 p-3">
-      <span className="text-rondo-accent shrink-0">{icon}</span>
-      <div className="mt-2">
+    <div className="flex gap-3">
+      <span className="text-rondo-accent shrink-0 mt-0.5">{icon}</span>
+      <div>
         <p className="text-white/45 text-[10px] uppercase tracking-wider">{label}</p>
-        <p className="mt-1 text-white/90 text-xs font-bold leading-tight">{value}</p>
+        <p className="text-white/90 text-sm font-medium">{value}</p>
       </div>
     </div>
   );

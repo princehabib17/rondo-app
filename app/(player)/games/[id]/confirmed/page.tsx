@@ -212,19 +212,17 @@ function ConfirmedContent() {
   }
 
   return (
-    <div className="min-h-[100dvh] rondo-page flex flex-col items-center justify-center px-6 text-center space-y-8">
-      <div className="space-y-5">
-        <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-full border border-rondo-yellow/55 bg-rondo-yellow/10 shadow-[inset_0_0_28px_rgba(255,241,109,0.1)]">
-          <CheckCircle2 size={68} className="text-rondo-yellow" strokeWidth={1.35} />
-        </div>
+    <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 text-center space-y-8">
+      <div className="space-y-4">
+        <CheckCircle2 size={64} className="text-rondo-yellow mx-auto" strokeWidth={1.5} />
         <div>
-          <h1 className="rondo-hero-title text-white text-[4.5rem]">
+          <h1 className="text-white font-black text-4xl tracking-tight uppercase leading-none">
             Match
             <br />
             Confirmed
           </h1>
           {game && (
-            <div className="flex items-center justify-center gap-2 mt-5 text-muted-foreground text-sm">
+            <div className="flex items-center justify-center gap-2 mt-4 text-muted-foreground text-sm">
               <Calendar size={14} />
               <span>See you on {formatGameDate(game.date_time)}</span>
             </div>
@@ -235,14 +233,14 @@ function ConfirmedContent() {
       <div className="space-y-3 w-full max-w-xs">
         <button
           onClick={() => router.push(`/games/${id}/invite`)}
-          className="rondo-btn rondo-btn-primary cursor-pointer min-h-[52px] flex items-center justify-center gap-2"
+          className="w-full bg-rondo-yellow text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-xl active:scale-[0.98] transition-all cursor-pointer min-h-[52px] flex items-center justify-center gap-2"
         >
           <Share2 size={18} />
           Invite Friends
         </button>
         <button
           onClick={() => router.push("/feed")}
-          className="rondo-btn border border-white/12 bg-white/[0.045] text-white/60 hover:text-white cursor-pointer min-h-[52px]"
+          className="w-full border border-border text-muted-foreground hover:text-white text-sm py-4 rounded-xl active:scale-[0.98] transition-all cursor-pointer min-h-[52px]"
         >
           Back to Home
         </button>

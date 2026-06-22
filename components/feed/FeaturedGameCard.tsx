@@ -13,8 +13,8 @@ interface FeaturedGameCardProps {
 function PlayerProgress({ current, max }: { current: number; max: number }) {
   const pct = max > 0 ? Math.min(100, (current / max) * 100) : 0;
   return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-      <div className="h-full rounded-full bg-rondo-accent transition-all" style={{ width: `${pct}%` }} />
+    <div className="h-1 w-full rounded-full bg-white/10 overflow-hidden">
+      <div className="h-full bg-rondo-accent rounded-full transition-all" style={{ width: `${pct}%` }} />
     </div>
   );
 }
@@ -25,59 +25,59 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
 
   return (
     <section className="px-4 pt-6">
-      <div className="mb-3 flex items-center gap-2">
-        <Star size={16} className="fill-rondo-accent text-rondo-accent" />
-        <h2 className="font-heading text-sm font-black uppercase italic tracking-wide text-white">
+      <div className="flex items-center gap-2 mb-3">
+        <Star size={16} className="text-rondo-accent fill-rondo-accent" />
+        <h2 className="font-heading text-white font-black italic text-sm uppercase tracking-wide">
           Featured Match
         </h2>
       </div>
 
-      <article className="rondo-poster overflow-hidden">
-        <div className="relative min-h-[25rem]">
-          <div className="absolute inset-x-0 top-0 h-[58%] bg-[#141511]">
+      <article className="rondo-surface overflow-hidden rounded-[1.35rem]">
+        <div className="flex gap-0">
+          <div className="relative w-[42%] min-h-[205px] shrink-0 bg-[#1c1c1c]">
             {game.banner_url ? (
-              <img src={game.banner_url} alt="" className="h-full w-full object-cover" />
+              <img src={game.banner_url} alt="" className="w-full h-full object-cover" />
             ) : (
-              <Image src="/feed/hero-soccer.jpg" alt="" fill className="object-cover" sizes="400px" />
+              <Image src="/feed/hero-soccer.jpg" alt="" fill className="object-cover" sizes="160px" />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#080907] via-[#080907]/38 to-transparent" />
-          </div>
-
-          <div className="relative z-10 flex min-h-[25rem] flex-col justify-end p-5">
-            <span className="mb-3 inline-flex self-start rounded-full border border-rondo-accent/35 bg-black/65 px-3 py-1 font-heading text-[10px] font-black uppercase tracking-wide text-rondo-accent">
+            <span className="absolute top-3 left-3 rounded-full border border-rondo-accent/35 bg-black/75 px-3 py-1 font-heading text-[10px] font-black uppercase tracking-wide text-rondo-accent">
               {Math.max(0, game.max_players - playerCount)} spots left
             </span>
+          </div>
 
-            <h3 className="rondo-hero-title mb-3 text-[3rem] text-white">{game.title}</h3>
+          <div className="flex-1 p-4 flex flex-col min-w-0">
+            <h3 className="rondo-hero-title text-[1.9rem] leading-none mb-2 truncate">
+              {game.title}
+            </h3>
 
-            <GameBadges game={game} className="mb-1" />
+            <GameBadges game={game} className="mb-2" />
 
-            <div className="my-4 grid grid-cols-2 gap-2 font-body text-[11px] text-white/66">
-              <div className="flex min-w-0 items-center gap-1.5">
+            <div className="space-y-1.5 font-body text-white/60 text-[11px] mb-2">
+              <div className="flex items-center gap-1.5 min-w-0">
                 {game.organization?.logo_url ? (
                   <Image
                     src={game.organization.logo_url}
                     alt=""
-                    width={17}
-                    height={17}
+                    width={16}
+                    height={16}
                     className="h-4 w-4 rounded-full object-cover"
                   />
                 ) : (
-                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-secondary font-heading text-[8px] text-white">
+                  <span className="w-4 h-4 rounded-full bg-secondary flex items-center justify-center shrink-0 text-[8px] font-heading text-white">
                     {getOrganizerInitials(organizerName)}
                   </span>
                 )}
                 <span className="truncate">{organizerName}</span>
               </div>
-              <div className="flex items-center justify-end gap-1.5">
+              <div className="flex items-center gap-1.5">
                 <Calendar size={11} className="shrink-0" />
                 <span className="truncate">{formatGameDate(game.date_time)}</span>
               </div>
-              <div className="flex min-w-0 items-center gap-1.5">
+              <div className="flex items-center gap-1.5">
                 <MapPin size={11} className="shrink-0" />
                 <span className="truncate">{game.venue_name}</span>
               </div>
-              <div className="flex items-center justify-end gap-1.5">
+              <div className="flex items-center gap-1.5">
                 <Users size={11} className="shrink-0" />
                 <span>
                   {playerCount} / {game.max_players} players
@@ -85,16 +85,19 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
               </div>
             </div>
 
-            <p className="mb-3 font-heading text-3xl font-black uppercase italic text-rondo-accent">
+            <p className="font-heading text-rondo-accent font-black text-2xl italic uppercase mb-2">
               {formatPrice(game.price_per_player)}{" "}
-              <span className="font-body text-[10px] normal-case tracking-normal text-white/50 not-italic">
+              <span className="text-[10px] text-white/50 font-body normal-case tracking-normal not-italic">
                 per player
               </span>
             </p>
 
             <PlayerProgress current={playerCount} max={game.max_players} />
 
-            <Link href={`/games/${game.id}`} className="rondo-btn rondo-btn-primary mt-4 min-h-[3.15rem] text-[12px]">
+            <Link
+              href={`/games/${game.id}`}
+              className="rondo-btn rondo-btn-primary mt-3 min-h-11 text-[12px]"
+            >
               View Match
               <ChevronRight size={14} />
             </Link>
@@ -108,8 +111,8 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
 export function FeaturedGameSkeleton() {
   return (
     <section className="px-4 pt-6">
-      <div className="mb-3 h-4 w-32 animate-pulse rounded bg-white/10" />
-      <div className="h-[25rem] animate-pulse rounded-2xl border border-white/10 bg-card" />
+      <div className="h-4 w-32 bg-white/10 rounded animate-pulse mb-3" />
+      <div className="h-[180px] bg-card border border-white/10 rounded-2xl animate-pulse" />
     </section>
   );
 }
