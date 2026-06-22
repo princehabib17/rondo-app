@@ -1,16 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  CalendarDays,
-  CirclePlus,
-  Home,
-  LayoutDashboard,
-  MapPinned,
-  Radio,
-  User,
-  Users,
-} from "lucide-react";
+import { CalendarDays, Home, LayoutDashboard, MapPinned, Radio, User, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -28,13 +19,13 @@ const playerTabs: TabDef[] = [
   {
     href: "/feed",
     icon: Home,
-    label: "Home",
+    label: "Discover",
     isActive: (p) => p === "/feed",
   },
   {
     href: "/community",
     icon: Users,
-    label: "Community",
+    label: "Squad",
     isActive: (p) => p === "/community" || p.startsWith("/community/"),
   },
   {
@@ -61,13 +52,13 @@ const organizerTabs: TabDef[] = [
   {
     href: "/feed",
     icon: Home,
-    label: "Feed",
+    label: "Discover",
     isActive: (p) => p === "/feed",
   },
   {
     href: "/organizer/dashboard",
     icon: LayoutDashboard,
-    label: "Dashboard",
+    label: "Create",
     isActive: (p) =>
       p === "/organizer/dashboard" ||
       (p.startsWith("/organizer") && !p.startsWith("/organizer/room")),
@@ -75,7 +66,7 @@ const organizerTabs: TabDef[] = [
   {
     href: "/organizer/room",
     icon: Radio,
-    label: "Room",
+    label: "Requests",
     isActive: (p) =>
       p === "/organizer/room" || p.startsWith("/organizer/room"),
   },
@@ -111,28 +102,31 @@ export function BottomNav() {
   const tabs = isOrganizerRoute || role === "organizer" ? organizerTabs : playerTabs;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 rondo-glass-nav z-[200] pb-[env(safe-area-inset-bottom)]">
-      <div className="mx-auto flex h-16 w-full max-w-[430px] items-center justify-around overflow-hidden px-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-[200] px-3 pb-[calc(env(safe-area-inset-bottom)+0.55rem)]">
+      <div className="rondo-glass-nav mx-auto flex h-[4.35rem] w-full max-w-[430px] items-center justify-around overflow-hidden rounded-[1.4rem] border border-white/10 px-2">
         {tabs.map(({ href, icon: Icon, label, isActive }) => {
           const active = isActive(pathname);
           return (
             <Link
               key={href}
               href={href}
-              className="flex min-w-0 flex-1 flex-col items-center gap-0.5 py-2 transition-all active:scale-90"
+              className={cn(
+                "flex min-w-0 flex-1 flex-col items-center gap-1 rounded-2xl py-2 transition-all active:scale-95",
+                active && "bg-rondo-accent text-black"
+              )}
             >
               <Icon
-                size={25}
+                size={21}
                 strokeWidth={active ? 2 : 1.75}
                 className={cn(
                   "transition-colors duration-200",
-                  active ? "text-rondo-accent" : "text-white/45"
+                  active ? "text-black" : "text-white/45"
                 )}
               />
               <span
                 className={cn(
-                  "max-w-full truncate font-body text-[11px] font-medium transition-colors duration-200",
-                  active ? "text-rondo-accent" : "text-white/45"
+                  "max-w-full truncate font-body text-[9px] font-black uppercase tracking-[0.04em] transition-colors duration-200",
+                  active ? "text-black" : "text-white/45"
                 )}
               >
                 {label}

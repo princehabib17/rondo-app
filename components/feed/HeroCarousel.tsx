@@ -25,7 +25,7 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
 
   return (
     <section className="px-4 pt-4">
-      <div className="relative h-52 rounded-2xl overflow-hidden bg-secondary">
+      <div className="rondo-poster relative min-h-[27rem] overflow-hidden">
         <Image
           src={slide.image}
           alt=""
@@ -34,21 +34,21 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
           sizes="400px"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/20" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,6,5,0.05),rgba(5,6,5,0.58)_46%,rgba(5,6,5,0.97)),radial-gradient(circle_at_22%_24%,rgba(255,241,109,0.14),transparent_34%)]" />
 
-        <div className="absolute inset-0 flex flex-col justify-end p-5">
-          <span className="font-heading text-rondo-accent text-[10px] font-black uppercase tracking-[0.2em] mb-1">
+        <div className="absolute inset-0 z-10 flex flex-col justify-end p-5">
+          <span className="mb-2 inline-flex self-start rounded-full border border-rondo-accent/35 bg-black/45 px-3 py-1 font-heading text-[10px] font-black uppercase tracking-[0.2em] text-rondo-accent">
             {slide.tag}
           </span>
-          <h2 className="font-heading text-white font-black italic text-2xl uppercase leading-none mb-1.5">
+          <h2 className="rondo-hero-title mb-3 text-[3.45rem] text-white drop-shadow-sm">
             {slide.title}
           </h2>
-          <p className="font-body text-white/75 text-xs leading-relaxed mb-4 max-w-[260px]">
+          <p className="font-body text-white/72 text-sm leading-5 mb-5 max-w-[285px]">
             {slide.description}
           </p>
           <Link
             href={slide.ctaHref}
-            className="inline-flex items-center gap-2 self-start bg-rondo-accent text-black font-heading font-black text-xs uppercase tracking-wider px-4 py-2.5 rounded-lg"
+            className="rondo-btn rondo-btn-primary min-h-[3.15rem] w-full text-[12px]"
           >
             {slide.ctaLabel}
             <ChevronRight size={14} strokeWidth={3} />

@@ -132,7 +132,7 @@ export default function MatchDetailPage() {
 
   return (
     <div className="min-h-[100dvh] rondo-page pb-36">
-      <header className="sticky top-0 z-40 rondo-glass-nav border-b border-white/5 px-4 py-3 flex items-center gap-3">
+      <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-white/5 bg-[#070807]/90 px-4 py-3 backdrop-blur-xl">
         <button
           type="button"
           onClick={() => router.back()}
@@ -149,14 +149,19 @@ export default function MatchDetailPage() {
         </span>
       </header>
 
-      <div className="relative h-48 bg-[#1c1c1c]">
+      <div className="relative min-h-[23rem] overflow-hidden bg-[#141511]">
         {game.banner_url ? (
-          <img src={game.banner_url} alt="" className="w-full h-full object-cover" />
-        ) : null}
-        <div className="absolute inset-0 bg-gradient-to-t from-rondo-page via-rondo-page/40 to-transparent" />
-        <span className="absolute bottom-3 left-4 font-heading text-white/90 text-2xl font-black italic uppercase">
-          {game.format}
-        </span>
+          <img src={game.banner_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        ) : (
+          <img src="/feed/hero-soccer.jpg" alt="" className="absolute inset-0 h-full w-full object-cover" />
+        )}
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,8,7,0.05),rgba(7,8,7,0.28)_38%,rgba(7,8,7,0.98)),radial-gradient(circle_at_18%_38%,rgba(255,241,109,0.14),transparent_34%)]" />
+        <div className="absolute bottom-0 left-0 right-0 p-5">
+          <span className="mb-3 inline-flex rounded-full border border-rondo-accent/35 bg-black/55 px-3 py-1 font-heading text-[10px] font-black uppercase tracking-[0.18em] text-rondo-accent">
+            {game.format}
+          </span>
+          <h2 className="rondo-hero-title max-w-[15rem] text-[3.5rem] text-white">{game.title}</h2>
+        </div>
       </div>
 
       <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
@@ -174,33 +179,24 @@ export default function MatchDetailPage() {
 
         <MatchRulesPanel game={game} organizer={game.organizer} gamesHosted={gamesHosted} />
 
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
+        <div className="grid grid-cols-3 gap-2">
+          <div className="rondo-surface p-3">
             <Calendar size={16} className="text-rondo-accent shrink-0" />
-            <div>
-              <p className="text-white/45 text-[10px] uppercase">When</p>
-              <p className="text-white text-sm font-semibold">{formatGameDate(game.date_time)}</p>
-            </div>
+            <p className="mt-2 text-white/45 text-[10px] uppercase">When</p>
+            <p className="mt-1 line-clamp-2 text-white text-xs font-semibold">{formatGameDate(game.date_time)}</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="rondo-surface p-3">
             <MapPin size={16} className="text-rondo-accent shrink-0" />
-            <div>
-              <p className="text-white/45 text-[10px] uppercase">Where</p>
-              <p className="text-white text-sm font-semibold">{game.venue_name}</p>
-              <p className="text-white/50 text-xs">{game.venue_address}</p>
-            </div>
+            <p className="mt-2 text-white/45 text-[10px] uppercase">Where</p>
+            <p className="mt-1 truncate text-white text-xs font-semibold">{game.venue_name}</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="rondo-surface p-3">
             <Users size={16} className="text-rondo-accent shrink-0" />
-            <div>
-              <p className="text-white/45 text-[10px] uppercase">Spots</p>
-              <p className="text-white text-sm font-semibold">
-                {game.max_players - left} / {game.max_players} filled
-                {left > 0 && (
-                  <span className="text-rondo-accent ml-2">{left} left</span>
-                )}
-              </p>
-            </div>
+            <p className="mt-2 text-white/45 text-[10px] uppercase">Spots</p>
+            <p className="mt-1 text-white text-xs font-semibold">
+              {game.max_players - left}/{game.max_players}
+              {left > 0 && <span className="block text-rondo-accent">{left} left</span>}
+            </p>
           </div>
         </div>
 
@@ -269,7 +265,7 @@ export default function MatchDetailPage() {
         )}
       </div>
 
-      <div className="fixed bottom-16 left-0 right-0 max-w-lg mx-auto px-4 pb-2 z-30 flex gap-2">
+      <div className="fixed bottom-[5.25rem] left-0 right-0 max-w-lg mx-auto px-4 pb-2 z-30 flex gap-2">
         <Link
           href={`/games/${game.id}/room`}
           className="min-w-[72px] min-h-[52px] rondo-surface flex flex-col items-center justify-center gap-0.5 text-white hover:text-rondo-accent transition-colors"

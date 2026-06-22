@@ -30,7 +30,7 @@ export function MatchTeamsRoster({ game }: { game: Game }) {
 
   return (
     <section className="space-y-3">
-      <h2 className="font-heading text-white font-black italic text-sm uppercase tracking-wide">
+      <h2 className="font-heading text-white font-black italic text-xl uppercase leading-none">
         Players joining
       </h2>
       <p className="font-body text-white/45 text-xs">
@@ -47,7 +47,7 @@ export function MatchTeamsRoster({ game }: { game: Game }) {
             <div
               key={team.id}
               className={cn(
-                "rondo-surface p-3 space-y-2",
+                "rondo-surface p-3 space-y-3",
                 full && "opacity-70"
               )}
             >
@@ -56,7 +56,7 @@ export function MatchTeamsRoster({ game }: { game: Game }) {
                   className="w-3 h-3 rounded-full shrink-0 border border-white/20"
                   style={{ backgroundColor: team.color }}
                 />
-                <span className="font-heading text-white text-xs font-black uppercase truncate flex-1">
+                <span className="font-heading text-white text-base font-black italic uppercase truncate flex-1">
                   {team.name}
                 </span>
                 {full ? (

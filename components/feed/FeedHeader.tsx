@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Bell, Clapperboard } from "lucide-react";
+import { Bell, SlidersHorizontal } from "lucide-react";
 
 interface FeedHeaderProps {
   notificationCount?: number;
@@ -8,21 +8,26 @@ interface FeedHeaderProps {
 
 export function FeedHeader({ notificationCount = 0 }: FeedHeaderProps) {
   return (
-    <header className="sticky top-0 z-40 rondo-glass-nav border-b border-white/5">
+    <header className="sticky top-0 z-40 border-b border-white/5 bg-[#070807]/90 backdrop-blur-xl">
       <div className="flex items-center justify-between px-4 py-3 max-w-lg mx-auto">
         <div className="flex items-center gap-2.5">
-          <Image src="/rondo-logo.png" alt="RONDO" width={32} height={32} className="object-contain" priority />
-          <span className="font-heading text-white font-black italic text-sm uppercase tracking-wide">
-            Rondo
-          </span>
+          <Image src="/rondo-logo.png" alt="RONDO" width={30} height={30} className="object-contain" priority />
+          <div>
+            <span className="block font-heading text-white font-black italic text-lg uppercase leading-none tracking-wide">
+              Rondo
+            </span>
+            <span className="block text-[8px] font-black uppercase tracking-[0.22em] text-rondo-accent">
+              Find your next five
+            </span>
+          </div>
         </div>
         <div className="flex items-center gap-1.5">
           <Link
-            href="/scout"
-            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-rondo-accent/25 bg-rondo-accent/12 px-3 font-heading text-xs font-black uppercase tracking-wide text-rondo-accent transition-colors duration-200 active:scale-[0.98]"
+            href="/feed/map"
+            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.055] px-3 font-heading text-xs font-black uppercase tracking-wide text-white transition-colors duration-200 active:scale-[0.98]"
           >
-            <Clapperboard size={16} />
-            Scout
+            <SlidersHorizontal size={15} />
+            Filter
           </Link>
           <Link
             href="/notifications"

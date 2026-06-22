@@ -133,7 +133,7 @@ function PaymentForm() {
 
   return (
     <div className="min-h-[100dvh] pb-8 rondo-page">
-      <header className="sticky top-0 bg-black/95 backdrop-blur-md border-b border-white/5 z-40 px-4 py-3 flex items-center gap-3">
+      <header className="sticky top-0 bg-[#070807]/90 backdrop-blur-xl border-b border-white/5 z-40 px-4 py-3 flex items-center gap-3">
         <button
           type="button"
           onClick={() => router.back()}
@@ -142,20 +142,30 @@ function PaymentForm() {
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="font-heading text-white font-black italic text-base uppercase">Pay from wallet</h1>
+        <h1 className="font-heading text-white font-black italic text-base uppercase">Payment</h1>
       </header>
 
       <div className="px-4 py-6 space-y-5 max-w-lg mx-auto">
-        <div className="rondo-surface p-4">
-          <p className="font-body text-white/50 text-xs uppercase mb-1">Match</p>
-          <p className="font-heading text-white font-black text-lg">{game.title}</p>
-          <p className="font-body text-white/50 text-sm flex items-center gap-1.5 mt-2">
-            <MapPin size={12} />
-            {game.venue_name}
-          </p>
-          <div className="flex justify-between items-end mt-4 pt-4 border-t border-white/10">
+        <div className="rondo-poster overflow-hidden">
+          <div className="relative h-36 bg-[#141511]">
+            {game.banner_url ? (
+              <img src={game.banner_url} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <img src="/feed/hero-night-court.png" alt="" className="h-full w-full object-cover" />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#090a08] to-transparent" />
+          </div>
+          <div className="relative z-10 p-4">
+            <p className="font-body text-white/50 text-xs uppercase mb-1">Match</p>
+            <p className="font-heading text-white font-black italic uppercase text-2xl leading-none">{game.title}</p>
+            <p className="font-body text-white/50 text-sm flex items-center gap-1.5 mt-2">
+              <MapPin size={12} />
+              {game.venue_name}
+            </p>
+          </div>
+          <div className="relative z-10 mx-4 flex justify-between items-end border-t border-white/10 py-4">
             <span className="font-body text-white/50 text-sm">Price</span>
-            <span className="font-heading text-rondo-accent font-black text-2xl">{formatPrice(price)}</span>
+            <span className="font-heading text-rondo-accent font-black italic text-3xl">{formatPrice(price)}</span>
           </div>
         </div>
 
@@ -172,7 +182,7 @@ function PaymentForm() {
           <button
             onClick={handlePayOnline}
             disabled={paying}
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-left transition-all hover:border-rondo-yellow/40 active:scale-[0.98] disabled:opacity-50"
+            className="w-full rounded-2xl border border-rondo-yellow/25 bg-rondo-yellow/10 p-4 text-left transition-all hover:border-rondo-yellow/45 active:scale-[0.98] disabled:opacity-50"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-rondo-yellow/10 flex items-center justify-center">
@@ -225,7 +235,7 @@ function PaymentForm() {
           type="button"
           onClick={handlePayWithWallet}
           disabled={paying || !hasEnoughBalance}
-          className="w-full bg-rondo-accent text-black font-heading font-black uppercase tracking-widest text-sm py-4 rounded-xl disabled:opacity-40 flex items-center justify-center gap-2 min-h-[52px]"
+          className="rondo-btn rondo-btn-primary disabled:opacity-40 flex items-center justify-center gap-2 min-h-[52px]"
         >
           {!paying && (
             <>
