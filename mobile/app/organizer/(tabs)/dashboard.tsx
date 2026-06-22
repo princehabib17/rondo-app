@@ -102,7 +102,7 @@ export default function OrganizerDashboard() {
         {/* Quick actions */}
         <View style={styles.quickActions}>
           <TouchableOpacity
-            onPress={() => router.push('/organizer/create/index')}
+            onPress={() => router.push('/organizer/create')}
             style={[styles.quickBtn, styles.quickBtnPrimary]}
             activeOpacity={0.85}
           >
