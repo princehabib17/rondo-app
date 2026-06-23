@@ -189,6 +189,7 @@ export default function OrganizerDashboardPage() {
             <Plus size={16} />
             Create
           </Link>
+
         </div>
       </header>
 
@@ -210,7 +211,7 @@ export default function OrganizerDashboardPage() {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Link href="/organizer/create" className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-rondo-yellow px-4 py-3 text-xs font-black uppercase tracking-wider text-black">
+                  <Link href="/organizer/create/match" className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-rondo-yellow px-4 py-3 text-xs font-black uppercase tracking-wider text-black">
                     <ClipboardList size={15} />
                     Create match
                   </Link>
@@ -231,7 +232,7 @@ export default function OrganizerDashboardPage() {
 
         <section className="grid gap-3 md:grid-cols-3">
           <ActionCard
-            href="/organizer/create"
+            href="/organizer/create/match"
             icon={<ClipboardList size={18} />}
             title="Match creation"
             description="Cover, venue, teams, price, and rules in one guided flow."
@@ -289,7 +290,7 @@ export default function OrganizerDashboardPage() {
                   Your games
                 </h2>
               </div>
-              <Link href="/organizer/create" className="text-xs font-black uppercase tracking-wider text-rondo-yellow">
+              <Link href="/organizer/create/match" className="text-xs font-black uppercase tracking-wider text-rondo-yellow">
                 New game
               </Link>
             </div>
@@ -311,7 +312,7 @@ export default function OrganizerDashboardPage() {
                 <p className="mx-auto mt-2 max-w-xs text-sm text-white/45">
                   Start with a match page that has a cover image, venue, teams, and payment rules.
                 </p>
-                <Link href="/organizer/create" className="mt-5 inline-flex min-h-[44px] items-center rounded-xl bg-rondo-yellow px-5 text-xs font-black uppercase tracking-wider text-black">
+                <Link href="/organizer/create/match" className="mt-5 inline-flex min-h-[44px] items-center rounded-xl bg-rondo-yellow px-5 text-xs font-black uppercase tracking-wider text-black">
                   Create first game
                 </Link>
               </div>

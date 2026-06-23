@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720">
+  <defs>
+    <radialGradient id="g1" cx="20%" cy="20%" r="60%">
+      <stop offset="0%" stop-color="#1a3a0a"/>
+      <stop offset="100%" stop-color="#050a04"/>
+    </radialGradient>
+    <radialGradient id="g2" cx="80%" cy="80%" r="50%">
+      <stop offset="0%" stop-color="#0f2206"/>
+      <stop offset="100%" stop-color="#050a04" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#g1)"/>
+  <rect width="1280" height="720" fill="url(#g2)"/>
+  <!-- pitch lines -->
+  <rect x="80" y="60" width="1120" height="600" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="3" rx="4"/>
+  <line x1="640" y1="60" x2="640" y2="660" stroke="rgba(255,255,255,0.12)" stroke-width="3"/>
+  <circle cx="640" cy="360" r="90" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="3"/>
+  <circle cx="640" cy="360" r="6" fill="rgba(255,255,255,0.18)"/>
+  <!-- penalty boxes -->
+  <rect x="80" y="220" width="200" height="280" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+  <rect x="1000" y="220" width="200" height="280" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+  <!-- text -->
+  <text x="640" y="340" text-anchor="middle" font-family="'Arial Black', Arial, sans-serif" font-size="80" font-weight="900" fill="rgba(255,255,255,0.08)" letter-spacing="12">FOOTBALL</text>
+  <text x="640" y="420" text-anchor="middle" font-family="'Arial Black', Arial, sans-serif" font-size="24" font-weight="700" fill="rgba(255,255,255,0.25)" letter-spacing="6">Replace with your cover image</text>
+</svg>

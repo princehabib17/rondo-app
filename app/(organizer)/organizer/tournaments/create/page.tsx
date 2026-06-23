@@ -8,6 +8,7 @@ import {
   Check,
   ChevronRight,
   ImagePlus,
+  Loader2,
   MapPin,
   ShieldCheck,
   Trophy,
@@ -17,19 +18,26 @@ import {
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { addYears, format as fnsFormat, isBefore, isValid, parse } from "date-fns";
+import { format as fnsFormat } from "date-fns";
 import { createClient } from "@/lib/supabase/client";
 import { Label } from "@/components/ui/label";
 import { DrumRollPicker } from "@/components/ui/drum-roll-picker";
+import { DateDrumRollPicker } from "@/components/ui/date-drum-roll-picker";
+import { ImageCropModal } from "@/components/ui/image-crop-modal";
 import { OrganizationPicker } from "@/components/organizer/OrganizationPicker";
 
+const SAMPLE_COVERS = [
+  { label: "Football", src: "/samples/football.svg" },
+  { label: "Futsal", src: "/samples/futsal.svg" },
+];
+
 const schema = z.object({
-  name: z.string().min(3, "Name required").max(120),
+  name: z.string().min(3, "Tournament name required").max(120),
   description: z.string().optional(),
   format: z.enum(["single_elimination", "round_robin"]),
   starts_date: z.string().min(1, "Start date required"),
   starts_time: z.string().min(1, "Start time required"),
-  venue_name: z.string().min(2, "Venue required"),
+  venue_name: z.string().min(2, "Venue name required"),
   venue_address: z.string().optional(),
   max_teams: z.coerce.number().min(2).max(64),
   team_size: z.coerce.number().min(1).max(11),
@@ -55,35 +63,12 @@ const STEPS: { id: StepId; label: string }[] = [
 const fieldClass =
   "w-full rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3 text-sm text-white outline-none transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] placeholder:text-white/30 focus:border-rondo-accent";
 const labelClass = "text-[10px] font-black uppercase tracking-[0.18em] text-white/45";
-
-function parsersToDate(input: string): Date | null {
-  const trimmed = input.trim();
-  if (!trimmed) return null;
-  const ref = new Date();
-  const formats = [
-    "MMMM d yyyy", "MMMM d, yyyy", "MMM d yyyy", "MMM d, yyyy",
-    "MMMM d", "MMM d", "M/d/yyyy", "M/d",
-    "d MMMM yyyy", "d MMM yyyy", "d MMMM", "d MMM",
-  ];
-  for (const fmt of formats) {
-    try {
-      const parsed = parse(trimmed, fmt, ref);
-      if (isValid(parsed)) {
-        const needsYear = !fmt.includes("yyyy");
-        if (needsYear && isBefore(parsed, new Date())) return addYears(parsed, 1);
-        return parsed;
-      }
-    } catch {
-      // Try the next accepted date shape.
-    }
-  }
-  return null;
-}
+const errorClass = "text-red-400 text-xs mt-1 flex items-center gap-1.5";
 
 async function searchAddress(query: string): Promise<NominatimResult[]> {
   try {
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&countrycodes=ph`,
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5`,
       { headers: { "Accept-Language": "en" } }
     );
     return await res.json();
@@ -105,19 +90,32 @@ export default function CreateTournamentPage() {
   const [error, setError] = useState<string | null>(null);
   const [organizationId, setOrganizationId] = useState("");
   const [organizationsReady, setOrganizationsReady] = useState(false);
+
+  // Cover
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [coverSampleUrl, setCoverSampleUrl] = useState<string | null>(null);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
+  // Address
   const [addressInput, setAddressInput] = useState("");
   const [suggestions, setSuggestions] = useState<NominatimResult[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [addressLoading, setAddressLoading] = useState(false);
   const addressDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
-  const [dateInput, setDateInput] = useState("");
-  const [parsedDate, setParsedDate] = useState<Date | null>(null);
-  const [startTime, setStartTime] = useState("19:00");
+  // Date
+  const [pickedDate, setPickedDate] = useState<Date | null>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    return d;
+  });
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // Time
+  const [startTime, setStartTime] = useState("09:00");
   const [showTimePicker, setShowTimePicker] = useState(false);
 
   const {
@@ -135,7 +133,7 @@ export default function CreateTournamentPage() {
       team_size: 5,
       entry_fee: 0,
       starts_date: "",
-      starts_time: "19:00",
+      starts_time: "09:00",
     },
   });
 
@@ -146,25 +144,37 @@ export default function CreateTournamentPage() {
   const teamSize = Number(watch("team_size") || 0);
   const entryFee = Number(watch("entry_fee") || 0);
   const totalPlayers = maxTeams * teamSize;
-
   const formatLabel = format === "single_elimination" ? "Knockout" : "League";
   const prizePoolHint = useMemo(() => entryFee * maxTeams, [entryFee, maxTeams]);
 
-  const handleAddressChange = useCallback((val: string) => {
-    setAddressInput(val);
-    setValue("venue_address", val);
-    if (addressDebounce.current) clearTimeout(addressDebounce.current);
-    if (val.length < 3) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
+  // Sync picked date to form
+  useEffect(() => {
+    if (pickedDate) {
+      setValue("starts_date", fnsFormat(pickedDate, "yyyy-MM-dd"));
     }
-    addressDebounce.current = setTimeout(async () => {
-      const results = await searchAddress(val);
-      setSuggestions(results);
-      setShowSuggestions(results.length > 0);
-    }, 600);
-  }, [setValue]);
+  }, [pickedDate, setValue]);
+
+  // Address autocomplete
+  const handleAddressChange = useCallback(
+    (val: string) => {
+      setAddressInput(val);
+      setValue("venue_address", val);
+      if (addressDebounce.current) clearTimeout(addressDebounce.current);
+      if (val.length < 3) {
+        setSuggestions([]);
+        setShowSuggestions(false);
+        return;
+      }
+      setAddressLoading(true);
+      addressDebounce.current = setTimeout(async () => {
+        const results = await searchAddress(val);
+        setAddressLoading(false);
+        setSuggestions(results);
+        setShowSuggestions(results.length > 0);
+      }, 500);
+    },
+    [setValue]
+  );
 
   useEffect(() => {
     function handle(e: MouseEvent) {
@@ -185,21 +195,28 @@ export default function CreateTournamentPage() {
     setShowSuggestions(false);
   }
 
-  function handleDateChange(val: string) {
-    setDateInput(val);
-    const d = parsersToDate(val);
-    setParsedDate(d);
-    setValue("starts_date", d ? fnsFormat(d, "yyyy-MM-dd") : "");
-  }
-
   function handleTimeChange(val: string) {
     setStartTime(val);
     setValue("starts_time", val);
   }
 
-  function handleCoverFile(file: File) {
-    setCoverFile(file);
-    setCoverPreview(URL.createObjectURL(file));
+  // Cover handlers
+  function openFileForCover(file: File) {
+    setCropSrc(URL.createObjectURL(file));
+  }
+
+  function handleCropDone(blob: Blob) {
+    const croppedFile = new File([blob], "cover.jpg", { type: "image/jpeg" });
+    setCoverFile(croppedFile);
+    setCoverPreview(URL.createObjectURL(blob));
+    setCoverSampleUrl(null);
+    setCropSrc(null);
+  }
+
+  function useSampleCover(src: string) {
+    setCoverFile(null);
+    setCoverPreview(src);
+    setCoverSampleUrl(src);
   }
 
   async function goNext() {
@@ -207,13 +224,17 @@ export default function CreateTournamentPage() {
     if (step === "identity") {
       const ok = await trigger(["name", "description"]);
       if (!ok || !organizationId) {
-        setError(!organizationId ? "Choose or create an organization first." : "Finish the tournament identity.");
+        setError(
+          !organizationId
+            ? "Choose or create an organization first."
+            : "Fill in the tournament name."
+        );
         return;
       }
     }
     if (step === "venue") {
       const ok = await trigger(["venue_name", "starts_date", "starts_time"]);
-      if (!ok || !parsedDate) {
+      if (!ok || !pickedDate) {
         setError("Add a valid venue, date, and start time.");
         return;
       }
@@ -226,10 +247,7 @@ export default function CreateTournamentPage() {
   }
 
   function goBack() {
-    if (currentIndex === 0) {
-      router.back();
-      return;
-    }
+    if (currentIndex === 0) { router.back(); return; }
     setStep(STEPS[currentIndex - 1].id);
   }
 
@@ -239,8 +257,8 @@ export default function CreateTournamentPage() {
       setError("Choose or create an organization first.");
       return;
     }
-    if (!parsedDate) {
-      setError("Enter a valid start date.");
+    if (!pickedDate) {
+      setError("Select a start date.");
       return;
     }
 
@@ -267,6 +285,8 @@ export default function CreateTournamentPage() {
       return;
     }
 
+    // Upload cover or use sample
+    let bannerUrl: string | null = null;
     if (coverFile && json.tournamentId) {
       const supabase = createClient();
       const { data: userData } = await supabase.auth.getUser();
@@ -277,8 +297,15 @@ export default function CreateTournamentPage() {
         .upload(path, coverFile, { upsert: true });
       if (!uploadError) {
         const { data } = supabase.storage.from("game-covers").getPublicUrl(path);
-        await supabase.from("tournaments").update({ banner_url: data.publicUrl }).eq("id", json.tournamentId);
+        bannerUrl = data.publicUrl;
       }
+    } else if (coverSampleUrl) {
+      bannerUrl = `${window.location.origin}${coverSampleUrl}`;
+    }
+
+    if (bannerUrl && json.tournamentId) {
+      const supabase = createClient();
+      await supabase.from("tournaments").update({ banner_url: bannerUrl }).eq("id", json.tournamentId);
     }
 
     router.push(`/organizer/tournaments/${json.tournamentId}/manage`);
@@ -309,6 +336,7 @@ export default function CreateTournamentPage() {
       </header>
 
       <div className="mx-auto max-w-lg px-4 pt-4">
+        {/* Step indicators */}
         <div className="mb-4 grid grid-cols-4 gap-2">
           {STEPS.map((item, index) => (
             <button
@@ -331,63 +359,96 @@ export default function CreateTournamentPage() {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+
+          {/* ── IDENTITY ── */}
           {step === "identity" && (
             <section className="space-y-5">
+              {/* Cover with sample picker */}
               <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04] p-1.5">
-                <button
-                  type="button"
-                  onClick={() => coverInputRef.current?.click()}
-                  className="relative flex aspect-[16/10] w-full overflow-hidden rounded-[calc(2rem-0.375rem)] bg-[#111] text-left"
-                >
-                  {coverPreview ? (
+                {coverPreview ? (
+                  <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[calc(2rem-0.375rem)]">
                     <img src={coverPreview} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full flex-col justify-end bg-[radial-gradient(circle_at_70%_20%,rgba(245,197,24,0.28),transparent_22%),linear-gradient(135deg,#171717,#050505)] p-5">
-                      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-rondo-accent text-rondo-black">
-                        <Trophy size={32} />
-                      </div>
-                      <p className="rondo-hero-title text-4xl text-white">Build the stage</p>
-                      <p className="mt-1 text-sm text-white/50">Add a cover from the organizer library.</p>
-                    </div>
-                  )}
-                  <span className="absolute bottom-4 right-4 inline-flex items-center gap-2 rounded-full bg-rondo-accent px-4 py-2 text-xs font-black uppercase tracking-wide text-rondo-black">
-                    <ImagePlus size={14} />
-                    {coverPreview ? "Change" : "Add cover"}
-                  </span>
-                  {coverPreview && (
-                    <span
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => {
-                        e.stopPropagation();
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                    <button
+                      type="button"
+                      onClick={() => {
                         setCoverFile(null);
                         setCoverPreview(null);
+                        setCoverSampleUrl(null);
                       }}
                       className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white"
                     >
                       <X size={16} />
-                    </span>
-                  )}
-                </button>
-                <input
-                  ref={coverInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleCoverFile(file);
-                    e.target.value = "";
-                  }}
-                />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => coverInputRef.current?.click()}
+                      className="absolute bottom-4 right-4 inline-flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 text-xs font-bold text-white"
+                    >
+                      <ImagePlus size={13} /> Change
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex aspect-[16/10] w-full flex-col items-center justify-center gap-4 overflow-hidden rounded-[calc(2rem-0.375rem)] bg-[radial-gradient(circle_at_70%_20%,rgba(245,197,24,0.15),transparent_35%),linear-gradient(135deg,#171717,#050505)]">
+                    <div className="mb-2 flex h-14 w-14 items-center justify-center rounded-3xl bg-rondo-accent text-rondo-black">
+                      <Trophy size={28} />
+                    </div>
+                    {/* Sample covers */}
+                    <div className="flex gap-3">
+                      {SAMPLE_COVERS.map((s) => (
+                        <button
+                          key={s.label}
+                          type="button"
+                          onClick={() => useSampleCover(s.src)}
+                          className="flex flex-col items-center gap-1.5 group"
+                        >
+                          <div className="w-20 h-12 rounded-lg overflow-hidden border border-white/20 group-hover:border-rondo-accent/60 transition-colors">
+                            <img src={s.src} alt={s.label} className="w-full h-full object-cover" />
+                          </div>
+                          <span className="text-white/40 text-[10px] font-semibold uppercase tracking-wider group-hover:text-rondo-accent transition-colors">
+                            {s.label}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => coverInputRef.current?.click()}
+                      className="inline-flex items-center gap-2 rounded-full bg-rondo-accent px-4 py-2 text-xs font-black uppercase tracking-wide text-rondo-black"
+                    >
+                      <ImagePlus size={14} />
+                      Upload cover
+                    </button>
+                  </div>
+                )}
               </div>
+              <input
+                ref={coverInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) openFileForCover(file);
+                  e.target.value = "";
+                }}
+              />
 
-              <OrganizationPicker value={organizationId} onChange={setOrganizationId} onReady={setOrganizationsReady} />
+              <OrganizationPicker
+                value={organizationId}
+                onChange={setOrganizationId}
+                onReady={setOrganizationsReady}
+              />
 
               <div className="space-y-2">
                 <Label className={labelClass}>Tournament name</Label>
                 <input {...register("name")} placeholder="Rondo Summer Cup" className={fieldClass} />
-                {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
+                {errors.name && (
+                  <p className={errorClass}>
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-400 shrink-0" />
+                    {errors.name.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -403,6 +464,7 @@ export default function CreateTournamentPage() {
             </section>
           )}
 
+          {/* ── VENUE ── */}
           {step === "venue" && (
             <section className="space-y-5">
               <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-1.5">
@@ -425,9 +487,15 @@ export default function CreateTournamentPage() {
               <div className="space-y-2">
                 <Label className={labelClass}>Venue name</Label>
                 <input {...register("venue_name")} placeholder="Sparta Futsal Arena" className={fieldClass} />
-                {errors.venue_name && <p className="text-xs text-destructive">{errors.venue_name.message}</p>}
+                {errors.venue_name && (
+                  <p className={errorClass}>
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-400 shrink-0" />
+                    {errors.venue_name.message}
+                  </p>
+                )}
               </div>
 
+              {/* Address with autocomplete */}
               <div className="space-y-2">
                 <Label className={labelClass}>Address</Label>
                 <div className="relative" ref={suggestionsRef}>
@@ -436,10 +504,15 @@ export default function CreateTournamentPage() {
                     onChange={(e) => handleAddressChange(e.target.value)}
                     onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                     placeholder="Start typing an address..."
-                    className={fieldClass}
+                    className={`${fieldClass} pr-8`}
                   />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {addressLoading && (
+                      <Loader2 size={14} className="text-white/30 animate-spin" />
+                    )}
+                  </div>
                   {showSuggestions && suggestions.length > 0 && (
-                    <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-white/15 bg-[#141414] shadow-2xl">
+                    <div className="absolute left-0 right-0 top-full z-[100] mt-2 overflow-hidden rounded-2xl border border-white/15 bg-[#141414] shadow-2xl">
                       {suggestions.map((s, i) => {
                         const parts = s.display_name.split(",");
                         return (
@@ -451,52 +524,82 @@ export default function CreateTournamentPage() {
                           >
                             <MapPin size={14} className="mt-0.5 shrink-0 text-rondo-accent" />
                             <span>
-                              <span className="block text-sm font-semibold text-white">{parts.slice(0, 2).join(",").trim()}</span>
-                              <span className="mt-0.5 block text-xs text-white/40">{parts.slice(2, 4).join(",").trim()}</span>
+                              <span className="block text-sm font-semibold text-white">
+                                {parts.slice(0, 2).join(",").trim()}
+                              </span>
+                              <span className="mt-0.5 block text-xs text-white/40">
+                                {parts.slice(2, 4).join(",").trim()}
+                              </span>
                             </span>
                           </button>
                         );
                       })}
                     </div>
                   )}
+                  {!addressLoading && addressInput.length >= 3 && suggestions.length === 0 && !showSuggestions && (
+                    <p className="mt-1 text-xs text-white/30">No suggestions — try a more specific address.</p>
+                  )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div className="space-y-2">
+              {/* Date drum roll */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
                   <Label className={labelClass}>Start date</Label>
-                  <input
-                    value={dateInput}
-                    onChange={(e) => handleDateChange(e.target.value)}
-                    placeholder="September 4"
-                    className={fieldClass}
-                    autoComplete="off"
-                  />
-                  <input type="hidden" {...register("starts_date")} />
-                </div>
-                <div className="space-y-2">
-                  <Label className={labelClass}>Start time</Label>
                   <button
                     type="button"
-                    onClick={() => setShowTimePicker((value) => !value)}
-                    className="flex min-h-[46px] w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3 text-left text-sm font-black text-white"
+                    onClick={() => setShowDatePicker((v) => !v)}
+                    className="text-rondo-accent text-xs font-semibold"
                   >
-                    {formatTime12h(startTime)}
+                    {showDatePicker ? "Done" : (pickedDate ? fnsFormat(pickedDate, "MMM d, yyyy") : "Pick date")}
+                  </button>
+                </div>
+                {!showDatePicker && (
+                  <button
+                    type="button"
+                    onClick={() => setShowDatePicker(true)}
+                    className="flex min-h-[46px] w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3 text-left text-sm font-semibold text-white"
+                  >
+                    {pickedDate ? fnsFormat(pickedDate, "EEEE, MMMM d, yyyy") : "Tap to pick a date"}
                     <CalendarDays size={16} className="text-rondo-accent" />
                   </button>
-                  <input type="hidden" {...register("starts_time")} />
-                </div>
+                )}
+                {showDatePicker && (
+                  <DateDrumRollPicker
+                    value={pickedDate}
+                    onChange={(d) => {
+                      setPickedDate(d);
+                      setValue("starts_date", fnsFormat(d, "yyyy-MM-dd"));
+                    }}
+                  />
+                )}
+                <input type="hidden" {...register("starts_date")} />
+                {errors.starts_date && !pickedDate && (
+                  <p className={errorClass}>
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-400 shrink-0" />
+                    {errors.starts_date.message}
+                  </p>
+                )}
               </div>
 
-              {dateInput && (
-                <p className={`text-xs font-semibold ${parsedDate ? "text-rondo-accent" : "text-white/35"}`}>
-                  {parsedDate ? fnsFormat(parsedDate, "EEEE, MMMM d, yyyy") : "Try Sep 4, 9/4, or September 4 2026."}
-                </p>
-              )}
+              {/* Time */}
+              <div className="space-y-2">
+                <Label className={labelClass}>Start time</Label>
+                <button
+                  type="button"
+                  onClick={() => setShowTimePicker((v) => !v)}
+                  className="flex min-h-[46px] w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3 text-left text-sm font-black text-white"
+                >
+                  {formatTime12h(startTime)}
+                  <CalendarDays size={16} className="text-rondo-accent" />
+                </button>
+                <input type="hidden" {...register("starts_time")} />
+              </div>
               {showTimePicker && <DrumRollPicker value={startTime} onChange={handleTimeChange} />}
             </section>
           )}
 
+          {/* ── STRUCTURE ── */}
           {step === "structure" && (
             <section className="space-y-5">
               <div className="grid gap-3">
@@ -537,13 +640,19 @@ export default function CreateTournamentPage() {
                 <div className="space-y-2">
                   <Label className={labelClass}>Teams</Label>
                   <input {...register("max_teams")} type="number" min={2} max={64} className={fieldClass} />
+                  {errors.max_teams && (
+                    <p className={errorClass}>
+                      <span className="w-2.5 h-2.5 rounded-full bg-red-400 shrink-0" />
+                      Required
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label className={labelClass}>Per side</Label>
                   <input {...register("team_size")} type="number" min={1} max={11} className={fieldClass} />
                 </div>
                 <div className="space-y-2">
-                  <Label className={labelClass}>Fee</Label>
+                  <Label className={labelClass}>Fee (₱)</Label>
                   <input {...register("entry_fee")} type="number" min={0} step="50" className={fieldClass} />
                 </div>
               </div>
@@ -556,28 +665,38 @@ export default function CreateTournamentPage() {
                 </div>
                 <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
                   <ShieldCheck size={18} className="text-rondo-accent" />
-                  <p className="mt-3 text-3xl font-black text-white">P{prizePoolHint || 0}</p>
+                  <p className="mt-3 text-3xl font-black text-white">₱{prizePoolHint || 0}</p>
                   <p className="text-xs font-bold uppercase tracking-wide text-white/40">Gross entry</p>
                 </div>
               </div>
             </section>
           )}
 
+          {/* ── REVIEW ── */}
           {step === "review" && (
             <section className="space-y-5">
               <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04] p-1.5">
                 <div className="relative min-h-64 rounded-[calc(2rem-0.375rem)] bg-[#080808]">
                   {coverPreview ? (
-                    <img src={coverPreview} alt="" className="absolute inset-0 h-full w-full rounded-[calc(2rem-0.375rem)] object-cover" />
+                    <img
+                      src={coverPreview}
+                      alt=""
+                      className="absolute inset-0 h-full w-full rounded-[calc(2rem-0.375rem)] object-cover"
+                    />
                   ) : (
                     <div className="absolute inset-0 rounded-[calc(2rem-0.375rem)] bg-[radial-gradient(circle_at_70%_25%,rgba(245,197,24,0.24),transparent_22%),linear-gradient(135deg,#181818,#050505)]" />
                   )}
                   <div className="absolute inset-0 rounded-[calc(2rem-0.375rem)] bg-gradient-to-t from-black via-black/55 to-transparent" />
                   <div className="relative flex min-h-64 flex-col justify-end p-5">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-rondo-accent">{formatLabel}</p>
-                    <h2 className="rondo-hero-title mt-1 text-5xl text-white">{values.name || "Tournament"}</h2>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-rondo-accent">
+                      {formatLabel}
+                    </p>
+                    <h2 className="rondo-hero-title mt-1 text-5xl text-white">
+                      {values.name || "Tournament"}
+                    </h2>
                     <p className="mt-2 text-sm text-white/60">
-                      {parsedDate ? fnsFormat(parsedDate, "MMM d") : "Date"} at {formatTime12h(startTime)} - {values.venue_name || "Venue"}
+                      {pickedDate ? fnsFormat(pickedDate, "MMM d") : "Date"} at{" "}
+                      {formatTime12h(startTime)} — {values.venue_name || "Venue"}
                     </p>
                   </div>
                 </div>
@@ -588,19 +707,27 @@ export default function CreateTournamentPage() {
                   ["Organization", organizationId ? "Selected" : "Missing"],
                   ["Teams", `${maxTeams || 0} teams`],
                   ["Squad size", `${teamSize || 0} per side`],
-                  ["Entry", entryFee > 0 ? `P${entryFee} per team` : "Free"],
+                  ["Entry", entryFee > 0 ? `₱${entryFee} per team` : "Free"],
                   ["Address", addressInput || "Not added"],
-                ].map(([label, value]) => (
-                  <div key={label} className="flex items-center justify-between gap-4 border-b border-white/[0.06] py-3 last:border-0">
+                ].map(([label, val]) => (
+                  <div
+                    key={label}
+                    className="flex items-center justify-between gap-4 border-b border-white/[0.06] py-3 last:border-0"
+                  >
                     <span className="text-sm text-white/45">{label}</span>
-                    <span className="text-right text-sm font-bold text-white">{value}</span>
+                    <span className="text-right text-sm font-bold text-white">{val}</span>
                   </div>
                 ))}
               </div>
             </section>
           )}
 
-          {error && <p className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</p>}
+          {error && (
+            <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 flex items-start gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0 mt-1.5" />
+              <p className="text-sm text-red-300">{error}</p>
+            </div>
+          )}
 
           <div className="fixed bottom-16 left-0 right-0 z-30 mx-auto max-w-lg px-4 pb-2">
             {step === "review" ? (
@@ -626,6 +753,17 @@ export default function CreateTournamentPage() {
           </div>
         </form>
       </div>
+
+      {/* Cover crop modal */}
+      {cropSrc && (
+        <ImageCropModal
+          src={cropSrc}
+          aspect={16 / 10}
+          label="Crop cover"
+          onDone={handleCropDone}
+          onCancel={() => setCropSrc(null)}
+        />
+      )}
     </div>
   );
 }
