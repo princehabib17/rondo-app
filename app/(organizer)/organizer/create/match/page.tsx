@@ -39,7 +39,6 @@ const SAMPLE_COVERS = [
 // ─── schema ───────────────────────────────────────────────────────────────────
 
 const schema = z.object({
-  title: z.string().min(3, "Match title is required (min 3 characters)"),
   venue_name: z.string().min(2, "Venue name is required"),
   venue_address: z.string().min(5, "Address is required"),
   game_date: z.string().min(1, "Date is required"),
@@ -147,6 +146,7 @@ export default function CreateMatchPage() {
       price_per_player: 200,
       game_date: fnsFormat(new Date(Date.now() + 86400000), "yyyy-MM-dd"),
       game_time: "19:00",
+      description: "",
     },
   });
 
@@ -271,12 +271,14 @@ export default function CreateMatchPage() {
 
     const dateTime = new Date(`${data.game_date}T${data.game_time}:00`).toISOString();
 
+    const autoTitle = `${data.venue_name} – ${fnsFormat(pickedDate, "MMM d, yyyy")}`;
+
     const { data: game, error: gameError } = await supabase
       .from("games")
       .insert({
         organizer_id: userData.user.id,
         organization_id: organizationId,
-        title: data.title,
+        title: autoTitle,
         description: data.description ?? null,
         venue_name: data.venue_name,
         venue_address: data.venue_address,
@@ -461,22 +463,6 @@ export default function CreateMatchPage() {
             onChange={setOrganizationId}
             onReady={setOrganizationsReady}
           />
-
-          {/* Match title */}
-          <div className="space-y-1.5">
-            <Label className={labelClass}>Match Title *</Label>
-            <input
-              {...register("title")}
-              placeholder="Thursday Night Futsal"
-              className={fieldClass}
-            />
-            {errors.title && (
-              <p className={errorClass}>
-                <span className="w-3 h-3 rounded-full bg-red-400 shrink-0 inline-block" />
-                {errors.title.message}
-              </p>
-            )}
-          </div>
 
           {/* ── Location ── */}
           <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.025] p-4">
