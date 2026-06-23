@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Building2, ImagePlus, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { rondoFieldClass } from "@/components/rondo/primitives";
+import { ImageCropModal } from "@/components/ui/image-crop-modal";
 import { createClient } from "@/lib/supabase/client";
 
 type OrganizationRecord = {
@@ -31,6 +33,7 @@ export function OrganizationPicker({ value, onChange, onReady }: OrganizationPic
   const [newName, setNewName] = useState("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -56,12 +59,19 @@ export function OrganizationPicker({ value, onChange, onReady }: OrganizationPic
     onReady?.(false);
     load();
     return () => { cancelled = true; };
-  }, [onChange, onReady, value]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  function handleLogoFile(file: File) {
-    setLogoFile(file);
-    const url = URL.createObjectURL(file);
-    setLogoPreview(url);
+  function openLogoFile(file: File) {
+    const objectUrl = URL.createObjectURL(file);
+    setCropSrc(objectUrl);
+  }
+
+  function handleCropDone(blob: Blob) {
+    const croppedFile = new File([blob], "logo.jpg", { type: "image/jpeg" });
+    setLogoFile(croppedFile);
+    setLogoPreview(URL.createObjectURL(blob));
+    setCropSrc(null);
   }
 
   async function uploadLogo(userId: string): Promise<string | null> {
@@ -99,10 +109,12 @@ export function OrganizationPicker({ value, onChange, onReady }: OrganizationPic
     });
     const json = await res.json();
     setCreating(false);
+
     if (!res.ok) {
       setError(json.error ?? "Could not create organization");
       return;
     }
+
     const org = json.organization as OrganizationRecord;
     const membership: MembershipRecord = {
       organization_id: org.id,
@@ -115,85 +127,100 @@ export function OrganizationPicker({ value, onChange, onReady }: OrganizationPic
     setNewName("");
     setLogoFile(null);
     setLogoPreview(null);
+    toast.success(`"${org.name}" created`);
   }
 
   return (
-    <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.025] p-4">
-      <div className="flex items-center gap-2">
-        <Building2 size={17} className="text-rondo-accent" />
-        <div>
-          <p className="font-heading text-sm font-black uppercase text-white">Organizer / Organization</p>
-          <p className="text-xs text-white/45">Games will show under this name.</p>
-        </div>
-      </div>
-
-      {activeMemberships.length > 0 && (
-        <select value={value} onChange={(e) => onChange(e.target.value)} className={rondoFieldClass}>
-          <option value="">Choose organization</option>
-          {activeMemberships.map((m) => (
-            <option key={m.organization_id} value={m.organization_id}>
-              {m.organization.name}
-            </option>
-          ))}
-        </select>
-      )}
-
-      <div className="grid gap-3">
-        <input
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          placeholder={activeMemberships.length ? "Create another organization" : "Organization name"}
-          className={rondoFieldClass}
-        />
-
-        {/* Logo picker */}
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="relative w-14 h-14 rounded-full border-2 border-dashed border-white/20 bg-white/[0.03] flex items-center justify-center overflow-hidden shrink-0 hover:border-rondo-accent/50 transition-colors"
-          >
-            {logoPreview ? (
-              <img src={logoPreview} alt="Logo preview" className="w-full h-full object-cover" />
-            ) : (
-              <ImagePlus size={18} className="text-white/30" />
-            )}
-          </button>
+    <>
+      <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.025] p-4">
+        <div className="flex items-center gap-2">
+          <Building2 size={17} className="text-rondo-accent" />
           <div>
+            <p className="font-heading text-sm font-black uppercase text-white">Organizer / Organization</p>
+            <p className="text-xs text-white/45">Games will show under this name.</p>
+          </div>
+        </div>
+
+        {activeMemberships.length > 0 && (
+          <select value={value} onChange={(e) => onChange(e.target.value)} className={rondoFieldClass}>
+            <option value="">Choose organization</option>
+            {activeMemberships.map((m) => (
+              <option key={m.organization_id} value={m.organization_id}>
+                {m.organization.name}
+              </option>
+            ))}
+          </select>
+        )}
+
+        <div className="grid gap-3">
+          <input
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && createOrganization()}
+            placeholder={activeMemberships.length ? "Create another organization" : "Organization name"}
+            className={rondoFieldClass}
+          />
+
+          {/* Logo picker with crop */}
+          <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="text-xs text-rondo-accent font-semibold"
+              className="relative w-14 h-14 rounded-full border-2 border-dashed border-white/20 bg-white/[0.03] flex items-center justify-center overflow-hidden shrink-0 hover:border-rondo-accent/50 transition-colors"
             >
-              {logoPreview ? "Change logo" : "Add logo (optional)"}
+              {logoPreview ? (
+                <img src={logoPreview} alt="Logo preview" className="w-full h-full object-cover" />
+              ) : (
+                <ImagePlus size={18} className="text-white/30" />
+              )}
             </button>
-            <p className="text-xs text-white/30 mt-0.5">Choose from gallery</p>
+            <div>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="text-xs text-rondo-accent font-semibold"
+              >
+                {logoPreview ? "Change logo" : "Add logo (optional)"}
+              </button>
+              <p className="text-xs text-white/30 mt-0.5">Square crop applied automatically</p>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) openLogoFile(f);
+                e.target.value = "";
+              }}
+            />
           </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) handleLogoFile(f);
-              e.target.value = "";
-            }}
-          />
+
+          <button
+            type="button"
+            onClick={createOrganization}
+            disabled={creating || newName.trim().length < 2}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-rondo-accent/35 bg-rondo-accent/10 px-4 font-heading text-xs font-black uppercase tracking-wide text-rondo-accent disabled:opacity-40"
+          >
+            <Plus size={15} />
+            {creating ? "Creating..." : "Save organization"}
+          </button>
         </div>
 
-        <button
-          type="button"
-          onClick={createOrganization}
-          disabled={creating || newName.trim().length < 2}
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-rondo-accent/35 bg-rondo-accent/10 px-4 font-heading text-xs font-black uppercase tracking-wide text-rondo-accent disabled:opacity-40"
-        >
-          <Plus size={15} />
-          {creating ? "Creating..." : "Save organization"}
-        </button>
+        {error && <p className="text-xs text-red-400">{error}</p>}
       </div>
 
-      {error && <p className="text-xs text-red-400">{error}</p>}
-    </div>
+      {/* Logo crop modal */}
+      {cropSrc && (
+        <ImageCropModal
+          src={cropSrc}
+          aspect={1}
+          label="Crop logo"
+          onDone={handleCropDone}
+          onCancel={() => setCropSrc(null)}
+        />
+      )}
+    </>
   );
 }
