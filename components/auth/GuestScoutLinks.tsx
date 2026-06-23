@@ -23,8 +23,7 @@ export function GuestScoutLinks() {
       return;
     }
     const next = new URLSearchParams(window.location.search).get("next");
-    router.push(next ? getSafeRedirectPath(next) : "/onboarding/slides");
-    router.refresh();
+    router.push(next ? getSafeRedirectPath(next) : "/feed");
   }
 
   async function handleScout() {
@@ -37,7 +36,6 @@ export function GuestScoutLinks() {
       return;
     }
     router.push("/reels");
-    router.refresh();
   }
 
   return (

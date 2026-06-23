@@ -88,10 +88,16 @@ const organizerTabs: TabDef[] = [
 
 export function BottomNav() {
   const pathname = usePathname();
-  const [role, setRole] = useState<UserRole>(null);
+  const [role, setRole] = useState<UserRole>(() => {
+    if (typeof window !== "undefined") {
+      return (sessionStorage.getItem("rondo_role") as UserRole) ?? null;
+    }
+    return null;
+  });
   const [pendingHref, setPendingHref] = useState<string | null>(null);
 
   useEffect(() => {
+    if (role) return; // already cached
     async function fetchRole() {
       const supabase = createClient();
       const { data: userData } = await supabase.auth.getUser();
@@ -102,10 +108,13 @@ export function BottomNav() {
         .select("role")
         .eq("id", userId)
         .single();
-      if (data?.role) setRole(data.role as UserRole);
+      if (data?.role) {
+        setRole(data.role as UserRole);
+        sessionStorage.setItem("rondo_role", data.role);
+      }
     }
     fetchRole();
-  }, []);
+  }, [role]);
 
   useEffect(() => {
     setPendingHref(null);

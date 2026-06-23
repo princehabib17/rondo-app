@@ -1,5 +1,5 @@
-import { RouteLoading } from "@/components/layout/RouteLoading";
-
 export default function Loading() {
-  return <RouteLoading />;
+  return (
+    <div className="min-h-[100dvh] bg-[#050505]" />
+  );
 }
