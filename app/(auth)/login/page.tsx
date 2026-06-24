@@ -52,8 +52,11 @@ export default function LoginPage() {
     const next = safeNext(new URLSearchParams(window.location.search).get("next"));
     if (next) { router.push(next); return; }
     const supabase = createClient();
-    supabase.from("profiles").select("role").then(({ data }) => {
-      router.push(data?.[0]?.role ? "/feed" : "/onboarding/slides");
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) { router.push("/login"); return; }
+      supabase.from("profiles").select("role").eq("id", user.id).single().then(({ data: profile }) => {
+        router.push(profile?.role ? "/feed" : "/onboarding/slides");
+      });
     });
   }
 
