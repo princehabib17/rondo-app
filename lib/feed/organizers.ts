@@ -7,7 +7,7 @@ export interface OrganizerGroup {
 
 /** Placeholder groups shown until real organizers exist in the database. */
 export const PLACEHOLDER_ORGANIZERS: OrganizerGroup[] = [
-  { id: "urban", full_name: "Urban", avatar_url: "/organizers/urban.png", verified: true },
+  { id: "urban", full_name: "Urban Football", avatar_url: "/organizers/urban.png", verified: true },
   { id: "tsl", full_name: "TSL", avatar_url: "/organizers/tsl.png", verified: true },
   { id: "liman-style", full_name: "Liman Style", avatar_url: "/organizers/liman-style.png", verified: true },
   { id: "east-football-united", full_name: "East Football United", avatar_url: "/organizers/east-football-united.png", verified: true },
