@@ -23,20 +23,36 @@ async function ensureOrganizerProfile(
     .eq("email", seed.email)
     .maybeSingle();
 
+  const baseProfile = {
+    full_name: seed.full_name,
+    role: "organizer" as const,
+    avatar_url: seed.avatar_url,
+    bio: seed.bio,
+    preferred_areas: seed.preferred_areas,
+    game_preference: seed.game_preference,
+  };
+
+  const extendedProfile = {
+    ...baseProfile,
+    phone: seed.phone ?? null,
+    organizer_verified: seed.verified,
+  };
+
   if (existingProfile?.id) {
-    await service
+    const { error: extendedErr } = await service
       .from("profiles")
-      .update({
-        full_name: seed.full_name,
-        role: "organizer",
-        avatar_url: seed.avatar_url,
-        bio: seed.bio,
-        phone: seed.phone ?? null,
-        organizer_verified: seed.verified,
-        preferred_areas: seed.preferred_areas,
-        game_preference: seed.game_preference,
-      })
+      .update(extendedProfile)
       .eq("id", existingProfile.id);
+
+    if (extendedErr) {
+      const { error: baseErr } = await service
+        .from("profiles")
+        .update(baseProfile)
+        .eq("id", existingProfile.id);
+      if (baseErr) {
+        throw new Error(`Failed to update profile for ${seed.email}: ${baseErr.message}`);
+      }
+    }
 
     return existingProfile.id;
   }
@@ -58,20 +74,23 @@ async function ensureOrganizerProfile(
     {
       id: userId,
       email: seed.email,
-      full_name: seed.full_name,
-      role: "organizer",
-      avatar_url: seed.avatar_url,
-      bio: seed.bio,
-      phone: seed.phone ?? null,
-      organizer_verified: seed.verified,
-      preferred_areas: seed.preferred_areas,
-      game_preference: seed.game_preference,
+      ...extendedProfile,
     },
     { onConflict: "id" }
   );
 
   if (profileErr) {
-    throw new Error(`Failed to upsert profile for ${seed.email}: ${profileErr.message}`);
+    const { error: fallbackErr } = await service.from("profiles").upsert(
+      {
+        id: userId,
+        email: seed.email,
+        ...baseProfile,
+      },
+      { onConflict: "id" }
+    );
+    if (fallbackErr) {
+      throw new Error(`Failed to upsert profile for ${seed.email}: ${fallbackErr.message}`);
+    }
   }
 
   return userId;
@@ -81,142 +100,172 @@ async function ensureOrganization(
   service: ReturnType<typeof createServiceClient>,
   seed: OrganizerSeed,
   createdBy: string
-): Promise<string> {
-  const { data: existing } = await service
-    .from("organizations")
-    .select("id")
-    .eq("slug", seed.slug)
-    .maybeSingle();
-
-  if (existing?.id) {
-    await service
+): Promise<string | null> {
+  try {
+    const { data: existing, error: existingErr } = await service
       .from("organizations")
-      .update({
+      .select("id")
+      .eq("slug", seed.slug)
+      .maybeSingle();
+
+    if (existingErr) return null;
+
+    if (existing?.id) {
+      await service
+        .from("organizations")
+        .update({
+          name: seed.organizationName,
+          logo_url: seed.avatar_url,
+          verified: seed.verified,
+        })
+        .eq("id", existing.id);
+
+      await service.from("organization_members").upsert(
+        {
+          organization_id: existing.id,
+          user_id: createdBy,
+          role: "owner",
+          status: "active",
+          approved_at: new Date().toISOString(),
+        },
+        { onConflict: "organization_id,user_id" }
+      );
+
+      return existing.id;
+    }
+
+    const { data: organization, error } = await service
+      .from("organizations")
+      .insert({
         name: seed.organizationName,
+        slug: seed.slug,
         logo_url: seed.avatar_url,
         verified: seed.verified,
+        created_by: createdBy,
       })
-      .eq("id", existing.id);
+      .select("id")
+      .single();
 
-    await service.from("organization_members").upsert(
-      {
-        organization_id: existing.id,
-        user_id: createdBy,
-        role: "owner",
-        status: "active",
-        approved_at: new Date().toISOString(),
-      },
-      { onConflict: "organization_id,user_id" }
-    );
+    if (error || !organization) return null;
 
-    return existing.id;
+    await service.from("organization_members").insert({
+      organization_id: organization.id,
+      user_id: createdBy,
+      role: "owner",
+      status: "active",
+      approved_at: new Date().toISOString(),
+    });
+
+    return organization.id;
+  } catch {
+    return null;
+  }
+}
+
+async function insertGame(
+  service: ReturnType<typeof createServiceClient>,
+  game: ReturnType<typeof buildGamesForOrganizer>[number],
+  organizationId: string | null
+) {
+  const { organization_id: _org, match_type, ...baseGame } = game;
+  const withOrg = organizationId ? { ...baseGame, organization_id: organizationId } : baseGame;
+  const fullGame = match_type ? { ...withOrg, match_type } : withOrg;
+
+  const attempts = [fullGame, withOrg, baseGame];
+
+  for (const payload of attempts) {
+    const { data: createdGame, error: gameErr } = await service
+      .from("games")
+      .insert(payload)
+      .select("id")
+      .single();
+
+    if (!gameErr && createdGame) {
+      return createdGame.id;
+    }
+
+    const lastError = gameErr?.message ?? "unknown error";
+    if (payload === baseGame) {
+      throw new Error(`Failed to create game "${game.title}": ${lastError}`);
+    }
   }
 
-  const { data: organization, error } = await service
-    .from("organizations")
-    .insert({
-      name: seed.organizationName,
-      slug: seed.slug,
-      logo_url: seed.avatar_url,
-      verified: seed.verified,
-      created_by: createdBy,
-    })
-    .select("id")
-    .single();
-
-  if (error || !organization) {
-    throw new Error(`Failed to create organization ${seed.slug}: ${error?.message ?? "unknown error"}`);
-  }
-
-  const { error: memberErr } = await service.from("organization_members").insert({
-    organization_id: organization.id,
-    user_id: createdBy,
-    role: "owner",
-    status: "active",
-    approved_at: new Date().toISOString(),
-  });
-
-  if (memberErr) {
-    throw new Error(`Failed to add owner for ${seed.slug}: ${memberErr.message}`);
-  }
-
-  return organization.id;
+  throw new Error(`Failed to create game "${game.title}"`);
 }
 
 export async function POST(request: Request) {
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return NextResponse.json({ error: "Service role key not configured" }, { status: 503 });
-  }
-
-  const seedSecret = process.env.SEED_SECRET;
-  if (seedSecret) {
-    const auth = request.headers.get("authorization") ?? "";
-    if (auth !== `Bearer ${seedSecret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-  }
-
-  const body = await request.json().catch(() => ({}));
-  const weeksAhead = typeof body.weeksAhead === "number" ? body.weeksAhead : 3;
-
-  const service = createServiceClient();
-  const results: string[] = [];
-  let totalGames = 0;
-
-  for (const seed of PLACEHOLDER_ORGANIZER_SEEDS) {
-    const organizerId = await ensureOrganizerProfile(service, seed);
-    const organizationId = await ensureOrganization(service, seed, organizerId);
-
-    const { error: deleteErr } = await service.from("games").delete().eq("organizer_id", organizerId);
-    if (deleteErr) {
-      return NextResponse.json(
-        { error: `Failed to clear games for ${seed.slug}: ${deleteErr.message}` },
-        { status: 500 }
-      );
+  try {
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return NextResponse.json({ error: "Service role key not configured" }, { status: 503 });
     }
 
-    const gameRows = buildGamesForOrganizer(organizerId, organizationId, seed, weeksAhead);
+    const seedSecret = process.env.SEED_SECRET;
+    if (seedSecret) {
+      const auth = request.headers.get("authorization") ?? "";
+      if (auth !== `Bearer ${seedSecret}`) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+    }
 
-    for (const game of gameRows) {
-      const { data: createdGame, error: gameErr } = await service
-        .from("games")
-        .insert(game)
-        .select("id")
-        .single();
+    const body = await request.json().catch(() => ({}));
+    const weeksAhead = typeof body.weeksAhead === "number" ? body.weeksAhead : 3;
 
-      if (gameErr || !createdGame) {
+    const service = createServiceClient();
+    const results: string[] = [];
+    let totalGames = 0;
+
+    for (const seed of PLACEHOLDER_ORGANIZER_SEEDS) {
+      const organizerId = await ensureOrganizerProfile(service, seed);
+      const organizationId = await ensureOrganization(service, seed, organizerId);
+
+      const { error: deleteErr } = await service.from("games").delete().eq("organizer_id", organizerId);
+      if (deleteErr) {
         return NextResponse.json(
-          { error: `Failed to create game "${game.title}": ${gameErr?.message ?? "unknown error"}` },
+          { error: `Failed to clear games for ${seed.slug}: ${deleteErr.message}` },
           { status: 500 }
         );
       }
 
-      const { error: teamsErr } = await service.from("teams").insert(
-        TEAM_COLORS.map((team) => ({
-          ...team,
-          game_id: createdGame.id,
-        }))
+      const gameRows = buildGamesForOrganizer(
+        organizerId,
+        organizationId ?? "00000000-0000-0000-0000-000000000000",
+        seed,
+        weeksAhead
       );
 
-      if (teamsErr) {
-        return NextResponse.json(
-          { error: `Failed to create teams for "${game.title}": ${teamsErr.message}` },
-          { status: 500 }
+      for (const game of gameRows) {
+        const gameId = await insertGame(service, game, organizationId);
+
+        const { error: teamsErr } = await service.from("teams").insert(
+          TEAM_COLORS.map((team) => ({
+            ...team,
+            game_id: gameId,
+          }))
         );
+
+        if (teamsErr) {
+          return NextResponse.json(
+            { error: `Failed to create teams for "${game.title}": ${teamsErr.message}` },
+            { status: 500 }
+          );
+        }
+
+        totalGames += 1;
       }
 
-      totalGames += 1;
+      results.push(`${seed.full_name}: ${gameRows.length} upcoming games`);
     }
 
-    results.push(`${seed.full_name}: ${gameRows.length} upcoming games`);
+    return NextResponse.json({
+      ok: true,
+      organizers: PLACEHOLDER_ORGANIZER_SEEDS.length,
+      games: totalGames,
+      weeksAhead,
+      results,
+      note: "Organizer logins use *@organizers.rondo with password OrganizerSeed123! (dev seed only).",
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown seed error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  return NextResponse.json({
-    ok: true,
-    organizers: PLACEHOLDER_ORGANIZER_SEEDS.length,
-    games: totalGames,
-    weeksAhead,
-    results,
-    note: "Organizer logins use *@organizers.rondo with password OrganizerSeed123! (dev seed only).",
-  });
 }
