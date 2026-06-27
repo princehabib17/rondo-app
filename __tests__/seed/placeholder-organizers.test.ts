@@ -52,9 +52,9 @@ describe("placeholder organizer seed", () => {
       new Date("2026-06-27T00:00:00+08:00")
     );
 
-    expect(games.some((game) => game.match_type === "futsal" && game.venue_name === "Axis Residences")).toBe(
+    expect(games.some((game) => game.match_type === "futsal" && game.venue_name === "Axis Residences Tower B")).toBe(
       true
     );
-    expect(games.some((game) => game.venue_name === "Cherry Turf")).toBe(true);
+    expect(games.some((game) => game.venue_name === "Cherry Turf" && game.price_per_player === 40000)).toBe(true);
   });
 });
