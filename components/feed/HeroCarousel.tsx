@@ -32,6 +32,7 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
           fill
           className="object-cover"
           sizes="400px"
+          quality={90}
           priority
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/20" />

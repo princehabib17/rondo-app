@@ -22,7 +22,7 @@ export function ContinueAsGuestLink() {
     }
 
     const next = new URLSearchParams(window.location.search).get("next");
-    router.push(next ? getSafeRedirectPath(next) : "/onboarding/slides");
+    router.replace(next ? getSafeRedirectPath(next) : "/feed");
     router.refresh();
   }
 

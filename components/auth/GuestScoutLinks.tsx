@@ -23,7 +23,7 @@ export function GuestScoutLinks() {
       return;
     }
     const next = new URLSearchParams(window.location.search).get("next");
-    router.push(next ? getSafeRedirectPath(next) : "/onboarding/slides");
+    router.replace(next ? getSafeRedirectPath(next) : "/feed");
     router.refresh();
   }
 
@@ -43,7 +43,7 @@ export function GuestScoutLinks() {
   return (
     <div className="mt-6 space-y-3">
       <p className="text-center font-body text-white/30 text-xs uppercase tracking-widest">
-        or browse without an account
+        or explore without signing up
       </p>
       <div className="grid grid-cols-2 gap-3">
         <button
@@ -54,7 +54,7 @@ export function GuestScoutLinks() {
         >
           <Eye size={18} />
           <span className="font-body text-xs font-semibold">
-            {guestLoading ? "Opening…" : "Guest"}
+            {guestLoading ? "Opening…" : "Browse matches"}
           </span>
         </button>
         <button
@@ -65,12 +65,12 @@ export function GuestScoutLinks() {
         >
           <UserSearch size={18} />
           <span className="font-body text-xs font-semibold">
-            {scoutLoading ? "Opening…" : "Scout"}
+            {scoutLoading ? "Opening…" : "Watch highlights"}
           </span>
         </button>
       </div>
       <p className="text-center font-body text-white/25 text-[10px] leading-relaxed">
-        Scout mode &mdash; browse players &amp; reels, build a shortlist
+        Browse matches to find games near you. Watch highlights to scout players and save a shortlist.
       </p>
       {error && (
         <p className="text-center text-xs text-red-400" role="alert">{error}</p>

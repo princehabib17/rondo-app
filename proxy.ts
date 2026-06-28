@@ -31,6 +31,7 @@ const PUBLIC_SKIP_AUTH = [
   "/reset-password",
   "/auth/callback",
   "/onboarding",
+  "/feed",
 ];
 
 const GUEST_BLOCKED_PREFIXES = [

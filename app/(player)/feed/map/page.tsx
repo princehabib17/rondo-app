@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Game } from "@/lib/supabase/types";
+import { fetchOpenGames } from "@/lib/supabase/game-queries";
 import {
   DEFAULT_FILTERS,
   applyFeedFilters,
@@ -51,16 +52,8 @@ export default function FeedMapPage() {
 
   const fetchGames = useCallback(async () => {
     const supabase = createClient();
-    const now = new Date().toISOString();
-    const { data } = await supabase
-      .from("games")
-      .select("*, organizer:profiles!organizer_id(id,full_name,avatar_url), organization:organizations(id,name,slug,logo_url,verified,created_by), game_players(id)")
-      .eq("status", "open")
-      .gte("date_time", now)
-      .order("date_time", { ascending: true })
-      .limit(80);
-
-    setGames((data as Game[]) ?? []);
+    const data = await fetchOpenGames(supabase, { from: 0, to: 79 });
+    setGames(data);
     setLoading(false);
   }, []);
 

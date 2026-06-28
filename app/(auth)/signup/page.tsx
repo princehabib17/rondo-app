@@ -10,6 +10,7 @@ import { getSafeRedirectPath } from "@/lib/auth/safe-redirect";
 import { ContinueAsGuestLink } from "@/components/auth/ContinueAsGuestLink";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
+import { formatAuthError } from "@/lib/auth/format-auth-error";
 import { isLikelyPhoneNumber, normalizePhoneNumber } from "@/lib/auth/phone";
 
 function safeSignupNext(raw: string | null): string {
@@ -65,7 +66,7 @@ export default function SignupPage() {
     setSending(false);
 
     if (otpError) {
-      setError(otpError.message);
+      setError(formatAuthError(otpError.message));
       return;
     }
 

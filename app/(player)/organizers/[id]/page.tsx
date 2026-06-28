@@ -7,7 +7,8 @@ import { ArrowLeft, Calendar, Megaphone, MapPin, Radio } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatGameDate, formatRelativeTime } from "@/lib/utils/format";
 import type { Announcement, Game, Profile } from "@/lib/supabase/types";
-import { getOrganizerInitials, PLACEHOLDER_ORGANIZERS } from "@/lib/feed/organizers";
+import { getOrganizerInitials } from "@/lib/feed/organizers";
+import { resolveOrganizer } from "@/lib/organizers/resolve-organizer";
 
 type BroadcastCategory = "general" | "game_on" | "cancelled" | "rules" | "tournament_notice";
 
@@ -61,52 +62,35 @@ export default function OrganizerHubPage() {
     const uid = userData.user?.id ?? null;
     setCurrentUserId(uid);
 
-    const isRealOrganizerId = isUuid(id);
-    let profile: Profile | null = null;
+    const resolved = await resolveOrganizer(supabase, id);
 
-    if (isRealOrganizerId) {
-      const { data } = await supabase.from("profiles").select("*").eq("id", id).maybeSingle();
-      profile = (data as Profile | null) ?? null;
+    if (!resolved) {
+      router.replace("/feed");
+      return;
     }
 
-    if (!profile) {
-      const placeholder = PLACEHOLDER_ORGANIZERS.find((entry) => entry.id === id);
-      if (!placeholder) {
-        router.replace("/feed");
-        return;
-      }
-      setIsPlaceholder(true);
-      profile = {
-        id: id,
-        email: null,
-        full_name: placeholder.full_name,
-        avatar_url: placeholder.avatar_url ?? null,
-        role: "organizer",
-        bio: null,
-        nationality: null,
-        position: null,
-        preferred_foot: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-    } else {
-      setIsPlaceholder(false);
-    }
+    const profile = resolved.profile;
+    const organizerId = resolved.organizerId;
+    setIsPlaceholder(resolved.isPlaceholder);
+
+    const gamesPromise = resolved.isPlaceholder
+      ? Promise.resolve({ data: [] as Game[] })
+      : supabase
+          .from("games")
+          .select("*, game_players(id)")
+          .eq("organizer_id", organizerId)
+          .eq("status", "open")
+          .gte("date_time", now)
+          .order("date_time", { ascending: true })
+          .limit(10);
 
     const queries = [
-      supabase
-        .from("games")
-        .select("*, game_players(id)")
-        .eq("organizer_id", profile.id)
-        .eq("status", "open")
-        .gte("date_time", now)
-        .order("date_time", { ascending: true })
-        .limit(10),
-      isRealOrganizerId
+      gamesPromise,
+      isUuid(organizerId)
         ? supabase
             .from("organizer_broadcasts")
             .select("*")
-            .or(`organizer_key.eq.${id},organizer_id.eq.${id}`)
+            .or(`organizer_key.eq.${id},organizer_id.eq.${organizerId}`)
             .order("created_at", { ascending: false })
             .limit(50)
         : supabase
@@ -115,24 +99,25 @@ export default function OrganizerHubPage() {
             .eq("organizer_key", id)
             .order("created_at", { ascending: false })
             .limit(50),
-      supabase
-        .from("announcements")
-        .select("*")
-        .eq("organizer_id", profile.id)
-        .order("created_at", { ascending: false })
-        .limit(20),
+      isUuid(organizerId)
+        ? supabase
+            .from("announcements")
+            .select("*")
+            .eq("organizer_id", organizerId)
+            .order("created_at", { ascending: false })
+            .limit(20)
+        : Promise.resolve({ data: [] as Announcement[] }),
     ] as const;
 
     const [{ data: gamesData }, { data: organizerBroadcasts }, { data: legacyAnnouncements }] =
       await Promise.all(queries);
 
-    // Room broadcasts: only real organizer_id rows, last 10
     let room: RoomBroadcast[] = [];
-    if (isRealOrganizerId) {
+    if (isUuid(organizerId)) {
       const { data: roomData } = await supabase
         .from("organizer_broadcasts")
         .select("id, organizer_id, body, created_at")
-        .eq("organizer_id", id)
+        .eq("organizer_id", organizerId)
         .order("created_at", { ascending: false })
         .limit(10);
       room = (roomData as RoomBroadcast[] | null) ?? [];

@@ -50,8 +50,10 @@ export function TopOrganizers({ organizers, loading = false }: TopOrganizersProp
                     <Image
                       src={organizer.avatar_url}
                       alt=""
-                      width={56}
-                      height={56}
+                      width={112}
+                      height={112}
+                      quality={95}
+                      sizes="56px"
                       className="w-full h-full object-cover"
                     />
                   ) : (

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Game } from "@/lib/supabase/types";
+import { fetchOpenGames } from "@/lib/supabase/game-queries";
 import { DEFAULT_CAROUSEL_SLIDES } from "@/lib/feed/carousel-slides";
 import type { OrganizerGroup } from "@/lib/feed/organizers";
 import { FeedHeader } from "@/components/feed/FeedHeader";
@@ -37,7 +38,10 @@ function partitionByTab(games: Game[], tab: GamesTab): Game[] {
   const now = Date.now();
   const weekMs = 7 * 24 * 60 * 60 * 1000;
   if (tab === "nearby") {
-    return games.filter((game) => new Date(game.date_time).getTime() - now <= weekMs);
+    return games.filter((game) => {
+      const delta = new Date(game.date_time).getTime() - now;
+      return delta >= 0 && delta <= weekMs;
+    });
   }
   return games.filter((game) => new Date(game.date_time).getTime() - now > weekMs);
 }
@@ -60,16 +64,10 @@ export function FeedPageClient({
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
     const supabase = createClient();
-    const now = new Date().toISOString();
-    const { data } = await supabase
-      .from("games")
-      .select("*, organizer:profiles!organizer_id(id,full_name,avatar_url), organization:organizations(id,name,slug,logo_url,verified,created_by), game_players(id)")
-      .eq("status", "open")
-      .gte("date_time", now)
-      .order("date_time", { ascending: true })
-      .range(gamesOffset, gamesOffset + PAGE_SIZE - 1);
-
-    const more = (data as Game[]) ?? [];
+    const more = await fetchOpenGames(supabase, {
+      from: gamesOffset,
+      to: gamesOffset + PAGE_SIZE - 1,
+    });
     if (more.length > 0) {
       setGames((prev) => [...prev, ...more]);
       setGamesOffset((offset) => offset + more.length);
