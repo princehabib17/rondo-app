@@ -40,7 +40,7 @@ export async function fetchOpenGames(
 
   const extended = await run(GAME_LIST_SELECT_WITH_ORG);
   if (!extended.error && extended.data) {
-    return extended.data as Game[];
+    return extended.data as unknown as Game[];
   }
 
   const basic = await run(GAME_LIST_SELECT_BASE);
@@ -49,5 +49,5 @@ export async function fetchOpenGames(
     return [];
   }
 
-  return (basic.data as Game[]) ?? [];
+  return (basic.data as unknown as Game[]) ?? [];
 }
