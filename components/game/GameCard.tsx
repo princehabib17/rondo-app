@@ -1,12 +1,30 @@
+"use client";
+
 import Link from "next/link";
-import { Calendar, MapPin, Users, Trophy } from "lucide-react";
+import { Calendar, MapPin, Users } from "lucide-react";
+import { motion } from "motion/react";
 import { formatGameDate, formatPrice } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
 import { Badge } from "@/components/ui/badge";
+import { bouncy } from "@/components/motion/springs";
 
 interface GameCardProps {
   game: Game;
   index?: number;
+}
+
+// Deterministic gradient based on game id — no stock images as fallback
+const fallbackGradients = [
+  "from-emerald-900/60 to-black",
+  "from-sky-900/60 to-black",
+  "from-violet-900/60 to-black",
+  "from-amber-900/60 to-black",
+  "from-rose-900/60 to-black",
+  "from-cyan-900/60 to-black",
+];
+function cardGradient(id: string) {
+  const n = id.charCodeAt(0) + id.charCodeAt(id.length - 1);
+  return fallbackGradients[n % fallbackGradients.length];
 }
 
 export function GameCard({ game, index = 0 }: GameCardProps) {
@@ -15,87 +33,96 @@ export function GameCard({ game, index = 0 }: GameCardProps) {
   const isFull = spotsLeft <= 0;
 
   return (
-    <Link
-      href={`/games/${game.id}`}
-      className="block cursor-pointer"
-      style={{ animationDelay: `${index * 80}ms`, animationFillMode: "both" }}
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ ...bouncy, delay: index * 0.04 }}
     >
-      <article className="group bg-card border border-border rounded-2xl overflow-hidden hover:border-primary/60 transition-all duration-200 active:scale-[0.98]">
-        {/* Banner */}
-        <div className="relative h-32 w-full overflow-hidden bg-muted">
-          {game.banner_url ? (
-            <img
-              src={game.banner_url}
-              alt={game.title}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-              loading="lazy"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border-b border-border">
-              <Trophy size={40} className="text-primary/40" />
-            </div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
-          {/* Price Badge */}
-          <div className="absolute top-3 right-3">
-            <span className="bg-primary text-primary-foreground font-black text-xs px-3 py-1.5 rounded-lg shadow-lg">
-              {formatPrice(game.price_per_player)}
+      <Link href={`/games/${game.id}`} className="block">
+        <article className="group overflow-hidden rounded-2xl border border-white/8 bg-black/40 transition active:scale-[0.98] hover:border-rondo-accent/25">
+          {/* Banner — taller, image dominant */}
+          <div className="relative h-40 overflow-hidden">
+            {game.banner_url ? (
+              <img
+                src={game.banner_url}
+                alt={game.title}
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                loading="lazy"
+              />
+            ) : (
+              <div className={`h-full w-full bg-gradient-to-br ${cardGradient(game.id)}`} />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+            {/* Price badge — top right */}
+            <span className="absolute right-3 top-3 rounded-full bg-rondo-accent px-2.5 py-1 font-heading text-[11px] font-black text-black">
+              {game.price_per_player === 0 ? "Free" : formatPrice(game.price_per_player)}
             </span>
-          </div>
-        </div>
 
-        {/* Content */}
-        <div className="p-4 space-y-3">
-          <h3 className="text-foreground font-black text-base leading-tight truncate">{game.title}</h3>
-
-          {/* Game Details */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-muted-foreground text-xs">
-              <Calendar size={14} className="shrink-0 text-primary" />
-              <span className="font-medium">{formatGameDate(game.date_time)}</span>
-            </div>
-            <div className="flex items-center gap-2 text-muted-foreground text-xs">
-              <MapPin size={14} className="shrink-0 text-primary" />
-              <span className="truncate font-medium">{game.venue_name}</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs">
-              <Users size={14} className="text-primary shrink-0" />
-              <span className="font-medium">{playerCount}/{game.max_players}</span>
-              {!isFull && (
-                <span className="text-primary font-bold text-xs ml-auto">{spotsLeft} left</span>
-              )}
-              {isFull && <span className="text-destructive font-bold text-xs ml-auto">Full</span>}
-            </div>
-          </div>
-
-          {/* Tags */}
-          <div className="flex items-center gap-2 flex-wrap pt-2">
-            <Badge variant="secondary" className="text-xs font-semibold">{game.format}</Badge>
-            <Badge variant="secondary" className="text-xs font-semibold">{game.round_duration_minutes}m</Badge>
-            {game.payment_type === "online" && (
-              <Badge className="text-xs font-semibold bg-primary/20 text-primary border-primary/30">Pay Online</Badge>
+            {/* Status — bottom right of image */}
+            {isFull && (
+              <span className="absolute bottom-3 right-3 rounded-full bg-white/10 px-2.5 py-1 font-body text-[10px] font-black uppercase tracking-wide text-white/60 backdrop-blur-sm">
+                Full
+              </span>
             )}
           </div>
-        </div>
-      </article>
-    </Link>
+
+          {/* Content */}
+          <div className="space-y-2.5 p-4">
+            <h3 className="font-heading text-base font-black uppercase italic leading-tight text-white">
+              {game.title}
+            </h3>
+
+            <div className="space-y-1.5 font-body text-xs text-white/45">
+              <div className="flex items-center gap-1.5">
+                <Calendar size={11} className="shrink-0 text-rondo-accent" />
+                <span className="truncate">{formatGameDate(game.date_time)}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <MapPin size={11} className="shrink-0 text-rondo-accent" />
+                <span className="truncate">{game.venue_name}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Users size={11} className="shrink-0 text-rondo-accent" />
+                <span>
+                  {playerCount}/{game.max_players}
+                  {!isFull && (
+                    <span className="ml-1.5 text-rondo-accent">{spotsLeft} left</span>
+                  )}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5 pt-0.5">
+              <Badge variant="secondary" className="h-5 text-[10px]">{game.format}</Badge>
+              <Badge variant="secondary" className="h-5 text-[10px]">{game.round_duration_minutes}m</Badge>
+              {game.payment_type === "online" && (
+                <Badge className="h-5 text-[10px] bg-rondo-accent/15 text-rondo-accent border-rondo-accent/25">
+                  Pay Online
+                </Badge>
+              )}
+            </div>
+          </div>
+        </article>
+      </Link>
+    </motion.div>
   );
 }
 
 export function GameCardSkeleton() {
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden">
-      <div className="h-28 bg-muted animate-pulse" />
-      <div className="p-4 space-y-3">
-        <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
+    <div className="overflow-hidden rounded-2xl border border-white/8 bg-black/40">
+      <div className="h-40 bg-white/[0.04] animate-pulse" />
+      <div className="space-y-3 p-4">
+        <div className="h-4 w-3/4 rounded bg-white/8 animate-pulse" />
         <div className="space-y-2">
-          <div className="h-3 bg-muted rounded animate-pulse w-full" />
-          <div className="h-3 bg-muted rounded animate-pulse w-2/3" />
-          <div className="h-3 bg-muted rounded animate-pulse w-1/2" />
+          <div className="h-3 w-full rounded bg-white/6 animate-pulse" />
+          <div className="h-3 w-2/3 rounded bg-white/6 animate-pulse" />
+          <div className="h-3 w-1/2 rounded bg-white/6 animate-pulse" />
         </div>
-        <div className="flex gap-2">
-          <div className="h-5 w-12 bg-muted rounded animate-pulse" />
-          <div className="h-5 w-20 bg-muted rounded animate-pulse" />
+        <div className="flex gap-1.5">
+          <div className="h-5 w-12 rounded bg-white/6 animate-pulse" />
+          <div className="h-5 w-16 rounded bg-white/6 animate-pulse" />
         </div>
       </div>
     </div>

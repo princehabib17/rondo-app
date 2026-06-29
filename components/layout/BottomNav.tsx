@@ -1,4 +1,5 @@
 "use client";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -13,6 +14,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { motion, AnimatePresence } from "motion/react";
+import { snappy } from "@/components/motion/springs";
 
 type UserRole = "player" | "organizer" | null;
 
@@ -75,8 +78,7 @@ const organizerTabs: TabDef[] = [
     href: "/organizer/room",
     icon: Radio,
     label: "Room",
-    isActive: (p) =>
-      p === "/organizer/room" || p.startsWith("/organizer/room"),
+    isActive: (p) => p === "/organizer/room" || p.startsWith("/organizer/room"),
   },
   {
     href: "/profile",
@@ -120,6 +122,8 @@ export function BottomNav() {
         {tabs.map(({ href, icon: Icon, label, isActive }) => {
           const active = isActive(pathname);
           const pending = pendingHref === href && !active;
+          const highlighted = active || pending;
+
           return (
             <Link
               key={href}
@@ -127,30 +131,45 @@ export function BottomNav() {
               onClick={() => {
                 if (!active) setPendingHref(href);
               }}
-              className={cn(
-                "relative flex min-w-0 flex-1 flex-col items-center gap-0.5 py-2 transition-all active:scale-90",
-                pending && "opacity-100"
-              )}
+              className="relative flex min-w-0 flex-1 flex-col items-center gap-0.5 py-2"
             >
-              <Icon
-                size={25}
-                strokeWidth={active ? 2 : 1.75}
-                className={cn(
-                  "transition-colors duration-200",
-                  active || pending ? "text-rondo-accent" : "text-white/45"
+              {/* Sliding gold dot indicator using shared layout animation */}
+              <AnimatePresence>
+                {highlighted && (
+                  <motion.span
+                    layoutId="nav-indicator"
+                    className="absolute top-1.5 h-1 w-5 rounded-full bg-rondo-accent"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={snappy}
+                  />
                 )}
-              />
+              </AnimatePresence>
+
+              <motion.div
+                animate={highlighted ? { scale: [1, 0.82, 1.08, 1] } : { scale: 1 }}
+                transition={snappy}
+                key={highlighted ? "active" : "inactive"}
+              >
+                <Icon
+                  size={25}
+                  strokeWidth={highlighted ? 2 : 1.75}
+                  className={cn(
+                    "transition-colors duration-150",
+                    highlighted ? "text-rondo-accent" : "text-white/45"
+                  )}
+                />
+              </motion.div>
+
               <span
                 className={cn(
-                  "max-w-full truncate font-body text-[11px] font-medium transition-colors duration-200",
-                  active || pending ? "text-rondo-accent" : "text-white/45"
+                  "max-w-full truncate font-body text-[11px] font-medium transition-colors duration-150",
+                  highlighted ? "text-rondo-accent" : "text-white/45"
                 )}
               >
                 {label}
               </span>
-              {pending && (
-                <span className="absolute top-1 h-1 w-1 rounded-full bg-rondo-accent" />
-              )}
             </Link>
           );
         })}
