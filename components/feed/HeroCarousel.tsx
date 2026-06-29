@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, useMotionValue, useTransform, AnimatePresence } from "motion/react";
+import { motion, useMotionValue, AnimatePresence } from "motion/react";
 import { ChevronRight } from "lucide-react";
 import type { CarouselSlide } from "@/lib/feed/carousel-slides";
 import { snappy, bouncy } from "@/components/motion/springs";
