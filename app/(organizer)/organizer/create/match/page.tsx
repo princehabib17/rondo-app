@@ -231,7 +231,7 @@ export default function CreateMatchPage() {
     setCropSrc(null);
   }
 
-  function useSampleCover(src: string) {
+  function applySampleCover(src: string) {
     setCoverFile(null);
     setCoverPreview(src);
     setCoverSampleUrl(src);
@@ -401,7 +401,7 @@ export default function CreateMatchPage() {
                   <button
                     key={s.label}
                     type="button"
-                    onClick={() => useSampleCover(s.src)}
+                    onClick={() => applySampleCover(s.src)}
                     className="flex flex-col items-center gap-1.5 group"
                   >
                     <div className="w-24 h-14 rounded-lg overflow-hidden border border-white/15 group-hover:border-rondo-yellow/60 transition-colors">

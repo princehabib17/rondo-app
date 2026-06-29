@@ -1,12 +1,16 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, Map, MapPinned } from "lucide-react";
+import { motion } from "motion/react";
 import { formatGameTime, formatPrice } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
 import { getOrganizerInitials } from "@/lib/feed/organizers";
 import { GameBadges } from "@/components/feed/GameBadges";
 import { getPlayerCount, isFull, type Coords } from "@/lib/feed/filters";
 import { format } from "date-fns";
+import { bouncy } from "@/components/motion/springs";
 
 interface NearbyGameRowProps {
   game: Game;
@@ -193,7 +197,16 @@ export function NearbyGamesSection({ games, tab, onTabChange, loading, hasMore, 
           <EmptyState tab={tab} />
         ) : (
           <>
-            {games.map((game) => <NearbyGameRow key={game.id} game={game} />)}
+            {games.map((game, i) => (
+              <motion.div
+                key={game.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ ...bouncy, delay: i * 0.04 }}
+              >
+                <NearbyGameRow game={game} />
+              </motion.div>
+            ))}
             {hasMore && onLoadMore && (
               <button
                 onClick={onLoadMore}

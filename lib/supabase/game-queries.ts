@@ -14,13 +14,6 @@ export interface OpenGamesQuery {
   limit?: number;
 }
 
-function applyOpenGameFilters<T extends { eq: Function; gte: Function; order: Function }>(
-  query: T,
-  now: string
-) {
-  return query.eq("status", "open").gte("date_time", now).order("date_time", { ascending: true });
-}
-
 /**
  * Fetches open games, falling back when optional relations (e.g. organizations) are missing.
  */
@@ -32,15 +25,18 @@ export async function fetchOpenGames(
   const from = options.from ?? 0;
   const to = options.to ?? (options.limit != null ? options.limit - 1 : 19);
 
-  const run = async (select: string) => {
-    let query = supabase.from("games").select(select);
-    query = applyOpenGameFilters(query, now);
-    return query.range(from, to);
-  };
+  const run = async (select: string) =>
+    supabase
+      .from("games")
+      .select(select)
+      .eq("status", "open")
+      .gte("date_time", now)
+      .order("date_time", { ascending: true })
+      .range(from, to);
 
   const extended = await run(GAME_LIST_SELECT_WITH_ORG);
   if (!extended.error && extended.data) {
-    return extended.data as Game[];
+    return extended.data as unknown as Game[];
   }
 
   const basic = await run(GAME_LIST_SELECT_BASE);
@@ -49,5 +45,5 @@ export async function fetchOpenGames(
     return [];
   }
 
-  return (basic.data as Game[]) ?? [];
+  return (basic.data as unknown as Game[]) ?? [];
 }
