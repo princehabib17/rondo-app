@@ -213,7 +213,7 @@ export default function CreateTournamentPage() {
     setCropSrc(null);
   }
 
-  function useSampleCover(src: string) {
+  function applySampleCover(src: string) {
     setCoverFile(null);
     setCoverPreview(src);
     setCoverSampleUrl(src);
@@ -399,7 +399,7 @@ export default function CreateTournamentPage() {
                         <button
                           key={s.label}
                           type="button"
-                          onClick={() => useSampleCover(s.src)}
+                          onClick={() => applySampleCover(s.src)}
                           className="flex flex-col items-center gap-1.5 group"
                         >
                           <div className="w-20 h-12 rounded-lg overflow-hidden border border-white/20 group-hover:border-rondo-accent/60 transition-colors">

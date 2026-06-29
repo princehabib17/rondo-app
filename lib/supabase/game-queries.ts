@@ -14,7 +14,8 @@ export interface OpenGamesQuery {
   limit?: number;
 }
 
-function applyOpenGameFilters<T extends { eq: Function; gte: Function; order: Function }>(
+type QueryMethod = (...args: unknown[]) => unknown;
+function applyOpenGameFilters<T extends { eq: QueryMethod; gte: QueryMethod; order: QueryMethod }>(
   query: T,
   now: string
 ) {
