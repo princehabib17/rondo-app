@@ -41,22 +41,29 @@ export async function POST(request: Request) {
 
   const supabase = createServiceClient();
 
-  const { data: existing } = await supabase
-    .from("webhook_events")
-    .select("id")
-    .eq("id", eventId)
-    .maybeSingle();
+  // Claim-first idempotency: insert the event id before any processing so
+  // concurrent deliveries of the same event race on the unique constraint
+  // instead of both passing a check-then-insert dedupe.
+  const { error: claimError } = await supabase.from("webhook_events").insert({
+    id: eventId,
+    event_type: eventType ?? "unknown",
+  });
 
-  if (existing) {
-    logPayment({ event: "webhook_duplicate", eventId, eventType });
-    return NextResponse.json({ received: true, duplicate: true });
+  if (claimError) {
+    if (claimError.code === "23505") {
+      logPayment({ event: "webhook_duplicate", eventId, eventType });
+      return NextResponse.json({ received: true, duplicate: true });
+    }
+    logPayment({
+      event: "webhook_claim_failed",
+      level: "error",
+      eventId,
+      error: claimError.message,
+    });
+    return NextResponse.json({ error: claimError.message }, { status: 500 });
   }
 
   if (eventType !== "checkout_session.payment.paid") {
-    await supabase.from("webhook_events").insert({
-      id: eventId,
-      event_type: eventType ?? "unknown",
-    });
     return NextResponse.json({ received: true });
   }
 
@@ -75,9 +82,13 @@ export async function POST(request: Request) {
 
       if (!user_id || !Number.isFinite(amountCentavos) || amountCentavos <= 0) {
         logPayment({ event: "webhook_wallet_topup_bad_metadata", level: "error", eventId });
+        await supabase.from("webhook_events").delete().eq("id", eventId);
         return NextResponse.json({ error: "Invalid wallet top-up metadata" }, { status: 400 });
       }
 
+      // Belt-and-braces guard: the claim insert above already prevents
+      // concurrent duplicate deliveries from both crediting, but keep this
+      // check as a second line of defense.
       if (!(await hasTopUpBeenCredited(paymentId))) {
         await creditWallet({
           userId: user_id,
@@ -86,11 +97,6 @@ export async function POST(request: Request) {
           note: topUpNote(paymentId),
         });
       }
-
-      await supabase.from("webhook_events").insert({
-        id: eventId,
-        event_type: eventType,
-      });
 
       logPayment({ event: "webhook_wallet_topup_credited", eventId, userId: user_id });
       return NextResponse.json({ received: true });
@@ -101,6 +107,7 @@ export async function POST(request: Request) {
 
     if (!game_id || !user_id) {
       logPayment({ event: "webhook_missing_metadata", level: "error", eventId });
+      await supabase.from("webhook_events").delete().eq("id", eventId);
       return NextResponse.json({ error: "Missing metadata" }, { status: 400 });
     }
 
@@ -122,19 +129,17 @@ export async function POST(request: Request) {
         eventId,
         error: upsertError.message,
       });
+      await supabase.from("webhook_events").delete().eq("id", eventId);
       return NextResponse.json({ error: upsertError.message }, { status: 500 });
     }
-
-    await supabase.from("webhook_events").insert({
-      id: eventId,
-      event_type: eventType,
-    });
 
     logPayment({ event: "webhook_payment_confirmed", eventId, game_id, user_id });
     return NextResponse.json({ received: true });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Internal server error";
     logPayment({ event: "webhook_error", level: "error", eventId, message });
+    // Release the claim so a PayMongo retry isn't swallowed as a duplicate.
+    await supabase.from("webhook_events").delete().eq("id", eventId);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
