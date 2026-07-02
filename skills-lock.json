@@ -7,6 +7,12 @@
       "skillPath": "skills/emil-design-eng/SKILL.md",
       "computedHash": "ac3fc5b4e206488ffc408a2806f829bb2e5eaf518fded09be34790685c2b3a0d"
     },
+    "grill-me": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/productivity/grill-me/SKILL.md",
+      "computedHash": "f321507f77702a54af1db66549ec1685fc625390d06c57d7949cdcda8eb1b5c7"
+    },
     "hallmark": {
       "source": "nutlope/hallmark",
       "sourceType": "github",
