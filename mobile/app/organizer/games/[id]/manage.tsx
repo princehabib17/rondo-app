@@ -11,7 +11,7 @@ import { Button } from '../../../../components/ui/Button';
 import { Card } from '../../../../components/ui/Card';
 import { useQuery, useMutation } from '../../../../hooks/useQuery';
 import * as q from '../../../../lib/queries';
-import type { Team, GamePlayerWithProfile, Announcement, Profile } from '../../../../lib/types';
+import type { Team, Announcement } from '../../../../lib/types';
 
 type Tab = 'teams' | 'announcements';
 

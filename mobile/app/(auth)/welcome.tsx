@@ -5,18 +5,15 @@ import {
   StyleSheet,
   ImageBackground,
   TouchableOpacity,
-  Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { Button } from '../../components/ui/Button';
-import { colors, font, spacing, radius } from '../../constants/theme';
+import { colors, font, spacing } from '../../constants/theme';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const welcomeBg = require('../../assets/icon.png');
-
-const { width, height } = Dimensions.get('window');
 
 export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();

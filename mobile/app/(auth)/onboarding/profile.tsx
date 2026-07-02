@@ -96,7 +96,7 @@ export default function ProfileSetupScreen() {
         {/* Photo picker */}
         <TouchableOpacity onPress={pickPhoto} style={styles.photoPicker} activeOpacity={0.8}>
           {photo ? (
-            <Image source={{ uri: photo }} style={styles.photo} />
+            <Image source={{ uri: photo }} style={styles.photo} alt="Your profile photo" />
           ) : (
             <View style={styles.photoPlaceholder}>
               <Text style={styles.photoIcon}>📷</Text>

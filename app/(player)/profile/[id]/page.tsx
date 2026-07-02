@@ -33,9 +33,6 @@ export default function PublicProfilePage() {
   const [loading, setLoading] = useState(true);
   const [followLoading, setFollowLoading] = useState(false);
   const [recentMatches, setRecentMatches] = useState<ProfileMatchEntry[]>([]);
-  const [walletBalanceCentavos, setWalletBalanceCentavos] = useState(0);
-  const [walletSpentCentavos, setWalletSpentCentavos] = useState(0);
-  const [walletPaidCount, setWalletPaidCount] = useState(0);
   const [walletRows, setWalletRows] = useState<Array<{ amount: number; direction: "credit" | "debit"; source: string }>>([]);
   const [isGuest, setIsGuest] = useState(false);
   const [locationHidden, setLocationHidden] = useState(false);
@@ -130,19 +127,8 @@ export default function PublicProfilePage() {
       const entries = ((matchesData as ProfileMatchEntry[] | null) ?? []).filter((entry) => !!entry.game);
       setRecentMatches(entries);
 
-      if (isOwnProfile && uid) {
-        const balanceRes = await fetch("/api/wallet/balance");
-        if (balanceRes.ok) {
-          const balanceJson = await balanceRes.json();
-          setWalletBalanceCentavos(balanceJson.balanceCentavos ?? 0);
-        }
-      }
-
       const walletRows = (walletData as Array<{ amount: number; direction: "credit" | "debit"; source: string }> | null) ?? [];
       setWalletRows(walletRows);
-      const debits = walletRows.filter((row) => row.direction === "debit");
-      setWalletPaidCount(debits.length);
-      setWalletSpentCentavos(debits.reduce((sum, row) => sum + row.amount, 0));
       // Fetch player reels
       const reelsRes = await fetch(`/api/reels?playerId=${id}&limit=6`);
       if (reelsRes.ok) {

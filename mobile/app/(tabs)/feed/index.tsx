@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  RefreshControl, Dimensions, ActivityIndicator,
+  RefreshControl, ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -11,8 +11,6 @@ import { Badge } from '../../../components/ui/Badge';
 import { useQuery } from '../../../hooks/useQuery';
 import * as q from '../../../lib/queries';
 import type { GameWithOrganizer } from '../../../lib/types';
-
-const { width } = Dimensions.get('window');
 
 function formatDate(iso: string) {
   const d = new Date(iso);

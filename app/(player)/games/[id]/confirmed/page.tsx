@@ -101,7 +101,7 @@ function ConfirmedContent() {
       clearInterval(retry);
       clearTimeout(stop);
     };
-  }, [id, router]);
+  }, [id, router, searchParams]);
 
   if (paymentState === "loading") {
     return (

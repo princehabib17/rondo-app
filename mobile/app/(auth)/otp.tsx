@@ -13,7 +13,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { supabase } from '../../lib/supabase';
 import * as q from '../../lib/queries';
-import { Button } from '../../components/ui/Button';
 import { colors, font, spacing, radius } from '../../constants/theme';
 
 const CODE_LENGTH = 6;

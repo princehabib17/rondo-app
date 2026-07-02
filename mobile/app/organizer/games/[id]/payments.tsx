@@ -4,7 +4,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, spacing, radius } from '../../../../constants/theme';
 import { Badge } from '../../../../components/ui/Badge';
-import { Card } from '../../../../components/ui/Card';
 import { useQuery } from '../../../../hooks/useQuery';
 import * as q from '../../../../lib/queries';
 import type { GamePlayerWithProfile, GamePlayerStatus } from '../../../../lib/types';
@@ -40,7 +39,7 @@ export default function PaymentsScreen() {
   const playersQuery = useQuery(() => q.getGamePlayers(gameId!), [gameId]);
 
   const game = gameQuery.data;
-  const players = playersQuery.data ?? [];
+  const players = useMemo(() => playersQuery.data ?? [], [playersQuery.data]);
   const loading = gameQuery.loading || (playersQuery.loading && !playersQuery.data);
 
   const filtered = useMemo(() => {

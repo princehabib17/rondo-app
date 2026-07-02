@@ -139,15 +139,6 @@ export default function ManageGamePage() {
     await loadGame();
   }
 
-  async function togglePayRule() {
-    const supabase = createClient();
-    await supabase
-      .from("games")
-      .update({ allow_pay_later: !game?.allow_pay_later })
-      .eq("id", id);
-    await loadGame();
-  }
-
   async function addFromWaitlist(waitlistId: string, teamId?: string | null) {
     setAddingWaitlistId(waitlistId);
     const res = await fetch(`/api/organizer/games/${id}/waitlist/add`, {
