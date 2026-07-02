@@ -56,13 +56,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Service role key not configured" }, { status: 503 });
   }
 
-  // If SEED_SECRET is configured, require it as Bearer token
+  // Fail closed: without SEED_SECRET this endpoint is unauthenticated (proxy.ts
+  // exempts /api/seed from auth), so refuse to run rather than allow public access.
   const seedSecret = process.env.SEED_SECRET;
-  if (seedSecret) {
-    const auth = request.headers.get("authorization") ?? "";
-    if (auth !== `Bearer ${seedSecret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  if (!seedSecret) {
+    return NextResponse.json(
+      { error: "Seed endpoint disabled: SEED_SECRET is not configured" },
+      { status: 503 }
+    );
+  }
+  const auth = request.headers.get("authorization") ?? "";
+  if (auth !== `Bearer ${seedSecret}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const service = createServiceClient();

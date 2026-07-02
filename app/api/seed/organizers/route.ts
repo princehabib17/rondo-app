@@ -167,7 +167,26 @@ async function insertGame(
   game: ReturnType<typeof buildGamesForOrganizer>[number],
   organizationId: string | null
 ) {
-  const { organization_id: _org, match_type, ...baseGame } = game;
+  const { match_type } = game;
+  const baseGame: Omit<typeof game, "organization_id" | "match_type"> = {
+    organizer_id: game.organizer_id,
+    title: game.title,
+    description: game.description,
+    venue_name: game.venue_name,
+    venue_address: game.venue_address,
+    venue_lat: game.venue_lat,
+    venue_lng: game.venue_lng,
+    date_time: game.date_time,
+    price_per_player: game.price_per_player,
+    max_players: game.max_players,
+    num_teams: game.num_teams,
+    format: game.format,
+    round_duration_minutes: game.round_duration_minutes,
+    payment_type: game.payment_type,
+    status: game.status,
+    registration_open: game.registration_open,
+    banner_url: game.banner_url,
+  };
   const withOrg = organizationId ? { ...baseGame, organization_id: organizationId } : baseGame;
   const fullGame = match_type ? { ...withOrg, match_type } : withOrg;
 
@@ -199,12 +218,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Service role key not configured" }, { status: 503 });
     }
 
+    // Fail closed: without SEED_SECRET this endpoint is unauthenticated (proxy.ts
+    // exempts /api/seed from auth), so refuse to run rather than allow public access.
     const seedSecret = process.env.SEED_SECRET;
-    if (seedSecret) {
-      const auth = request.headers.get("authorization") ?? "";
-      if (auth !== `Bearer ${seedSecret}`) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
+    if (!seedSecret) {
+      return NextResponse.json(
+        { error: "Seed endpoint disabled: SEED_SECRET is not configured" },
+        { status: 503 }
+      );
+    }
+    const auth = request.headers.get("authorization") ?? "";
+    if (auth !== `Bearer ${seedSecret}`) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json().catch(() => ({}));

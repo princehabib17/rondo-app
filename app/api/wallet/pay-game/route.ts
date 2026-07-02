@@ -39,10 +39,14 @@ export async function POST(request: Request) {
       .eq("id", gameId)
       .single();
 
+    if (!game) {
+      return NextResponse.json({ error: "Game not found" }, { status: 404 });
+    }
+
     const risk = await checkAndRecordPaymentAttempt(service, {
       userId: userData.user.id,
       kind: "wallet_pay",
-      amountCentavos: game?.price_per_player ?? 0,
+      amountCentavos: game.price_per_player,
     });
     if (risk.rateLimited) {
       return NextResponse.json({ error: PAYMENT_RATE_LIMIT_MESSAGE }, { status: 429 });
