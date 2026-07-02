@@ -117,8 +117,21 @@ export function BottomNav() {
   const tabs = isOrganizerRoute || role === "organizer" ? organizerTabs : playerTabs;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 rondo-glass-nav z-[200] pb-[env(safe-area-inset-bottom)]">
-      <div className="mx-auto flex h-16 w-full max-w-[430px] items-center justify-around overflow-hidden px-2">
+    <nav
+      className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[200]"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
+      <div
+        className="flex items-center gap-1 px-2 h-[60px] rounded-[22px]"
+        style={{
+          background: "rgba(12, 12, 12, 0.92)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          border: "1px solid rgba(255,255,255,0.09)",
+          boxShadow:
+            "0 8px 40px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.06)",
+        }}
+      >
         {tabs.map(({ href, icon: Icon, label, isActive }) => {
           const active = isActive(pathname);
           const pending = pendingHref === href && !active;
@@ -128,17 +141,22 @@ export function BottomNav() {
             <Link
               key={href}
               href={href}
+              aria-label={label}
               onClick={() => {
                 if (!active) setPendingHref(href);
               }}
-              className="relative flex min-w-0 flex-1 flex-col items-center gap-0.5 py-2"
+              className="relative flex items-center justify-center w-[52px] h-[44px] rounded-[14px]"
             >
-              {/* Sliding gold dot indicator using shared layout animation */}
+              {/* Sliding pill background */}
               <AnimatePresence>
                 {highlighted && (
                   <motion.span
-                    layoutId="nav-indicator"
-                    className="absolute top-1.5 h-1 w-5 rounded-full bg-rondo-accent"
+                    layoutId="nav-pill"
+                    className="absolute inset-0 rounded-[14px]"
+                    style={{
+                      background:
+                        "color-mix(in oklch, oklch(92% 0.16 102) 11%, transparent)",
+                    }}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -148,28 +166,22 @@ export function BottomNav() {
               </AnimatePresence>
 
               <motion.div
-                animate={highlighted ? { scale: [1, 0.82, 1.08, 1] } : { scale: 1 }}
+                animate={
+                  highlighted ? { scale: [1, 0.84, 1.1, 1] } : { scale: 1 }
+                }
                 transition={snappy}
                 key={highlighted ? "active" : "inactive"}
+                className="relative z-10"
               >
                 <Icon
-                  size={25}
-                  strokeWidth={highlighted ? 2 : 1.75}
+                  size={22}
+                  strokeWidth={highlighted ? 2.1 : 1.65}
                   className={cn(
                     "transition-colors duration-150",
-                    highlighted ? "text-rondo-accent" : "text-white/45"
+                    highlighted ? "text-rondo-accent" : "text-white/40"
                   )}
                 />
               </motion.div>
-
-              <span
-                className={cn(
-                  "max-w-full truncate font-body text-[11px] font-medium transition-colors duration-150",
-                  highlighted ? "text-rondo-accent" : "text-white/45"
-                )}
-              >
-                {label}
-              </span>
             </Link>
           );
         })}
