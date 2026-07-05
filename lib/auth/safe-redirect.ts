@@ -5,6 +5,7 @@ const ALLOWED_PREFIXES = [
   "/onboarding",
   "/games",
   "/my-games",
+  "/tournaments",
   "/profile",
   "/organizer",
   "/login",

@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import type { Game } from "@/lib/supabase/types";
@@ -12,18 +11,6 @@ export default async function FeedPage() {
   const supabase = await createClient();
   const { data: userData } = await supabase.auth.getUser();
   const user = userData.user;
-
-  if (user && !isGuestUser(user)) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile?.role) {
-      redirect("/onboarding/slides");
-    }
-  }
 
   const [initialGames, initialOrganizers, unreadCount] = await Promise.all([
     fetchOpenGames(supabase, { from: 0, to: PAGE_SIZE - 1 }),

@@ -1,12 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { getSafeRedirectPath } from "@/lib/auth/safe-redirect";
-import { isGuestUser } from "@/lib/auth/is-guest";
+import { getRoleHomePath } from "@/lib/auth/role-routing";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = getSafeRedirectPath(searchParams.get("next"));
+  const requestedNext = searchParams.get("next");
+  const next = getSafeRedirectPath(requestedNext);
 
   if (code) {
     const supabase = await createClient();
@@ -31,7 +32,11 @@ export async function GET(request: Request) {
           .select("role")
           .eq("id", user.id)
           .single();
-        const destination = profile?.role ? next : "/onboarding/slides";
+        const destination = profile?.role
+          ? requestedNext && !next.startsWith("/onboarding")
+            ? next
+            : getRoleHomePath(profile.role)
+          : "/onboarding/slides";
         return NextResponse.redirect(`${origin}${destination}`);
       }
     }

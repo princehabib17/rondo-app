@@ -8,6 +8,7 @@ import { z } from "zod";
 import { Upload, User } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { OnboardingHeader } from "@/components/onboarding/OnboardingHeader";
+import { getPostOnboardingPath } from "@/lib/auth/role-routing";
 import { NATIONALITIES } from "@/lib/utils/format";
 
 const baseProfileSchema = z.object({
@@ -168,7 +169,7 @@ export default function PlayerSetupPage() {
     }
 
     sessionStorage.removeItem("selectedRole");
-    router.push("/feed");
+    router.push(getPostOnboardingPath(role));
     router.refresh();
   }
 
