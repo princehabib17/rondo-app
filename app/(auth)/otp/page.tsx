@@ -7,12 +7,14 @@ import Image from "next/image";
 import { ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { getSafeRedirectPath } from "@/lib/auth/safe-redirect";
+import { ONBOARDING_START_PATH, getRoleHomePath } from "@/lib/auth/role-routing";
 
 function OtpContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const phone = searchParams.get("phone") ?? "";
-  const next = getSafeRedirectPath(searchParams.get("next"), "/onboarding/slides");
+  const requestedNext = searchParams.get("next");
+  const next = getSafeRedirectPath(requestedNext, ONBOARDING_START_PATH);
   const [code, setCode] = useState("");
   const [cooldown, setCooldown] = useState(60);
   const [resent, setResent] = useState(false);
@@ -67,7 +69,19 @@ function OtpContent() {
       avatar_url: metadata.avatar_url ?? null,
     });
 
-    router.push(next);
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .single();
+
+    const destination = profile?.role
+      ? requestedNext && !next.startsWith("/onboarding")
+        ? next
+        : getRoleHomePath(profile.role)
+      : ONBOARDING_START_PATH;
+
+    router.push(destination);
     router.refresh();
   }
 

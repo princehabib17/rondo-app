@@ -6,8 +6,8 @@ import {
   CalendarDays,
   Home,
   LayoutDashboard,
-  MapPinned,
   Radio,
+  Trophy,
   User,
   Users,
 } from "lucide-react";
@@ -40,10 +40,10 @@ const playerTabs: TabDef[] = [
     isActive: (p) => p === "/community" || p.startsWith("/community/"),
   },
   {
-    href: "/feed/map",
-    icon: MapPinned,
-    label: "Map",
-    isActive: (p) => p === "/feed/map" || p.startsWith("/feed/map/"),
+    href: "/tournaments",
+    icon: Trophy,
+    label: "Cups",
+    isActive: (p) => p === "/tournaments" || p.startsWith("/tournaments/"),
   },
   {
     href: "/my-games",

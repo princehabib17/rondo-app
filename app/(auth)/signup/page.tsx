@@ -12,6 +12,7 @@ import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
 import { formatAuthError } from "@/lib/auth/format-auth-error";
 import { isLikelyPhoneNumber, normalizePhoneNumber } from "@/lib/auth/phone";
+import { getRoleHomePath } from "@/lib/auth/role-routing";
 
 function safeSignupNext(raw: string | null): string {
   const next = getSafeRedirectPath(raw, "/onboarding/slides");
@@ -36,7 +37,7 @@ export default function SignupPage() {
         .eq("id", data.user.id)
         .single()
         .then(({ data: profile }) => {
-          router.replace(profile?.role ? "/feed" : "/onboarding/slides");
+          router.replace(profile?.role ? getRoleHomePath(profile.role) : "/onboarding/slides");
         });
     });
     setNextParam(new URLSearchParams(window.location.search).get("next"));

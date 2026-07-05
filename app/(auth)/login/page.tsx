@@ -11,6 +11,7 @@ import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
 import { isLikelyPhoneNumber, normalizePhoneNumber } from "@/lib/auth/phone";
 import { formatAuthError } from "@/lib/auth/format-auth-error";
+import { getRoleHomePath } from "@/lib/auth/role-routing";
 
 type LoginMode = "phone" | "email";
 
@@ -46,7 +47,7 @@ export default function LoginPage() {
         .eq("id", data.user.id)
         .single()
         .then(({ data: profile }) => {
-          router.replace(profile?.role ? "/feed" : "/onboarding/slides");
+          router.replace(profile?.role ? getRoleHomePath(profile.role) : "/onboarding/slides");
         });
     });
     setNextParam(new URLSearchParams(window.location.search).get("next"));
@@ -86,7 +87,7 @@ export default function LoginPage() {
         .select("role")
         .eq("id", (await supabase.auth.getUser()).data.user?.id ?? "")
         .single();
-      router.replace(profile?.role ? "/feed" : "/onboarding/slides");
+      router.replace(profile?.role ? getRoleHomePath(profile.role) : "/onboarding/slides");
       return;
     }
 
