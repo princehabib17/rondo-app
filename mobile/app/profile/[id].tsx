@@ -9,7 +9,7 @@ import * as Haptics from 'expo-haptics';
 import { colors, font, spacing, radius } from '../../constants/theme';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
-import { useQuery, useMutation } from '../../hooks/useQuery';
+import { useQuery } from '../../hooks/useQuery';
 import { useAuth } from '../../hooks/useAuth';
 import * as q from '../../lib/queries';
 import type { GamePlayer, Game } from '../../lib/types';

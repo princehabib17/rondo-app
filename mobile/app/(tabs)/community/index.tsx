@@ -52,7 +52,7 @@ function ErrorState({ error, onRetry }: { error: string; onRetry: () => void }) 
   );
 }
 
-function PostCard({ post, onChanged }: { post: PostItem; onChanged: () => void }) {
+function PostCard({ post }: { post: PostItem; onChanged: () => void }) {
   const [liked, setLiked] = useState(post.liked_by_me);
   const [likeCount, setLikeCount] = useState(post.like_count);
 

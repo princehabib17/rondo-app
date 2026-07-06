@@ -20,7 +20,6 @@ export function ReelPlayer({
   reel,
   isActive,
   currentUserId,
-  isScout,
   onLikeToggle,
   onShortlistToggle,
   isShortlisted,

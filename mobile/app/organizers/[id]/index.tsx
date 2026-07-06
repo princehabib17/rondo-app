@@ -6,11 +6,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, spacing, radius } from '../../../constants/theme';
-import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { useQuery } from '../../../hooks/useQuery';
 import * as q from '../../../lib/queries';
-import type { Game } from '../../../lib/types';
 
 const { width } = Dimensions.get('window');
 const GAME_CARD_WIDTH = (width - spacing.lg * 2 - spacing.sm) / 2;
@@ -18,10 +16,6 @@ const BANNER_HEIGHT = 160;
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-}
-
-function spotsLeft(game: Game): number {
-  return game.max_players; // accurate spot count needs join with game_players; approximate here
 }
 
 export default function OrganizerPublicProfileScreen() {

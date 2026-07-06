@@ -8,7 +8,6 @@ import * as Haptics from 'expo-haptics';
 import { Linking } from 'react-native';
 import { colors, font, spacing, radius } from '../constants/theme';
 import { ScreenHeader } from '../components/layout/ScreenHeader';
-import { Button } from '../components/ui/Button';
 import { useQuery } from '../hooks/useQuery';
 import * as q from '../lib/queries';
 import * as api from '../lib/api';

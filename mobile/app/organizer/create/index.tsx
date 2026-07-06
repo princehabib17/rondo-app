@@ -157,7 +157,7 @@ export default function CreateGameScreen() {
           <View style={styles.step}>
             <TouchableOpacity onPress={pickCover} style={styles.coverPicker} activeOpacity={0.8}>
               {form.coverPhoto ? (
-                <Image source={{ uri: form.coverPhoto }} style={styles.coverImage} contentFit="cover" />
+                <Image source={{ uri: form.coverPhoto }} style={styles.coverImage} contentFit="cover" alt="Game cover photo" />
               ) : (
                 <LinearGradient colors={['#1A2A1A', '#0A0A0A']} style={styles.coverPlaceholder}>
                   <Text style={styles.coverIcon}>🏟️</Text>
@@ -233,7 +233,7 @@ export default function CreateGameScreen() {
 
             <Text style={styles.fieldLabel}>Team colors</Text>
             <View style={styles.colorRow}>
-              {TEAM_COLORS.slice(0, form.teamCount).map((c, i) => (
+              {TEAM_COLORS.slice(0, form.teamCount).map((c) => (
                 <View key={c.id} style={styles.colorChip}>
                   <View style={[styles.colorDot, { backgroundColor: c.color }]} />
                   <Text style={styles.colorLabel}>{c.label}</Text>
@@ -311,7 +311,7 @@ export default function CreateGameScreen() {
             <Text style={styles.stepSubtitle}>Double-check everything before publishing.</Text>
 
             {form.coverPhoto && (
-              <Image source={{ uri: form.coverPhoto }} style={styles.reviewCover} contentFit="cover" />
+              <Image source={{ uri: form.coverPhoto }} style={styles.reviewCover} contentFit="cover" alt="Game cover photo preview" />
             )}
 
             <View style={styles.reviewRows}>

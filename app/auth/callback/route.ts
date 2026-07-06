@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { getSafeRedirectPath } from "@/lib/auth/safe-redirect";
-import { isGuestUser } from "@/lib/auth/is-guest";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {

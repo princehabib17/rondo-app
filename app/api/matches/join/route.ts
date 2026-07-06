@@ -28,13 +28,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
-    const { gameId, teamId, paymentStatus } = parsed.data;
+    const { gameId, teamId, paymentStatus: requestedPaymentStatus } = parsed.data;
     const userId = userData.user.id;
 
     const service = createServiceClient();
 
-    // Atomically check capacity and insert using a single transaction-safe query:
-    // Count confirmed players, compare against max_players from the games table.
+    // Check capacity and insert, then re-verify below — see the post-insert
+    // recount for why this pre-check alone is NOT sufficient to prevent overselling.
     const { data: game, error: gameError } = await service
       .from("games")
       .select("id, max_players, num_teams, status, registration_open, is_private")
@@ -53,6 +53,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Registration is closed" }, { status: 409 });
     }
 
+    // Private games always require organizer approval — the client's requested
+    // status is only honored for public games.
+    const paymentStatus = game.is_private ? "pending_approval" : requestedPaymentStatus;
+
     // Check if user is already in the game
     const { data: existing } = await service
       .from("game_players")
@@ -70,7 +74,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true });
     }
 
-    // Count current confirmed players — this is the race-condition guard
+    // Count current confirmed players — a best-effort guard, not a hard guarantee
     const { count, error: countError } = await service
       .from("game_players")
       .select("id", { count: "exact", head: true })
@@ -85,8 +89,8 @@ export async function POST(request: Request) {
     }
 
     // Check team capacity if num_teams > 0
-    if (game.num_teams > 0 && teamId) {
-      const perTeam = Math.ceil(game.max_players / game.num_teams);
+    const perTeam = game.num_teams > 0 ? Math.ceil(game.max_players / game.num_teams) : null;
+    if (perTeam !== null && teamId) {
       const { count: teamCount } = await service
         .from("game_players")
         .select("id", { count: "exact", head: true })
@@ -99,6 +103,9 @@ export async function POST(request: Request) {
     }
 
     // Insert — unique constraint on (game_id, user_id) is the final safety net
+    // against duplicate joins, but NOT against overselling capacity: this
+    // check-then-insert is still racy under concurrency, so we re-count below
+    // and roll back the insert if it turns out to have oversold the game/team.
     const { error: insertError } = await service.from("game_players").insert({
       game_id: gameId,
       user_id: userId,
@@ -111,6 +118,32 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: true }); // duplicate, treat as success
       }
       return NextResponse.json({ error: insertError.message }, { status: 500 });
+    }
+
+    // Post-insert compensation: re-count now that our row is committed. The
+    // count includes the row we just inserted, so overflow is count > cap
+    // (not >=).
+    const { count: postCount, error: postCountError } = await service
+      .from("game_players")
+      .select("id", { count: "exact", head: true })
+      .eq("game_id", gameId);
+
+    if (!postCountError && (postCount ?? 0) > game.max_players) {
+      await service.from("game_players").delete().eq("game_id", gameId).eq("user_id", userId);
+      return NextResponse.json({ error: "This match is full" }, { status: 409 });
+    }
+
+    if (perTeam !== null && teamId) {
+      const { count: postTeamCount, error: postTeamCountError } = await service
+        .from("game_players")
+        .select("id", { count: "exact", head: true })
+        .eq("game_id", gameId)
+        .eq("team_id", teamId);
+
+      if (!postTeamCountError && (postTeamCount ?? 0) > perTeam) {
+        await service.from("game_players").delete().eq("game_id", gameId).eq("user_id", userId);
+        return NextResponse.json({ error: "That team is full" }, { status: 409 });
+      }
     }
 
     return NextResponse.json({ ok: true });

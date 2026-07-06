@@ -30,7 +30,7 @@ function BracketTab({ tournamentId }: { tournamentId: string }) {
   const [scores, setScores] = useState<Record<string, { a: string; b: string }>>({});
   const [saving, setSaving] = useState(false);
 
-  const matches = matchesQuery.data ?? [];
+  const matches = useMemo(() => matchesQuery.data ?? [], [matchesQuery.data]);
   const teams = teamsQuery.data ?? [];
 
   const teamName = (id: string | null) => {

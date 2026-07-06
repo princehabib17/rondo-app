@@ -10,7 +10,7 @@ import { colors, font, spacing, radius } from '../../constants/theme';
 import { useQuery } from '../../hooks/useQuery';
 import { useAuth } from '../../hooks/useAuth';
 import * as q from '../../lib/queries';
-import type { DirectMessage, Profile } from '../../lib/types';
+import type { DirectMessage } from '../../lib/types';
 
 type DisplayMsg = DirectMessage & { mine: boolean };
 
