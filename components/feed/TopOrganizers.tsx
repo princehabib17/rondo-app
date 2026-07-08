@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { BadgeCheck, ChevronRight, Shield } from "lucide-react";
+import { ArrowRight, SealCheck, ShieldCheck } from "@phosphor-icons/react";
 import { getOrganizerInitials, type OrganizerGroup } from "@/lib/feed/organizers";
 
 interface TopOrganizersProps {
@@ -11,28 +11,28 @@ interface TopOrganizersProps {
 export function TopOrganizers({ organizers, loading = false }: TopOrganizersProps) {
   return (
     <section className="px-4 pt-6">
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Shield size={16} className="text-rondo-accent" />
-          <h2 className="font-heading text-white font-black italic text-sm uppercase tracking-wide">
+          <ShieldCheck size={18} weight="duotone" className="text-[var(--gold)]" />
+          <h2 className="rondo-label text-[var(--ink-hi)]">
             Top Organizers
           </h2>
         </div>
         <Link
           href="/feed"
-          className="flex items-center gap-0.5 font-body text-white/40 text-xs hover:text-rondo-accent transition-colors"
+          className="flex items-center gap-1 rondo-meta text-[var(--ink-low)] transition-colors hover:text-[var(--gold)]"
         >
           View All
-          <ChevronRight size={13} strokeWidth={2.5} />
+          <ArrowRight size={13} weight="bold" />
         </Link>
       </div>
 
-      <div className="flex gap-4 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1">
+      <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 [scrollbar-width:none]">
         {loading
           ? Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex flex-col items-center gap-2 shrink-0 w-[72px]">
-                <div className="w-14 h-14 rounded-full bg-white/10 animate-pulse" />
-                <div className="h-2.5 w-12 rounded bg-white/10 animate-pulse" />
+              <div key={i} className="flex w-[86px] shrink-0 flex-col items-center gap-2 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-3">
+                <div className="h-14 w-14 rounded-[var(--r-md)] rondo-shimmer" />
+                <div className="h-2.5 w-12 rounded rondo-shimmer" />
               </div>
             ))
           : organizers.map((organizer) => {
@@ -42,10 +42,10 @@ export function TopOrganizers({ organizers, loading = false }: TopOrganizersProp
             <Link
               key={organizer.id}
               href={href}
-              className="flex flex-col items-center gap-2 shrink-0 w-[72px] group"
+              className="group flex w-[86px] shrink-0 flex-col items-center gap-2 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-3 transition-colors hover:border-[color-mix(in_oklch,var(--gold)_42%,var(--stroke))]"
             >
               <div className="relative">
-                <div className="w-14 h-14 rounded-full bg-secondary border border-white/10 flex items-center justify-center overflow-hidden group-hover:border-rondo-accent/50 transition-colors">
+                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-inset)] transition-colors group-hover:border-[var(--gold)]">
                   {organizer.avatar_url ? (
                     <Image
                       src={organizer.avatar_url}
@@ -54,22 +54,23 @@ export function TopOrganizers({ organizers, loading = false }: TopOrganizersProp
                       height={112}
                       quality={95}
                       sizes="56px"
-                      className="w-full h-full object-cover"
+                      className="h-full w-full object-cover"
                     />
                   ) : (
-                    <span className="font-heading text-white font-black text-sm">
+                    <span className="font-heading text-sm font-black text-[var(--ink-hi)]">
                       {getOrganizerInitials(organizer.full_name)}
                     </span>
                   )}
                 </div>
                 {organizer.verified !== false && (
-                  <BadgeCheck
+                  <SealCheck
                     size={16}
-                    className="absolute -bottom-0.5 -right-0.5 text-rondo-accent fill-black"
+                    weight="fill"
+                    className="absolute -bottom-0.5 -right-0.5 text-[var(--gold)]"
                   />
                 )}
               </div>
-              <span className="font-body text-white/80 text-[10px] text-center leading-tight line-clamp-2">
+              <span className="line-clamp-2 text-center rondo-meta leading-tight text-[var(--ink-mid)]">
                 {organizer.full_name}
               </span>
                 </Link>

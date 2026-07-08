@@ -3,11 +3,11 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { ArrowRight, MapPin, SoccerBall, Trophy, Users } from "@phosphor-icons/react";
 import { signInAsGuest } from "@/lib/auth/guest";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { bouncy, gentle } from "@/components/motion/springs";
+import { gentle } from "@/components/motion/springs";
 
 export default function HomePage() {
   const router = useRouter();
@@ -28,14 +28,8 @@ export default function HomePage() {
   }
 
   return (
-    <main className="relative min-h-[100dvh] bg-black flex flex-col overflow-hidden">
-      {/* Hero image */}
-      <motion.div
-        className="absolute inset-0"
-        initial={{ opacity: 0, scale: 1.04 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
-      >
+    <main className="relative min-h-[100dvh] overflow-hidden rondo-page text-[var(--ink-hi)]">
+      <div className="absolute inset-0 opacity-55">
         <Image
           src="/feed/hero-night-court.png"
           alt=""
@@ -44,102 +38,87 @@ export default function HomePage() {
           className="object-cover object-center"
           sizes="100vw"
         />
-      </motion.div>
+      </div>
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_oklch,var(--bg-page)_72%,transparent)_0%,color-mix(in_oklch,var(--bg-page)_42%,transparent)_38%,var(--bg-page)_100%)]" />
+      <div className="absolute inset-0 rondo-map-shell opacity-40 mix-blend-screen" />
 
-      {/* Gradient overlays */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/10 to-black" />
-
-      {/* Atmospheric type — oversized low-opacity brand word */}
-      <div
-        className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
-        aria-hidden
-      >
-        <span
-          className="select-none font-heading text-[22vw] font-black uppercase italic leading-none text-white"
-          style={{ opacity: 0.04, letterSpacing: "-0.02em" }}
-        >
-          RONDO
+      <div className="pointer-events-none absolute inset-x-0 top-20 flex justify-center overflow-hidden" aria-hidden>
+        <span className="select-none font-heading text-[29vw] font-black uppercase leading-none text-[var(--gold)] opacity-[0.055]">
+          Street
         </span>
       </div>
 
-      {/* Content */}
-      <div className="relative z-10 flex flex-col min-h-[100dvh] px-6 pt-14 pb-10 max-w-lg mx-auto w-full">
-
-        {/* Logo */}
+      <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-lg flex-col px-4 pb-6 pt-5">
         <motion.div
-          className="flex justify-center"
-          initial={{ opacity: 0, scale: 0.82 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ ...bouncy, delay: 0.25 }}
+          className="flex items-center justify-between"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={gentle}
         >
-          <Image
-            src="/rondo-logo.png"
-            alt="Rondo"
-            width={52}
-            height={52}
-            priority
-            className="object-contain drop-shadow-[0_0_24px_rgba(255,250,152,0.45)]"
-          />
+          <div className="flex items-center gap-2.5">
+            <Image src="/rondo-logo.png" alt="Rondo" width={42} height={42} priority className="object-contain" />
+            <div>
+              <p className="rondo-label text-[var(--gold)]">Rondo</p>
+              <p className="rondo-meta text-[var(--ink-low)]">Street football network</p>
+            </div>
+          </div>
+          <Link href="/login" className="rondo-chip bg-[color-mix(in_oklch,var(--bg-page)_70%,transparent)]">
+            Log in
+          </Link>
         </motion.div>
 
         <div className="flex-1" />
 
-        {/* CTAs — staggered entrance */}
-        <div className="space-y-3">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ ...gentle, delay: 0.4 }}
-          >
-            <Link
-              href="/signup"
-              className="block w-full bg-rondo-accent text-black font-heading font-black uppercase tracking-widest text-sm py-4 text-center rounded-xl active:scale-[0.98] transition-transform"
-            >
-              Create Account
-            </Link>
-          </motion.div>
+        <motion.section
+          className="space-y-5"
+          initial={{ opacity: 0, y: 22 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ...gentle, delay: 0.1 }}
+        >
+          <div className="inline-flex items-center gap-2 rounded-[var(--r-pill)] border border-[color-mix(in_oklch,var(--gold)_38%,transparent)] bg-[color-mix(in_oklch,var(--gold)_12%,transparent)] px-3 py-1.5">
+            <span className="rondo-live-dot" />
+            <span className="rondo-label text-[var(--gold)]">Find the next run</span>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ ...gentle, delay: 0.47 }}
-          >
-            <Link
-              href="/login"
-              className="block w-full bg-white/[0.07] border border-white/12 text-white font-heading font-black uppercase tracking-widest text-sm py-4 text-center rounded-xl active:scale-[0.98] transition-transform backdrop-blur-sm"
-            >
-              Log In
-            </Link>
-          </motion.div>
+          <div className="space-y-3">
+            <h1 className="font-heading text-[4.5rem] font-black uppercase leading-[0.78] tracking-[-0.04em] text-[var(--ink-hi)] sm:text-[5.4rem]">
+              Own the street
+            </h1>
+            <p className="max-w-[21rem] rondo-body text-[var(--ink-mid)]">
+              Open the map, join nearby football, and turn pickup games into real matchdays.
+            </p>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ ...gentle, delay: 0.56 }}
-          >
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { icon: MapPin, label: "Street map" },
+              { icon: Users, label: "Open squads" },
+              { icon: Trophy, label: "Brackets" },
+            ].map(({ icon: Icon, label }) => (
+              <div key={label} className="rounded-[var(--r-md)] border border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_74%,transparent)] p-3 backdrop-blur-md">
+                <Icon size={20} weight="duotone" className="mb-4 text-[var(--gold)]" aria-hidden />
+                <p className="rondo-label text-[var(--ink-mid)]">{label}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-3">
+            <Link href="/signup" className="rondo-btn rondo-btn-primary">
+              Create account
+              <ArrowRight size={18} weight="bold" aria-hidden />
+            </Link>
             <button
               type="button"
               onClick={handleGuest}
               disabled={guestLoading}
-              className="w-full py-3 text-white/40 text-xs uppercase tracking-[0.2em] disabled:opacity-40 transition-opacity flex items-center justify-center gap-2"
+              className="rondo-btn border border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_76%,transparent)] text-[var(--ink-hi)] backdrop-blur-md"
             >
-              {guestLoading ? (
-                <>
-                  <Loader2 size={12} className="animate-spin" />
-                  Please wait…
-                </>
-              ) : (
-                "Continue as guest"
-              )}
+              <SoccerBall size={18} weight="duotone" aria-hidden />
+              {guestLoading ? "Opening feed" : "Continue as guest"}
             </button>
-          </motion.div>
-
-          {guestError && (
-            <p className="text-red-400 text-xs text-center leading-relaxed px-2">
-              {guestError}
-            </p>
-          )}
-        </div>
+            {guestError && <p className="rondo-meta px-2 text-center text-[var(--live)]">{guestError}</p>}
+          </div>
+        </motion.section>
       </div>
     </main>
   );

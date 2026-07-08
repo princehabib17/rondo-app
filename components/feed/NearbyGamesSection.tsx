@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronRight, Map, MapPinned } from "lucide-react";
+import { ArrowRight, MapPin, MapTrifold } from "@phosphor-icons/react";
 import { motion } from "motion/react";
 import { formatGameTime, formatPrice } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
@@ -21,10 +21,10 @@ function PlayerProgress({ current, max }: { current: number; max: number }) {
   const pct = max > 0 ? Math.min(100, (current / max) * 100) : 0;
   const full = current >= max;
   return (
-    <div className="h-1 w-full rounded-full bg-white/10 overflow-hidden mt-2">
+    <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-[color-mix(in_oklch,var(--ink-hi)_8%,transparent)]">
       <div
         className={`h-full rounded-full transition-[width] duration-300 ${
-          full ? "bg-white/30" : pct >= 80 ? "bg-amber-400" : "bg-rondo-accent"
+          full ? "bg-[color-mix(in_oklch,var(--ink-hi)_28%,transparent)]" : pct >= 80 ? "bg-[var(--gold)]" : "bg-[var(--gold)]"
         }`}
         style={{ width: `${pct}%` }}
       />
@@ -45,16 +45,16 @@ export function NearbyGameRow({ game, coords = null }: NearbyGameRowProps) {
   return (
     <Link
       href={`/games/${game.id}`}
-      className="flex items-center gap-3 py-3 border-b border-white/5 last:border-0 active:opacity-80 transition-opacity"
+      className="group grid grid-cols-[3.25rem_minmax(0,1fr)_auto] items-center gap-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-surface)_84%,transparent)] p-3 transition-colors active:opacity-80"
     >
-      <div className="w-11 h-11 rounded-full bg-secondary border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
+      <div className="flex h-[3.25rem] w-[3.25rem] shrink-0 items-center justify-center overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-inset)]">
         {game.organization?.logo_url ? (
           <Image
             src={game.organization.logo_url}
             alt=""
             width={44}
             height={44}
-            className="w-full h-full object-cover"
+            className="h-full w-full object-cover"
           />
         ) : game.organizer?.avatar_url ? (
           <Image
@@ -62,10 +62,10 @@ export function NearbyGameRow({ game, coords = null }: NearbyGameRowProps) {
             alt=""
             width={44}
             height={44}
-            className="w-full h-full object-cover"
+            className="h-full w-full object-cover"
           />
         ) : (
-          <span className="font-heading text-white text-xs font-black">
+          <span className="font-heading text-xs font-black text-[var(--ink-hi)]">
             {getOrganizerInitials(organizerName)}
           </span>
         )}
@@ -73,37 +73,37 @@ export function NearbyGameRow({ game, coords = null }: NearbyGameRowProps) {
 
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-heading text-white font-black italic text-sm uppercase leading-tight truncate">
+          <h3 className="truncate font-heading text-base font-black uppercase leading-tight text-[var(--ink-hi)]">
             {game.title}
           </h3>
-          <span className="font-heading text-rondo-accent text-xs font-black shrink-0">
+          <span className="shrink-0 font-heading text-xs font-black text-[var(--gold)]">
             {game.price_per_player === 0 ? "Free" : formatPrice(game.price_per_player)}
           </span>
         </div>
-        <p className="font-body text-white/50 text-[11px] truncate mt-0.5">{game.venue_name}</p>
+        <p className="mt-0.5 truncate rondo-meta text-[var(--ink-low)]">{game.venue_name}</p>
 
         <GameBadges game={game} coords={coords} className="mt-1.5" />
 
-        <div className="flex items-center justify-between mt-1.5">
-          <span className="font-body text-white/40 text-[10px]">
-            {formatShortDate(game.date_time)} · {formatGameTime(game.date_time)}
+        <div className="mt-1.5 flex items-center justify-between">
+          <span className="rondo-meta text-[var(--ink-low)]">
+            {formatShortDate(game.date_time)} / {formatGameTime(game.date_time)}
           </span>
-          <span className={`font-body text-[10px] ${full ? "text-white/40" : "text-white/50"}`}>
-            {full ? "Full" : `${spotsLeft} left`} · {playerCount}/{game.max_players}
+          <span className={`rondo-meta ${full ? "text-[var(--ink-low)]" : "text-[var(--ink-mid)]"}`}>
+            {full ? "Full" : `${spotsLeft} left`} / {playerCount}/{game.max_players}
           </span>
         </div>
         <PlayerProgress current={playerCount} max={game.max_players} />
       </div>
 
-      <ChevronRight size={16} className="text-white/30 shrink-0" />
+      <ArrowRight size={16} weight="bold" className="shrink-0 text-[var(--ink-low)] transition-colors group-hover:text-[var(--gold)]" />
     </Link>
   );
 }
 
 function RowSkeleton() {
   return (
-    <div className="flex items-center gap-3 py-3 border-b border-white/5 last:border-0">
-      <div className="w-11 h-11 rounded-full rondo-shimmer shrink-0" />
+    <div className="grid grid-cols-[3.25rem_minmax(0,1fr)] items-center gap-3 rounded-[var(--r-md)] border border-[var(--stroke)] p-3">
+      <div className="h-[3.25rem] w-[3.25rem] shrink-0 rounded-[var(--r-md)] rondo-shimmer" />
       <div className="flex-1 min-w-0 space-y-2">
         <div className="flex items-center justify-between gap-2">
           <div className="h-3.5 w-2/5 rounded rondo-shimmer" />
@@ -122,16 +122,16 @@ function RowSkeleton() {
 
 function EmptyState({ tab }: { tab: "nearby" | "upcoming" }) {
   return (
-    <div className="flex flex-col items-center text-center py-12 px-4">
-      <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-4">
-        <MapPinned size={24} className="text-white/40" />
+    <div className="flex flex-col items-center px-4 py-12 text-center">
+      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-inset)]">
+        <MapPin size={24} weight="duotone" className="text-[var(--gold)]" />
       </div>
-      <p className="font-heading text-white font-black italic text-base uppercase">
+      <p className="font-heading text-base font-black uppercase text-[var(--ink-hi)]">
         {tab === "nearby" ? "No nearby matches" : "No upcoming matches"}
       </p>
-      <p className="font-body text-white/50 text-sm mt-1 max-w-[260px]">
+      <p className="mt-1 max-w-[260px] rondo-body text-[var(--ink-low)]">
         {tab === "nearby"
-          ? "Nothing in the next 7 days yet. Check Upcoming or the Map tab to explore more."
+          ? "Nothing in the next 7 days yet. Check Upcoming or open the map."
           : "Nothing scheduled beyond this week yet. Check Nearby for sooner games."}
       </p>
     </div>
@@ -150,16 +150,16 @@ interface NearbyGamesSectionProps {
 
 export function NearbyGamesSection({ games, tab, onTabChange, loading, hasMore, loadingMore, onLoadMore }: NearbyGamesSectionProps) {
   return (
-    <section id="nearby-games" className="px-4 pt-6 pb-4">
-      <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-1 bg-white/[0.06] rounded-xl p-1">
+    <section id="nearby-games" className="px-4 pb-4 pt-6">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-1 rounded-[var(--r-pill)] border border-[var(--stroke)] bg-[var(--bg-inset)] p-1">
           <button
             type="button"
             onClick={() => onTabChange("nearby")}
-            className={`font-heading text-xs uppercase tracking-wide px-3 py-1.5 rounded-lg transition-all duration-200 ${
+            className={`rounded-[var(--r-pill)] px-3 py-1.5 font-heading text-xs uppercase tracking-wide transition-all duration-200 ${
               tab === "nearby"
-                ? "bg-rondo-accent text-black font-black"
-                : "text-white/50 hover:text-white/80"
+                ? "bg-[var(--gold)] text-[var(--gold-ink)] font-black"
+                : "text-[var(--ink-low)] hover:text-[var(--ink-hi)]"
             }`}
           >
             Nearby
@@ -167,10 +167,10 @@ export function NearbyGamesSection({ games, tab, onTabChange, loading, hasMore, 
           <button
             type="button"
             onClick={() => onTabChange("upcoming")}
-            className={`font-heading text-xs uppercase tracking-wide px-3 py-1.5 rounded-lg transition-all duration-200 ${
+            className={`rounded-[var(--r-pill)] px-3 py-1.5 font-heading text-xs uppercase tracking-wide transition-all duration-200 ${
               tab === "upcoming"
-                ? "bg-rondo-accent text-black font-black"
-                : "text-white/50 hover:text-white/80"
+                ? "bg-[var(--gold)] text-[var(--gold-ink)] font-black"
+                : "text-[var(--ink-low)] hover:text-[var(--ink-hi)]"
             }`}
           >
             Upcoming
@@ -179,16 +179,16 @@ export function NearbyGamesSection({ games, tab, onTabChange, loading, hasMore, 
 
         <Link
           href="/feed/map"
-          className="flex items-center gap-1.5 font-body text-white/50 text-xs hover:text-rondo-accent transition-colors"
+          className="flex items-center gap-1.5 rondo-meta text-[var(--ink-low)] transition-colors hover:text-[var(--gold)]"
         >
-          <Map size={13} />
-          <span>Map</span>
+          <MapTrifold size={15} weight="duotone" />
+          <span>Street map</span>
         </Link>
       </div>
 
-      <div className="mt-2">
+      <div className="mt-2 space-y-2">
         {loading ? (
-          <div className="py-1">
+          <div className="space-y-2 py-1">
             {[0, 1, 2, 3].map((i) => (
               <RowSkeleton key={i} />
             ))}
@@ -211,9 +211,9 @@ export function NearbyGamesSection({ games, tab, onTabChange, loading, hasMore, 
               <button
                 onClick={onLoadMore}
                 disabled={loadingMore}
-                className="w-full mt-4 py-3 font-body text-white/50 hover:text-rondo-accent text-xs uppercase tracking-wider border border-white/10 rounded-xl transition-colors disabled:opacity-40 cursor-pointer"
+                className="rondo-btn rondo-btn-secondary mt-4 cursor-pointer disabled:opacity-40"
               >
-                {loadingMore ? "Loading..." : "Load More"}
+                {loadingMore ? "Loading" : "Load more"}
               </button>
             )}
           </>
