@@ -92,8 +92,8 @@ export default function FeedMapPage() {
   ).length;
 
   return (
-    <div className="h-[calc(100dvh-4rem)] w-full max-w-[430px] overflow-x-hidden bg-black flex flex-col">
-      <div className="shrink-0 z-30 bg-black/96 border-b border-white/8">
+    <div className="h-[calc(100dvh-4rem)] w-full max-w-[430px] overflow-x-hidden bg-[var(--bg-page)] flex flex-col">
+      <div className="shrink-0 z-30 bg-[color-mix(in_oklch,var(--bg-page)_96%,transparent)] border-b border-[var(--stroke)]">
         <div className="box-border w-full max-w-full px-4 pt-4 pb-3 mx-auto space-y-4">
           <div className="flex items-center justify-between">
             <Image
@@ -107,27 +107,27 @@ export default function FeedMapPage() {
             />
             <Link
               href="/notifications"
-              className="relative grid min-h-11 min-w-11 place-items-center rounded-full border border-white/10 text-white hover:text-rondo-accent"
+            className="relative grid min-h-11 min-w-11 place-items-center rounded-[var(--r-pill)] border border-[var(--stroke)] text-[var(--ink-hi)] hover:text-[var(--gold)]"
               aria-label="Notifications"
             >
               <Bell size={22} />
-              <span className="absolute right-2.5 top-2.5 h-2.5 w-2.5 rounded-full bg-rondo-accent" />
+              <span className="absolute right-2.5 top-2.5 h-2.5 w-2.5 rounded-[var(--r-pill)] bg-[var(--gold)]" />
             </Link>
           </div>
 
           <div className="flex min-w-0 gap-3">
-            <label className="flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-2xl border border-white/12 bg-white/[0.045] px-4 text-white/60">
-              <Search size={24} className="shrink-0 text-white" />
+            <label className="flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-inset)] px-4 text-[var(--ink-low)]">
+              <Search size={24} className="shrink-0 text-[var(--ink-hi)]" />
               <span className="sr-only">Search games or venues</span>
               <input
                 type="search"
                 placeholder="Search games or venues"
-                className="min-w-0 flex-1 bg-transparent font-body text-base text-white outline-none placeholder:text-white/38"
+                className="min-w-0 flex-1 bg-transparent rondo-body text-[var(--ink-hi)] outline-none placeholder:text-[var(--ink-low)]"
               />
             </label>
             <Link
               href="/saved"
-              className="inline-flex min-h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/14 bg-white/[0.035] px-0 text-white"
+              className="inline-flex min-h-14 w-14 shrink-0 items-center justify-center rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-inset)] px-0 text-[var(--ink-hi)]"
               aria-label="Saved games"
             >
               <Bookmark size={20} />
@@ -169,15 +169,15 @@ export default function FeedMapPage() {
         <button
           type="button"
           onClick={fetchGames}
-          className="absolute left-1/2 top-5 z-20 inline-flex -translate-x-1/2 items-center gap-2 rounded-full bg-rondo-accent px-6 py-3 font-heading text-sm font-black uppercase tracking-wide text-black shadow-[0_0_30px_rgba(246,224,55,0.35)]"
+          className="absolute left-1/2 top-5 z-20 inline-flex -translate-x-1/2 items-center gap-2 rounded-[var(--r-pill)] bg-[var(--gold)] px-6 py-3 font-heading text-sm font-bold uppercase text-[var(--gold-ink)]"
         >
           <MapPinned size={18} />
-          Search this area
+          Show games here
         </button>
 
         {!loading && missingLocationCount > 0 && (
-          <div className="absolute top-20 left-4 right-4 z-20 bg-zinc-900/95 border border-white/10 rounded-xl px-3 py-2 max-w-lg mx-auto">
-            <p className="text-xs text-white/70">
+          <div className="absolute top-20 left-4 right-4 z-20 bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] px-3 py-2 max-w-lg mx-auto">
+            <p className="rondo-meta text-[var(--ink-mid)]">
               {missingLocationCount} match{missingLocationCount > 1 ? "es" : ""} in your list have no
               map pin (venue coordinates missing).
             </p>
@@ -193,11 +193,11 @@ export default function FeedMapPage() {
       </div>
 
       {countActiveFilters(filters) > 0 && (
-        <div className="shrink-0 px-4 py-2 border-t border-white/5 bg-black/90 text-center">
+          <div className="shrink-0 px-4 py-2 border-t border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_90%,transparent)] text-center">
           <button
             type="button"
             onClick={() => setFilters(DEFAULT_FILTERS)}
-            className="text-rondo-accent text-xs font-semibold uppercase"
+            className="rondo-label text-[var(--gold)]"
           >
             Clear all filters
           </button>

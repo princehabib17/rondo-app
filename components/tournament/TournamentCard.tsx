@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarDays, MapPin, Trophy, Users } from "lucide-react";
+import { CalendarBlank, Crown, MapPin, SoccerBall, Trophy, Users } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import type { Tournament, TournamentStatus } from "@/lib/supabase/types";
 import { formatGameDate, formatPrice } from "@/lib/utils/format";
@@ -21,13 +21,13 @@ export const TOURNAMENT_STATUS_META: Record<
 export function statusToneClasses(tone: "open" | "live" | "done" | "off"): string {
   switch (tone) {
     case "open":
-      return "border-emerald-400/30 bg-emerald-400/15 text-emerald-300";
+      return "border-[var(--gold)] bg-[var(--gold-dim)] text-[var(--gold)]";
     case "live":
-      return "border-red-400/30 bg-black/50 text-red-300";
+      return "border-[var(--live)] bg-[color-mix(in_oklch,var(--live)_16%,transparent)] text-[var(--live)]";
     case "done":
-      return "border-white/15 bg-black/50 text-white/60";
+      return "border-[var(--stroke)] bg-[var(--bg-inset)] text-[var(--ink-low)]";
     case "off":
-      return "border-red-400/25 bg-black/50 text-red-300/80";
+      return "border-[var(--live)] bg-[color-mix(in_oklch,var(--live)_12%,transparent)] text-[var(--live)]";
   }
 }
 
@@ -47,7 +47,7 @@ function StatusRibbon({ status }: { status: TournamentStatus }) {
   return (
     <span
       className={cn(
-        "absolute right-2.5 top-2.5 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide backdrop-blur-sm",
+        "inline-flex h-8 items-center gap-1 rounded-[var(--r-pill)] border px-3 rondo-label",
         statusToneClasses(meta.tone)
       )}
     >
@@ -60,72 +60,121 @@ function StatusRibbon({ status }: { status: TournamentStatus }) {
 interface TournamentCardProps {
   tournament: Tournament;
   href: string;
+  variant?: "live" | "open" | "upcoming" | "completed";
 }
 
-export function TournamentCard({ tournament, href }: TournamentCardProps) {
+function variantFor(tournament: Tournament): NonNullable<TournamentCardProps["variant"]> {
+  if (tournament.status === "active") return "live";
+  if (tournament.status === "completed") return "completed";
+  if (tournament.status === "registration") return "open";
+  return "upcoming";
+}
+
+export function TournamentCard({ tournament, href, variant = variantFor(tournament) }: TournamentCardProps) {
   const teamCount = tournament.tournament_teams?.filter((t) => t.status === "registered").length ?? 0;
   const capacity = Math.min(100, Math.round((teamCount / Math.max(tournament.max_teams, 1)) * 100));
   const full = teamCount >= tournament.max_teams;
+  const spotsLeft = Math.max(0, tournament.max_teams - teamCount);
+  const isLive = variant === "live";
+  const isCompleted = variant === "completed";
 
   return (
     <Link
       href={href}
-      className="block overflow-hidden rounded-2xl border border-white/10 bg-black/40 transition active:scale-[0.98] hover:border-rondo-accent/30"
+      className={cn(
+        "block overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] transition-[border-color,transform,opacity] duration-200 active:scale-[0.98]",
+        "hover:border-[color-mix(in_oklch,var(--gold)_45%,var(--stroke))]",
+        isCompleted && "opacity-70"
+      )}
     >
       <div
-        className="relative h-28 overflow-hidden rondo-floodlight-scene"
+        className={cn("relative overflow-hidden rondo-floodlight-scene", isLive ? "h-36" : "h-28")}
         data-variant={sceneVariant(tournament.id)}
       >
-        <Trophy
-          size={76}
-          strokeWidth={1.25}
-          aria-hidden
-          className="pointer-events-none absolute -bottom-4 -right-4 text-white/[0.07]"
-        />
+        {isLive ? (
+          <SoccerBall
+            size={96}
+            weight="duotone"
+            aria-hidden
+            className="pointer-events-none absolute -bottom-6 -right-5 text-[color-mix(in_oklch,var(--gold)_12%,transparent)]"
+          />
+        ) : (
+          <Trophy
+            size={76}
+            weight="duotone"
+            aria-hidden
+            className="pointer-events-none absolute -bottom-4 -right-4 text-[color-mix(in_oklch,var(--ink-hi)_7%,transparent)]"
+          />
+        )}
 
-        <span className="absolute left-2.5 top-2.5 rounded-full border border-white/15 bg-black/45 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white/70 backdrop-blur-sm">
-          {FORMAT_LABEL[tournament.format]}
-        </span>
+        <div className="absolute left-3 top-3 flex items-center gap-2">
+          <span className="inline-flex h-8 items-center rounded-[var(--r-pill)] border border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_65%,transparent)] px-3 rondo-label text-[var(--ink-mid)] backdrop-blur-sm">
+            {FORMAT_LABEL[tournament.format]}
+          </span>
+          {isCompleted && <Crown size={16} weight="fill" className="text-[var(--gold)]" aria-hidden />}
+        </div>
 
-        <StatusRibbon status={tournament.status} />
+        <div className="absolute right-3 top-3">
+          <StatusRibbon status={tournament.status} />
+        </div>
+
+        {isLive && (
+          <div className="absolute inset-x-3 bottom-12">
+            <p className="rondo-label text-[var(--live)]">Now playing</p>
+            <p className="mt-1 font-heading text-[2.5rem] font-bold leading-none tabular-nums text-[var(--ink-hi)]">
+              Live
+            </p>
+          </div>
+        )}
 
         {tournament.entry_fee > 0 && (
-          <span className="absolute bottom-2.5 right-2.5 rounded-full bg-rondo-accent px-2.5 py-1 font-heading text-[11px] font-black text-black">
+          <span className="absolute bottom-3 right-3 rounded-[var(--r-pill)] bg-[var(--gold)] px-3 py-1 font-heading text-sm font-bold text-[var(--gold-ink)]">
             {formatPrice(tournament.entry_fee)}
           </span>
         )}
 
-        <h3 className="absolute bottom-2.5 left-2.5 right-16 truncate font-heading text-lg font-black uppercase italic leading-none text-white">
+        <h3
+          className={cn(
+            "absolute left-3 truncate font-heading font-bold uppercase leading-none text-[var(--ink-hi)]",
+            isLive ? "bottom-3 right-24 text-2xl" : "bottom-3 right-20 text-xl"
+          )}
+        >
           {tournament.name}
         </h3>
       </div>
 
-      <div className="space-y-2.5 p-3.5">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-white/50">
-          <span className="flex min-w-0 items-center gap-1.5">
-            <CalendarDays size={11} className="shrink-0 text-white/30" />
+      <div className="space-y-3 p-4">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rondo-meta text-[var(--ink-low)]">
+          <span className="flex min-w-0 items-center gap-1">
+            <CalendarBlank size={16} className="shrink-0 text-[var(--gold)]" aria-hidden />
             <span className="truncate">{formatGameDate(tournament.starts_at)}</span>
           </span>
           {tournament.venue_name && (
-            <span className="flex min-w-0 items-center gap-1.5">
-              <MapPin size={11} className="shrink-0 text-white/30" />
+            <span className="flex min-w-0 items-center gap-1">
+              <MapPin size={16} className="shrink-0 text-[var(--gold)]" aria-hidden />
               <span className="truncate">{tournament.venue_name}</span>
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
+        <div className="grid grid-cols-[1fr_auto] items-center gap-3">
+          <div className="h-1.5 overflow-hidden rounded-[var(--r-pill)] bg-[var(--bg-inset)]">
             <div
-              className={cn("h-full rounded-full transition-[width]", full ? "bg-white/25" : "bg-white/45")}
+              className={cn("h-full rounded-[var(--r-pill)] transition-[width]", full ? "bg-[var(--ink-low)]" : "bg-[var(--gold)]")}
               style={{ width: `${capacity}%` }}
             />
           </div>
-          <span className="flex shrink-0 items-center gap-1 text-[11px] font-semibold text-white/60">
-            <Users size={11} className="text-white/30" />
-            {teamCount}/{tournament.max_teams}
+          <span className="flex shrink-0 items-center gap-1 rondo-meta font-bold text-[var(--ink-mid)]">
+            <Users size={16} className="text-[var(--ink-low)]" aria-hidden />
+            {variant === "open" ? `${spotsLeft} spots left` : `${teamCount}/${tournament.max_teams}`}
           </span>
         </div>
+
+        {isCompleted && (
+          <p className="rondo-meta text-[var(--ink-low)]">
+            Champions show here once the final score is locked.
+          </p>
+        )}
       </div>
     </Link>
   );
@@ -134,14 +183,14 @@ export function TournamentCard({ tournament, href }: TournamentCardProps) {
 /** Skeleton matching the card's geometry: floodlight hero + meta rows. */
 export function TournamentCardSkeleton() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/40">
+    <div className="overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)]">
       <div className="h-28 rondo-shimmer" />
-      <div className="space-y-3 p-3.5">
+      <div className="space-y-3 p-4">
         <div className="flex gap-3">
-          <div className="h-2.5 w-24 rounded rondo-shimmer" />
-          <div className="h-2.5 w-20 rounded rondo-shimmer" />
+          <div className="h-3 w-24 rounded-[var(--r-pill)] rondo-shimmer" />
+          <div className="h-3 w-20 rounded-[var(--r-pill)] rondo-shimmer" />
         </div>
-        <div className="h-1.5 w-full rounded-full rondo-shimmer" />
+        <div className="h-1.5 w-full rounded-[var(--r-pill)] rondo-shimmer" />
       </div>
     </div>
   );

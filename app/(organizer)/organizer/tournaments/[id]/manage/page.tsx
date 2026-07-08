@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Play, Shield, Trophy } from "lucide-react";
+import { ArrowLeft, Plus, Play, Shield, Trophy } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { subscribeToTournament } from "@/lib/realtime";
@@ -10,15 +10,16 @@ import type { Tournament, TournamentMatch, TournamentTeam } from "@/lib/supabase
 import { BracketView } from "@/components/tournament/BracketView";
 import { StandingsTable } from "@/components/tournament/StandingsTable";
 import { computeStandings } from "@/lib/tournament/bracket";
+import { EmptyState, MatchCell, StatTile } from "@/components/rondo/primitives";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">{children}</h2>
+    <h2 className="rondo-label text-[var(--ink-low)]">{children}</h2>
   );
 }
 
 /**
- * A team name on the left, +/- stepper on the right — stacked one team per
+ * A team name on the left, +/- stepper on the right. Stacked one team per
  * row so the 44px targets never fight for width at 320px, unlike a
  * side-by-side layout would.
  */
@@ -33,26 +34,26 @@ function Stepper({
 }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="min-w-0 flex-1 truncate text-sm font-bold text-white">{label}</span>
+      <span className="min-w-0 flex-1 truncate rondo-body font-bold text-[var(--ink-hi)]">{label}</span>
       <div className="flex shrink-0 items-center gap-2">
         <button
           type="button"
           onClick={() => onChange(Math.max(0, value - 1))}
           aria-label={`Decrease ${label} score`}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/12 bg-white/[0.05] text-white active:scale-95"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--r-pill)] border border-[var(--stroke)] bg-[var(--bg-inset)] text-[var(--ink-hi)] active:scale-95"
         >
           <span aria-hidden="true" className="text-lg font-black leading-none">
             −
           </span>
         </button>
-        <span className="w-7 text-center font-heading text-2xl font-black text-white tabular-nums">
+        <span className="w-9 text-center font-heading text-4xl font-bold text-[var(--ink-hi)] tabular-nums">
           {value}
         </span>
         <button
           type="button"
           onClick={() => onChange(Math.min(99, value + 1))}
           aria-label={`Increase ${label} score`}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-rondo-accent/40 bg-rondo-accent/10 text-rondo-accent active:scale-95"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--r-pill)] border border-[var(--gold)] bg-[var(--gold-dim)] text-[var(--gold)] active:scale-95"
         >
           <Plus size={16} />
         </button>
@@ -124,25 +125,26 @@ function ScoreSheet({
         type="button"
         aria-label="Close score entry"
         onClick={onClose}
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+        className="absolute inset-0 bg-[oklch(0%_0_0_/_0.6)] backdrop-blur-sm animate-in fade-in duration-200"
       />
       <div
-        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg overflow-y-auto rounded-t-3xl border-t border-white/10 bg-rondo-elevated pb-[calc(env(safe-area-inset-bottom)+1rem)] shadow-2xl"
-        style={{ animation: "rondoSheetUp 280ms cubic-bezier(0.32,0.72,0,1)" }}
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg overflow-y-auto rounded-t-[var(--r-lg)] border-t border-[var(--stroke)] bg-[var(--bg-inset)] pb-[calc(env(safe-area-inset-bottom)+1rem)]"
+        style={{ animation: "rondoSheetUp 240ms var(--ease-out)" }}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
+        <div className="mx-auto mt-2 h-1 w-8 rounded-[var(--r-pill)] bg-[var(--gold)]" />
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--stroke)]">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-rondo-accent">
+            <p className="rondo-label text-[var(--gold)]">
               {isKnockout ? "Knockout result" : "Match result"}
             </p>
-            <h2 className="font-heading text-lg font-black uppercase italic text-white truncate">
+            <h2 className="rondo-title text-[var(--ink-hi)] truncate">
               {home} vs {away}
             </h2>
           </div>
         </div>
 
         <div className="px-5 py-6 space-y-5">
-          <div className="space-y-3 divide-y divide-white/[0.06]">
+          <div className="space-y-3 divide-y divide-[var(--stroke)]">
             <Stepper label={home} value={homeScore} onChange={setHomeScore} />
             <div className="pt-3">
               <Stepper label={away} value={awayScore} onChange={setAwayScore} />
@@ -150,23 +152,23 @@ function ScoreSheet({
           </div>
 
           {knockoutDrawBlocked && (
-            <p className="text-red-300 text-xs text-center bg-red-500/10 border border-red-500/25 rounded-xl px-3 py-2.5">
-              Knockout matches can&rsquo;t end in a draw — adjust one score to save.
+            <p className="rondo-meta text-center text-[var(--live)] bg-[color-mix(in_oklch,var(--live)_10%,transparent)] border border-[var(--live)] rounded-[var(--r-sm)] px-3 py-2">
+              Knockout matches cannot end in a draw. Adjust one score to save.
             </p>
           )}
 
           {confirming && !knockoutDrawBlocked && (
-            <p className="text-rondo-accent text-xs text-center bg-rondo-accent/10 border border-rondo-accent/25 rounded-xl px-3 py-2.5">
-              {home} {homeScore} - {awayScore} {away}. Knockout results can&rsquo;t be changed once saved — confirm to
+            <p className="rondo-meta text-center text-[var(--gold)] bg-[var(--gold-dim)] border border-[var(--gold)] rounded-[var(--r-sm)] px-3 py-2">
+              {home} {homeScore} - {awayScore} {away}. Knockout results cannot be changed once saved. Confirm to
               lock it in.
             </p>
           )}
 
-          <div className="flex gap-2.5">
+          <div className="flex gap-2">
             <button
               type="button"
               onClick={confirming ? () => setConfirming(false) : onClose}
-              className="flex-1 min-h-[48px] rounded-2xl border border-white/12 text-white/60 text-sm font-bold"
+              className="rondo-btn rondo-btn-secondary flex-1"
             >
               {confirming ? "Back" : "Cancel"}
             </button>
@@ -174,9 +176,9 @@ function ScoreSheet({
               type="button"
               onClick={handlePrimaryTap}
               disabled={saving || knockoutDrawBlocked}
-              className="flex-1 min-h-[48px] rounded-2xl bg-rondo-accent text-rondo-black text-sm font-black uppercase tracking-wide disabled:opacity-40"
+              className="rondo-btn rondo-btn-primary flex-1 disabled:opacity-40"
             >
-              {saving ? "Saving…" : confirming ? "Confirm final score" : "Save score"}
+              {saving ? "Saving..." : confirming ? "Confirm final score" : "Save score"}
             </button>
           </div>
         </div>
@@ -251,7 +253,7 @@ export default function ManageTournamentPage() {
         toast.error(json.error ?? "Could not start tournament");
         return;
       }
-      toast.success("Fixtures generated — game on!");
+      toast.success("Fixtures generated. Game on!");
       setConfirmStart(false);
       await load();
     } finally {
@@ -307,39 +309,39 @@ export default function ManageTournamentPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] rondo-page pb-20">
-      <header className="sticky top-0 rondo-glass-nav border-b border-white/5 z-40 px-4 py-3">
-        <div className="flex items-center gap-2.5 max-w-lg mx-auto">
+    <div className="min-h-[100dvh] rondo-page pb-24">
+      <header className="sticky top-0 rondo-glass-nav border-b border-[var(--stroke)] z-40 px-4 py-3">
+        <div className="flex h-12 items-center gap-2 max-w-lg mx-auto">
           <button
             type="button"
             onClick={() => router.push("/organizer/tournaments")}
             aria-label="Back"
-            className="flex min-h-[44px] min-w-[44px] items-center justify-center -ml-2.5 rounded-full text-white/70"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-[var(--r-pill)] text-[var(--ink-mid)]"
           >
             <ArrowLeft size={18} />
           </button>
-          <Trophy size={18} className="text-white/50" />
-          <h1 className="text-white font-black text-lg truncate">{tournament.name}</h1>
+          <Trophy size={20} weight="duotone" className="text-[var(--gold)]" />
+          <h1 className="rondo-title text-[var(--ink-hi)] truncate">{tournament.name}</h1>
         </div>
       </header>
 
-      <div className="px-4 py-5 space-y-6 max-w-lg mx-auto">
+      <div className="px-4 py-6 space-y-8 max-w-lg mx-auto">
         {/* ── COMPLETED: champion celebration ── */}
         {tournament.status === "completed" && (
-          <section className="rondo-surface p-6 text-center space-y-2">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-rondo-accent/15">
-              <Trophy size={30} className="text-rondo-accent" />
+          <section className="rondo-surface p-6 text-center space-y-3 rondo-floodlight-scene--gold">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[var(--r-lg)] bg-[var(--gold-dim)]">
+              <Trophy size={32} weight="duotone" className="text-[var(--gold)]" />
             </div>
-            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">
+            <p className="rondo-label text-[var(--gold)]">
               Tournament completed
             </p>
             {champion ? (
               <>
-                <h2 className="rondo-hero-title text-4xl text-rondo-accent">{champion.name}</h2>
-                <p className="text-sm text-white/55">{champion.detail}</p>
+                <h2 className="font-heading text-5xl font-bold uppercase text-[var(--ink-hi)]">{champion.name}</h2>
+                <p className="rondo-meta text-[var(--ink-mid)]">{champion.detail}</p>
               </>
             ) : (
-              <h2 className="rondo-hero-title text-2xl text-white">Champion pending</h2>
+              <h2 className="rondo-title text-[var(--ink-hi)]">Champion pending</h2>
             )}
           </section>
         )}
@@ -347,24 +349,21 @@ export default function ManageTournamentPage() {
         {/* ── REGISTRATION: roster + start ── */}
         {tournament.status === "registration" && (
           <>
-            <section className="rondo-surface p-4 space-y-3">
-              <p className="text-white/70 text-sm">
-                <span className="text-white font-bold">{teams.length}</span> of {tournament.max_teams}{" "}
-                teams registered.
-              </p>
+            <section className="space-y-3">
+              <StatTile label="Teams registered" value={teams.length} unit={`/ ${tournament.max_teams}`} size="lg" />
 
               {confirmStart ? (
-                <div className="space-y-3 rounded-2xl border border-rondo-accent/30 bg-rondo-accent/10 p-4">
-                  <p className="text-white text-sm font-bold">Start this tournament?</p>
-                  <p className="text-white/60 text-xs leading-5">
+                <div className="space-y-3 rounded-[var(--r-md)] border border-[var(--gold)] bg-[var(--gold-dim)] p-4">
+                  <p className="rondo-body font-bold text-[var(--ink-hi)]">Start this tournament?</p>
+                  <p className="rondo-meta text-[var(--ink-mid)]">
                     The {isKnockout ? "bracket" : "full schedule"} is drawn from {teams.length} teams and
-                    registration closes — no more teams can join after this.
+                    registration closes. No more teams can join after this.
                   </p>
                   <div className="flex gap-2">
                     <button
                       type="button"
                       onClick={() => setConfirmStart(false)}
-                      className="flex-1 min-h-[44px] rounded-xl border border-white/12 text-white/60 text-xs font-bold"
+                      className="rondo-btn rondo-btn-secondary flex-1"
                     >
                       Go back
                     </button>
@@ -372,9 +371,9 @@ export default function ManageTournamentPage() {
                       type="button"
                       onClick={startTournament}
                       disabled={starting}
-                      className="flex-1 min-h-[44px] rounded-xl bg-rondo-accent text-rondo-black text-xs font-black uppercase tracking-wide disabled:opacity-50"
+                      className="rondo-btn rondo-btn-primary flex-1 disabled:opacity-50"
                     >
-                      {starting ? "Generating…" : "Confirm, start"}
+                      {starting ? "Generating..." : "Confirm, start"}
                     </button>
                   </div>
                 </div>
@@ -384,13 +383,13 @@ export default function ManageTournamentPage() {
                     type="button"
                     onClick={() => setConfirmStart(true)}
                     disabled={teams.length < 2}
-                    className="rondo-btn rondo-btn-primary min-h-[56px] text-sm disabled:opacity-40"
+                    className="rondo-btn rondo-btn-primary min-h-12 disabled:opacity-40"
                   >
                     <Play size={16} />
                     Start tournament
                   </button>
                   {teams.length < 2 && (
-                    <p className="text-muted-foreground text-xs">Need at least 2 teams to start.</p>
+                    <p className="rondo-meta text-[var(--ink-low)]">Need at least 2 teams to start.</p>
                   )}
                 </>
               )}
@@ -399,20 +398,16 @@ export default function ManageTournamentPage() {
             <section className="space-y-3">
               <SectionLabel>Teams ({teams.length})</SectionLabel>
               {teams.length === 0 ? (
-                <div className="rondo-surface p-4">
-                  <p className="text-muted-foreground text-sm">
-                    No teams yet. Share the tournament page so captains can register.
-                  </p>
-                </div>
+                <EmptyState title="No teams yet" body="Share the tournament page so captains can register." />
               ) : (
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   {teams.map((team) => (
                     <div
                       key={team.id}
-                      className="flex items-center gap-2 bg-card border border-border rounded-xl px-3 py-2.5"
+                      className="flex min-h-14 items-center gap-2 rounded-[var(--r-md)] border border-[var(--stroke)] bg-card px-3 py-3"
                     >
-                      <Shield size={13} className="text-rondo-accent shrink-0" />
-                      <span className="text-white text-xs font-semibold truncate">{team.name}</span>
+                      <Shield size={16} weight="duotone" className="text-[var(--gold)] shrink-0" />
+                      <span className="rondo-meta font-bold text-[var(--ink-hi)] truncate">{team.name}</span>
                     </div>
                   ))}
                 </div>
@@ -426,16 +421,16 @@ export default function ManageTournamentPage() {
           <>
             {isKnockout ? (
               <section className="space-y-3">
-                <SectionLabel>Bracket — tap a match to enter the result</SectionLabel>
+                <SectionLabel>Bracket. Tap a match to enter the result</SectionLabel>
                 <BracketView matches={matches} teams={teams} onMatchTap={handleMatchTap} />
               </section>
             ) : (
               <>
                 <section className="space-y-3">
-                  <SectionLabel>Fixtures — tap a match to enter the result</SectionLabel>
+                  <SectionLabel>Fixtures. Tap a match to enter the result</SectionLabel>
                   {roundRobinDays.map((round) => (
                     <div key={round} className="space-y-2">
-                      <p className="text-white/40 text-[10px] font-bold uppercase tracking-wider">
+                      <p className="rondo-label text-[var(--ink-low)]">
                         Matchday {round}
                       </p>
                       {playable
@@ -450,21 +445,17 @@ export default function ManageTournamentPage() {
                               type="button"
                               onClick={() => handleMatchTap(match)}
                               disabled={done}
-                              className="flex w-full items-center justify-between gap-2 bg-card border border-border rounded-xl px-3 py-2.5 min-h-[44px] disabled:active:scale-100 active:scale-[0.98] transition-transform"
+                              className="block w-full disabled:active:scale-100 active:scale-[0.98] transition-transform"
                             >
-                              <span className="text-white/85 text-xs font-semibold flex-1 text-left truncate">
-                                {home}
-                              </span>
-                              {done ? (
-                                <span className="text-rondo-accent text-sm font-bold px-2 tabular-nums">
-                                  {match.home_score} - {match.away_score}
-                                </span>
-                              ) : (
-                                <span className="text-white/30 text-xs px-2">Tap to score</span>
-                              )}
-                              <span className="text-white/85 text-xs font-semibold flex-1 text-right truncate">
-                                {away}
-                              </span>
+                              <MatchCell
+                                home={home}
+                                away={away}
+                                homeScore={match.home_score}
+                                awayScore={match.away_score}
+                                state={done ? "final" : "scheduled"}
+                                kickoff={done ? null : "Tap"}
+                                className="rounded-[var(--r-md)] border border-[var(--stroke)] bg-card"
+                              />
                             </button>
                           );
                         })}

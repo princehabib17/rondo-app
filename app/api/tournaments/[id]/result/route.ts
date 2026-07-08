@@ -70,7 +70,7 @@ export async function POST(
     const isElimination = tournament.format === "single_elimination";
     if (isElimination && match.status === "completed") {
       return NextResponse.json(
-        { error: "Result already recorded — knockout results can't be changed" },
+        { error: "Result already recorded. Knockout results cannot be changed" },
         { status: 409 }
       );
     }
@@ -91,7 +91,7 @@ export async function POST(
 
     if (isElimination) {
       const winnerId = homeScore > awayScore ? match.home_team_id : match.away_team_id;
-      // The final is simply the bracket's last round — cheaper and more robust
+      // The final is simply the bracket's last round. Cheaper and more robust
       // than re-deriving it from the team count.
       const { data: lastMatch } = await service
         .from("tournament_matches")
@@ -141,15 +141,28 @@ export async function POST(
       const home = matchTeams.find((t) => t.id === match.home_team_id);
       const away = matchTeams.find((t) => t.id === match.away_team_id);
       if (home && away) {
+        const resultBody = `${home.name} ${homeScore} - ${awayScore} ${away.name}`;
         await service.from("notifications").insert(
           matchTeams.map((team) => ({
             user_id: team.captain_id,
             type: "tournament_result",
             title: "Result posted",
-            body: `${home.name} ${homeScore} - ${awayScore} ${away.name} (${tournament.name})`,
+            body: `${resultBody} (${tournament.name})`,
             link: `/tournaments/${tournamentId}`,
           }))
         );
+        await service.from("tournament_messages").insert({
+          tournament_id: tournamentId,
+          user_id: userData.user.id,
+          kind: "match_result",
+          body: resultBody,
+        });
+        await service.from("posts").insert({
+          author_id: userData.user.id,
+          tournament_id: tournamentId,
+          kind: "match_result",
+          body: `${resultBody} at ${tournament.name}.`,
+        });
       }
     }
 

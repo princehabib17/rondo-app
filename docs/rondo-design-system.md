@@ -1,5 +1,16 @@
 # RONDO Design System — "Matchday"
 
+Companion docs:
+
+- `docs/rondo-design-first-playbook.md` defines the screen-by-screen product
+  direction and Strava pattern translation.
+- `docs/rondo-scale-spec.md` extends this system with exact stat typography,
+  sizing, spacing, radius, motion, and z-index values.
+- `docs/strava-design-reference.md` is source material only. It is not a Rondo
+  palette, typography, or measurement spec.
+- `docs/rondo-strava-street-map-reference.md` translates the Strava map/feed
+  reference into Rondo's golden street-futsal map surface.
+
 One system, few tokens, hard rules. The current UI fails because it has *brand*
 (gold, condensed type) but no *law*: 4 radii, 12+ paddings, 3 color systems.
 This document is the law. Every value below is exact; anything not listed is

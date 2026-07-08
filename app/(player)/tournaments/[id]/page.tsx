@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Lock, Shield, Trophy } from "lucide-react";
+import { ArrowLeft, Lock, Shield, Trophy } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
@@ -13,6 +13,7 @@ import type { Tournament, TournamentMatch, TournamentTeam } from "@/lib/supabase
 import { BracketView } from "@/components/tournament/BracketView";
 import { StandingsTable } from "@/components/tournament/StandingsTable";
 import { TournamentHero } from "@/components/tournament/TournamentHero";
+import { EmptyState, MatchCell, StatTile } from "@/components/rondo/primitives";
 
 export default function TournamentDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -115,7 +116,7 @@ export default function TournamentDetailPage() {
       if (!winnerId) return null;
       return {
         name: teams.find((t) => t.id === winnerId)?.name ?? "Champion",
-        line: `Won the final ${final.home_score}–${final.away_score}`,
+        line: `Won the final ${final.home_score} - ${final.away_score}`,
       };
     }
     const standings = computeStandings(teams.map((t) => t.id), matches);
@@ -158,58 +159,88 @@ export default function TournamentDetailPage() {
 
   return (
     <div className="min-h-[100dvh] rondo-page pb-44">
-      <header className="sticky top-0 z-40 border-b border-white/5 rondo-glass-nav px-4 py-3">
-        <div className="mx-auto flex max-w-lg items-center gap-2.5">
-          <button type="button" onClick={() => router.back()} aria-label="Back" className="p-0.5">
-            <ArrowLeft size={18} className="text-white/70" />
+      <header className="sticky top-0 z-40 border-b border-[var(--stroke)] rondo-glass-nav px-4 py-3">
+        <div className="mx-auto flex h-12 max-w-lg items-center gap-3">
+          <button type="button" onClick={() => router.back()} aria-label="Back" className="grid min-h-11 min-w-11 place-items-center rounded-[var(--r-pill)] text-[var(--ink-mid)]">
+            <ArrowLeft size={20} />
           </button>
-          <h1 className="truncate text-lg font-black text-white">{tournament.name}</h1>
+          <h1 className="truncate rondo-title text-[var(--ink-hi)]">{tournament.name}</h1>
         </div>
       </header>
 
       <TournamentHero tournament={tournament} teamCount={teams.length} />
 
-      <div className="mx-auto max-w-lg space-y-6 px-4 py-6">
+      <nav className="sticky top-[73px] z-20 border-b border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_92%,transparent)] px-4 py-2 backdrop-blur-md">
+        <div className="mx-auto flex max-w-lg gap-2 overflow-x-auto [scrollbar-width:none]">
+          {["Overview", isKnockout ? "Bracket" : "Standings", "Schedule", "Squad"].map((item, index) => (
+            <a key={item} href={`#${item.toLowerCase()}`} className="rondo-chip shrink-0" data-active={index === 0}>
+              {item}
+            </a>
+          ))}
+          <Link href={`/tournaments/${id}/room`} className="rondo-chip shrink-0">
+            Room
+          </Link>
+          {tournament.status === "completed" && (
+            <Link href={`/tournaments/${id}/champion`} className="rondo-chip shrink-0">
+              Champion
+            </Link>
+          )}
+        </div>
+      </nav>
+
+      <div className="mx-auto max-w-lg space-y-8 px-4 py-6">
         {champion && (
           <section
-            className="relative overflow-hidden rounded-2xl border border-rondo-accent/30 rondo-floodlight-scene--gold px-4 py-6 text-center"
+            className="relative overflow-hidden rounded-[var(--r-lg)] border border-[var(--gold)] rondo-floodlight-scene--gold px-4 py-6 text-center"
             aria-label="Champion"
           >
-            <Trophy size={26} className="mx-auto mb-2 text-rondo-accent" />
-            <p className="text-[10px] font-bold uppercase tracking-widest text-rondo-accent/80">Champion</p>
-            <p className="mt-1 font-heading text-2xl font-black uppercase italic text-white">{champion.name}</p>
-            <p className="mt-1 text-xs text-white/60">{champion.line}</p>
+            <Trophy size={32} weight="duotone" className="mx-auto mb-2 text-[var(--gold)]" />
+            <p className="rondo-label text-[var(--gold)]">Champion</p>
+            <p className="mt-1 font-heading text-4xl font-bold uppercase text-[var(--ink-hi)]">{champion.name}</p>
+            <p className="mt-2 rondo-meta text-[var(--ink-mid)]">{champion.line}</p>
           </section>
         )}
 
-        {tournament.description && (
-          <p className="whitespace-pre-wrap text-sm text-white/70">{tournament.description}</p>
-        )}
+        <section id="overview" className="space-y-3 scroll-mt-28">
+          <h2 className="rondo-label text-[var(--ink-low)]">Overview</h2>
+          <div className="grid gap-3">
+            <StatTile label="Teams" value={teams.length} unit={`/ ${tournament.max_teams}`} size="lg" />
+            <div className="grid grid-cols-2 gap-3">
+              <StatTile label="Matches" value={matches.length || "Draw soon"} size="sm" />
+              <StatTile
+                label="Goals"
+                value={matches.reduce((sum, match) => sum + (match.home_score ?? 0) + (match.away_score ?? 0), 0)}
+                size="sm"
+              />
+            </div>
+          </div>
+          {tournament.description && (
+            <p className="whitespace-pre-wrap rondo-body text-[var(--ink-mid)]">{tournament.description}</p>
+          )}
+        </section>
 
         {matches.length === 0 ? (
-          <section className="space-y-3">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <section id="squad" className="space-y-3 scroll-mt-28">
+            <h2 className="rondo-label text-[var(--ink-low)]">
               Teams ({teams.length}/{tournament.max_teams})
             </h2>
             {teams.length === 0 ? (
-              <div className="rondo-surface p-4">
-                <p className="text-sm text-muted-foreground">No teams registered yet — be the first.</p>
-              </div>
+              <EmptyState title="No teams yet" body="Register first and make everyone chase your seed." />
             ) : (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 {teams.map((team) => (
                   <div
                     key={team.id}
-                    className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 ${
+                    className={`flex min-h-14 items-center gap-2 rounded-[var(--r-md)] border px-3 py-3 ${
                       team.id === myTeamId
-                        ? "border-rondo-blue/40 bg-rondo-blue/10"
-                        : "border-border bg-card"
+                        ? "border-[var(--gold)] bg-[var(--gold-dim)]"
+                        : "border-[var(--stroke)] bg-[var(--bg-surface)]"
                     }`}
                   >
-                    <Shield size={13} className="shrink-0 text-rondo-accent" />
-                    <span className="truncate text-xs font-semibold text-white">{team.name}</span>
+                    <Shield size={16} weight="duotone" className="shrink-0 text-[var(--gold)]" />
+                    <span className="truncate rondo-meta font-bold text-[var(--ink-hi)]">{team.name}</span>
                     {team.id === myTeamId && (
-                      <span className="shrink-0 rounded-full bg-rondo-blue/20 px-1.5 py-[1px] text-[8px] font-black uppercase tracking-wide text-rondo-blue">
+                      <span className="shrink-0 rounded-[var(--r-pill)] bg-[var(--gold)] px-2 py-0.5 rondo-label text-[var(--gold-ink)]">
                         You
                       </span>
                     )}
@@ -219,34 +250,37 @@ export default function TournamentDetailPage() {
             )}
           </section>
         ) : (
-          <section className="space-y-3">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <section id={isKnockout ? "bracket" : "standings"} className="space-y-3 scroll-mt-28">
+            <h2 className="rondo-label text-[var(--ink-low)]">
               {isKnockout ? "Bracket" : "Standings"}
             </h2>
             {isKnockout ? (
-              <BracketView matches={matches} teams={teams} highlightTeamId={myTeamId} />
+              <>
+                <BracketView matches={matches} teams={teams} highlightTeamId={myTeamId} />
+                <Link href={`/tournaments/${id}/bracket`} className="rondo-btn rondo-btn-secondary">
+                  Open full bracket
+                </Link>
+              </>
             ) : (
               <>
                 <StandingsTable matches={matches} teams={teams} highlightTeamId={myTeamId} />
-                <h2 className="pt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <h2 id="schedule" className="pt-5 rondo-label text-[var(--ink-low)] scroll-mt-28">
                   Fixtures
                 </h2>
-                <div className="space-y-2">
+                <div className="rondo-surface overflow-hidden">
                   {matches.map((match) => {
                     const home = teams.find((t) => t.id === match.home_team_id)?.name ?? "TBD";
                     const away = teams.find((t) => t.id === match.away_team_id)?.name ?? "TBD";
                     return (
-                      <div
+                      <MatchCell
                         key={match.id}
-                        className="flex items-center justify-between rounded-xl border border-border bg-card px-3 py-2.5 text-xs"
-                      >
-                        <span className="w-14 shrink-0 text-white/40">MD {match.round}</span>
-                        <span className="flex-1 truncate text-right font-semibold text-white/85">{home}</span>
-                        <span className="px-3 tabular-nums font-bold text-rondo-accent">
-                          {match.status === "completed" ? `${match.home_score} - ${match.away_score}` : "vs"}
-                        </span>
-                        <span className="flex-1 truncate font-semibold text-white/85">{away}</span>
-                      </div>
+                        home={home}
+                        away={away}
+                        homeScore={match.home_score}
+                        awayScore={match.away_score}
+                        state={match.status === "completed" ? "final" : match.status === "scheduled" ? "scheduled" : "live"}
+                        kickoff={`MD ${match.round}`}
+                      />
                     );
                   })}
                 </div>
@@ -262,13 +296,13 @@ export default function TournamentDetailPage() {
             {tournament.status !== "registration" ? (
               <div className="flex min-h-[44px] items-center gap-2 text-sm text-white/50">
                 <Lock size={14} className="shrink-0" />
-                {tournament.status === "active" && "Registration closed — tournament underway."}
+                {tournament.status === "active" && "Registration closed. Tournament underway."}
                 {tournament.status === "completed" && "Tournament completed."}
               </div>
             ) : alreadyRegistered ? (
               <div className="flex min-h-[44px] items-center gap-2 text-sm font-semibold text-emerald-300">
                 <Shield size={14} className="shrink-0" />
-                Your team is in — see you on matchday.
+                Your team is in. See you on matchday.
               </div>
             ) : !userId ? (
               <Link
@@ -287,7 +321,7 @@ export default function TournamentDetailPage() {
             ) : !canRegister ? (
               <div className="flex min-h-[44px] items-center gap-2 text-sm text-white/50">
                 <Lock size={14} className="shrink-0" />
-                Tournament full — all {tournament.max_teams} team slots are taken.
+                Tournament full. All {tournament.max_teams} team slots are taken.
               </div>
             ) : (
               <div className="flex items-center gap-2">
@@ -295,15 +329,15 @@ export default function TournamentDetailPage() {
                   value={teamName}
                   onChange={(e) => setTeamName(e.target.value.slice(0, 60))}
                   placeholder="Team name"
-                  className="min-h-[44px] flex-1 rounded-lg border border-white/10 bg-black/30 px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/30 focus:border-rondo-accent/40"
+                className="h-12 flex-1 rounded-[var(--r-sm)] border border-transparent bg-[var(--bg-inset)] px-4 rondo-body text-[var(--ink-hi)] outline-none placeholder:text-[var(--ink-low)] focus:border-[var(--gold)]"
                 />
                 <button
                   type="button"
                   onClick={registerTeam}
                   disabled={teamName.trim().length < 2 || registering}
-                  className="min-h-[44px] shrink-0 rounded-lg bg-rondo-accent px-4 py-2.5 text-sm font-bold text-black transition active:scale-[0.98] disabled:opacity-40"
+                  className="h-12 shrink-0 rounded-[var(--r-pill)] bg-[var(--gold)] px-6 font-heading text-base font-bold uppercase text-[var(--gold-ink)] transition active:scale-[0.98] disabled:opacity-40"
                 >
-                  {registering ? "…" : "Register"}
+                  {registering ? "..." : "Register"}
                 </button>
               </div>
             )}

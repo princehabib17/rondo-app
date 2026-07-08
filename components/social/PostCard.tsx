@@ -3,15 +3,15 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Clapperboard, Heart, MessageCircle, Trash2, Trophy } from "lucide-react";
+import { ChatCircle, Clapperboard, Trash, Trophy } from "@phosphor-icons/react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { PUBLIC_PROFILE_SELECT } from "@/lib/supabase/profile-select";
 import type { Post, PostComment } from "@/lib/supabase/types";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { COMMENT_BODY_MAX } from "@/lib/social/post-schema";
+import { Chip, KudosButton } from "@/components/rondo/primitives";
 
 interface PostCardProps {
   post: Post;
@@ -95,7 +95,7 @@ export function PostCard({ post, currentUserId, onDeleted }: PostCardProps) {
   }
 
   return (
-    <article className="rondo-surface p-4 space-y-3">
+    <article className="rondo-surface space-y-3 p-4">
       <div className="flex items-start gap-3">
         {post.author && (
           <Link href={`/profile/${post.author_id}`}>
@@ -106,38 +106,47 @@ export function PostCard({ post, currentUserId, onDeleted }: PostCardProps) {
           <div className="flex items-center gap-2">
             <Link
               href={`/profile/${post.author_id}`}
-              className="text-white text-sm font-semibold truncate"
+              className="rondo-body truncate font-bold text-[var(--ink-hi)]"
             >
               {post.author?.full_name ?? "Player"}
             </Link>
             {post.kind === "highlight" && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-rondo-accent/15 text-rondo-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
-                <Clapperboard size={10} />
-                Highlight
-              </span>
+              <Chip label="Highlight" variant="outline" size="sm" icon={<Clapperboard size={14} />} />
             )}
             {post.kind === "match_result" && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-rondo-accent/15 text-rondo-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
-                <Trophy size={10} />
-                Result
-              </span>
+              <Chip label="Result" variant="outline" size="sm" icon={<Trophy size={14} />} />
             )}
           </div>
-          <p className="text-muted-foreground text-xs">{formatRelativeTime(post.created_at)}</p>
+          <p className="rondo-meta text-[var(--ink-low)]">{formatRelativeTime(post.created_at)}</p>
         </div>
         {currentUserId === post.author_id && (
           <button
             type="button"
             onClick={deletePost}
             aria-label="Delete post"
-            className="text-white/25 hover:text-red-400 transition-colors p-1"
+            className="p-1 text-[var(--ink-low)] transition-colors hover:text-[var(--live)]"
           >
-            <Trash2 size={15} />
+            <Trash size={16} />
           </button>
         )}
       </div>
 
-      <p className="text-white/85 text-sm whitespace-pre-wrap break-words">{post.body}</p>
+      {(post.tournament || post.game) && (
+        <div className="flex flex-wrap gap-2">
+          {post.tournament && (
+            <Link href={`/tournaments/${post.tournament.id}`}>
+              <Chip label={post.tournament.name} variant="outline" size="sm" icon={<Trophy size={14} />} />
+            </Link>
+          )}
+          {post.game && (
+            <Link href={`/games/${post.game.id}`}>
+              <Chip label={post.game.title} variant="ghost" size="sm" />
+            </Link>
+          )}
+        </div>
+      )}
+
+      <p className="whitespace-pre-wrap break-words rondo-body text-[var(--ink-mid)]">{post.body}</p>
 
       {post.media_url && (
         <a href={post.media_url} target="_blank" rel="noopener noreferrer" className="block">
@@ -147,39 +156,29 @@ export function PostCard({ post, currentUserId, onDeleted }: PostCardProps) {
             width={800}
             height={450}
             unoptimized
-            className="w-full rounded-xl border border-white/10 object-cover max-h-72"
+            className="max-h-72 w-full rounded-[var(--r-sm)] border border-[var(--stroke)] object-cover"
           />
         </a>
       )}
 
       <div className="flex items-center gap-5 pt-1">
-        <button
-          type="button"
-          onClick={toggleLike}
-          className={cn(
-            "inline-flex items-center gap-1.5 text-xs font-semibold transition-colors",
-            liked ? "text-rondo-accent" : "text-white/40 hover:text-white/70"
-          )}
-        >
-          <Heart size={15} className={liked ? "fill-current" : ""} />
-          {likeCount}
-        </button>
+        <KudosButton count={likeCount} active={liked} onToggle={toggleLike} />
         <button
           type="button"
           onClick={openComments}
-          className="inline-flex items-center gap-1.5 text-white/40 hover:text-white/70 text-xs font-semibold transition-colors"
+          className="inline-flex min-h-11 items-center gap-2 rondo-meta font-bold text-[var(--ink-low)] transition-colors hover:text-[var(--ink-mid)]"
         >
-          <MessageCircle size={15} />
+          <ChatCircle size={20} />
           {commentCount}
         </button>
       </div>
 
       {commentsOpen && (
-        <div className="space-y-3 border-t border-white/5 pt-3">
+        <div className="space-y-3 border-t border-[var(--stroke)] pt-3">
           {comments === null ? (
-            <div className="h-8 rounded-lg bg-white/5 animate-pulse" />
+            <div className="h-8 rounded-[var(--r-sm)] rondo-shimmer" />
           ) : comments.length === 0 ? (
-            <p className="text-muted-foreground text-xs">No comments yet — be the first.</p>
+            <p className="rondo-meta text-[var(--ink-low)]">No comments yet. Be first.</p>
           ) : (
             comments.map((comment) => (
               <div key={comment.id} className="flex items-start gap-2">
@@ -187,13 +186,13 @@ export function PostCard({ post, currentUserId, onDeleted }: PostCardProps) {
                   <PlayerAvatar profile={comment.author} size="xs" showFlag={false} linkable={false} />
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="text-white text-xs font-semibold">
+                  <p className="rondo-meta font-bold text-[var(--ink-hi)]">
                     {comment.author?.full_name ?? "Player"}{" "}
-                    <span className="text-muted-foreground font-normal">
+                    <span className="font-normal text-[var(--ink-low)]">
                       {formatRelativeTime(comment.created_at)}
                     </span>
                   </p>
-                  <p className="text-white/75 text-xs break-words">{comment.body}</p>
+                  <p className="break-words rondo-meta text-[var(--ink-mid)]">{comment.body}</p>
                 </div>
               </div>
             ))
@@ -209,14 +208,14 @@ export function PostCard({ post, currentUserId, onDeleted }: PostCardProps) {
                     sendComment();
                   }
                 }}
-                placeholder="Add a comment…"
-                className="flex-1 bg-black/30 border border-white/10 rounded-full px-3 py-1.5 text-white text-xs placeholder:text-white/30 outline-none focus:border-rondo-accent/40"
+                placeholder="Add a comment"
+                className="h-10 flex-1 rounded-[var(--r-pill)] border border-transparent bg-[var(--bg-inset)] px-3 rondo-meta text-[var(--ink-hi)] outline-none placeholder:text-[var(--ink-low)] focus:border-[var(--gold)]"
               />
               <button
                 type="button"
                 onClick={sendComment}
                 disabled={!commentBody.trim() || sendingComment}
-                className="text-rondo-accent text-xs font-bold disabled:opacity-40"
+                className="rondo-meta font-bold text-[var(--gold)] disabled:opacity-40"
               >
                 Send
               </button>

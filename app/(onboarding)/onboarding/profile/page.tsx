@@ -12,29 +12,27 @@ import { NATIONALITIES } from "@/lib/utils/format";
 
 const baseProfileSchema = z.object({
   full_name: z.string().min(2, "Name required"),
-  age: z.string(),
-  gender: z.string(),
-  phone: z.string().min(7, "Phone required"),
-  address: z.string(),
-  nationality: z.string().min(1, "Nationality required"),
+  age: z.string().optional(),
+  gender: z.string().optional(),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  nationality: z.string().optional(),
   position: z.string(),
   skill_level: z.string(),
-  preferred_areas: z.string().min(2, "Preferred areas required"),
+  preferred_areas: z.string().optional(),
   game_preference: z.string(),
   bio: z.string(),
 });
 
 const playerSchema = baseProfileSchema.extend({
-  age: z.string().min(1, "Age required"),
-  gender: z.string().min(1, "Gender required"),
-  address: z.string().min(2, "Address required"),
+  full_name: z.string().min(2, "What should we call you?"),
 });
 
 type ProfileForm = z.infer<typeof baseProfileSchema>;
 
-const labelClass = "font-heading text-white text-xs uppercase tracking-wider";
+const labelClass = "rondo-label text-[var(--ink-low)]";
 const inputClass =
-  "w-full bg-[#1c1c1c] border-0 text-white font-body text-sm px-4 py-3.5 rounded-xl placeholder:text-white/35 focus:outline-none focus:ring-2 focus:ring-rondo-accent/50";
+  "h-12 w-full rounded-[var(--r-sm)] border border-transparent bg-[var(--bg-inset)] px-4 rondo-body text-[var(--ink-hi)] placeholder:text-[var(--ink-low)] focus:outline-none focus:border-[var(--gold)]";
 
 export default function PlayerSetupPage() {
   const router = useRouter();
@@ -172,22 +170,42 @@ export default function PlayerSetupPage() {
     router.refresh();
   }
 
+  async function skipForNow() {
+    if (!userId) return;
+    const supabase = createClient();
+    await supabase.from("profiles").update({ role: userRole }).eq("id", userId);
+    sessionStorage.removeItem("selectedRole");
+    router.push("/feed");
+    router.refresh();
+  }
+
   return (
-    <div className="min-h-screen bg-black flex flex-col px-6 py-8 max-w-lg mx-auto">
+    <div className="min-h-screen rondo-page flex flex-col px-6 py-8 max-w-lg mx-auto">
       <OnboardingHeader />
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col mt-6">
+        <div className="mb-6 space-y-3">
+          <div className="flex gap-2">
+            {[0, 1, 2].map((step) => (
+              <span key={step} className="h-1 flex-1 rounded-[var(--r-pill)] bg-[var(--gold)] opacity-80" />
+            ))}
+          </div>
+          <p className="rondo-label text-[var(--gold)]">Profile setup</p>
+          <h1 className="rondo-display text-[var(--ink-hi)]">What should we call you?</h1>
+          <p className="rondo-body text-[var(--ink-mid)]">Add the essentials now. The rest can wait.</p>
+        </div>
+
         <div className="flex justify-center mb-8">
           <label className="relative cursor-pointer">
-            <div className="w-36 h-36 rounded-full bg-[#1c1c1c] flex items-center justify-center overflow-hidden border border-white/10">
+            <div className="w-24 h-24 rounded-[var(--r-pill)] bg-[var(--bg-inset)] flex items-center justify-center overflow-hidden border-2 border-[var(--gold)]">
               {avatarPreview ? (
                 <img src={avatarPreview} alt="" className="w-full h-full object-cover" />
               ) : (
-                <Upload className="text-white/50 w-10 h-10" strokeWidth={1.5} />
+                <Upload className="text-[var(--ink-low)] w-8 h-8" strokeWidth={1.5} />
               )}
             </div>
-            <span className="absolute bottom-1 right-1 w-9 h-9 rounded-full bg-rondo-accent flex items-center justify-center border-2 border-black">
-              <User className="w-4 h-4 text-black" strokeWidth={2.5} />
+            <span className="absolute bottom-0 right-0 w-9 h-9 rounded-[var(--r-pill)] bg-[var(--gold)] flex items-center justify-center border-2 border-[var(--bg-page)]">
+              <User className="w-4 h-4 text-[var(--gold-ink)]" strokeWidth={2.5} />
             </span>
             <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
           </label>
@@ -196,10 +214,10 @@ export default function PlayerSetupPage() {
         <div className="space-y-4 flex-1">
           {isOrganizer && (
             <div className="space-y-1 pb-1">
-              <h2 className="font-heading text-white font-black italic text-lg uppercase">
+              <h2 className="rondo-title text-[var(--ink-hi)]">
                 Set up your organizer profile
               </h2>
-              <p className="text-white/50 text-xs font-body">
+              <p className="rondo-meta text-[var(--ink-low)]">
                 This is what players see when they browse your games.
               </p>
             </div>
@@ -212,7 +230,7 @@ export default function PlayerSetupPage() {
               placeholder={isOrganizer ? "Urban Futsal MNL" : "Miguel Santos"}
               className={inputClass}
             />
-            {errors.full_name && <p className="text-red-400 text-xs font-body">{errors.full_name.message}</p>}
+            {errors.full_name && <p className="rondo-meta text-[var(--live)]">{errors.full_name.message}</p>}
           </div>
 
           {!isOrganizer && (
@@ -309,7 +327,7 @@ export default function PlayerSetupPage() {
               placeholder={
                 isOrganizer
                   ? "Weekly 5v5 nights, all levels welcome, shirts provided..."
-                  : "Tell the squad about yourself — playing style, favourite position, where you're from..."
+                  : "Tell the squad about yourself. Playing style, favourite position, where you're from..."
               }
               maxLength={500}
               rows={4}
@@ -320,13 +338,18 @@ export default function PlayerSetupPage() {
           {error && <p className="text-red-400 text-sm text-center font-body">{error}</p>}
         </div>
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="mt-8 w-full bg-rondo-accent text-black font-heading font-black uppercase tracking-widest text-sm py-4 rounded-xl disabled:opacity-50"
-        >
-          {isSubmitting ? "Saving..." : "Next"}
-        </button>
+        <div className="mt-8 grid gap-2">
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="rondo-btn rondo-btn-primary disabled:opacity-50"
+          >
+            {isSubmitting ? "Saving..." : "Continue"}
+          </button>
+          <button type="button" onClick={skipForNow} className="rondo-btn rondo-btn-ghost">
+            Skip for now
+          </button>
+        </div>
       </form>
     </div>
   );

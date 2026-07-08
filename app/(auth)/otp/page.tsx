@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { getSafeRedirectPath } from "@/lib/auth/safe-redirect";
 
@@ -84,14 +84,14 @@ function OtpContent() {
         />
       </div>
 
-      <div className="w-20 h-20 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto">
-        <ShieldCheck size={36} className="text-primary" />
+      <div className="w-20 h-20 rounded-[var(--r-pill)] bg-[var(--gold-dim)] border border-[var(--gold)] flex items-center justify-center mx-auto">
+        <ShieldCheck size={36} weight="duotone" className="text-[var(--gold)]" />
       </div>
 
       <div className="space-y-2">
-        <h1 className="rondo-hero-title text-4xl">Enter OTP</h1>
-        <p className="text-muted-foreground text-sm">We sent a code to</p>
-        <p className="text-white font-semibold text-sm">{phone || "your phone"}</p>
+        <h1 className="rondo-display text-[var(--ink-hi)]">Enter code</h1>
+        <p className="rondo-meta text-[var(--ink-low)]">We sent a code to</p>
+        <p className="rondo-body font-bold text-[var(--ink-hi)]">{phone || "your phone"}</p>
       </div>
 
       <form onSubmit={handleVerify} className="space-y-4">
@@ -102,16 +102,16 @@ function OtpContent() {
           autoComplete="one-time-code"
           maxLength={8}
           placeholder="1 2 3 4 5 6"
-          className="w-full bg-white/[0.045] border border-white/18 rounded-xl px-4 py-4 text-center text-2xl font-heading text-white tracking-[0.35em] outline-none focus:border-rondo-accent/70"
+          className="h-14 w-full rounded-[var(--r-sm)] border border-transparent bg-[var(--bg-inset)] px-4 text-center font-heading text-3xl font-bold tracking-[0.28em] text-[var(--ink-hi)] outline-none focus:border-[var(--gold)]"
         />
 
-        {error && <p className="text-red-400 text-sm">{error}</p>}
-        {resent && <p className="text-primary text-sm font-medium">Code resent.</p>}
+        {error && <p className="rondo-meta text-[var(--live)]">{error}</p>}
+        {resent && <p className="rondo-meta font-bold text-[var(--gold)]">Code resent.</p>}
 
         <button
           type="submit"
           disabled={!canVerify || verifying}
-          className="w-full bg-rondo-accent text-black font-heading font-black uppercase tracking-widest text-sm py-4 rounded-xl disabled:opacity-40 active:scale-[0.98] transition-all"
+          className="rondo-btn rondo-btn-primary disabled:opacity-40"
         >
           {verifying ? "Verifying..." : "Continue"}
         </button>
@@ -122,11 +122,11 @@ function OtpContent() {
           type="button"
           onClick={handleResend}
           disabled={cooldown > 0 || !phone}
-          className="text-rondo-accent text-sm font-semibold disabled:text-white/35"
+          className="rondo-meta font-bold text-[var(--gold)] disabled:text-[var(--ink-low)]"
         >
           {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend code"}
         </button>
-        <Link href="/login" className="block text-muted-foreground text-sm hover:text-white transition-colors">
+        <Link href="/login" className="block rondo-meta text-[var(--ink-low)] transition-colors hover:text-[var(--ink-hi)]">
           Use another number
         </Link>
       </div>
