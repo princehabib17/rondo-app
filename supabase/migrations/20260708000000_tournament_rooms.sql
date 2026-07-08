@@ -57,5 +57,9 @@ with check (
   )
 );
 
-alter publication supabase_realtime add table public.tournament_messages;
+do $$
+begin
+  alter publication supabase_realtime add table public.tournament_messages;
+exception when duplicate_object then null;
+end $$;
 
