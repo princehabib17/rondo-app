@@ -73,7 +73,12 @@ export default function CommunityPage() {
     const { data } = await supabase
       .from("posts")
       .select(
-        `*, author:profiles!author_id(${PUBLIC_PROFILE_SELECT}), post_likes(user_id), post_comments(count)`
+        `*,
+        author:profiles!author_id(${PUBLIC_PROFILE_SELECT}),
+        game:games!game_id(id, title, venue_name, date_time),
+        tournament:tournaments!tournament_id(id, name, status, venue_name, starts_at),
+        post_likes(user_id),
+        post_comments(count)`
       )
       .order("created_at", { ascending: false })
       .range(offset, offset + POSTS_PAGE_SIZE - 1);
@@ -198,12 +203,12 @@ export default function CommunityPage() {
   }, [currentUserId]);
 
   return (
-    <div className="min-h-[100dvh] rondo-page pb-20">
-      <header className="sticky top-0 rondo-glass-nav border-b border-white/5 z-40 px-4 py-3">
+    <div className="min-h-[100dvh] rondo-page pb-24">
+      <header className="sticky top-0 rondo-glass-nav border-b border-[var(--stroke)] z-40 px-4 py-3">
         <div className="flex items-center justify-between gap-2 max-w-lg mx-auto">
           <div className="flex items-center gap-2.5">
-            <Users size={18} className="text-rondo-accent" />
-            <h1 className="text-white font-black text-lg">Community</h1>
+            <Users size={18} className="text-[var(--gold)]" />
+            <h1 className="rondo-title text-[var(--ink-hi)]">Community</h1>
           </div>
           <div className="flex gap-1.5">
             {(
@@ -217,10 +222,10 @@ export default function CommunityPage() {
                 type="button"
                 onClick={() => setTab(value)}
                 className={cn(
-                  "rounded-full border px-3 py-1 text-xs font-semibold transition-colors",
+                  "rounded-[var(--r-pill)] border px-3 py-1 rondo-label transition-colors",
                   tab === value
-                    ? "border-rondo-accent/60 bg-rondo-accent/15 text-rondo-accent"
-                    : "border-white/10 text-white/40"
+                    ? "border-[var(--gold)] bg-[var(--gold-dim)] text-[var(--gold)]"
+                    : "border-[var(--stroke)] text-[var(--ink-low)]"
                 )}
               >
                 {label}
@@ -279,7 +284,7 @@ export default function CommunityPage() {
                       disabled={loadingMore}
                       className="w-full rounded-xl border border-white/10 py-2.5 text-white/60 text-xs font-semibold disabled:opacity-50"
                     >
-                      {loadingMore ? "Loading…" : "Load more"}
+                      {loadingMore ? "Loading..." : "Load more"}
                     </button>
                   </div>
                 )}
@@ -300,7 +305,7 @@ export default function CommunityPage() {
                     disabled={locating}
                     className="text-rondo-accent text-xs font-semibold disabled:opacity-50"
                   >
-                    {locating ? "Locating…" : "Find nearby"}
+                    {locating ? "Locating..." : "Find nearby"}
                   </button>
                 )}
               </div>
@@ -308,7 +313,7 @@ export default function CommunityPage() {
               {nearby.length === 0 ? (
                 <div className="rondo-surface p-4 space-y-2">
                   <p className="text-white/70 text-sm">
-                    Distance is only shown when you ask — we never track you in the background.
+                    Distance is only shown when you ask. We never track you in the background.
                   </p>
                   <p className="text-muted-foreground text-xs">
                     Players who hide location won&apos;t appear. Turn off hiding in your profile if you
@@ -324,7 +329,7 @@ export default function CommunityPage() {
                     className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-rondo-accent text-black px-4 py-2 text-xs font-bold disabled:opacity-50"
                   >
                     <MapPin size={13} />
-                    {locating ? "Locating…" : "Use my location once"}
+                    {locating ? "Locating..." : "Use my location once"}
                   </button>
                 </div>
               ) : (

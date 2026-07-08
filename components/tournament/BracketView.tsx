@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock, Trophy } from "lucide-react";
+import { Crown, Lock } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import type { TournamentMatch, TournamentTeam } from "@/lib/supabase/types";
 import { roundLabel } from "@/lib/tournament/bracket";
@@ -43,19 +43,19 @@ function TeamRow({
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-2 px-2.5 py-1.5",
-        isWinner ? "font-bold text-rondo-accent" : isTbd ? "text-white/25" : "text-white/80"
+        "flex items-center justify-between gap-2 px-3 py-2",
+        isWinner ? "font-bold text-[var(--gold)]" : isTbd ? "text-[var(--ink-low)]" : "text-[var(--ink-mid)]"
       )}
     >
       <span className="flex min-w-0 items-center gap-1.5">
-        <span className="truncate text-xs">{teamName ?? "TBD"}</span>
+        <span className="truncate rondo-meta font-bold uppercase">{teamName ?? "TBD"}</span>
         {isYou && (
-          <span className="shrink-0 rounded-full bg-rondo-blue/20 px-1.5 py-[1px] text-[8px] font-black uppercase tracking-wide text-rondo-blue">
+          <span className="shrink-0 rounded-[var(--r-pill)] bg-[var(--gold-dim)] px-2 py-0.5 rondo-label text-[var(--gold)]">
             You
           </span>
         )}
       </span>
-      {score !== null && <span className="shrink-0 text-xs tabular-nums">{score}</span>}
+      {score !== null && <span className="shrink-0 font-heading text-xl font-bold tabular-nums">{score}</span>}
     </div>
   );
 }
@@ -72,7 +72,7 @@ export function BracketView({ matches, teams, highlightTeamId = null, onMatchTap
 
   if (rounds.length === 0 || !finalMatch) {
     return (
-      <div className="rondo-surface p-6 text-center text-sm text-white/50">
+      <div className="rondo-surface p-6 text-center rondo-meta text-[var(--ink-low)]">
         Bracket opens once the draw is made.
       </div>
     );
@@ -87,8 +87,8 @@ export function BracketView({ matches, teams, highlightTeamId = null, onMatchTap
           const pairs = chunkPairs(roundMatches);
 
           return (
-            <div key={round} className="rondo-snap-col flex w-40 shrink-0 flex-col">
-              <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            <div key={round} className="rondo-snap-col flex w-48 shrink-0 flex-col">
+              <p className="mb-2 text-center rondo-label text-[var(--ink-low)]">
                 {roundLabel(round, totalRounds)}
               </p>
               <div className="flex flex-1 flex-col justify-around gap-4">
@@ -106,17 +106,22 @@ export function BracketView({ matches, teams, highlightTeamId = null, onMatchTap
                         const awayWinner = decidedWinner !== null && decidedWinner === match.away_team_id;
                         const isTbdMatch = !match.home_team_id || !match.away_team_id;
                         const tappable =
-                          !!onMatchTap && match.status !== "bye" && !!match.home_team_id && !!match.away_team_id;
+                          !!onMatchTap &&
+                          match.status !== "bye" &&
+                          match.status !== "completed" &&
+                          !!match.home_team_id &&
+                          !!match.away_team_id;
                         const isLiveFinal = isFinalRound && finalIsLive && match.id === finalMatch.id;
 
                         const cardClasses = cn(
-                          "w-full divide-y divide-white/5 rounded-xl border bg-card text-left transition",
+                          "w-full divide-y divide-[var(--stroke)] rounded-[var(--r-sm)] border bg-[var(--bg-surface)] text-left transition-[border-color,transform,opacity]",
                           match.status === "bye"
-                            ? "border-dashed border-white/10 opacity-50"
+                            ? "border-dashed border-[var(--stroke)] opacity-50"
                             : isTbdMatch
-                              ? "border-dashed border-white/10"
-                              : "border-border",
-                          isLiveFinal && "border-red-400/40"
+                              ? "border-dashed border-[var(--stroke)]"
+                              : "border-[var(--stroke)]",
+                          decidedWinner && "border-[color-mix(in_oklch,var(--gold)_42%,var(--stroke))]",
+                          isLiveFinal && "border-[var(--live)]"
                         );
 
                         const body = (
@@ -129,7 +134,7 @@ export function BracketView({ matches, teams, highlightTeamId = null, onMatchTap
                               isYou={!!highlightTeamId && match.home_team_id === highlightTeamId}
                             />
                             {match.status === "bye" ? (
-                              <div className="px-2.5 py-1.5 text-[10px] uppercase tracking-wide text-white/25">
+                              <div className="px-3 py-2 rondo-label text-[var(--ink-low)]">
                                 Bye
                               </div>
                             ) : (
@@ -142,9 +147,9 @@ export function BracketView({ matches, teams, highlightTeamId = null, onMatchTap
                               />
                             )}
                             {isLiveFinal && (
-                              <div className="flex items-center gap-1.5 bg-red-400/10 px-2.5 py-1">
+                              <div className="flex items-center gap-1.5 bg-[color-mix(in_oklch,var(--live)_10%,transparent)] px-3 py-2">
                                 <span className="rondo-live-dot" />
-                                <span className="text-[9px] font-bold uppercase tracking-wide text-red-300">
+                                <span className="rondo-label text-[var(--live)]">
                                   Decider
                                 </span>
                               </div>
@@ -157,7 +162,7 @@ export function BracketView({ matches, teams, highlightTeamId = null, onMatchTap
                             key={match.id}
                             type="button"
                             onClick={() => onMatchTap?.(match)}
-                            className={cn(cardClasses, "active:scale-[0.98] hover:border-rondo-accent/40")}
+                            className={cn(cardClasses, "active:scale-[0.98] hover:border-[var(--gold)]")}
                           >
                             {body}
                           </button>
@@ -173,7 +178,7 @@ export function BracketView({ matches, teams, highlightTeamId = null, onMatchTap
                         aria-hidden
                         className={cn(
                           "absolute -right-3 bottom-1/4 top-1/4 w-3 rounded-r border-y border-r",
-                          championPassedThrough ? "border-rondo-accent/70" : "border-white/15"
+                          championPassedThrough ? "border-[var(--gold)]" : "border-[var(--stroke)]"
                         )}
                       />
                     </div>
@@ -184,23 +189,23 @@ export function BracketView({ matches, teams, highlightTeamId = null, onMatchTap
           );
         })}
 
-        {/* Champion slot — crowned once the final is decided. */}
-        <div className="rondo-snap-col flex w-32 shrink-0 flex-col">
-          <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        {/* Champion slot. Crowned once the final is decided. */}
+        <div className="rondo-snap-col flex w-36 shrink-0 flex-col">
+          <p className="mb-2 text-center rondo-label text-[var(--ink-low)]">
             Champion
           </p>
           <div className="flex flex-1 items-center justify-center">
             {championTeamId ? (
-              <div className="flex flex-col items-center gap-1.5 rounded-xl border border-rondo-accent/40 bg-rondo-accent/10 px-3 py-4 text-center">
-                <Trophy size={20} className="text-rondo-accent" />
-                <span className="text-xs font-black uppercase text-rondo-accent">
+              <div className="flex flex-col items-center gap-2 rounded-[var(--r-sm)] border border-[var(--gold)] bg-[var(--gold-dim)] px-3 py-4 text-center">
+                <Crown size={20} weight="fill" className="text-[var(--gold)]" />
+                <span className="rondo-label text-[var(--gold)]">
                   {teamName(championTeamId)}
                 </span>
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-1.5 rounded-xl border border-dashed border-white/10 px-3 py-4 text-center text-white/25">
+              <div className="flex flex-col items-center gap-2 rounded-[var(--r-sm)] border border-dashed border-[var(--stroke)] px-3 py-4 text-center text-[var(--ink-low)]">
                 <Lock size={16} />
-                <span className="text-[10px] uppercase tracking-wide">TBD</span>
+                <span className="rondo-label">TBD</span>
               </div>
             )}
           </div>

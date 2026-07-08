@@ -241,6 +241,7 @@ export interface DirectMessage {
 export type TournamentFormat = "single_elimination" | "round_robin";
 export type TournamentStatus = "registration" | "active" | "completed" | "cancelled";
 export type TournamentMatchStatus = "scheduled" | "completed" | "bye";
+export type TournamentMessageKind = "text" | "announcement" | "match_result" | "system";
 export type PostKind = "post" | "highlight" | "match_result";
 
 export interface Tournament {
@@ -296,6 +297,17 @@ export interface TournamentMatch {
   away_team?: TournamentTeam | null;
 }
 
+export interface TournamentMessage {
+  id: string;
+  tournament_id: string;
+  user_id: string;
+  kind: TournamentMessageKind;
+  body: string;
+  created_at: string;
+  // joined
+  author?: Profile;
+}
+
 export interface Post {
   id: string;
   author_id: string;
@@ -307,6 +319,8 @@ export interface Post {
   created_at: string;
   // joined
   author?: Profile;
+  game?: Pick<Game, "id" | "title" | "venue_name" | "date_time"> | null;
+  tournament?: Pick<Tournament, "id" | "name" | "status" | "venue_name" | "starts_at"> | null;
   post_likes?: { user_id: string }[];
   post_comments?: { count: number }[];
 }

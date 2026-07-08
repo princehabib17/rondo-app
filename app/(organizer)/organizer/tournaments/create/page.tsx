@@ -10,9 +10,7 @@ import {
   ImagePlus,
   Loader2,
   MapPin,
-  ShieldCheck,
   Trophy,
-  Users,
   X,
 } from "lucide-react";
 import { useForm, type Resolver } from "react-hook-form";
@@ -27,6 +25,7 @@ import { ImageCropModal } from "@/components/ui/image-crop-modal";
 import { OrganizationPicker } from "@/components/organizer/OrganizationPicker";
 import { TournamentCard } from "@/components/tournament/TournamentCard";
 import type { Tournament } from "@/lib/supabase/types";
+import { StatTile, StepHeader, rondoFieldClass } from "@/components/rondo/primitives";
 
 const SAMPLE_COVERS = [
   { label: "Football", src: "/samples/football.svg" },
@@ -34,7 +33,7 @@ const SAMPLE_COVERS = [
 ];
 
 const schema = z.object({
-  name: z.string().min(3, "Give it a name — at least 3 characters").max(120),
+  name: z.string().min(3, "Give it a name. At least 3 characters").max(120),
   description: z.string().optional(),
   format: z.enum(["single_elimination", "round_robin"]),
   starts_date: z.string().min(1, "Pick a start date"),
@@ -55,10 +54,10 @@ interface NominatimResult {
 }
 
 const fieldClass =
-  "w-full rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3 text-sm text-white outline-none transition-colors duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] placeholder:text-white/30 focus:border-rondo-accent";
-const labelClass = "text-[10px] font-black uppercase tracking-[0.18em] text-white/45";
-const errorClass = "text-red-400 text-xs mt-1 flex items-center gap-1.5";
-const hintClass = "text-white/30 text-xs mt-1";
+  rondoFieldClass;
+const labelClass = "rondo-label text-[var(--ink-low)]";
+const errorClass = "text-[var(--live)] rondo-meta mt-1 flex items-center gap-2";
+const hintClass = "text-[var(--ink-low)] rondo-meta mt-1";
 
 async function searchAddress(query: string): Promise<NominatimResult[]> {
   try {
@@ -81,14 +80,9 @@ function formatTime12h(hhmm: string): string {
 
 function SectionHeading({ index, title, hint }: { index: number; title: string; hint: string }) {
   return (
-    <div className="flex items-baseline gap-2.5">
-      <span className="font-heading text-sm font-black italic text-rondo-accent tabular-nums">
-        0{index}
-      </span>
-      <div className="min-w-0">
-        <h2 className="rondo-hero-title text-2xl text-white">{title}</h2>
-        <p className="text-xs text-white/40">{hint}</p>
-      </div>
+    <div className="space-y-1">
+      <StepHeader current={index} total={4} label={title} />
+      <p className="rondo-meta text-[var(--ink-low)]">{hint}</p>
     </div>
   );
 }
@@ -224,7 +218,7 @@ export default function CreateTournamentPage() {
     setCoverSampleUrl(src);
   }
 
-  // Live preview object — mirrors the row `onSubmit` will create, so the
+  // Live preview object mirrors the row `onSubmit` will create, so the
   // organizer sees the same card players will see, as they type.
   const previewTournament: Tournament = useMemo(() => {
     const startsAt = pickedDate
@@ -334,26 +328,26 @@ export default function CreateTournamentPage() {
 
   return (
     <div className="min-h-[100dvh] rondo-page pb-28">
-      <header className="sticky top-0 z-40 border-b border-white/5 bg-[color-mix(in_oklch,var(--color-rondo-black)_90%,transparent)] px-4 py-3 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-lg items-center gap-3">
+      <header className="sticky top-0 z-40 border-b border-[var(--stroke)] rondo-glass-nav px-4 py-3">
+        <div className="mx-auto flex h-12 max-w-lg items-center gap-3">
           <button
             type="button"
             onClick={goBack}
-            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-white/70 hover:bg-white/5 hover:text-white"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-[var(--r-pill)] text-[var(--ink-mid)] hover:bg-[var(--bg-inset)] hover:text-[var(--ink-hi)]"
             aria-label="Back"
           >
             <ArrowLeft size={20} />
           </button>
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-rondo-accent">
+            <p className="rondo-label text-[var(--gold)]">
               Tournament builder
             </p>
-            <h1 className="rondo-hero-title truncate text-2xl text-white">Create Cup</h1>
+            <h1 className="rondo-title truncate text-[var(--ink-hi)]">Create cup</h1>
           </div>
         </div>
       </header>
 
-      <div className="mx-auto max-w-lg px-4 pt-4">
+      <div className="mx-auto max-w-lg px-4 pt-6">
         <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-8">
           {/* ── LIVE PREVIEW ── */}
           <section className="space-y-2">
@@ -470,7 +464,7 @@ export default function CreateTournamentPage() {
                 placeholder="Prizes, registration rules, schedule flow, refund policy..."
                 className={`${fieldClass} min-h-32 resize-none`}
               />
-              <p className={hintClass}>Optional — captains read this before they register.</p>
+              <p className={hintClass}>Optional. Captains read this before they register.</p>
             </div>
           </section>
 
@@ -529,11 +523,7 @@ export default function CreateTournamentPage() {
               </div>
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
-              <Users size={18} className="text-rondo-accent" />
-              <p className="mt-3 text-3xl font-black text-white tabular-nums">{totalPlayers || 0}</p>
-              <p className="text-xs font-bold uppercase tracking-wide text-white/40">Max players across the field</p>
-            </div>
+            <StatTile label="Max players across the field" value={totalPlayers || 0} size="lg" />
           </section>
 
           {/* ── MONEY ── */}
@@ -546,13 +536,7 @@ export default function CreateTournamentPage() {
               <p className={hintClass}>Set to 0 for a free tournament.</p>
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
-              <ShieldCheck size={18} className="text-rondo-accent" />
-              <p className="mt-3 text-3xl font-black text-white tabular-nums">₱{prizePoolHint || 0}</p>
-              <p className="text-xs font-bold uppercase tracking-wide text-white/40">
-                Gross entry if the field fills up
-              </p>
-            </div>
+            <StatTile label="Gross entry if the field fills up" value={`₱${prizePoolHint || 0}`} size="lg" />
           </section>
 
           {/* ── SCHEDULE ── */}
@@ -627,7 +611,7 @@ export default function CreateTournamentPage() {
                   </div>
                 )}
                 {!addressLoading && addressInput.length >= 3 && suggestions.length === 0 && !showSuggestions && (
-                  <p className={hintClass}>No suggestions — try a more specific address.</p>
+                  <p className={hintClass}>No suggestions. Try a more specific address.</p>
                 )}
               </div>
             </div>
@@ -699,7 +683,7 @@ export default function CreateTournamentPage() {
             <button
               type="submit"
               disabled={isSubmitting || !organizationsReady}
-              className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-rondo-accent px-5 py-4 text-sm font-black uppercase tracking-widest text-rondo-black shadow-[0_18px_55px_color-mix(in_oklch,var(--color-rondo-accent)_16%,transparent)] disabled:opacity-50"
+              className="rondo-btn rondo-btn-primary min-h-12 disabled:opacity-50"
             >
               {isSubmitting ? "Publishing..." : "Publish tournament"}
               <ChevronRight size={18} />

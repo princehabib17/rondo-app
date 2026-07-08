@@ -6,60 +6,65 @@
 
 @theme inline {
   /* shadcn semantic tokens */
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
+  --color-background: var(--bg-page);
+  --color-foreground: var(--ink-hi);
+  --color-card: var(--bg-surface);
+  --color-card-foreground: var(--ink-hi);
+  --color-popover: var(--bg-inset);
+  --color-popover-foreground: var(--ink-hi);
+  --color-primary: var(--gold);
+  --color-primary-foreground: var(--gold-ink);
+  --color-secondary: var(--bg-inset);
+  --color-secondary-foreground: var(--ink-hi);
+  --color-muted: var(--bg-inset);
+  --color-muted-foreground: var(--ink-low);
+  --color-accent: var(--gold-dim);
+  --color-accent-foreground: var(--gold);
+  --color-destructive: var(--live);
+  --color-border: var(--stroke);
+  --color-input: var(--bg-inset);
+  --color-ring: var(--gold);
 
   /* Radius */
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-lg);
+  --radius-4xl: var(--r-pill);
 
   /* Fonts */
   --font-heading: var(--font-barlow-condensed), sans-serif;
   --font-body: var(--font-manrope), system-ui, sans-serif;
   --font-sans: var(--font-manrope), system-ui, sans-serif;
 
-  --ease-out-rondo: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-in-out-rondo: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-out-rondo: var(--ease-out);
+  --ease-in-out-rondo: var(--ease-snappy);
   --font-mono: var(--font-geist-mono);
+  --z-60: 60;
+  --z-70: 70;
+  --z-80: 80;
+  --z-90: 90;
 
   /* Team colors — used as default options in game creation */
-  --color-team-red: #E53935;
-  --color-team-blue: #1E88E5;
-  --color-team-yellow: #F5E642;
-  --color-team-green: #43A047;
-  --color-team-orange: #FB8C00;
-  --color-team-purple: #8E24AA;
+  --color-team-red: oklch(62% 0.19 25);
+  --color-team-blue: oklch(61% 0.13 250);
+  --color-team-yellow: oklch(86% 0.115 96);
+  --color-team-green: oklch(70% 0.14 155);
+  --color-team-orange: oklch(72% 0.16 58);
+  --color-team-purple: oklch(63% 0.14 310);
 
-  /* RONDO brand colors */
-  --color-rondo-accent: oklch(92% 0.16 102);
-  --color-rondo-yellow: oklch(92% 0.16 102);
-  --color-rondo-black: oklch(7.5% 0.008 102);
-  --color-rondo-dark: oklch(10.5% 0.01 102);
-  --color-rondo-elevated: oklch(14% 0.012 102);
-  --color-rondo-card: oklch(17% 0.014 102);
-  --color-rondo-border: oklch(31% 0.014 102);
-  --color-rondo-muted: oklch(43% 0.012 102);
-  --color-rondo-red: #EF4444;
-  --color-rondo-blue: #3B82F6;
-  --color-rondo-gold: #D4A574;
+  /* RONDO compatibility colors. New code should use Matchday tokens above. */
+  --color-rondo-accent: var(--gold);
+  --color-rondo-yellow: var(--gold);
+  --color-rondo-black: var(--bg-page);
+  --color-rondo-dark: var(--bg-page);
+  --color-rondo-elevated: var(--bg-inset);
+  --color-rondo-card: var(--bg-surface);
+  --color-rondo-border: var(--stroke);
+  --color-rondo-muted: var(--ink-low);
+  --color-rondo-red: var(--live);
+  --color-rondo-blue: var(--gold);
+  --color-rondo-gold: var(--gold);
 
   /* Sidebar */
   --color-sidebar: var(--sidebar);
@@ -72,70 +77,95 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* ========================================
-   RONDO DARK THEME (default / :root)
-   Pure black background, bold gold yellow
-   ======================================== */
 :root {
-  --background: oklch(10% 0.01 102);
-  --foreground: #FFFFFF;                  /* White text */
-  --card: #161616;                        /* Deep dark gray */
-  --card-foreground: #FFFFFF;
-  --popover: #161616;
-  --popover-foreground: #FFFFFF;
-  --primary: oklch(92% 0.13 102);
-  --primary-foreground: #000000;
-  --secondary: #1A1A1A;                   /* Dark gray */
-  --secondary-foreground: #FFFFFF;
-  --muted: #1A1A1A;
-  --muted-foreground: #808080;            /* Gray text */
-  --accent: oklch(92% 0.13 102);
-  --accent-foreground: #000000;
-  --destructive: #EF4444;                 /* Red */
-  --border: #2A2A2A;                      /* Subtle borders */
-  --input: #1A1A1A;                       /* Dark input bg */
-  --ring: oklch(92% 0.13 102);
-  --radius: 0.875rem;                     /* Rounded corners */
+  /* Matchday ground */
+  --bg-page: oklch(11% 0.008 102);
+  --bg-surface: oklch(15.5% 0.01 102);
+  --bg-inset: oklch(19% 0.012 102);
+  --stroke: oklch(26% 0.012 102);
 
-  /* Sidebar */
-  --sidebar: #161616;
-  --sidebar-foreground: #FFFFFF;
-  --sidebar-primary: oklch(92% 0.13 102);
-  --sidebar-primary-foreground: #0A0A0A;
-  --sidebar-accent: #1A1A1A;
-  --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: #2A2A2A;
-  --sidebar-ring: #fffa98;
+  /* Matchday ink */
+  --ink-hi: oklch(97% 0 0);
+  --ink-mid: oklch(78% 0.008 102);
+  --ink-low: oklch(58% 0.01 102);
+
+  /* Matchday accent */
+  --gold: oklch(86% 0.115 96);
+  --gold-ink: oklch(20% 0.02 96);
+  --gold-dim: color-mix(in oklch, var(--gold) 14%, transparent);
+
+  /* Matchday semantic */
+  --live: oklch(62% 0.19 25);
+  --ok: oklch(70% 0.14 155);
+
+  /* Scale */
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-pill: 999px;
+  --sp-micro: 4px;
+  --sp-cluster: 8px;
+  --sp-stack: 12px;
+  --sp-card: 16px;
+  --sp-hero: 24px;
+  --sp-section: 32px;
+
+  /* Motion */
+  --ease-snappy: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-bouncy: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Compatibility with shadcn variable consumers. */
+  --background: var(--bg-page);
+  --foreground: var(--ink-hi);
+  --card: var(--bg-surface);
+  --card-foreground: var(--ink-hi);
+  --popover: var(--bg-inset);
+  --popover-foreground: var(--ink-hi);
+  --primary: var(--gold);
+  --primary-foreground: var(--gold-ink);
+  --secondary: var(--bg-inset);
+  --secondary-foreground: var(--ink-hi);
+  --muted: var(--bg-inset);
+  --muted-foreground: var(--ink-low);
+  --accent: var(--gold-dim);
+  --accent-foreground: var(--gold);
+  --destructive: var(--live);
+  --border: var(--stroke);
+  --input: var(--bg-inset);
+  --ring: var(--gold);
+  --radius: var(--r-md);
+
+  --sidebar: var(--bg-surface);
+  --sidebar-foreground: var(--ink-hi);
+  --sidebar-primary: var(--gold);
+  --sidebar-primary-foreground: var(--gold-ink);
+  --sidebar-accent: var(--bg-inset);
+  --sidebar-accent-foreground: var(--ink-hi);
+  --sidebar-border: var(--stroke);
+  --sidebar-ring: var(--gold);
 }
 
 /* Dark class mirrors root (RONDO is always dark) */
 .dark {
-  --background: #000000;
-  --foreground: #FFFFFF;
-  --card: #161616;
-  --card-foreground: #FFFFFF;
-  --popover: #161616;
-  --popover-foreground: #FFFFFF;
-  --primary: #fffa98;
-  --primary-foreground: #000000;
-  --secondary: #1A1A1A;
-  --secondary-foreground: #FFFFFF;
-  --muted: #1A1A1A;
-  --muted-foreground: #808080;
-  --accent: #fffa98;
-  --accent-foreground: #000000;
-  --destructive: #EF4444;
-  --border: #2A2A2A;
-  --input: #1c1c1c;
-  --ring: #fffa98;
-  --sidebar: #161616;
-  --sidebar-foreground: #FFFFFF;
-  --sidebar-primary: #fffa98;
-  --sidebar-primary-foreground: #000000;
-  --sidebar-accent: #1A1A1A;
-  --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: #2A2A2A;
-  --sidebar-ring: #fffa98;
+  --background: var(--bg-page);
+  --foreground: var(--ink-hi);
+  --card: var(--bg-surface);
+  --card-foreground: var(--ink-hi);
+  --popover: var(--bg-inset);
+  --popover-foreground: var(--ink-hi);
+  --primary: var(--gold);
+  --primary-foreground: var(--gold-ink);
+  --secondary: var(--bg-inset);
+  --secondary-foreground: var(--ink-hi);
+  --muted: var(--bg-inset);
+  --muted-foreground: var(--ink-low);
+  --accent: var(--gold-dim);
+  --accent-foreground: var(--gold);
+  --destructive: var(--live);
+  --border: var(--stroke);
+  --input: var(--bg-inset);
+  --ring: var(--gold);
 }
 
 @utility font-heading {
@@ -144,6 +174,51 @@
 
 @utility font-body {
   font-family: var(--font-body);
+}
+
+@utility rondo-display {
+  font-family: var(--font-heading);
+  font-size: 1.75rem;
+  line-height: 1.875rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+@utility rondo-title {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  line-height: 1.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+@utility rondo-label {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  line-height: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@utility rondo-body {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.375rem;
+  font-weight: 500;
+}
+
+@utility rondo-meta {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: 1.125rem;
+  font-weight: 500;
+}
+
+@utility rondo-tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
 }
 
 @layer base {
@@ -203,7 +278,7 @@
   }
 
   :where(a, button, input, select, textarea):focus-visible {
-    outline: 2px solid var(--color-rondo-accent);
+    outline: 2px solid var(--gold);
     outline-offset: 3px;
   }
 }
@@ -211,22 +286,17 @@
 /* ---- Rondo design system utilities ---- */
 
 .rondo-page {
-  background-color: var(--color-rondo-black);
+  background-color: var(--bg-page);
   background-image:
-    radial-gradient(ellipse 90% 60% at 20% -10%, rgba(255, 235, 55, 0.09), transparent 45%),
-    radial-gradient(ellipse 80% 50% at 80% 0%, rgba(255, 250, 152, 0.045), transparent 48%),
-    linear-gradient(180deg, #050505 0%, #090909 54%, #050505 100%);
+    radial-gradient(ellipse 90% 60% at 18% -12%, color-mix(in oklch, var(--gold) 10%, transparent), transparent 45%),
+    radial-gradient(ellipse 80% 50% at 82% 0%, color-mix(in oklch, var(--gold) 5%, transparent), transparent 48%),
+    linear-gradient(180deg, var(--bg-page) 0%, oklch(9% 0.008 102) 54%, var(--bg-page) 100%);
 }
 
 .rondo-surface {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012)),
-    var(--color-rondo-elevated);
-  border: 1px solid rgba(255, 255, 255, 0.105);
-  border-radius: 1.125rem;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.055) inset,
-    0 18px 48px rgba(0, 0, 0, 0.45);
+  background: var(--bg-surface);
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-md);
 }
 
 .rondo-map-shell {
@@ -246,12 +316,11 @@
   width: min(100vw, 24rem);
   max-width: 100%;
   overflow-x: clip;
-  border: 1px solid rgba(255, 255, 255, 0.065);
-  border-radius: 1.75rem;
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-lg);
   background:
-    radial-gradient(circle at 25% 0%, rgba(255, 250, 152, 0.08), transparent 26%),
-    #050505;
-  box-shadow: 0 22px 80px rgba(0, 0, 0, 0.48);
+    radial-gradient(circle at 25% 0%, color-mix(in oklch, var(--gold) 8%, transparent), transparent 26%),
+    var(--bg-page);
 }
 
 .rondo-hero-title {
@@ -270,44 +339,46 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.46);
+  color: var(--ink-low);
 }
 
 .rondo-chip {
   display: inline-flex;
-  min-height: 2.625rem;
+  min-height: 2rem;
   align-items: center;
-  gap: 0.45rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  background: rgba(255, 255, 255, 0.045);
-  padding: 0 0.95rem;
-  color: rgba(255, 255, 255, 0.84);
-  font-size: 0.8125rem;
+  gap: var(--sp-cluster);
+  border-radius: var(--r-pill);
+  border: 1px solid var(--stroke);
+  background: transparent;
+  padding: 0 var(--sp-stack);
+  color: var(--ink-low);
+  font-size: 0.6875rem;
   font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .rondo-chip[data-active="true"] {
-  border-color: color-mix(in oklch, var(--color-rondo-accent) 72%, transparent);
-  background: color-mix(in oklch, var(--color-rondo-accent) 12%, transparent);
-  color: var(--color-rondo-accent);
+  border-color: var(--gold);
+  background: var(--gold-dim);
+  color: var(--gold);
 }
 
 .rondo-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: var(--sp-cluster);
   width: 100%;
   max-width: 100%;
-  min-height: 3.25rem;
-  padding: 0.875rem 1.25rem;
+  min-height: 3rem;
+  padding: 0 var(--sp-hero);
   font-family: var(--font-heading);
-  font-size: 0.8125rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
   text-transform: uppercase;
-  border-radius: 0.72rem;
+  border-radius: var(--r-pill);
   transition:
     transform 180ms var(--ease-out-rondo),
     opacity 180ms var(--ease-out-rondo),
@@ -325,19 +396,18 @@
 }
 
 .rondo-btn-primary {
-  background: linear-gradient(180deg, #fff47a 0%, #ffe145 100%);
-  color: #090909;
-  box-shadow: 0 10px 30px rgba(255, 226, 55, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  background: var(--gold);
+  color: var(--gold-ink);
 }
 
 .rondo-btn-secondary {
-  background: #ffffff;
-  color: #0a0a0a;
+  background: var(--bg-inset);
+  color: var(--ink-hi);
 }
 
 .rondo-btn-ghost {
   background: transparent;
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--ink-mid);
   font-family: var(--font-body);
   font-weight: 600;
   letter-spacing: 0.18em;
@@ -346,15 +416,14 @@
 }
 
 .rondo-btn-ghost:hover {
-  color: #ffffff;
+  color: var(--ink-hi);
 }
 
 .rondo-glass-nav {
-  background: rgba(5, 5, 5, 0.88);
+  background: color-mix(in oklch, var(--bg-page) 88%, transparent);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  border-color: var(--stroke);
 }
 
 .rondo-nav-pill {
@@ -376,9 +445,9 @@
 .rondo-shimmer {
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.04) 0%,
-    rgba(255, 255, 255, 0.1) 50%,
-    rgba(255, 255, 255, 0.04) 100%
+    color-mix(in oklch, var(--ink-hi) 4%, transparent) 0%,
+    color-mix(in oklch, var(--ink-hi) 10%, transparent) 50%,
+    color-mix(in oklch, var(--ink-hi) 4%, transparent) 100%
   );
   background-size: 200% 100%;
   animation: rondo-shimmer 1.4s ease-in-out infinite;
@@ -420,15 +489,19 @@
   font-family: inherit;
 }
 
+.rondo-street-tiles {
+  filter: sepia(0.16) saturate(0.82) contrast(1.08) brightness(0.78);
+}
+
 .leaflet-control-attribution {
-  background: rgba(0, 0, 0, 0.55) !important;
-  color: rgba(255, 255, 255, 0.55) !important;
+  background: color-mix(in oklch, var(--bg-page) 70%, transparent) !important;
+  color: var(--ink-low) !important;
   font-size: 9px !important;
   backdrop-filter: blur(8px);
 }
 
 .leaflet-control-attribution a {
-  color: rgba(255, 250, 152, 0.8) !important;
+  color: var(--gold) !important;
 }
 
 /* Pulsating node rings */
@@ -441,8 +514,8 @@
   position: absolute;
   width: 36px;
   height: 36px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(255, 250, 152, 0.55);
+  border-radius: var(--r-pill);
+  border: 1.5px solid color-mix(in oklch, var(--gold) 55%, transparent);
   animation: rondo-pulse 2.4s ease-out infinite;
   pointer-events: none;
 }
@@ -480,41 +553,41 @@
 .rondo-floodlight-scene {
   position: relative;
   background:
-    radial-gradient(120% 140% at 12% -25%, rgba(255, 255, 255, 0.15), transparent 42%),
-    radial-gradient(120% 140% at 88% -25%, rgba(255, 255, 255, 0.09), transparent 46%),
+    radial-gradient(120% 140% at 12% -25%, color-mix(in oklch, var(--ink-hi) 15%, transparent), transparent 42%),
+    radial-gradient(120% 140% at 88% -25%, color-mix(in oklch, var(--ink-hi) 9%, transparent), transparent 46%),
     radial-gradient(80% 70% at 50% 120%, color-mix(in oklch, var(--color-team-green) 20%, transparent), transparent 65%),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0 2px, transparent 2px 34px),
-    var(--color-rondo-black);
+    repeating-linear-gradient(90deg, color-mix(in oklch, var(--ink-hi) 3%, transparent) 0 2px, transparent 2px 34px),
+    var(--bg-page);
 }
 
 .rondo-floodlight-scene[data-variant="1"] {
   background:
-    radial-gradient(120% 140% at 85% -25%, rgba(255, 255, 255, 0.15), transparent 42%),
-    radial-gradient(120% 140% at 15% -20%, rgba(255, 255, 255, 0.09), transparent 46%),
+    radial-gradient(120% 140% at 85% -25%, color-mix(in oklch, var(--ink-hi) 15%, transparent), transparent 42%),
+    radial-gradient(120% 140% at 15% -20%, color-mix(in oklch, var(--ink-hi) 9%, transparent), transparent 46%),
     radial-gradient(80% 70% at 50% 120%, color-mix(in oklch, var(--color-team-blue) 16%, transparent), transparent 65%),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0 2px, transparent 2px 34px),
-    var(--color-rondo-black);
+    repeating-linear-gradient(90deg, color-mix(in oklch, var(--ink-hi) 3%, transparent) 0 2px, transparent 2px 34px),
+    var(--bg-page);
 }
 
 .rondo-floodlight-scene[data-variant="2"] {
   background:
-    radial-gradient(130% 120% at 50% -30%, rgba(255, 255, 255, 0.13), transparent 44%),
-    radial-gradient(60% 70% at 15% 112%, rgba(255, 255, 255, 0.06), transparent 55%),
+    radial-gradient(130% 120% at 50% -30%, color-mix(in oklch, var(--ink-hi) 13%, transparent), transparent 44%),
+    radial-gradient(60% 70% at 15% 112%, color-mix(in oklch, var(--ink-hi) 6%, transparent), transparent 55%),
     radial-gradient(60% 70% at 85% 112%, color-mix(in oklch, var(--color-team-purple) 16%, transparent), transparent 55%),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0 2px, transparent 2px 34px),
-    var(--color-rondo-black);
+    repeating-linear-gradient(90deg, color-mix(in oklch, var(--ink-hi) 3%, transparent) 0 2px, transparent 2px 34px),
+    var(--bg-page);
 }
 
 .rondo-floodlight-scene--gold {
   background:
-    radial-gradient(120% 140% at 50% -30%, color-mix(in oklch, var(--color-rondo-accent) 24%, transparent), transparent 55%),
-    radial-gradient(70% 90% at 50% 118%, rgba(255, 255, 255, 0.05), transparent 60%),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 2px, transparent 2px 34px),
-    var(--color-rondo-black);
+    radial-gradient(120% 140% at 50% -30%, color-mix(in oklch, var(--gold) 24%, transparent), transparent 55%),
+    radial-gradient(70% 90% at 50% 118%, color-mix(in oklch, var(--ink-hi) 5%, transparent), transparent 60%),
+    repeating-linear-gradient(90deg, color-mix(in oklch, var(--ink-hi) 3.5%, transparent) 0 2px, transparent 2px 34px),
+    var(--bg-page);
 }
 
 .rondo-trophy-mark {
-  filter: drop-shadow(0 8px 22px rgba(0, 0, 0, 0.55));
+  color: var(--gold);
 }
 
 /* Broadcast-style LIVE indicator — red, distinct from the gold accent so
@@ -536,16 +609,16 @@
   display: inline-flex;
   width: 6px;
   height: 6px;
-  border-radius: 999px;
-  background: var(--color-rondo-red);
+  border-radius: var(--r-pill);
+  background: var(--live);
 }
 
 .rondo-live-dot::after {
   content: "";
   position: absolute;
   inset: -4px;
-  border-radius: 999px;
-  border: 1.5px solid var(--color-rondo-red);
+  border-radius: var(--r-pill);
+  border: 1.5px solid var(--live);
   animation: rondo-live-ping 1.6s ease-out infinite;
 }
 
@@ -562,9 +635,8 @@
 
 /* Sticky bottom registration action card on the tournament detail page. */
 .rondo-sticky-action {
-  background: rgba(5, 5, 5, 0.92);
+  background: color-mix(in oklch, var(--bg-page) 92%, transparent);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 -18px 40px rgba(0, 0, 0, 0.45);
+  border-top: 1px solid var(--stroke);
 }

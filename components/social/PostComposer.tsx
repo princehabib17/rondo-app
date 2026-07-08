@@ -1,19 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { Clapperboard, Send } from "lucide-react";
+import { PaperPlaneRight, VideoCamera } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { POST_BODY_MAX } from "@/lib/social/post-schema";
 
 interface PostComposerProps {
   onPosted: () => void;
+  gameId?: string;
+  tournamentId?: string;
+  defaultKind?: "post" | "highlight" | "match_result";
 }
 
-export function PostComposer({ onPosted }: PostComposerProps) {
+export function PostComposer({ onPosted, gameId, tournamentId, defaultKind = "post" }: PostComposerProps) {
   const [body, setBody] = useState("");
   const [mediaUrl, setMediaUrl] = useState("");
-  const [isHighlight, setIsHighlight] = useState(false);
+  const [isHighlight, setIsHighlight] = useState(defaultKind === "highlight");
   const [showMediaInput, setShowMediaInput] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -27,7 +30,9 @@ export function PostComposer({ onPosted }: PostComposerProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           body: trimmed,
-          kind: isHighlight ? "highlight" : "post",
+          kind: defaultKind === "match_result" ? "match_result" : isHighlight ? "highlight" : "post",
+          ...(gameId ? { gameId } : {}),
+          ...(tournamentId ? { tournamentId } : {}),
           ...(mediaUrl.trim() ? { mediaUrl: mediaUrl.trim() } : {}),
         }),
       });
@@ -49,13 +54,13 @@ export function PostComposer({ onPosted }: PostComposerProps) {
   }
 
   return (
-    <div className="rondo-surface p-3 space-y-2">
+    <div className="rondo-surface space-y-3 p-4">
       <textarea
         value={body}
         onChange={(e) => setBody(e.target.value.slice(0, POST_BODY_MAX))}
-        placeholder="Share a result, a highlight, or find players…"
+        placeholder={tournamentId ? "Post to this tournament" : "Share a result, a highlight, or find players"}
         rows={2}
-        className="w-full bg-transparent text-white text-sm placeholder:text-white/30 resize-none outline-none"
+        className="w-full resize-none bg-transparent rondo-body text-[var(--ink-hi)] outline-none placeholder:text-[var(--ink-low)]"
       />
       {showMediaInput && (
         <input
@@ -63,7 +68,7 @@ export function PostComposer({ onPosted }: PostComposerProps) {
           value={mediaUrl}
           onChange={(e) => setMediaUrl(e.target.value)}
           placeholder="https:// link to a photo or clip"
-          className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white text-xs placeholder:text-white/30 outline-none focus:border-rondo-accent/40"
+          className="h-12 w-full rounded-[var(--r-sm)] border border-transparent bg-[var(--bg-inset)] px-4 rondo-body text-[var(--ink-hi)] outline-none placeholder:text-[var(--ink-low)] focus:border-[var(--gold)]"
         />
       )}
       <div className="flex items-center justify-between">
@@ -72,23 +77,23 @@ export function PostComposer({ onPosted }: PostComposerProps) {
             type="button"
             onClick={() => setIsHighlight((v) => !v)}
             className={cn(
-              "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors",
+              "inline-flex h-8 items-center gap-1 rounded-[var(--r-pill)] border px-3 rondo-label transition-colors",
               isHighlight
-                ? "border-rondo-accent/60 bg-rondo-accent/15 text-rondo-accent"
-                : "border-white/10 text-white/40"
+                ? "border-[var(--gold)] bg-[var(--gold-dim)] text-[var(--gold)]"
+                : "border-[var(--stroke)] text-[var(--ink-low)]"
             )}
           >
-            <Clapperboard size={12} />
+            <VideoCamera size={14} />
             Highlight
           </button>
           <button
             type="button"
             onClick={() => setShowMediaInput((v) => !v)}
             className={cn(
-              "rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors",
+              "h-8 rounded-[var(--r-pill)] border px-3 rondo-label transition-colors",
               showMediaInput
-                ? "border-rondo-accent/60 bg-rondo-accent/15 text-rondo-accent"
-                : "border-white/10 text-white/40"
+                ? "border-[var(--gold)] bg-[var(--gold-dim)] text-[var(--gold)]"
+                : "border-[var(--stroke)] text-[var(--ink-low)]"
             )}
           >
             + Media link
@@ -98,10 +103,10 @@ export function PostComposer({ onPosted }: PostComposerProps) {
           type="button"
           onClick={submit}
           disabled={!body.trim() || submitting}
-          className="inline-flex items-center gap-1.5 rounded-full bg-rondo-accent text-black px-4 py-1.5 text-xs font-bold disabled:opacity-40"
+          className="inline-flex h-10 items-center gap-2 rounded-[var(--r-pill)] bg-[var(--gold)] px-4 rondo-meta font-bold text-[var(--gold-ink)] disabled:opacity-40"
         >
-          <Send size={12} />
-          {submitting ? "Posting…" : "Post"}
+          <PaperPlaneRight size={16} weight="fill" />
+          {submitting ? "Posting..." : "Post"}
         </button>
       </div>
     </div>
