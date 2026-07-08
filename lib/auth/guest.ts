@@ -8,7 +8,7 @@ export async function signInAsGuest(): Promise<{ ok: boolean; error?: string }> 
 
   if (!anonError && anonData.user) {
     // Best-effort — profile creation failure shouldn't block the guest
-    await fetch("/api/auth/guest/ensure-profile", { method: "POST" }).catch(() => null);
+    void fetch("/api/auth/guest/ensure-profile", { method: "POST" }).catch(() => null);
     return { ok: true };
   }
 

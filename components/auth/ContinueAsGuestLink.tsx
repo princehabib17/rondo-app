@@ -5,6 +5,18 @@ import { useRouter } from "next/navigation";
 import { signInAsGuest } from "@/lib/auth/guest";
 import { getSafeRedirectPath } from "@/lib/auth/safe-redirect";
 
+const GUEST_BLOCKED_PREFIXES = ["/my-games", "/wallet", "/organizer"];
+const GUEST_BLOCKED_SUFFIXES = ["/join", "/payment", "/chat", "/room", "/confirmed", "/invite"];
+
+function getGuestDestination(rawNext: string | null): string {
+  const next = rawNext ? getSafeRedirectPath(rawNext) : "/onboarding/slides";
+  const isBlocked =
+    GUEST_BLOCKED_PREFIXES.some((prefix) => next.startsWith(prefix)) ||
+    GUEST_BLOCKED_SUFFIXES.some((suffix) => next.endsWith(suffix));
+
+  return isBlocked ? "/feed" : next;
+}
+
 export function ContinueAsGuestLink() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +34,7 @@ export function ContinueAsGuestLink() {
     }
 
     const next = new URLSearchParams(window.location.search).get("next");
-    router.push(next ? getSafeRedirectPath(next) : "/onboarding/slides");
+    router.push(getGuestDestination(next));
     router.refresh();
   }
 

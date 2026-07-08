@@ -112,6 +112,8 @@ export default function CommunityPage() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function init() {
       const supabase = createClient();
       const { data: userData } = await supabase.auth.getUser();
@@ -121,12 +123,27 @@ export default function CommunityPage() {
         router.push("/login");
         return;
       }
+      if (cancelled) return;
+
       setCurrentUserId(uid);
       setIsGuest(isGuestUser(userData.user));
-      await Promise.all([loadPosts(), loadSocial(uid)]);
       setLoading(false);
+
+      loadPosts().catch(() => {
+        if (!cancelled) setPostsLoading(false);
+      });
+      loadSocial(uid).catch(() => {
+        if (!cancelled) {
+          setFollowing([]);
+          setFollowers([]);
+        }
+      });
     }
     init();
+
+    return () => {
+      cancelled = true;
+    };
   }, [router, loadSocial, loadPosts]);
 
   const loadMorePosts = useCallback(async () => {

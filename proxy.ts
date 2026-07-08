@@ -15,6 +15,7 @@ const PUBLIC_ROUTES = [
 const PUBLIC_PREFIXES = [
   "/api/payments/webhook",
   "/api/auth/guest",
+  "/api/auth/phone",
   "/api/auth/signup",
   "/api/seed",
 ];
