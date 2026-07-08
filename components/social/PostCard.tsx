@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ChatCircle, Clapperboard, Trash, Trophy } from "@phosphor-icons/react";
+import { ChatCircle, Trash, Trophy, VideoCamera } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { PUBLIC_PROFILE_SELECT } from "@/lib/supabase/profile-select";
@@ -111,7 +111,7 @@ export function PostCard({ post, currentUserId, onDeleted }: PostCardProps) {
               {post.author?.full_name ?? "Player"}
             </Link>
             {post.kind === "highlight" && (
-              <Chip label="Highlight" variant="outline" size="sm" icon={<Clapperboard size={14} />} />
+              <Chip label="Highlight" variant="outline" size="sm" icon={<VideoCamera size={14} />} />
             )}
             {post.kind === "match_result" && (
               <Chip label="Result" variant="outline" size="sm" icon={<Trophy size={14} />} />

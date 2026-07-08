@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Clapperboard, PaperPlaneRight } from "@phosphor-icons/react";
+import { PaperPlaneRight, VideoCamera } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { POST_BODY_MAX } from "@/lib/social/post-schema";
@@ -83,7 +83,7 @@ export function PostComposer({ onPosted, gameId, tournamentId, defaultKind = "po
                 : "border-[var(--stroke)] text-[var(--ink-low)]"
             )}
           >
-            <Clapperboard size={14} />
+            <VideoCamera size={14} />
             Highlight
           </button>
           <button

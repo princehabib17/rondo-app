@@ -10,9 +10,7 @@ import {
   ImagePlus,
   Loader2,
   MapPin,
-  ShieldCheck,
   Trophy,
-  Users,
   X,
 } from "lucide-react";
 import { useForm, type Resolver } from "react-hook-form";
