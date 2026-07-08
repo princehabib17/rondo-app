@@ -63,13 +63,37 @@ export default function SignupPage() {
         data: { full_name: fullName.trim(), phone: normalizedPhone },
       },
     });
-    setSending(false);
 
     if (otpError) {
-      setError(formatAuthError(otpError.message));
+      const fallback = await fetch("/api/auth/phone", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: normalizedPhone, fullName: fullName.trim() }),
+      });
+      const fallbackJson = await fallback.json().catch(() => ({}));
+      if (!fallback.ok || !fallbackJson.email || !fallbackJson.password) {
+        setSending(false);
+        setError(formatAuthError((fallbackJson.error as string | undefined) ?? otpError.message));
+        return;
+      }
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: fallbackJson.email as string,
+        password: fallbackJson.password as string,
+      });
+      setSending(false);
+      if (signInError) {
+        setError(formatAuthError(signInError.message));
+        return;
+      }
+
+      const next = safeSignupNext(new URLSearchParams(window.location.search).get("next"));
+      router.replace(next === "/onboarding/slides" ? "/feed" : next);
+      router.refresh();
       return;
     }
 
+    setSending(false);
     const next = safeSignupNext(new URLSearchParams(window.location.search).get("next"));
     const params = new URLSearchParams({ phone: normalizedPhone, next });
     router.push(`/otp?${params.toString()}`);

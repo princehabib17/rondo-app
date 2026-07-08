@@ -7,6 +7,18 @@ import { signInAsScout } from "@/lib/auth/scout";
 import { getSafeRedirectPath } from "@/lib/auth/safe-redirect";
 import { Eye, UserSearch } from "lucide-react";
 
+const GUEST_BLOCKED_PREFIXES = ["/my-games", "/wallet", "/organizer"];
+const GUEST_BLOCKED_SUFFIXES = ["/join", "/payment", "/chat", "/room", "/confirmed", "/invite"];
+
+function getGuestDestination(rawNext: string | null): string {
+  const next = getSafeRedirectPath(rawNext, "/feed");
+  const blocked =
+    GUEST_BLOCKED_PREFIXES.some((prefix) => next.startsWith(prefix)) ||
+    GUEST_BLOCKED_SUFFIXES.some((suffix) => next.endsWith(suffix));
+
+  return blocked ? "/feed" : next;
+}
+
 export function GuestScoutLinks() {
   const router = useRouter();
   const [guestLoading, setGuestLoading] = useState(false);
@@ -23,7 +35,7 @@ export function GuestScoutLinks() {
       return;
     }
     const next = new URLSearchParams(window.location.search).get("next");
-    router.replace(next ? getSafeRedirectPath(next) : "/feed");
+    router.replace(getGuestDestination(next));
     router.refresh();
   }
 
