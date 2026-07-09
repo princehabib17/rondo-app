@@ -361,7 +361,7 @@ export default function CreateMatchPage() {
         <div className="px-4 py-5">
           <div className="rounded-2xl border border-rondo-yellow/15 bg-rondo-yellow/10 p-4">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-rondo-yellow">
-              Step 1 of 5
+              Match builder
             </p>
             <h2 className="mt-1 font-heading text-2xl font-black uppercase italic leading-none text-white">
               Start with the match page players will see.

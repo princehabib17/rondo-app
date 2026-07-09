@@ -169,7 +169,11 @@ export function BottomNav() {
                 animate={
                   highlighted ? { scale: [1, 0.84, 1.1, 1] } : { scale: 1 }
                 }
-                transition={snappy}
+                transition={
+                  highlighted
+                    ? { type: "tween", duration: 0.28, ease: "easeOut" }
+                    : snappy
+                }
                 key={highlighted ? "active" : "inactive"}
                 className="relative z-10"
               >

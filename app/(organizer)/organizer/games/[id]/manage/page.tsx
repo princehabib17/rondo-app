@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Megaphone, Timer, Users } from "lucide-react";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import { formatGameDate } from "@/lib/utils/format";
@@ -149,7 +150,7 @@ export default function ManageGamePage() {
     setAddingWaitlistId(null);
     if (!res.ok) {
       const json = await res.json().catch(() => ({}));
-      alert(json.error ?? "Could not add player");
+      toast.error(json.error ?? "Could not add player");
       return;
     }
     await loadGame();

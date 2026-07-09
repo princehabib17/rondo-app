@@ -10,20 +10,29 @@ export default function AnnouncePage() {
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
 
   async function handleSend() {
     if (!body.trim() || sending) return;
     setSending(true);
+    setSendError(null);
     const supabase = createClient();
     const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return;
-    await supabase.from("announcements").insert({
+    if (!userData.user) {
+      setSending(false);
+      return;
+    }
+    const { error } = await supabase.from("announcements").insert({
       game_id: id,
       organizer_id: userData.user.id,
       body: body.trim(),
     });
-    setSent(true);
     setSending(false);
+    if (error) {
+      setSendError(error.message);
+      return;
+    }
+    setSent(true);
     setTimeout(() => router.back(), 1500);
   }
 
@@ -53,6 +62,10 @@ export default function AnnouncePage() {
           />
           <p className="text-muted-foreground text-xs text-right">{body.length}/500</p>
         </div>
+
+        {sendError && (
+          <p className="text-red-400 text-sm">{sendError}</p>
+        )}
 
         {sent ? (
           <div className="text-center py-4">
