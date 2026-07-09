@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { Fire, MapTrifold, Trophy } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import type { Game } from "@/lib/supabase/types";
 import { fetchOpenGames } from "@/lib/supabase/game-queries";
@@ -89,6 +91,7 @@ export function FeedPageClient({
 
   const tabGames = useMemo(() => partitionByTab(games, tab), [games, tab]);
   const featuredGame = useMemo(() => pickFeaturedGame(games), [games]);
+  const openThisWeek = useMemo(() => partitionByTab(games, "nearby").length, [games]);
   const listGames = useMemo(() => {
     if (!featuredGame) return tabGames;
     return tabGames.filter((game) => game.id !== featuredGame.id);
@@ -99,6 +102,44 @@ export function FeedPageClient({
       <FeedHeader notificationCount={notificationCount} />
 
       <HeroCarousel slides={DEFAULT_CAROUSEL_SLIDES} />
+
+      <section className="px-4 pt-4">
+        <div className="grid grid-cols-2 gap-2">
+          <Link
+            href="/feed/map"
+            className="group relative min-h-32 overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-4"
+          >
+            <div className="absolute inset-0 rondo-map-shell opacity-55 transition-opacity group-hover:opacity-70" />
+            <div className="relative flex h-full flex-col justify-between">
+              <MapTrifold size={26} weight="duotone" className="text-[var(--gold)]" aria-hidden />
+              <div>
+                <p className="rondo-label text-[var(--gold)]">Street map</p>
+                <p className="rondo-meta mt-1 text-[var(--ink-mid)]">See games around you</p>
+              </div>
+            </div>
+          </Link>
+
+          <Link
+            href="/tournaments"
+            className="group relative min-h-32 overflow-hidden rounded-[var(--r-md)] border border-[color-mix(in_oklch,var(--gold)_28%,var(--stroke))] bg-[color-mix(in_oklch,var(--gold)_9%,var(--bg-surface))] p-4"
+          >
+            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[var(--gold-dim)] blur-2xl transition-transform group-hover:scale-125" />
+            <div className="relative flex h-full flex-col justify-between">
+              <Trophy size={26} weight="duotone" className="text-[var(--gold)]" aria-hidden />
+              <div>
+                <p className="rondo-label text-[var(--gold)]">Tournaments</p>
+                <p className="rondo-meta mt-1 text-[var(--ink-mid)]">Brackets and rooms</p>
+              </div>
+            </div>
+          </Link>
+        </div>
+        <div className="mt-2 flex items-center gap-2 rounded-[var(--r-pill)] border border-[var(--stroke)] bg-[var(--bg-inset)] px-3 py-2">
+          <Fire size={16} weight="duotone" className="text-[var(--gold)]" aria-hidden />
+          <p className="rondo-meta text-[var(--ink-mid)]">
+            {openThisWeek > 0 ? `${openThisWeek} open this week` : "No open matches this week yet"}
+          </p>
+        </div>
+      </section>
 
       <TopOrganizers organizers={initialOrganizers} />
 

@@ -1,4 +1,4 @@
-import { Lock, Users2, Zap } from "lucide-react";
+import { Lightning, Lock, Users } from "@phosphor-icons/react";
 import type { Game } from "@/lib/supabase/types";
 import {
   getMatchType,
@@ -23,11 +23,11 @@ function Pill({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-body font-semibold uppercase tracking-wide leading-none",
-        tone === "neutral" && "bg-white/8 text-white/70 border border-white/10",
-        tone === "accent" && "bg-rondo-accent/15 text-rondo-accent border border-rondo-accent/25",
-        tone === "warn" && "bg-amber-400/15 text-amber-300 border border-amber-400/25",
-        tone === "muted" && "bg-white/5 text-white/50 border border-white/8",
+        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-body text-[10px] font-semibold uppercase leading-none tracking-wide",
+        tone === "neutral" && "border-[var(--stroke)] bg-[var(--bg-inset)] text-[var(--ink-mid)]",
+        tone === "accent" && "border-[color-mix(in_oklch,var(--gold)_34%,transparent)] bg-[var(--gold-dim)] text-[var(--gold)]",
+        tone === "warn" && "border-[color-mix(in_oklch,var(--gold)_34%,transparent)] bg-[var(--gold-dim)] text-[var(--gold)]",
+        tone === "muted" && "border-[var(--stroke)] bg-[color-mix(in_oklch,var(--ink-hi)_4%,transparent)] text-[var(--ink-low)]",
         className
       )}
     >
@@ -64,20 +64,20 @@ export function GameBadges({
 
       {game.is_private && (
         <Pill tone="muted">
-          <Lock size={9} strokeWidth={2.5} />
+          <Lock size={9} weight="bold" />
           Private
         </Pill>
       )}
 
       {showStatus && full && (
         <Pill tone="muted">
-          <Users2 size={9} strokeWidth={2.5} />
+          <Users size={9} weight="bold" />
           Full
         </Pill>
       )}
       {showStatus && !full && almost && (
         <Pill tone="warn">
-          <Zap size={9} strokeWidth={2.5} />
+          <Lightning size={9} weight="fill" />
           Almost full
         </Pill>
       )}

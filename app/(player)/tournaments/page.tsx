@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Trophy } from "@phosphor-icons/react";
+import { Fire, Shield, Trophy, Users } from "@phosphor-icons/react";
 import { motion, useReducedMotion } from "motion/react";
 import { createClient } from "@/lib/supabase/client";
 import type { Tournament, TournamentStatus } from "@/lib/supabase/types";
@@ -42,6 +42,8 @@ export default function TournamentsPage() {
   const visible = filter === "all" ? tournaments : tournaments.filter((t) => t.status === filter);
   const countFor = (value: TournamentStatus | "all") =>
     value === "all" ? tournaments.length : tournaments.filter((t) => t.status === value).length;
+  const openCount = countFor("registration");
+  const liveCount = countFor("active");
 
   return (
     <div className="min-h-[100dvh] rondo-page pb-24">
@@ -56,6 +58,43 @@ export default function TournamentsPage() {
       </header>
 
       <div className="mx-auto max-w-lg space-y-6 px-4 py-6">
+        <section className="relative overflow-hidden rounded-[var(--r-lg)] border border-[var(--stroke)] rondo-floodlight-scene rondo-floodlight-scene--gold p-5">
+          <div className="absolute inset-0 rondo-map-shell opacity-20 mix-blend-screen" />
+          <div className="relative space-y-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="rondo-label text-[var(--gold)]">City bracket board</p>
+                <h2 className="mt-2 max-w-[15rem] font-heading text-[3.25rem] font-black uppercase leading-[0.82] tracking-[-0.035em] text-[var(--ink-hi)]">
+                  Run the table
+                </h2>
+              </div>
+              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full border border-[color-mix(in_oklch,var(--gold)_32%,var(--stroke))] bg-[var(--gold-dim)]">
+                <Trophy size={28} weight="duotone" className="text-[var(--gold)]" aria-hidden />
+              </div>
+            </div>
+            <p className="max-w-[20rem] rondo-body text-[var(--ink-mid)]">
+              Join open brackets, follow live scores, and carry the win into the room.
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-[var(--r-md)] border border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_64%,transparent)] p-3">
+                <Fire size={18} weight="duotone" className="mb-3 text-[var(--gold)]" aria-hidden />
+                <p className="rondo-title text-[var(--ink-hi)]">{liveCount}</p>
+                <p className="rondo-meta text-[var(--ink-low)]">Live</p>
+              </div>
+              <div className="rounded-[var(--r-md)] border border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_64%,transparent)] p-3">
+                <Users size={18} weight="duotone" className="mb-3 text-[var(--gold)]" aria-hidden />
+                <p className="rondo-title text-[var(--ink-hi)]">{openCount}</p>
+                <p className="rondo-meta text-[var(--ink-low)]">Open</p>
+              </div>
+              <div className="rounded-[var(--r-md)] border border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_64%,transparent)] p-3">
+                <Shield size={18} weight="duotone" className="mb-3 text-[var(--gold)]" aria-hidden />
+                <p className="rondo-title text-[var(--ink-hi)]">{tournaments.length}</p>
+                <p className="rondo-meta text-[var(--ink-low)]">Total</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
           {FILTERS.map(({ value, label }) => {
             const count = countFor(value);

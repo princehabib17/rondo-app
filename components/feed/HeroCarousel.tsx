@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, useMotionValue, AnimatePresence } from "motion/react";
-import { ChevronRight } from "lucide-react";
+import { ArrowRight, MapPin, Trophy } from "@phosphor-icons/react";
 import type { CarouselSlide } from "@/lib/feed/carousel-slides";
-import { snappy, bouncy } from "@/components/motion/springs";
+import { bouncy, snappy } from "@/components/motion/springs";
 
 interface HeroCarouselProps {
   slides: CarouselSlide[];
@@ -47,7 +47,7 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
     <section className="px-4 pt-4">
       <div
         ref={containerRef}
-        className="relative h-52 rounded-2xl overflow-hidden bg-secondary select-none"
+        className="relative min-h-[25rem] overflow-hidden rounded-[var(--r-lg)] border border-[var(--stroke)] bg-[var(--bg-page)] select-none"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
@@ -62,13 +62,15 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
               src={slide.image}
               alt=""
               fill
-              className="object-cover"
+              className="object-cover opacity-50 saturate-75"
               sizes="400px"
               quality={90}
               priority={current === 0}
             />
           </motion.div>
         </AnimatePresence>
+        <div className="absolute inset-0 rondo-map-shell opacity-55 mix-blend-screen" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_oklch,var(--bg-page)_35%,transparent)_0%,var(--bg-page)_76%)]" />
 
         {/* Drag layer */}
         <motion.div
@@ -81,32 +83,42 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
           onDragEnd={handleDragEnd}
         />
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/20 pointer-events-none" />
+        <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="rounded-[var(--r-md)] border border-[color-mix(in_oklch,var(--gold)_32%,transparent)] bg-[color-mix(in_oklch,var(--bg-page)_72%,transparent)] px-3 py-2 backdrop-blur-md">
+              <span className="rondo-label text-[var(--gold)]">{slide.tag}</span>
+              <p className="rondo-meta mt-1 text-[var(--ink-low)]">Tap, book, play</p>
+            </div>
+            <div className="grid h-16 w-16 place-items-center rounded-full border border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_68%,transparent)] backdrop-blur-md">
+              {current % 2 === 0 ? (
+                <MapPin size={28} weight="duotone" className="text-[var(--gold)]" aria-hidden />
+              ) : (
+                <Trophy size={28} weight="duotone" className="text-[var(--gold)]" aria-hidden />
+              )}
+            </div>
+          </div>
 
-        <div className="absolute inset-0 flex flex-col justify-end p-5 pointer-events-none">
           <motion.div
             key={`content-${current}`}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...bouncy, delay: 0.05 }}
+            className="space-y-4"
           >
-            <span className="font-heading text-rondo-accent text-[10px] font-black uppercase tracking-[0.2em] mb-1 block">
-              {slide.tag}
-            </span>
-            <h2 className="font-heading text-white font-black italic text-2xl uppercase leading-none mb-1.5">
+            <h2 className="max-w-[18rem] font-heading text-[3.25rem] font-black uppercase leading-[0.82] tracking-[-0.035em] text-[var(--ink-hi)]">
               {slide.title}
             </h2>
-            <p className="font-body text-white/75 text-xs leading-relaxed mb-4 max-w-[260px]">
+            <p className="max-w-[17rem] rondo-body text-[var(--ink-mid)]">
               {slide.description}
             </p>
+            <Link
+              href={slide.ctaHref}
+              className="pointer-events-auto inline-flex min-h-12 items-center gap-2 rounded-[var(--r-pill)] bg-[var(--gold)] px-5 font-heading text-sm font-black uppercase tracking-wide text-[var(--gold-ink)]"
+            >
+              {slide.ctaLabel}
+              <ArrowRight size={16} weight="bold" />
+            </Link>
           </motion.div>
-          <Link
-            href={slide.ctaHref}
-            className="inline-flex items-center gap-2 self-start bg-rondo-accent text-black font-heading font-black text-xs uppercase tracking-wider px-4 py-2.5 rounded-lg pointer-events-auto"
-          >
-            {slide.ctaLabel}
-            <ChevronRight size={14} strokeWidth={3} />
-          </Link>
         </div>
       </div>
 

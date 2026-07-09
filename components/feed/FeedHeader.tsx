@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Bell, Clapperboard } from "lucide-react";
+import { Bell, VideoCamera } from "@phosphor-icons/react";
 
 interface FeedHeaderProps {
   notificationCount?: number;
@@ -8,30 +8,33 @@ interface FeedHeaderProps {
 
 export function FeedHeader({ notificationCount = 0 }: FeedHeaderProps) {
   return (
-    <header className="sticky top-0 z-40 rondo-glass-nav border-b border-white/5">
-      <div className="flex items-center justify-between px-4 py-3 max-w-lg mx-auto">
+    <header className="sticky top-0 z-40 border-b border-[var(--stroke)] rondo-glass-nav">
+      <div className="mx-auto flex max-w-lg items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2.5">
           <Image src="/rondo-logo.png" alt="RONDO" width={32} height={32} className="object-contain" priority />
-          <span className="font-heading text-white font-black italic text-sm uppercase tracking-wide">
-            Rondo
-          </span>
+          <div>
+            <span className="block font-heading text-sm font-black uppercase tracking-wide text-[var(--ink-hi)]">
+              Rondo
+            </span>
+            <span className="rondo-meta -mt-0.5 block text-[var(--ink-low)]">Street feed</span>
+          </div>
         </div>
         <div className="flex items-center gap-1.5">
           <Link
             href="/scout"
-            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-rondo-accent/25 bg-rondo-accent/12 px-3 font-heading text-xs font-black uppercase tracking-wide text-rondo-accent transition-colors duration-200 active:scale-[0.98]"
+            className="inline-flex h-10 items-center gap-1.5 rounded-[var(--r-pill)] border border-[color-mix(in_oklch,var(--gold)_34%,transparent)] bg-[var(--gold-dim)] px-3 font-heading text-xs font-black uppercase tracking-wide text-[var(--gold)] transition-colors duration-200 active:scale-[0.98]"
           >
-            <Clapperboard size={16} />
+            <VideoCamera size={16} weight="duotone" />
             Scout
           </Link>
           <Link
             href="/notifications"
-            className="relative w-10 h-10 flex items-center justify-center rounded-xl text-white/70 hover:text-white hover:bg-white/5 transition-colors duration-200 active:scale-[0.98]"
+            className="relative flex h-10 w-10 items-center justify-center rounded-[var(--r-pill)] text-[var(--ink-mid)] transition-colors duration-200 hover:bg-[var(--bg-inset)] hover:text-[var(--ink-hi)] active:scale-[0.98]"
             aria-label="Notifications"
           >
-            <Bell size={20} strokeWidth={1.75} />
+            <Bell size={20} weight="duotone" />
             {notificationCount > 0 && (
-              <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+              <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--live)] px-1 text-[10px] font-bold text-white">
                 {notificationCount > 9 ? "9+" : notificationCount}
               </span>
             )}
