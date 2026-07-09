@@ -19,6 +19,12 @@ sees the same white "can't be reached" frame I did. Evidence:
 `scratchpad/rondo-feed.png` (empty feed), Chrome error frames captured for
 `/login` and `/signup`.
 
+**D0 — the store falls down while you're inside it (resilience).** The crash above
+isn't just a test-env artifact: a data fetch rejecting unhandled at module scope
+takes the whole storefront down. A player on bad hotel Wi-Fi gets the identical
+white frame. *Fix:* guard the fetch helpers (`lib/feed/*`) to degrade to an
+empty-with-retry state; never let a data fetch reject unhandled at module scope.
+
 ---
 
 ## Verdict
@@ -87,6 +93,11 @@ system allows 3 radii + pill and one spacing scale; the dashboard uses arbitrary
 values that appear nowhere else, so nothing lines up between this screen and the
 feed.
 *Fix:* snap to the scale — `px-4` gutter, `--r-md` cards, Display/Title type roles.
+Minute detail: eleven hand-mixed inks (`white/40 /35 /45 /30`, `border-white/5 /6
+/8 /12`, `bg-white/6 [0.02] [0.03]`) where the system defines three; and the
+`bouncy` spring fires on *every* section entrance (`:164,:184,:220,:278,:306`) —
+Matchday scopes `bouncy` to celebrations and `gentle` to entrances, so the whole
+dashboard wobbles like a notification on every load.
 
 **S6 — Empty state is a dashed void, not art direction.**
 The "No games yet" state (`dashboard/page.tsx:274–293`) is a dashed-border box with
