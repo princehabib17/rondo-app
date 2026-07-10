@@ -114,33 +114,40 @@ export default function ReelsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] bg-black flex items-center justify-center">
-        <div className="w-10 h-10 border-2 border-rondo-accent border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-[100dvh] rondo-page flex items-center justify-center">
+        <div className="w-10 h-10 border-2 border-[var(--gold)] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   if (reels.length === 0) {
     return (
-      <div className="min-h-[100dvh] bg-black flex flex-col items-center justify-center gap-4 px-8 text-center">
-        <p className="font-heading text-white font-black italic text-2xl uppercase">No Clips Yet</p>
-        <p className="font-body text-white/50 text-sm">
+      <div className="min-h-[100dvh] rondo-page flex flex-col items-center justify-center gap-4 px-8 text-center">
+        <p className="font-heading text-[var(--ink-hi)] font-black italic text-2xl uppercase">No Clips Yet</p>
+        <p className="font-body text-[var(--ink-low)] text-sm">
           No clips posted yet. Check back soon.
         </p>
         {isPlayer && (
           <button
             onClick={() => setShowUpload(true)}
-            className="mt-4 bg-rondo-accent text-black font-bold px-6 py-3 rounded-xl"
+            className="rondo-btn rondo-btn-primary mt-4 !w-auto px-6"
           >
             Be the first — post a clip
           </button>
+        )}
+        {showUpload && currentUserId && (
+          <ReelUploadModal
+            userId={currentUserId}
+            onClose={() => setShowUpload(false)}
+            onUploaded={() => fetchReels(true)}
+          />
         )}
       </div>
     );
   }
 
   return (
-    <div className="relative bg-black overflow-hidden" style={{ height: "100dvh" }}>
+    <div className="relative bg-[var(--bg-page)] overflow-hidden" style={{ height: "100dvh" }}>
       {/* Scroll container — vertical snap */}
       <div
         ref={containerRef}
@@ -161,7 +168,7 @@ export default function ReelsPage() {
         ))}
         {loadingMore && (
           <div className="h-20 flex items-center justify-center">
-            <div className="w-6 h-6 border-2 border-rondo-accent border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-[var(--gold)] border-t-transparent rounded-full animate-spin" />
           </div>
         )}
       </div>
@@ -170,7 +177,8 @@ export default function ReelsPage() {
       {isPlayer && (
         <button
           onClick={() => setShowUpload(true)}
-          className="absolute top-14 right-4 w-10 h-10 rounded-full bg-rondo-accent text-black flex items-center justify-center shadow-lg z-20"
+          className="absolute top-14 right-4 w-10 h-10 rounded-full bg-[var(--gold)] text-[var(--gold-ink)] flex items-center justify-center shadow-lg z-20"
+          aria-label="Upload reel"
         >
           <PlusCircle size={20} />
         </button>
@@ -180,7 +188,7 @@ export default function ReelsPage() {
       {isScout && (
         <button
           onClick={() => router.push("/scout/shortlist")}
-          className="absolute top-14 left-4 flex items-center gap-1.5 bg-black/60 border border-rondo-accent/30 text-rondo-accent text-xs font-semibold px-3 py-2 rounded-full z-20"
+          className="absolute top-14 left-4 flex items-center gap-1.5 bg-[var(--bg-page)]/60 border border-[var(--gold)]/30 text-[var(--gold)] text-xs font-semibold px-3 py-2 rounded-full z-20"
         >
           <Bookmark size={14} />
           Shortlist ({shortlisted.size})

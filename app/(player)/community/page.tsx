@@ -20,12 +20,12 @@ const POSTS_PAGE_SIZE = 20;
 function PlayerList({ title, players }: { title: string; players: Profile[] }) {
   return (
     <section className="space-y-3">
-      <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+      <h2 className="rondo-label text-[var(--ink-low)]">
         {title} ({players.length})
       </h2>
       {players.length === 0 ? (
         <div className="rondo-surface p-4">
-          <p className="text-muted-foreground text-sm">No players yet.</p>
+          <p className="text-[var(--ink-low)] text-sm">No players yet.</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -33,14 +33,14 @@ function PlayerList({ title, players }: { title: string; players: Profile[] }) {
             <Link
               key={player.id}
               href={`/profile/${player.id}`}
-              className="flex items-center gap-3 bg-card border border-border hover:border-rondo-accent/40 rounded-xl p-3 transition-colors"
+              className="flex items-center gap-3 bg-[var(--bg-surface)] border border-[var(--stroke)] hover:border-[var(--gold)]/40 rounded-xl p-3 transition-colors"
             >
               <PlayerAvatar profile={player} size="sm" showFlag linkable={false} />
               <div className="min-w-0">
-                <p className="text-white text-sm font-semibold truncate">
+                <p className="text-[var(--ink-hi)] text-sm font-semibold truncate">
                   {player.full_name ?? "Player"}
                 </p>
-                <p className="text-muted-foreground text-xs truncate">
+                <p className="text-[var(--ink-low)] text-xs truncate">
                   {player.nationality ?? "No nationality yet"}
                 </p>
               </div>
@@ -257,10 +257,10 @@ export default function CommunityPage() {
           <>
             {isGuest ? (
               <div className="rondo-surface p-4 space-y-2">
-                <p className="text-white/70 text-sm">
+                <p className="text-[var(--ink-mid)] text-sm">
                   Create an account to post results, highlights, and shout-outs.
                 </p>
-                <Link href="/signup" className="text-rondo-accent text-xs font-bold">
+                <Link href="/signup" className="text-[var(--gold)] text-xs font-bold">
                   Sign up →
                 </Link>
               </div>
@@ -271,13 +271,13 @@ export default function CommunityPage() {
             {postsLoading ? (
               <div className="space-y-3">
                 {[0, 1, 2].map((i) => (
-                  <div key={i} className="h-28 bg-card border border-border rounded-xl animate-pulse" />
+                  <div key={i} className="h-28 bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-xl animate-pulse" />
                 ))}
               </div>
             ) : posts.length === 0 ? (
               <div className="rondo-surface p-6 text-center space-y-1">
-                <p className="text-white/70 text-sm font-semibold">Nothing here yet</p>
-                <p className="text-muted-foreground text-xs">
+                <p className="text-[var(--ink-mid)] text-sm font-semibold">Nothing here yet</p>
+                <p className="text-[var(--ink-low)] text-xs">
                   Be the first to share a result or a highlight from your last match.
                 </p>
               </div>
@@ -299,7 +299,7 @@ export default function CommunityPage() {
                       type="button"
                       onClick={loadMorePosts}
                       disabled={loadingMore}
-                      className="w-full rounded-xl border border-white/10 py-2.5 text-white/60 text-xs font-semibold disabled:opacity-50"
+                      className="w-full rounded-xl border border-[var(--stroke)] py-2.5 text-[var(--ink-low)] text-xs font-semibold disabled:opacity-50"
                     >
                       {loadingMore ? "Loading..." : "Load more"}
                     </button>
@@ -312,7 +312,7 @@ export default function CommunityPage() {
           <>
             <section className="space-y-3">
               <div className="flex items-center justify-between gap-2">
-                <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+                <h2 className="rondo-label text-[var(--ink-low)]">
                   Players near you
                 </h2>
                 {nearby.length === 0 && (
@@ -320,7 +320,7 @@ export default function CommunityPage() {
                     type="button"
                     onClick={findNearbyPlayers}
                     disabled={locating}
-                    className="text-rondo-accent text-xs font-semibold disabled:opacity-50"
+                    className="text-[var(--gold)] text-xs font-semibold disabled:opacity-50"
                   >
                     {locating ? "Locating..." : "Find nearby"}
                   </button>
@@ -329,10 +329,10 @@ export default function CommunityPage() {
 
               {nearby.length === 0 ? (
                 <div className="rondo-surface p-4 space-y-2">
-                  <p className="text-white/70 text-sm">
+                  <p className="text-[var(--ink-mid)] text-sm">
                     Distance is only shown when you ask. We never track you in the background.
                   </p>
-                  <p className="text-muted-foreground text-xs">
+                  <p className="text-[var(--ink-low)] text-xs">
                     Players who hide location won&apos;t appear. Turn off hiding in your profile if you
                     want to be discoverable.
                   </p>
@@ -343,7 +343,7 @@ export default function CommunityPage() {
                     type="button"
                     onClick={findNearbyPlayers}
                     disabled={locating}
-                    className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-rondo-accent text-black px-4 py-2 text-xs font-bold disabled:opacity-50"
+                    className="rondo-btn rondo-btn-primary mt-2 !w-auto !min-h-0 px-4 py-2 text-xs"
                   >
                     <MapPin size={13} />
                     {locating ? "Locating..." : "Use my location once"}
@@ -355,14 +355,14 @@ export default function CommunityPage() {
                     <Link
                       key={player.id}
                       href={`/profile/${player.id}`}
-                      className="flex items-center gap-3 bg-card border border-border hover:border-rondo-accent/40 rounded-xl p-3 transition-colors"
+                      className="flex items-center gap-3 bg-[var(--bg-surface)] border border-[var(--stroke)] hover:border-[var(--gold)]/40 rounded-xl p-3 transition-colors"
                     >
                       <PlayerAvatar profile={player} size="sm" showFlag linkable={false} />
                       <div className="min-w-0 flex-1">
-                        <p className="text-white text-sm font-semibold truncate">
+                        <p className="text-[var(--ink-hi)] text-sm font-semibold truncate">
                           {player.full_name ?? "Player"}
                         </p>
-                        <p className="text-rondo-accent text-xs">{formatPlayerDistance(player.distanceKm)}</p>
+                        <p className="text-[var(--gold)] text-xs">{formatPlayerDistance(player.distanceKm)}</p>
                       </div>
                     </Link>
                   ))}
@@ -373,7 +373,7 @@ export default function CommunityPage() {
             {loading ? (
               <div className="space-y-3">
                 {[0, 1, 2].map((i) => (
-                  <div key={i} className="h-16 bg-card border border-border rounded-xl animate-pulse" />
+                  <div key={i} className="h-16 bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-xl animate-pulse" />
                 ))}
               </div>
             ) : (
