@@ -6,12 +6,9 @@ import { Fire, MapTrifold, Trophy } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import type { Game } from "@/lib/supabase/types";
 import { fetchOpenGames } from "@/lib/supabase/game-queries";
-import { DEFAULT_CAROUSEL_SLIDES } from "@/lib/feed/carousel-slides";
 import type { OrganizerGroup } from "@/lib/feed/organizers";
 import { FeedHeader } from "@/components/feed/FeedHeader";
-import { HeroCarousel } from "@/components/feed/HeroCarousel";
 import { TopOrganizers } from "@/components/feed/TopOrganizers";
-import { FeaturedGameCard } from "@/components/feed/FeaturedGameCard";
 import { NearbyGamesSection } from "@/components/feed/NearbyGamesSection";
 
 type GamesTab = "nearby" | "upcoming";
@@ -24,16 +21,6 @@ interface FeedPageClientProps {
   initialNotificationCount: number;
   initialHasMore: boolean;
   shouldExpireReservations: boolean;
-}
-
-function pickFeaturedGame(games: Game[]): Game | null {
-  if (games.length === 0) return null;
-  return [...games].sort((a, b) => {
-    const aCount = a.game_players?.length ?? 0;
-    const bCount = b.game_players?.length ?? 0;
-    if (bCount !== aCount) return bCount - aCount;
-    return new Date(a.date_time).getTime() - new Date(b.date_time).getTime();
-  })[0];
 }
 
 function partitionByTab(games: Game[], tab: GamesTab): Game[] {
@@ -90,26 +77,18 @@ export function FeedPageClient({
   }, []);
 
   const tabGames = useMemo(() => partitionByTab(games, tab), [games, tab]);
-  const featuredGame = useMemo(() => pickFeaturedGame(games), [games]);
   const openThisWeek = useMemo(() => partitionByTab(games, "nearby").length, [games]);
-  const listGames = useMemo(() => {
-    if (!featuredGame) return tabGames;
-    return tabGames.filter((game) => game.id !== featuredGame.id);
-  }, [tabGames, featuredGame]);
 
   return (
-    <div className="min-h-[100dvh] rondo-page">
+    <div className="min-h-[100dvh]">
       <FeedHeader notificationCount={notificationCount} />
-
-      <HeroCarousel slides={DEFAULT_CAROUSEL_SLIDES} />
 
       <section className="px-4 pt-4">
         <div className="grid grid-cols-2 gap-2">
           <Link
             href="/feed/map"
-            className="group relative min-h-32 overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-4"
+            className="group relative min-h-28 overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-4"
           >
-            <div className="absolute inset-0 rondo-map-shell opacity-55 transition-opacity group-hover:opacity-70" />
             <div className="relative flex h-full flex-col justify-between">
               <MapTrifold size={26} weight="duotone" className="text-[var(--gold)]" aria-hidden />
               <div>
@@ -121,9 +100,8 @@ export function FeedPageClient({
 
           <Link
             href="/tournaments"
-            className="group relative min-h-32 overflow-hidden rounded-[var(--r-md)] border border-[color-mix(in_oklch,var(--gold)_28%,var(--stroke))] bg-[color-mix(in_oklch,var(--gold)_9%,var(--bg-surface))] p-4"
+            className="group relative min-h-28 overflow-hidden rounded-[var(--r-md)] border border-[color-mix(in_oklch,var(--gold)_28%,var(--stroke))] bg-[color-mix(in_oklch,var(--gold)_9%,var(--bg-surface))] p-4"
           >
-            <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[var(--gold-dim)] blur-2xl transition-transform group-hover:scale-125" />
             <div className="relative flex h-full flex-col justify-between">
               <Trophy size={26} weight="duotone" className="text-[var(--gold)]" aria-hidden />
               <div>
@@ -141,12 +119,8 @@ export function FeedPageClient({
         </div>
       </section>
 
-      <TopOrganizers organizers={initialOrganizers} />
-
-      {featuredGame ? <FeaturedGameCard game={featuredGame} /> : null}
-
       <NearbyGamesSection
-        games={listGames}
+        games={tabGames}
         tab={tab}
         onTabChange={setTab}
         loading={false}
@@ -154,6 +128,8 @@ export function FeedPageClient({
         loadingMore={loadingMore}
         onLoadMore={loadMore}
       />
+
+      <TopOrganizers organizers={initialOrganizers} />
     </div>
   );
 }

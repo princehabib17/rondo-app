@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  CalendarDays,
-  Home,
-  LayoutDashboard,
-  MapPinned,
-  Radio,
+  CalendarBlank,
+  House,
+  SquaresFour,
+  MapPin,
+  Broadcast,
   User,
-  Users,
-} from "lucide-react";
+  UsersThree,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -29,25 +29,25 @@ type TabDef = {
 const playerTabs: TabDef[] = [
   {
     href: "/feed",
-    icon: Home,
+    icon: House,
     label: "Home",
     isActive: (p) => p === "/feed",
   },
   {
     href: "/community",
-    icon: Users,
+    icon: UsersThree,
     label: "Community",
     isActive: (p) => p === "/community" || p.startsWith("/community/"),
   },
   {
     href: "/feed/map",
-    icon: MapPinned,
+    icon: MapPin,
     label: "Map",
     isActive: (p) => p === "/feed/map" || p.startsWith("/feed/map/"),
   },
   {
     href: "/my-games",
-    icon: CalendarDays,
+    icon: CalendarBlank,
     label: "Matches",
     isActive: (p) => p === "/my-games" || p.startsWith("/my-games/"),
   },
@@ -62,13 +62,13 @@ const playerTabs: TabDef[] = [
 const organizerTabs: TabDef[] = [
   {
     href: "/feed",
-    icon: Home,
+    icon: House,
     label: "Feed",
     isActive: (p) => p === "/feed",
   },
   {
     href: "/organizer/dashboard",
-    icon: LayoutDashboard,
+    icon: SquaresFour,
     label: "Dashboard",
     isActive: (p) =>
       p === "/organizer/dashboard" ||
@@ -76,7 +76,7 @@ const organizerTabs: TabDef[] = [
   },
   {
     href: "/organizer/room",
-    icon: Radio,
+    icon: Broadcast,
     label: "Room",
     isActive: (p) => p === "/organizer/room" || p.startsWith("/organizer/room"),
   },
@@ -118,20 +118,10 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[200]"
+      className="fixed bottom-5 left-1/2 z-[200] -translate-x-1/2"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <div
-        className="flex items-center gap-1 px-2 h-[60px] rounded-[22px]"
-        style={{
-          background: "rgba(12, 12, 12, 0.92)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-          border: "1px solid rgba(255,255,255,0.09)",
-          boxShadow:
-            "0 8px 40px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.06)",
-        }}
-      >
+      <div className="rondo-glass-nav flex h-[60px] items-center gap-1 rounded-[var(--r-lg)] border border-[var(--stroke)] px-2 shadow-[0_8px_40px_color-mix(in_oklch,var(--bg-page)_65%,transparent)]">
         {tabs.map(({ href, icon: Icon, label, isActive }) => {
           const active = isActive(pathname);
           const pending = pendingHref === href && !active;
@@ -145,18 +135,13 @@ export function BottomNav() {
               onClick={() => {
                 if (!active) setPendingHref(href);
               }}
-              className="relative flex items-center justify-center w-[52px] h-[44px] rounded-[14px]"
+              className="relative flex h-11 w-[52px] items-center justify-center rounded-[var(--r-md)]"
             >
-              {/* Sliding pill background */}
               <AnimatePresence>
                 {highlighted && (
                   <motion.span
                     layoutId="nav-pill"
-                    className="absolute inset-0 rounded-[14px]"
-                    style={{
-                      background:
-                        "color-mix(in oklch, oklch(92% 0.16 102) 11%, transparent)",
-                    }}
+                    className="absolute inset-0 rounded-[var(--r-md)] bg-[var(--gold-dim)]"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -166,19 +151,17 @@ export function BottomNav() {
               </AnimatePresence>
 
               <motion.div
-                animate={
-                  highlighted ? { scale: [1, 0.84, 1.1, 1] } : { scale: 1 }
-                }
+                animate={highlighted ? { scale: [1, 0.84, 1.1, 1] } : { scale: 1 }}
                 transition={snappy}
                 key={highlighted ? "active" : "inactive"}
                 className="relative z-10"
               >
                 <Icon
                   size={22}
-                  strokeWidth={highlighted ? 2.1 : 1.65}
+                  weight={highlighted ? "fill" : "duotone"}
                   className={cn(
                     "transition-colors duration-150",
-                    highlighted ? "text-rondo-accent" : "text-white/40"
+                    highlighted ? "text-[var(--gold)]" : "text-[var(--ink-low)]"
                   )}
                 />
               </motion.div>

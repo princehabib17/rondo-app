@@ -27,7 +27,7 @@ export function RondoLogo({ size = "lg", showWordmark = true, className }: Rondo
         className="object-contain"
       />
       {showWordmark && (
-        <span className={cn("text-white font-bold uppercase", s.word)}>RONDO</span>
+        <span className={cn("font-heading font-black uppercase text-[var(--ink-hi)]", s.word)}>RONDO</span>
       )}
     </div>
   );

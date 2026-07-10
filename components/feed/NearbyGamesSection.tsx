@@ -24,7 +24,7 @@ function PlayerProgress({ current, max }: { current: number; max: number }) {
     <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-[color-mix(in_oklch,var(--ink-hi)_8%,transparent)]">
       <div
         className={`h-full rounded-full transition-[width] duration-300 ${
-          full ? "bg-[color-mix(in_oklch,var(--ink-hi)_28%,transparent)]" : pct >= 80 ? "bg-[var(--gold)]" : "bg-[var(--gold)]"
+          full ? "bg-[color-mix(in_oklch,var(--ink-hi)_28%,transparent)]" : pct >= 80 ? "bg-[var(--live)]" : "bg-[var(--gold)]"
         }`}
         style={{ width: `${pct}%` }}
       />
@@ -134,6 +134,10 @@ function EmptyState({ tab }: { tab: "nearby" | "upcoming" }) {
           ? "Nothing in the next 7 days yet. Check Upcoming or open the map."
           : "Nothing scheduled beyond this week yet. Check Nearby for sooner games."}
       </p>
+      <Link href="/feed/map" className="rondo-btn rondo-btn-secondary mt-5 !w-auto !px-5">
+        <MapTrifold size={16} weight="duotone" aria-hidden />
+        Open street map
+      </Link>
     </div>
   );
 }
@@ -182,7 +186,7 @@ export function NearbyGamesSection({ games, tab, onTabChange, loading, hasMore, 
           className="flex items-center gap-1.5 rondo-meta text-[var(--ink-low)] transition-colors hover:text-[var(--gold)]"
         >
           <MapTrifold size={15} weight="duotone" />
-          <span>Street map</span>
+          <span>Map</span>
         </Link>
       </div>
 
@@ -202,7 +206,7 @@ export function NearbyGamesSection({ games, tab, onTabChange, loading, hasMore, 
                 key={game.id}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ ...bouncy, delay: i * 0.04 }}
+                transition={{ ...bouncy, delay: Math.min(i, 4) * 0.04 }}
               >
                 <NearbyGameRow game={game} />
               </motion.div>

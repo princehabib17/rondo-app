@@ -19,10 +19,10 @@ export function TopOrganizers({ organizers, loading = false }: TopOrganizersProp
           </h2>
         </div>
         <Link
-          href="/feed"
+          href="/community"
           className="flex items-center gap-1 rondo-meta text-[var(--ink-low)] transition-colors hover:text-[var(--gold)]"
         >
-          View All
+          View all
           <ArrowRight size={13} weight="bold" />
         </Link>
       </div>
