@@ -1,26 +1,28 @@
+/** Matchday palette — aligned with web `app/globals.css` oklch tokens (approx hex). */
 export const colors = {
-  bg: '#0A0A0A',
-  surface: '#111111',
-  surfaceElevated: '#1A1A1A',
-  surfaceHigh: '#222222',
-  border: '#2A2A2A',
-  borderSubtle: '#1E1E1E',
+  bg: '#16160F',
+  surface: '#22221A',
+  surfaceElevated: '#2B2B22',
+  surfaceHigh: '#333329',
+  border: '#3D3D33',
+  borderSubtle: '#2E2E26',
 
-  yellow: '#F5C518',
-  yellowDim: 'rgba(245,197,24,0.15)',
-  yellowGlow: 'rgba(245,197,24,0.08)',
+  yellow: '#E8D24A',
+  yellowDim: 'rgba(232,210,74,0.14)',
+  yellowGlow: 'rgba(232,210,74,0.08)',
 
-  accent: '#00D4FF',
-  accentDim: 'rgba(0,212,255,0.15)',
+  // Accent matches web gold (no cyan brand split)
+  accent: '#E8D24A',
+  accentDim: 'rgba(232,210,74,0.14)',
 
-  white: '#FFFFFF',
-  text: '#FFFFFF',
-  textSecondary: '#9CA3AF',
-  textMuted: '#6B7280',
-  textFaint: '#374151',
+  white: '#F7F7F7',
+  text: '#F7F7F7',
+  textSecondary: '#C4C4B8',
+  textMuted: '#8E8E82',
+  textFaint: '#5C5C52',
 
-  success: '#22C55E',
-  successDim: 'rgba(34,197,94,0.15)',
+  success: '#4ADE80',
+  successDim: 'rgba(74,222,128,0.15)',
   error: '#EF4444',
   errorDim: 'rgba(239,68,68,0.15)',
   warning: '#F59E0B',
@@ -44,15 +46,15 @@ export const spacing = {
 export const radius = {
   xs: 6,
   sm: 10,
-  md: 14,
-  lg: 20,
+  md: 16,
+  lg: 24,
   xl: 28,
   full: 9999,
 } as const;
 
 export const font = {
-  display: { fontSize: 48, fontWeight: '800' as const, letterSpacing: -1.5 },
-  h1: { fontSize: 32, fontWeight: '700' as const, letterSpacing: -0.8 },
+  display: { fontSize: 48, fontWeight: '900' as const, letterSpacing: -1.5 },
+  h1: { fontSize: 32, fontWeight: '800' as const, letterSpacing: -0.8 },
   h2: { fontSize: 24, fontWeight: '700' as const, letterSpacing: -0.4 },
   h3: { fontSize: 20, fontWeight: '600' as const, letterSpacing: -0.2 },
   h4: { fontSize: 17, fontWeight: '600' as const },

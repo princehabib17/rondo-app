@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Plus, Wallet, ArrowDownToLine, Clock } from "lucide-react";
+import { ArrowLeft, Plus, Wallet, ArrowDownToLine, Clock, ShieldCheck, Lock } from "@phosphor-icons/react";
 import { formatPrice, formatRelativeTime } from "@/lib/utils/format";
 import { TOPUP_PRESETS_CENTAVOS } from "@/lib/wallet/constants";
 import type { WalletTransaction } from "@/lib/supabase/types";
+import { RondoButton, RondoSurface, rondoFieldClass } from "@/components/rondo/primitives";
 
 const TOPUP_SESSION_KEY = "rondo_pending_topup_session";
 const TOPUP_REFERENCE_KEY = "rondo_pending_topup_reference";
@@ -159,70 +160,77 @@ function WalletContent() {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-black">
-        <div className="w-2 h-2 rounded-full bg-rondo-accent animate-ping" />
+      <div className="rondo-page flex min-h-[100dvh] items-center justify-center">
+        <div className="h-8 w-32 rounded-[var(--r-pill)] rondo-shimmer" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-[100dvh] rondo-page pb-24">
-      <header className="sticky top-0 z-40 rondo-glass-nav border-b border-white/5 px-4 py-3 flex items-center gap-3">
+    <div className="rondo-page min-h-[100dvh] pb-24">
+      <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-[var(--stroke)] rondo-glass-nav px-4 py-3">
         <button
           type="button"
           onClick={() => router.back()}
-          className="w-10 h-10 flex items-center justify-center text-white/80"
+          className="flex h-11 w-11 items-center justify-center text-[var(--ink-mid)]"
           aria-label="Back"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={20} weight="bold" />
         </button>
-        <h1 className="font-heading text-white font-black italic text-lg uppercase">Wallet</h1>
+        <div className="min-w-0 flex-1">
+          <h1 className="font-heading text-lg font-black uppercase text-[var(--ink-hi)]">Wallet</h1>
+          <p className="rondo-meta text-[var(--ink-low)]">PayMongo secured</p>
+        </div>
+        <Lock size={18} weight="duotone" className="text-[var(--gold)]" aria-hidden />
       </header>
 
-      <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
-        <div className="rondo-surface border-rondo-accent/30 bg-gradient-to-br from-rondo-accent/15 to-transparent p-6">
-          <div className="flex items-center gap-2 mb-2">
-            <Wallet size={18} className="text-rondo-accent" />
-            <span className="font-body text-white/60 text-xs uppercase tracking-wider">Available balance</span>
+      <div className="mx-auto max-w-lg space-y-6 px-4 py-6">
+        <RondoSurface className="border-[color-mix(in_oklch,var(--gold)_30%,var(--stroke))] bg-[linear-gradient(145deg,color-mix(in_oklch,var(--gold)_14%,transparent),transparent)] p-6">
+          <div className="mb-2 flex items-center gap-2">
+            <Wallet size={18} weight="duotone" className="text-[var(--gold)]" aria-hidden />
+            <span className="rondo-label text-[var(--ink-low)]">Available balance</span>
           </div>
-          <p className="font-heading text-white font-black text-4xl">{formatPrice(balanceCentavos)}</p>
-          <p className="font-body text-white/50 text-xs mt-2">
-            Top up with PayMongo, then pay match fees from here — one balance, no paying the organizer directly in the app.
-          </p>
-        </div>
+          <p className="font-heading text-4xl font-black text-[var(--ink-hi)]">{formatPrice(balanceCentavos)}</p>
+          <div className="mt-3 flex items-start gap-2">
+            <ShieldCheck size={16} weight="duotone" className="mt-0.5 shrink-0 text-[var(--gold)]" aria-hidden />
+            <p className="rondo-meta text-[var(--ink-mid)]">
+              Top up with PayMongo, then pay match fees from here — one balance, no paying organizers in-app.
+            </p>
+          </div>
+        </RondoSurface>
 
         {topupBanner === "cancelled" && (
-          <div className="bg-[#141414] border border-white/15 rounded-xl p-4 space-y-2">
-            <p className="text-white font-semibold text-sm">Top-up cancelled</p>
-            <p className="text-white/50 text-xs">No money was added. You can try again when ready.</p>
-          </div>
+          <RondoSurface className="space-y-2 p-4">
+            <p className="rondo-body font-semibold text-[var(--ink-hi)]">Top-up cancelled</p>
+            <p className="rondo-meta text-[var(--ink-low)]">No money was added. You can try again when ready.</p>
+          </RondoSurface>
         )}
 
         {topupBanner === "failed" && error && (
-          <div className="bg-red-950/40 border border-red-800/50 rounded-xl p-4 space-y-2">
-            <p className="text-red-200 font-semibold text-sm">Top-up not completed</p>
-            <p className="text-red-200/80 text-xs">{error}</p>
+          <div className="space-y-2 rounded-[var(--r-md)] border border-[color-mix(in_oklch,var(--live)_40%,transparent)] bg-[color-mix(in_oklch,var(--live)_12%,transparent)] p-4">
+            <p className="rondo-body font-semibold text-[var(--live)]">Top-up not completed</p>
+            <p className="rondo-meta text-[var(--live)]">{error}</p>
           </div>
         )}
 
         {message && (
-          <div className="bg-green-950/40 border border-green-800/50 rounded-xl p-4 space-y-1">
-            <p className="text-green-400 text-sm font-semibold">{message}</p>
+          <div className="space-y-1 rounded-[var(--r-md)] border border-[color-mix(in_oklch,var(--ok)_40%,transparent)] bg-[color-mix(in_oklch,var(--ok)_12%,transparent)] p-4">
+            <p className="rondo-body font-semibold text-[var(--ok)]">{message}</p>
             {topupReference && (
-              <p className="text-green-200/70 text-xs font-mono break-all">Ref: {topupReference}</p>
+              <p className="break-all font-mono text-xs text-[var(--ink-mid)]">Ref: {topupReference}</p>
             )}
           </div>
         )}
         {error && !topupBanner && (
-          <p className="text-red-400 text-sm text-center bg-red-950/30 border border-red-800/40 rounded-xl py-3 px-4">
+          <p className="rounded-[var(--r-md)] border border-[color-mix(in_oklch,var(--live)_40%,transparent)] bg-[color-mix(in_oklch,var(--live)_12%,transparent)] px-4 py-3 text-center rondo-meta text-[var(--live)]">
             {error}
           </p>
         )}
 
         <section>
-          <h2 className="font-heading text-white font-black text-sm uppercase mb-3">Top up</h2>
-          <p className="font-body text-white/50 text-xs mb-4">
-            Add funds via GCash, Maya, or card. Money lands in your Rondo Wallet right after payment.
+          <h2 className="mb-1 font-heading text-sm font-black uppercase text-[var(--ink-hi)]">Top up</h2>
+          <p className="rondo-meta mb-4 text-[var(--ink-low)]">
+            Add funds via GCash, Maya, or card. Money lands in your Rondo Wallet after payment.
           </p>
           <div className="grid grid-cols-3 gap-2">
             {TOPUP_PRESETS_CENTAVOS.map((amount) => (
@@ -231,13 +239,13 @@ function WalletContent() {
                 type="button"
                 disabled={topingUp !== null}
                 onClick={() => handleTopUp(amount)}
-                className="bg-[#141414] border border-white/10 hover:border-rondo-accent/50 rounded-xl py-3 text-white font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-1"
+                className="flex items-center justify-center gap-1 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] py-3 text-sm font-bold text-[var(--ink-hi)] hover:border-[color-mix(in_oklch,var(--gold)_40%,var(--stroke))] disabled:opacity-50"
               >
                 {topingUp === amount ? (
-                  <span className="w-4 h-4 border-2 border-rondo-accent border-t-transparent rounded-full animate-spin" />
+                  <span className="h-4 w-4 rounded-full border-2 border-[var(--gold)] border-t-transparent animate-spin" />
                 ) : (
                   <>
-                    <Plus size={14} className="text-rondo-accent" />
+                    <Plus size={14} weight="bold" className="text-[var(--gold)]" aria-hidden />
                     {formatPrice(amount)}
                   </>
                 )}
@@ -247,87 +255,89 @@ function WalletContent() {
         </section>
 
         <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-heading text-white font-black text-sm uppercase">Cash Out</h2>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-heading text-sm font-black uppercase text-[var(--ink-hi)]">Cash out</h2>
             {!showPayoutForm && (
               <button
                 type="button"
-                onClick={() => { setShowPayoutForm(true); setPayoutSuccess(false); setPayoutError(null); }}
-                className="flex items-center gap-1.5 text-rondo-accent text-xs font-bold uppercase tracking-wider"
+                onClick={() => {
+                  setShowPayoutForm(true);
+                  setPayoutSuccess(false);
+                  setPayoutError(null);
+                }}
+                className="flex items-center gap-1.5 rondo-label text-[var(--gold)]"
               >
-                <ArrowDownToLine size={13} /> Request
+                <ArrowDownToLine size={13} weight="bold" aria-hidden /> Request
               </button>
             )}
           </div>
 
-          <div className="bg-[#0f0f0f] border border-white/10 rounded-xl p-4 mb-3 space-y-1">
-            <p className="text-white/60 text-xs leading-relaxed">
-              Top-ups via GCash, Maya, and card are <span className="text-white font-semibold">real money</span>. Payouts are processed manually by the Rondo team and sent via bank transfer within 3–5 business days.
-            </p>
-          </div>
+          <RondoSurface className="mb-3 space-y-1 border-[color-mix(in_oklch,var(--gold)_22%,var(--stroke))] p-4">
+            <div className="flex items-start gap-2">
+              <ShieldCheck size={16} weight="duotone" className="mt-0.5 shrink-0 text-[var(--gold)]" aria-hidden />
+              <p className="rondo-meta leading-relaxed text-[var(--ink-mid)]">
+                Top-ups via GCash, Maya, and card are{" "}
+                <span className="font-semibold text-[var(--ink-hi)]">real money</span>. Payouts are processed
+                manually by the Rondo team and sent via bank transfer within 3–5 business days.
+              </p>
+            </div>
+          </RondoSurface>
 
           {payoutSuccess && (
-            <div className="bg-green-950/40 border border-green-800/50 rounded-xl p-4 mb-3">
-              <p className="text-green-400 text-sm font-semibold">Payout request submitted</p>
-              <p className="text-green-200/70 text-xs mt-0.5">We&apos;ll process it within 3–5 business days.</p>
+            <div className="mb-3 rounded-[var(--r-md)] border border-[color-mix(in_oklch,var(--ok)_40%,transparent)] bg-[color-mix(in_oklch,var(--ok)_12%,transparent)] p-4">
+              <p className="rondo-body font-semibold text-[var(--ok)]">Payout request submitted</p>
+              <p className="rondo-meta mt-0.5 text-[var(--ink-mid)]">We&apos;ll process it within 3–5 business days.</p>
             </div>
           )}
 
           {showPayoutForm && !payoutSuccess && (
-            <div className="bg-[#141414] border border-white/10 rounded-xl p-4 space-y-3 mb-3">
+            <RondoSurface className="mb-3 space-y-3 p-4">
               <div className="space-y-1">
-                <label className="font-heading text-white/60 text-[10px] uppercase tracking-wider">Amount (₱)</label>
+                <label className="rondo-label text-[var(--ink-low)]">Amount (₱)</label>
                 <input
                   type="number"
                   placeholder="e.g. 500"
                   value={payoutAmount}
                   onChange={(e) => setPayoutAmount(e.target.value)}
-                  className="w-full bg-[#1c1c1c] text-white font-body text-sm px-4 py-3 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-rondo-accent/50 placeholder:text-white/30"
+                  className={rondoFieldClass}
                 />
               </div>
               <div className="space-y-1">
-                <label className="font-heading text-white/60 text-[10px] uppercase tracking-wider">Bank Name</label>
+                <label className="rondo-label text-[var(--ink-low)]">Bank name</label>
                 <input
                   type="text"
                   placeholder="BDO, BPI, GCash, Maya…"
                   value={payoutBank}
                   onChange={(e) => setPayoutBank(e.target.value)}
-                  className="w-full bg-[#1c1c1c] text-white font-body text-sm px-4 py-3 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-rondo-accent/50 placeholder:text-white/30"
+                  className={rondoFieldClass}
                 />
               </div>
               <div className="space-y-1">
-                <label className="font-heading text-white/60 text-[10px] uppercase tracking-wider">Account Name</label>
+                <label className="rondo-label text-[var(--ink-low)]">Account name</label>
                 <input
                   type="text"
                   placeholder="Full name on account"
                   value={payoutName}
                   onChange={(e) => setPayoutName(e.target.value)}
-                  className="w-full bg-[#1c1c1c] text-white font-body text-sm px-4 py-3 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-rondo-accent/50 placeholder:text-white/30"
+                  className={rondoFieldClass}
                 />
               </div>
               <div className="space-y-1">
-                <label className="font-heading text-white/60 text-[10px] uppercase tracking-wider">Account Number</label>
+                <label className="rondo-label text-[var(--ink-low)]">Account number</label>
                 <input
                   type="text"
                   placeholder="09xxxxxxxxxx or account number"
                   value={payoutAccount}
                   onChange={(e) => setPayoutAccount(e.target.value)}
-                  className="w-full bg-[#1c1c1c] text-white font-body text-sm px-4 py-3 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-rondo-accent/50 placeholder:text-white/30"
+                  className={rondoFieldClass}
                 />
               </div>
-              {payoutError && (
-                <p className="text-red-400 text-xs">{payoutError}</p>
-              )}
+              {payoutError && <p className="rondo-meta text-[var(--live)]">{payoutError}</p>}
               <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowPayoutForm(false)}
-                  className="flex-1 py-3 rounded-xl border border-white/10 text-white/50 text-xs font-bold uppercase tracking-wider"
-                >
+                <RondoButton onClick={() => setShowPayoutForm(false)} variant="secondary" className="flex-1">
                   Cancel
-                </button>
-                <button
-                  type="button"
+                </RondoButton>
+                <RondoButton
                   disabled={payoutLoading}
                   onClick={async () => {
                     setPayoutLoading(true);
@@ -344,71 +354,83 @@ function WalletContent() {
                         }),
                       });
                       const json = await res.json();
-                      if (!res.ok) { setPayoutError(json.error ?? "Request failed"); return; }
+                      if (!res.ok) {
+                        setPayoutError(json.error ?? "Request failed");
+                        return;
+                      }
                       setPayoutSuccess(true);
                       setShowPayoutForm(false);
-                      setPayoutAmount(""); setPayoutBank(""); setPayoutName(""); setPayoutAccount("");
+                      setPayoutAmount("");
+                      setPayoutBank("");
+                      setPayoutName("");
+                      setPayoutAccount("");
                       await loadWallet();
                     } finally {
                       setPayoutLoading(false);
                     }
                   }}
-                  className="flex-1 py-3 rounded-xl bg-rondo-accent text-black text-xs font-black uppercase tracking-wider disabled:opacity-50"
+                  variant="primary"
+                  className="flex-1"
                 >
-                  {payoutLoading ? "Submitting…" : "Submit Request"}
-                </button>
+                  {payoutLoading ? "Submitting…" : "Submit request"}
+                </RondoButton>
               </div>
-            </div>
+            </RondoSurface>
           )}
 
           {payoutRequests.length > 0 && (
-            <div className="space-y-2 mb-3">
+            <div className="mb-3 space-y-2">
               {payoutRequests.map((req) => (
-                <div key={req.id} className="bg-[#141414] border border-white/10 rounded-xl px-4 py-3 flex items-center gap-3">
-                  <Clock size={14} className="text-white/30 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white text-sm font-semibold">{formatPrice(req.amount)} → {req.bank_name}</p>
-                    <p className="text-white/40 text-xs">{req.bank_account_name} · {formatRelativeTime(req.created_at)}</p>
+                <RondoSurface key={req.id} className="flex items-center gap-3 px-4 py-3">
+                  <Clock size={14} weight="duotone" className="shrink-0 text-[var(--ink-low)]" aria-hidden />
+                  <div className="min-w-0 flex-1">
+                    <p className="rondo-body font-semibold text-[var(--ink-hi)]">
+                      {formatPrice(req.amount)} → {req.bank_name}
+                    </p>
+                    <p className="rondo-meta text-[var(--ink-low)]">
+                      {req.bank_account_name} · {formatRelativeTime(req.created_at)}
+                    </p>
                   </div>
-                  <span className={`text-xs font-bold uppercase ${
-                    req.status === "paid" ? "text-green-400" :
-                    req.status === "rejected" ? "text-red-400" :
-                    "text-rondo-accent/80"
-                  }`}>
+                  <span
+                    className={`rondo-label ${
+                      req.status === "paid"
+                        ? "text-[var(--ok)]"
+                        : req.status === "rejected"
+                          ? "text-[var(--live)]"
+                          : "text-[var(--gold)]"
+                    }`}
+                  >
                     {req.status}
                   </span>
-                </div>
+                </RondoSurface>
               ))}
             </div>
           )}
         </section>
 
         <section>
-          <h2 className="font-heading text-white font-black text-sm uppercase mb-3">Recent activity</h2>
+          <h2 className="mb-3 font-heading text-sm font-black uppercase text-[var(--ink-hi)]">Recent activity</h2>
           {transactions.length === 0 ? (
-            <p className="font-body text-white/40 text-sm">No transactions yet. Top up to join paid matches.</p>
+            <p className="rondo-body text-[var(--ink-low)]">No transactions yet. Top up to join paid matches.</p>
           ) : (
             <div className="space-y-2">
               {transactions.map((tx) => (
-                <div
-                  key={tx.id}
-                  className="bg-[#141414] border border-white/10 rounded-xl px-4 py-3 flex items-center justify-between gap-3"
-                >
+                <RondoSurface key={tx.id} className="flex items-center justify-between gap-3 px-4 py-3">
                   <div className="min-w-0">
-                    <p className="font-body text-white text-sm capitalize">
+                    <p className="rondo-body capitalize text-[var(--ink-hi)]">
                       {tx.direction === "credit" ? "Added" : "Spent"} · {tx.source.replaceAll("_", " ")}
                     </p>
-                    <p className="font-body text-white/40 text-xs">{formatRelativeTime(tx.created_at)}</p>
+                    <p className="rondo-meta text-[var(--ink-low)]">{formatRelativeTime(tx.created_at)}</p>
                   </div>
                   <span
-                    className={`font-heading font-black text-sm shrink-0 ${
-                      tx.direction === "credit" ? "text-green-400" : "text-white"
+                    className={`shrink-0 font-heading text-sm font-black ${
+                      tx.direction === "credit" ? "text-[var(--ok)]" : "text-[var(--ink-hi)]"
                     }`}
                   >
                     {tx.direction === "credit" ? "+" : "−"}
                     {formatPrice(tx.amount)}
                   </span>
-                </div>
+                </RondoSurface>
               ))}
             </div>
           )}
@@ -422,8 +444,8 @@ export default function WalletPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-[100dvh] flex items-center justify-center bg-black">
-          <div className="w-2 h-2 rounded-full bg-rondo-accent animate-ping" />
+        <div className="rondo-page flex min-h-[100dvh] items-center justify-center">
+          <div className="h-8 w-32 rounded-[var(--r-pill)] rondo-shimmer" />
         </div>
       }
     >

@@ -86,7 +86,7 @@ async function searchAddress(query: string): Promise<NominatimResult[]> {
 // ─── styles ───────────────────────────────────────────────────────────────────
 
 const fieldClass =
-  "w-full bg-white/[0.045] border border-white/18 text-white rounded-xl p-3 text-sm focus:border-rondo-yellow focus:outline-none placeholder:text-white/30";
+  "h-12 w-full max-w-full min-w-0 rounded-[var(--r-sm)] border border-transparent bg-[var(--bg-inset)] px-4 text-[var(--ink-hi)] rondo-body placeholder:text-[var(--ink-low)] focus:outline-none focus:border-[var(--gold)] focus:ring-2 focus:ring-[color-mix(in_oklch,var(--gold)_16%,transparent)]";
 const labelClass = "text-white/50 text-xs uppercase tracking-wider font-semibold";
 const errorClass = "text-red-400 text-xs mt-1 flex items-center gap-1";
 
@@ -338,7 +338,7 @@ export default function CreateMatchPage() {
   // ─── render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-[100dvh] bg-[#050505] pb-12">
+    <div className="rondo-page min-h-[100dvh] pb-12">
       {/* header */}
       <header className="sticky top-0 bg-background/90 backdrop-blur-md border-b border-white/10 z-40 px-4 py-3 flex items-center gap-3">
         <button

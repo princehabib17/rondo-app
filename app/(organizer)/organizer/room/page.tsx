@@ -104,28 +104,28 @@ export default function OrganizerRoomPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] bg-black flex items-center justify-center">
+      <div className="min-h-[100dvh] rondo-page flex items-center justify-center">
         <div className="w-2 h-2 rounded-full bg-rondo-accent animate-ping" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-[100dvh] bg-black pb-24">
+    <div className="min-h-[100dvh] rondo-page pb-24">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-black/95 backdrop-blur-md border-b border-white/5 px-4 py-3">
+      <header className="sticky top-0 z-10 bg-[color-mix(in_oklch,var(--bg-page)_95%,transparent)] backdrop-blur-md border-b border-[var(--stroke)] px-4 py-3">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => router.back()}
-            className="w-10 h-10 flex items-center justify-center text-white/80 hover:text-white"
+            className="w-10 h-10 flex items-center justify-center text-[var(--ink-hi)]/80 hover:text-[var(--ink-hi)]"
             aria-label="Back"
           >
             <ArrowLeft size={20} />
           </button>
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <Radio size={18} className="text-rondo-accent shrink-0" />
-            <h1 className="font-heading text-white font-black italic text-lg uppercase truncate">
+            <h1 className="font-heading text-[var(--ink-hi)] font-black italic text-lg uppercase truncate">
               My Room
             </h1>
           </div>
@@ -138,7 +138,7 @@ export default function OrganizerRoomPage() {
           onSubmit={handlePost}
           className="bg-card border border-border rounded-xl p-4 space-y-3 mb-6"
         >
-          <h2 className="font-heading text-white font-black uppercase text-sm">
+          <h2 className="font-heading text-[var(--ink-hi)] font-black uppercase text-sm">
             Broadcast Update
           </h2>
           <textarea
@@ -146,13 +146,13 @@ export default function OrganizerRoomPage() {
             onChange={(e) => setBody(e.target.value)}
             maxLength={500}
             placeholder="Share an update with your followers..."
-            className="w-full h-24 bg-black border border-white/10 text-white rounded-lg p-3 text-sm resize-none placeholder:text-white/30 focus:outline-none focus:border-rondo-accent/50"
+            className="w-full h-24 bg-[var(--bg-inset)] border border-[var(--stroke)] text-[var(--ink-hi)] rounded-lg p-3 text-sm resize-none placeholder:text-[var(--ink-low)] focus:outline-none focus:border-rondo-accent/50"
           />
           {postError && (
             <p className="font-body text-red-400 text-xs">{postError}</p>
           )}
           <div className="flex items-center justify-between">
-            <span className="font-body text-white/30 text-xs">{body.length}/500</span>
+            <span className="font-body text-[var(--ink-hi)]/30 text-xs">{body.length}/500</span>
             <button
               type="submit"
               disabled={posting || !body.trim()}
@@ -166,13 +166,13 @@ export default function OrganizerRoomPage() {
         {/* Feed */}
         <div className="flex items-center gap-2 mb-3">
           <Radio size={14} className="text-rondo-accent" />
-          <h2 className="font-heading text-white font-black italic text-sm uppercase">
+          <h2 className="font-heading text-[var(--ink-hi)] font-black italic text-sm uppercase">
             Past Broadcasts
           </h2>
         </div>
 
         {broadcasts.length === 0 ? (
-          <p className="font-body text-white/40 text-sm bg-card border border-border rounded-xl p-4">
+          <p className="font-body text-[var(--ink-hi)]/40 text-sm bg-card border border-border rounded-xl p-4">
             No broadcasts yet. Post your first update above.
           </p>
         ) : (
@@ -182,18 +182,18 @@ export default function OrganizerRoomPage() {
                 key={item.id}
                 className="bg-card border border-border rounded-xl p-4"
               >
-                <p className="font-body text-white/90 text-sm leading-relaxed">
+                <p className="font-body text-[var(--ink-hi)]/90 text-sm leading-relaxed">
                   {item.body}
                 </p>
                 <div className="flex items-center justify-between mt-3">
-                  <p className="font-body text-white/40 text-xs">
+                  <p className="font-body text-[var(--ink-hi)]/40 text-xs">
                     {formatRelativeTime(item.created_at)}
                   </p>
                   <button
                     type="button"
                     onClick={() => handleDelete(item.id)}
                     disabled={deletingId === item.id}
-                    className="w-7 h-7 flex items-center justify-center text-white/30 hover:text-red-400 transition-colors disabled:opacity-40"
+                    className="w-7 h-7 flex items-center justify-center text-[var(--ink-hi)]/30 hover:text-red-400 transition-colors disabled:opacity-40"
                     aria-label="Delete broadcast"
                   >
                     <Trash2 size={14} />
