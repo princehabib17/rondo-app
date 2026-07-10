@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Plus, Wallet, ArrowDownToLine, Clock, ShieldCheck, Lock } from "@phosphor-icons/react";
+import { ArrowLeft, Plus, Wallet, ArrowLineDown, Clock, ShieldCheck, Lock } from "@phosphor-icons/react";
 import { formatPrice, formatRelativeTime } from "@/lib/utils/format";
 import { TOPUP_PRESETS_CENTAVOS } from "@/lib/wallet/constants";
 import type { WalletTransaction } from "@/lib/supabase/types";
@@ -267,7 +267,7 @@ function WalletContent() {
                 }}
                 className="flex items-center gap-1.5 rondo-label text-[var(--gold)]"
               >
-                <ArrowDownToLine size={13} weight="bold" aria-hidden /> Request
+                <ArrowLineDown size={13} weight="bold" aria-hidden /> Request
               </button>
             )}
           </div>
