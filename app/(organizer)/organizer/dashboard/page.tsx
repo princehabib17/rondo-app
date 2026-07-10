@@ -44,11 +44,11 @@ function getGreeting() {
 
 // Deterministic gradient per game id for no-image fallback
 const gradients = [
-  "from-emerald-900/80 to-[#050505]",
-  "from-sky-900/80 to-[#050505]",
-  "from-violet-900/80 to-[#050505]",
-  "from-amber-900/80 to-[#050505]",
-  "from-rose-900/80 to-[#050505]",
+  "from-emerald-900/80 to-[var(--bg-page)]",
+  "from-sky-900/80 to-[var(--bg-page)]",
+  "from-violet-900/80 to-[var(--bg-page)]",
+  "from-amber-900/80 to-[var(--bg-page)]",
+  "from-rose-900/80 to-[var(--bg-page)]",
 ];
 function gameGradient(id: string) {
   const n = id.charCodeAt(0) + id.charCodeAt(id.length - 1);
@@ -140,16 +140,16 @@ export default function OrganizerDashboardPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[#050505]">
+    <div className="min-h-[100dvh] rondo-page">
       {/* Sticky minimal header */}
-      <header className="sticky top-0 z-40 border-b border-white/5 bg-black/85 px-5 py-3 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-[var(--stroke)] rondo-glass-nav px-5 py-3">
         <div className="flex items-center justify-between gap-3">
-          <p className="font-body text-[10px] font-black uppercase tracking-[0.26em] text-rondo-accent">
+          <p className="font-body text-[10px] font-black uppercase tracking-[0.26em] text-[var(--gold)]">
             Organizer
           </p>
           <Link
             href="/organizer/create/match"
-            className="inline-flex min-h-[36px] items-center rounded-full bg-rondo-accent px-4 text-[11px] font-black uppercase tracking-wider text-black transition active:scale-[0.97]"
+            className="rondo-btn rondo-btn-primary !w-auto !min-h-[36px] px-4 text-[11px]"
           >
             + Create
           </Link>
@@ -163,15 +163,15 @@ export default function OrganizerDashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={bouncy}
         >
-          <p className="font-body text-sm text-white/40">{getGreeting()}</p>
-          <h1 className="font-heading text-[3.25rem] font-black uppercase italic leading-none text-white">
+          <p className="font-body text-sm text-[var(--ink-low)]">{getGreeting()}</p>
+          <h1 className="font-heading text-[3.25rem] font-black uppercase italic leading-none text-[var(--ink-hi)]">
             {loading ? "..." : firstName || "Organizer"}
           </h1>
           <div className="mt-4 flex items-baseline gap-3">
-            <span className="font-heading text-4xl font-black italic text-rondo-accent">
+            <span className="font-heading text-4xl font-black italic text-[var(--gold)]">
               {loading ? "—" : formatPrice(totalEarnings)}
             </span>
-            <span className="font-body text-sm text-white/35">
+            <span className="font-body text-sm text-[var(--ink-low)]">
               {loading ? "" : `earned · ${games.length} game${games.length !== 1 ? "s" : ""}`}
             </span>
           </div>
@@ -187,25 +187,25 @@ export default function OrganizerDashboardPage() {
           <div className="flex w-max gap-2">
             <Link
               href="/organizer/create/match"
-              className="inline-flex h-10 items-center rounded-full bg-rondo-accent px-5 font-body text-xs font-black uppercase tracking-wider text-black transition active:scale-[0.97]"
+              className="rondo-btn rondo-btn-primary !w-auto !min-h-10 px-5 text-xs"
             >
               Create Match
             </Link>
             <Link
               href="/organizer/tournaments"
-              className="inline-flex h-10 items-center rounded-full border border-white/12 bg-white/6 px-5 font-body text-xs font-black uppercase tracking-wider text-white transition active:scale-[0.97]"
+              className="inline-flex h-10 items-center rounded-full border border-[var(--stroke)] bg-[var(--bg-surface)] px-5 font-body text-xs font-black uppercase tracking-wider text-[var(--ink-hi)] transition active:scale-[0.97]"
             >
               Tournaments
             </Link>
             <Link
               href="/organizer/organizations"
-              className="inline-flex h-10 items-center rounded-full border border-white/12 bg-white/6 px-5 font-body text-xs font-black uppercase tracking-wider text-white transition active:scale-[0.97]"
+              className="inline-flex h-10 items-center rounded-full border border-[var(--stroke)] bg-[var(--bg-surface)] px-5 font-body text-xs font-black uppercase tracking-wider text-[var(--ink-hi)] transition active:scale-[0.97]"
             >
               Organizations
             </Link>
             <Link
               href="/organizer/payout"
-              className="inline-flex h-10 items-center rounded-full border border-white/12 bg-white/6 px-5 font-body text-xs font-black uppercase tracking-wider text-white transition active:scale-[0.97]"
+              className="inline-flex h-10 items-center rounded-full border border-[var(--stroke)] bg-[var(--bg-surface)] px-5 font-body text-xs font-black uppercase tracking-wider text-[var(--ink-hi)] transition active:scale-[0.97]"
             >
               Payout
             </Link>
@@ -218,23 +218,23 @@ export default function OrganizerDashboardPage() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...bouncy, delay: 0.1 }}
-            className="rounded-2xl border border-rondo-accent/20 bg-rondo-accent/8 p-4"
+            className="rounded-2xl border border-[var(--gold)]/20 bg-[var(--gold-dim)] p-4"
           >
-            <p className="mb-1 font-body text-[10px] font-black uppercase tracking-[0.22em] text-rondo-accent">
+            <p className="mb-1 font-body text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gold)]">
               Next up
             </p>
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <h2 className="font-heading text-xl font-black uppercase italic leading-none text-white">
+                <h2 className="font-heading text-xl font-black uppercase italic leading-none text-[var(--ink-hi)]">
                   {nextGame.title}
                 </h2>
-                <p className="mt-1 font-body text-xs text-white/45">
+                <p className="mt-1 font-body text-xs text-[var(--ink-low)]">
                   {formatGameDate(nextGame.date_time)}
                 </p>
               </div>
               <Link
                 href={`/organizer/games/${nextGame.id}/manage`}
-                className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-black/40 px-3 py-2 font-body text-[10px] font-black uppercase tracking-wider text-white transition active:scale-[0.97]"
+                className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-[var(--bg-page)]/40 px-3 py-2 font-body text-[10px] font-black uppercase tracking-wider text-[var(--ink-hi)] transition active:scale-[0.97]"
               >
                 Manage
                 <ArrowUpRight size={12} />
@@ -247,16 +247,16 @@ export default function OrganizerDashboardPage() {
         <section className="space-y-4">
           <div className="flex items-end justify-between">
             <div>
-              <p className="font-body text-[10px] font-black uppercase tracking-[0.22em] text-white/30">
+              <p className="font-body text-[10px] font-black uppercase tracking-[0.22em] text-[var(--ink-low)]">
                 Event inventory
               </p>
-              <h2 className="font-heading text-2xl font-black uppercase italic leading-none text-white">
+              <h2 className="font-heading text-2xl font-black uppercase italic leading-none text-[var(--ink-hi)]">
                 Your Games
               </h2>
             </div>
             <Link
               href="/organizer/create/match"
-              className="font-body text-xs font-black uppercase tracking-wider text-rondo-accent"
+              className="font-body text-xs font-black uppercase tracking-wider text-[var(--gold)]"
             >
               New Game
             </Link>
@@ -267,7 +267,7 @@ export default function OrganizerDashboardPage() {
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
-                  className="h-52 animate-pulse rounded-2xl border border-white/6 bg-white/[0.03]"
+                  className="h-52 animate-pulse rounded-2xl border border-[var(--stroke)] bg-[var(--bg-surface)]"
                 />
               ))}
             </div>
@@ -276,17 +276,17 @@ export default function OrganizerDashboardPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={bouncy}
-              className="rounded-2xl border border-dashed border-white/12 bg-white/[0.02] px-5 py-16 text-center"
+              className="rounded-2xl border border-dashed border-[var(--stroke)] bg-[var(--bg-surface)]/50 px-5 py-16 text-center"
             >
-              <p className="font-heading text-2xl font-black uppercase italic text-white">
+              <p className="font-heading text-2xl font-black uppercase italic text-[var(--ink-hi)]">
                 No games yet
               </p>
-              <p className="mx-auto mt-2 max-w-[22ch] font-body text-sm text-white/40">
+              <p className="mx-auto mt-2 max-w-[22ch] font-body text-sm text-[var(--ink-low)]">
                 Start with a match page — cover image, venue, teams, and price.
               </p>
               <Link
                 href="/organizer/create/match"
-                className="mt-6 inline-flex min-h-[44px] items-center rounded-xl bg-rondo-accent px-6 font-body text-xs font-black uppercase tracking-wider text-black"
+                className="rondo-btn rondo-btn-primary mt-6 !w-auto !min-h-[44px] px-6 text-xs"
               >
                 Create First Game
               </Link>
@@ -304,7 +304,7 @@ export default function OrganizerDashboardPage() {
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ ...bouncy, delay: 0.08 + i * 0.04 }}
-                    className="overflow-hidden rounded-2xl border border-white/8 bg-white/[0.03] transition hover:border-rondo-accent/25"
+                    className="overflow-hidden rounded-2xl border border-[var(--stroke)] bg-[var(--bg-surface)] transition hover:border-[var(--gold)]/25"
                   >
                     {/* Image — dominant, full width */}
                     <div className="relative h-44">
@@ -319,11 +319,11 @@ export default function OrganizerDashboardPage() {
                           className={`h-full w-full bg-gradient-to-br ${gameGradient(game.id)}`}
                         />
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-page)]/90 via-[var(--bg-page)]/20 to-transparent" />
 
                       {/* Cover upload */}
                       <label
-                        className="absolute right-3 top-3 inline-flex cursor-pointer items-center gap-1 rounded-full bg-black/65 px-2.5 py-1 font-body text-[10px] font-black uppercase tracking-wide text-white/75 backdrop-blur-sm"
+                        className="absolute right-3 top-3 inline-flex cursor-pointer items-center gap-1 rounded-full bg-[var(--bg-page)]/65 px-2.5 py-1 font-body text-[10px] font-black uppercase tracking-wide text-[var(--ink-mid)] backdrop-blur-sm"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <ImagePlus size={10} />
@@ -354,10 +354,10 @@ export default function OrganizerDashboardPage() {
 
                       {/* Title + meta overlaid at bottom */}
                       <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <h3 className="font-heading text-xl font-black uppercase italic leading-none text-white">
+                        <h3 className="font-heading text-xl font-black uppercase italic leading-none text-[var(--ink-hi)]">
                           {game.title}
                         </h3>
-                        <p className="mt-1 font-body text-xs text-white/50">
+                        <p className="mt-1 font-body text-xs text-[var(--ink-low)]">
                           {formatGameDate(game.date_time)}
                         </p>
                       </div>
@@ -366,7 +366,7 @@ export default function OrganizerDashboardPage() {
                     {/* Footer strip */}
                     <div className="flex items-center justify-between gap-3 px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <span className="flex items-center gap-1 font-body text-xs text-white/50">
+                        <span className="flex items-center gap-1 font-body text-xs text-[var(--ink-low)]">
                           <Users size={12} />
                           {game.game_players.length}/{game.max_players}
                         </span>
@@ -374,20 +374,20 @@ export default function OrganizerDashboardPage() {
                           {game.format}
                         </Badge>
                         {/* Capacity bar */}
-                        <div className="h-1 w-16 overflow-hidden rounded-full bg-white/10">
+                        <div className="h-1 w-16 overflow-hidden rounded-full bg-[var(--stroke)]">
                           <div
-                            className="h-full rounded-full bg-rondo-accent transition-all duration-500"
+                            className="h-full rounded-full bg-[var(--gold)] transition-all duration-500"
                             style={{ width: `${capacity}%` }}
                           />
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="font-heading text-base font-black italic text-rondo-accent">
+                        <span className="font-heading text-base font-black italic text-[var(--gold)]">
                           {formatPrice(game.price_per_player)}
                         </span>
                         <Link
                           href={`/organizer/games/${game.id}/manage`}
-                          className="inline-flex min-h-[32px] items-center gap-0.5 rounded-lg bg-white/8 px-3 font-body text-[10px] font-black uppercase tracking-wider text-white transition active:scale-[0.97]"
+                          className="inline-flex min-h-[32px] items-center gap-0.5 rounded-lg bg-[var(--bg-inset)] px-3 font-body text-[10px] font-black uppercase tracking-wider text-[var(--ink-hi)] transition active:scale-[0.97]"
                         >
                           Manage
                           <ArrowUpRight size={11} />

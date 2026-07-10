@@ -132,29 +132,29 @@ export default function MatchDetailPage() {
 
   return (
     <div className="min-h-[100dvh] rondo-page pb-36">
-      <header className="sticky top-0 z-40 rondo-glass-nav border-b border-white/5 px-4 py-3 flex items-center gap-3">
+      <header className="sticky top-0 z-40 rondo-glass-nav border-b border-[var(--stroke)] px-4 py-3 flex items-center gap-3">
         <button
           type="button"
           onClick={() => router.back()}
-          className="w-10 h-10 flex items-center justify-center text-white hover:bg-white/5 rounded-lg transition-colors active:scale-[0.95]"
+          className="w-10 h-10 flex items-center justify-center text-[var(--ink-hi)] hover:bg-[var(--bg-inset)] rounded-lg transition-colors active:scale-[0.95]"
           aria-label="Go back"
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="font-heading text-white font-black italic text-base uppercase flex-1 truncate">
+        <h1 className="font-heading text-[var(--ink-hi)] font-black italic text-base uppercase flex-1 truncate">
           {game.title}
         </h1>
-        <span className="font-heading text-rondo-accent font-black text-sm shrink-0">
+        <span className="font-heading text-[var(--gold)] font-black text-sm shrink-0">
           {game.price_per_player === 0 ? "Free" : formatPrice(game.price_per_player)}
         </span>
       </header>
 
-      <div className="relative h-48 bg-[#1c1c1c]">
+      <div className="relative h-48 bg-[var(--bg-surface)]">
         {game.banner_url ? (
           <img src={game.banner_url} alt="" className="w-full h-full object-cover" />
         ) : null}
         <div className="absolute inset-0 bg-gradient-to-t from-rondo-page via-rondo-page/40 to-transparent" />
-        <span className="absolute bottom-3 left-4 font-heading text-white/90 text-2xl font-black italic uppercase">
+        <span className="absolute bottom-3 left-4 font-heading text-[var(--ink-hi)] text-2xl font-black italic uppercase">
           {game.format}
         </span>
       </div>
@@ -176,28 +176,28 @@ export default function MatchDetailPage() {
 
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <Calendar size={16} className="text-rondo-accent shrink-0" />
+            <Calendar size={16} className="text-[var(--gold)] shrink-0" />
             <div>
-              <p className="text-white/45 text-[10px] uppercase">When</p>
-              <p className="text-white text-sm font-semibold">{formatGameDate(game.date_time)}</p>
+              <p className="rondo-label text-[var(--ink-low)]">When</p>
+              <p className="text-[var(--ink-hi)] text-sm font-semibold">{formatGameDate(game.date_time)}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <MapPin size={16} className="text-rondo-accent shrink-0" />
+            <MapPin size={16} className="text-[var(--gold)] shrink-0" />
             <div>
-              <p className="text-white/45 text-[10px] uppercase">Where</p>
-              <p className="text-white text-sm font-semibold">{game.venue_name}</p>
-              <p className="text-white/50 text-xs">{game.venue_address}</p>
+              <p className="rondo-label text-[var(--ink-low)]">Where</p>
+              <p className="text-[var(--ink-hi)] text-sm font-semibold">{game.venue_name}</p>
+              <p className="text-[var(--ink-low)] text-xs">{game.venue_address}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Users size={16} className="text-rondo-accent shrink-0" />
+            <Users size={16} className="text-[var(--gold)] shrink-0" />
             <div>
-              <p className="text-white/45 text-[10px] uppercase">Spots</p>
-              <p className="text-white text-sm font-semibold">
+              <p className="rondo-label text-[var(--ink-low)]">Spots</p>
+              <p className="text-[var(--ink-hi)] text-sm font-semibold">
                 {game.max_players - left} / {game.max_players} filled
                 {left > 0 && (
-                  <span className="text-rondo-accent ml-2">{left} left</span>
+                  <span className="text-[var(--gold)] ml-2">{left} left</span>
                 )}
               </p>
             </div>
@@ -212,9 +212,9 @@ export default function MatchDetailPage() {
           rel="noopener noreferrer"
           className="rondo-surface flex items-center gap-3 p-4 active:scale-[0.98] transition-transform"
         >
-          <MapPin size={18} className="text-rondo-accent shrink-0" />
-          <span className="text-white text-sm font-semibold flex-1">Open in Maps</span>
-          <ChevronRight size={16} className="text-white/30" />
+          <MapPin size={18} className="text-[var(--gold)] shrink-0" />
+          <span className="text-[var(--ink-hi)] text-sm font-semibold flex-1">Open in Maps</span>
+          <ChevronRight size={16} className="text-[var(--ink-low)]" />
         </a>
 
         <MatchTeamsRoster game={game} />
@@ -223,22 +223,22 @@ export default function MatchDetailPage() {
           href={`/games/${game.id}/timer`}
           className="rondo-surface flex items-center gap-4 p-4 active:scale-[0.98] transition-transform"
         >
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-rondo-accent text-rondo-black">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--gold)] text-[var(--gold-ink)]">
             <Timer size={22} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-white text-sm font-bold">Live match timer</p>
-            <p className="text-white/45 text-xs">
+            <p className="text-[var(--ink-hi)] text-sm font-bold">Live match timer</p>
+            <p className="text-[var(--ink-low)] text-xs">
               Open the round clock, current matchup, and next rotation.
             </p>
           </div>
-          <ChevronRight size={18} className="text-white/30 shrink-0" />
+          <ChevronRight size={18} className="text-[var(--ink-low)] shrink-0" />
         </Link>
 
         {myEntry && (
-          <div className="rondo-surface border-rondo-accent/30 p-4 text-center">
-            <p className="text-rondo-accent font-semibold text-sm">You have a spot in this match</p>
-            <p className="text-white/50 text-xs mt-1 capitalize">{myEntry.payment_status.replace(/_/g, " ")}</p>
+          <div className="rondo-surface border-[var(--gold)]/30 p-4 text-center">
+            <p className="text-[var(--gold)] font-semibold text-sm">You have a spot in this match</p>
+            <p className="text-[var(--ink-low)] text-xs mt-1 capitalize">{myEntry.payment_status.replace(/_/g, " ")}</p>
           </div>
         )}
 
@@ -247,12 +247,12 @@ export default function MatchDetailPage() {
             {spotOpenForWaitlist ? (
               <>
                 <p className="text-amber-100 text-sm font-semibold">A spot is open — claim it before someone else does.</p>
-                <p className="text-white/45 text-xs">Everyone on the waitlist was notified. First to accept wins.</p>
+                <p className="text-[var(--ink-low)] text-xs">Everyone on the waitlist was notified. First to accept wins.</p>
               </>
             ) : (
               <>
-                <p className="text-white text-sm font-semibold">You&apos;re on the waitlist</p>
-                <p className="text-white/45 text-xs">
+                <p className="text-[var(--ink-hi)] text-sm font-semibold">You&apos;re on the waitlist</p>
+                <p className="text-[var(--ink-low)] text-xs">
                   When a spot opens, everyone gets notified. First to accept gets in. You stay on the list until you leave.
                 </p>
               </>
@@ -261,7 +261,7 @@ export default function MatchDetailPage() {
               type="button"
               onClick={leaveWaitlist}
               disabled={leavingWaitlist}
-              className="text-white/60 hover:text-white text-xs font-semibold underline underline-offset-2 disabled:opacity-50"
+              className="text-[var(--ink-mid)] hover:text-[var(--ink-hi)] text-xs font-semibold underline underline-offset-2 disabled:opacity-50"
             >
               {leavingWaitlist ? "Leaving…" : "Leave waitlist"}
             </button>
@@ -272,7 +272,7 @@ export default function MatchDetailPage() {
       <div className="fixed bottom-16 left-0 right-0 max-w-lg mx-auto px-4 pb-2 z-30 flex gap-2">
         <Link
           href={`/games/${game.id}/room`}
-          className="min-w-[72px] min-h-[52px] rondo-surface flex flex-col items-center justify-center gap-0.5 text-white hover:text-rondo-accent transition-colors"
+          className="min-w-[72px] min-h-[52px] rondo-surface flex flex-col items-center justify-center gap-0.5 text-[var(--ink-hi)] hover:text-[var(--gold)] transition-colors"
           aria-label="Organizer room"
         >
           <Megaphone size={18} />
@@ -281,8 +281,8 @@ export default function MatchDetailPage() {
 
         {cta.action === "disabled" ? (
           <div className="flex-1 rondo-surface px-4 py-3 flex flex-col justify-center min-h-[52px]">
-            <p className="text-white font-bold text-sm">{cta.label}</p>
-            <p className="text-white/45 text-xs">{cta.reason}</p>
+            <p className="text-[var(--ink-hi)] font-bold text-sm">{cta.label}</p>
+            <p className="text-[var(--ink-low)] text-xs">{cta.reason}</p>
           </div>
         ) : cta.action === "login" || cta.action === "signup" ? (
           <Link href={cta.href!} className="flex-1 rondo-btn rondo-btn-primary min-h-[52px] flex items-center justify-center">

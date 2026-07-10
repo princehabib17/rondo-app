@@ -61,14 +61,14 @@ export function FeedFiltersBar({
           className={cn(
             "shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
             activeCount > 0
-              ? "bg-rondo-accent text-black border-rondo-accent"
-              : "bg-white/5 text-white/80 border-white/12 hover:border-white/25"
+              ? "bg-[var(--gold)] text-[var(--gold-ink)] border-[var(--gold)]"
+              : "bg-[var(--bg-surface)] text-[var(--ink-mid)] border-[var(--stroke)] hover:border-[var(--ink-low)]"
           )}
         >
           <SlidersHorizontal size={13} strokeWidth={2.5} />
           Filters
           {activeCount > 0 && (
-            <span className="ml-0.5 min-w-[16px] h-4 px-1 rounded-full bg-black/20 text-black text-[10px] flex items-center justify-center">
+            <span className="ml-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[var(--gold-ink)]/20 text-[var(--gold-ink)] text-[10px] flex items-center justify-center">
               {activeCount}
             </span>
           )}
@@ -81,8 +81,8 @@ export function FeedFiltersBar({
           className={cn(
             "shrink-0 inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
             hasLocation
-              ? "bg-rondo-accent/15 text-rondo-accent border-rondo-accent/30"
-              : "bg-white/5 text-white/60 border-white/12 hover:border-white/25"
+              ? "bg-[var(--gold-dim)] text-[var(--gold)] border-[var(--gold)]/30"
+              : "bg-[var(--bg-surface)] text-[var(--ink-low)] border-[var(--stroke)] hover:border-[var(--ink-low)]"
           )}
         >
           <MapPin size={12} />
@@ -99,8 +99,8 @@ export function FeedFiltersBar({
               className={cn(
                 "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
                 active
-                  ? "bg-white text-black border-white"
-                  : "bg-white/5 text-white/70 border-white/12 hover:border-white/25"
+                  ? "bg-[var(--ink-hi)] text-[var(--bg-page)] border-[var(--ink-hi)]"
+                  : "bg-[var(--bg-surface)] text-[var(--ink-mid)] border-[var(--stroke)] hover:border-[var(--ink-low)]"
               )}
             >
               {area}
@@ -117,7 +117,7 @@ export function FeedFiltersBar({
               key={chip.key}
               type="button"
               onClick={() => onChange(clearChip(filters, chip.key))}
-              className="shrink-0 inline-flex items-center gap-1 rounded-full bg-rondo-accent/15 border border-rondo-accent/25 text-rondo-accent px-2.5 py-1 text-[11px] font-semibold"
+              className="shrink-0 inline-flex items-center gap-1 rounded-full bg-[var(--gold-dim)] border border-[var(--gold)]/25 text-[var(--gold)] px-2.5 py-1 text-[11px] font-semibold"
             >
               {chip.label}
               <X size={11} strokeWidth={3} />
@@ -126,7 +126,7 @@ export function FeedFiltersBar({
           <button
             type="button"
             onClick={() => onChange(DEFAULT_FILTERS)}
-            className="shrink-0 text-white/50 hover:text-white text-[11px] font-semibold underline underline-offset-2 px-1"
+            className="shrink-0 text-[var(--ink-low)] hover:text-[var(--ink-hi)] text-[11px] font-semibold underline underline-offset-2 px-1"
           >
             Clear all
           </button>
@@ -151,7 +151,7 @@ export function FeedFiltersBar({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="font-heading text-white/50 text-[11px] uppercase tracking-wider mb-2">
+    <h3 className="rondo-label text-[var(--ink-low)] mb-2">
       {children}
     </h3>
   );
@@ -173,8 +173,8 @@ function OptionChip({
       className={cn(
         "rounded-full border px-3 py-2 text-xs font-semibold transition-colors",
         active
-          ? "bg-rondo-accent text-black border-rondo-accent"
-          : "bg-white/5 text-white/70 border-white/12 hover:border-white/25"
+          ? "bg-[var(--gold)] text-[var(--gold-ink)] border-[var(--gold)]"
+          : "bg-[var(--bg-surface)] text-[var(--ink-mid)] border-[var(--stroke)] hover:border-[var(--ink-low)]"
       )}
     >
       {children}
@@ -257,18 +257,18 @@ function FilterSheet({
         type="button"
         aria-label="Close filters"
         onClick={onClose}
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+        className="absolute inset-0 bg-[var(--bg-page)]/70 backdrop-blur-sm animate-in fade-in duration-200"
       />
       <div
-        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg max-h-[88dvh] overflow-y-auto rounded-t-3xl bg-rondo-elevated border-t border-white/10 shadow-2xl"
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg max-h-[88dvh] overflow-y-auto rounded-t-3xl bg-[var(--bg-surface)] border-t border-[var(--stroke)] shadow-2xl"
         style={{ animation: "rondoSheetUp 280ms cubic-bezier(0.32,0.72,0,1)" }}
       >
-        <div className="sticky top-0 z-10 bg-rondo-elevated/95 backdrop-blur-md flex items-center justify-between px-5 py-4 border-b border-white/8">
-          <h2 className="font-heading text-white font-black italic text-lg uppercase">Filters</h2>
+        <div className="sticky top-0 z-10 bg-[var(--bg-surface)]/95 backdrop-blur-md flex items-center justify-between px-5 py-4 border-b border-[var(--stroke)]">
+          <h2 className="font-heading text-[var(--ink-hi)] font-black italic text-lg uppercase">Filters</h2>
           <button
             type="button"
             onClick={onClose}
-            className="w-9 h-9 flex items-center justify-center rounded-full bg-white/5 text-white/70 hover:text-white"
+            className="w-9 h-9 flex items-center justify-center rounded-full bg-[var(--bg-inset)] text-[var(--ink-mid)] hover:text-[var(--ink-hi)]"
             aria-label="Close"
           >
             <X size={18} />
@@ -285,7 +285,7 @@ function FilterSheet({
                 disabled={locating}
                 className={cn(
                   "inline-flex items-center gap-1 text-[11px] font-semibold",
-                  hasLocation ? "text-rondo-accent" : "text-white/55 hover:text-white"
+                  hasLocation ? "text-[var(--gold)]" : "text-[var(--ink-low)] hover:text-[var(--ink-hi)]"
                 )}
               >
                 <MapPin size={12} />
@@ -314,8 +314,8 @@ function FilterSheet({
                     className={cn(
                       "inline-flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-semibold transition-colors",
                       active
-                        ? "bg-rondo-accent text-black border-rondo-accent"
-                        : "bg-white/5 text-white/70 border-white/12 hover:border-white/25"
+                        ? "bg-[var(--gold)] text-[var(--gold-ink)] border-[var(--gold)]"
+                        : "bg-[var(--bg-surface)] text-[var(--ink-mid)] border-[var(--stroke)] hover:border-[var(--ink-low)]"
                     )}
                   >
                     {active && <Check size={12} strokeWidth={3} />}
@@ -414,11 +414,11 @@ function FilterSheet({
 
         </div>
 
-        <div className="sticky bottom-0 bg-rondo-elevated/95 backdrop-blur-md border-t border-white/8 px-5 py-4 flex items-center gap-3">
+        <div className="sticky bottom-0 bg-[var(--bg-surface)]/95 backdrop-blur-md border-t border-[var(--stroke)] px-5 py-4 flex items-center gap-3">
           <button
             type="button"
             onClick={() => onChange(DEFAULT_FILTERS)}
-            className="text-white/60 hover:text-white text-sm font-semibold px-2"
+            className="text-[var(--ink-low)] hover:text-[var(--ink-hi)] text-sm font-semibold px-2"
           >
             Reset
           </button>

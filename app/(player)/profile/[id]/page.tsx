@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, UserPlus, UserMinus, MapPin, Trophy, Wallet, CalendarDays, ChevronRight, ArrowUpRight, ArrowDownLeft, MessageCircle } from "lucide-react";
+import { ArrowLeft, UserPlus, UserMinus, MapPin, Trophy, Wallet, CalendarBlank, CaretRight, ArrowUpRight, ArrowDownLeft, ChatCircle } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { PUBLIC_PROFILE_SELECT } from "@/lib/supabase/profile-select";
@@ -203,20 +203,20 @@ export default function PublicProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] p-4 space-y-4">
-        <div className="w-8 h-8 bg-muted rounded animate-pulse" />
+      <div className="rondo-page min-h-[100dvh] p-4 space-y-4">
+        <div className="w-8 h-8 bg-[var(--bg-inset)] rounded animate-pulse" />
         <div className="flex gap-4 items-center">
-          <div className="w-20 h-20 rounded-full bg-muted animate-pulse" />
+          <div className="w-20 h-20 rounded-full bg-[var(--bg-inset)] animate-pulse" />
           <div className="space-y-2 flex-1">
-            <div className="h-5 bg-muted rounded animate-pulse w-1/2" />
-            <div className="h-3 bg-muted rounded animate-pulse w-1/3" />
+            <div className="h-5 bg-[var(--bg-inset)] rounded animate-pulse w-1/2" />
+            <div className="h-3 bg-[var(--bg-inset)] rounded animate-pulse w-1/3" />
           </div>
         </div>
       </div>
     );
   }
 
-  if (!profile) return <div className="min-h-[100dvh] flex items-center justify-center text-muted-foreground">Player not found</div>;
+  if (!profile) return <div className="rondo-page min-h-[100dvh] flex items-center justify-center text-[var(--ink-low)]">Player not found</div>;
 
   const flag = profile.nationality ? getFlagEmoji(profile.nationality) : "";
   const isOwnProfile = currentUserId === id;
@@ -226,26 +226,26 @@ export default function PublicProfilePage() {
     .slice(0, 3);
 
   return (
-    <div className="min-h-[100dvh] pb-8">
-      <header className="sticky top-0 bg-background/90 backdrop-blur-md border-b border-border z-40 px-4 py-3 flex items-center gap-3">
-        <button onClick={() => router.back()} className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white hover:text-rondo-yellow transition-colors cursor-pointer" aria-label="Back">
+    <div className="rondo-page min-h-[100dvh] pb-8">
+      <header className="sticky top-0 bg-[var(--bg-page)]/90 backdrop-blur-md border-b border-[var(--stroke)] z-40 px-4 py-3 flex items-center gap-3">
+        <button onClick={() => router.back()} className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--ink-hi)] hover:text-rondo-yellow transition-colors cursor-pointer" aria-label="Back">
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-white font-bold text-base flex-1 truncate">{profile.full_name}</h1>
+        <h1 className="text-[var(--ink-hi)] font-bold text-base flex-1 truncate">{profile.full_name}</h1>
         {!isOwnProfile && currentUserId && !isGuest && (
           <div className="flex items-center gap-2 shrink-0">
             <Link
               href={`/messages/${id}`}
-              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-border hover:border-rondo-yellow/40 text-rondo-yellow transition-all"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-[var(--stroke)] hover:border-rondo-yellow/40 text-rondo-yellow transition-all"
               aria-label="Message player"
             >
-              <MessageCircle size={18} />
+              <ChatCircle size={18} />
             </Link>
             <button
               onClick={handleFollow}
               disabled={followLoading}
-              className="min-h-[44px] px-4 flex items-center gap-2 rounded-lg border border-border hover:border-rondo-yellow/40 text-sm font-semibold transition-all cursor-pointer active:scale-[0.97] disabled:opacity-50"
-              style={{ color: isFollowing ? "var(--muted-foreground)" : "var(--color-rondo-yellow)" }}
+              className="min-h-[44px] px-4 flex items-center gap-2 rounded-lg border border-[var(--stroke)] hover:border-rondo-yellow/40 text-sm font-semibold transition-all cursor-pointer active:scale-[0.97] disabled:opacity-50"
+              style={{ color: isFollowing ? "var(--ink-low)" : "var(--color-rondo-yellow)" }}
             >
               {isFollowing ? <><UserMinus size={15} />Unfollow</> : <><UserPlus size={15} />Follow</>}
             </button>
@@ -257,11 +257,11 @@ export default function PublicProfilePage() {
         {/* Avatar + name */}
         <div className="flex items-center gap-4">
           <div className="relative shrink-0">
-            <div className="w-20 h-20 rounded-full bg-secondary border-2 border-border overflow-hidden flex items-center justify-center">
+            <div className="w-20 h-20 rounded-full bg-secondary border-2 border-[var(--stroke)] overflow-hidden flex items-center justify-center">
               {profile.avatar_url ? (
                 <img src={profile.avatar_url} alt={profile.full_name ?? ""} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-white font-black text-2xl">
+                <span className="text-[var(--ink-hi)] font-black text-2xl">
                   {(profile.full_name ?? "?").slice(0, 1)}
                 </span>
               )}
@@ -272,7 +272,7 @@ export default function PublicProfilePage() {
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className="text-white font-black text-xl leading-tight">{profile.full_name}</h2>
+              <h2 className="text-[var(--ink-hi)] font-black text-xl leading-tight">{profile.full_name}</h2>
               {isOrganizer && (
                 <span className="rounded-full bg-rondo-accent/15 text-rondo-accent text-[10px] font-black uppercase tracking-wider px-2 py-0.5 border border-rondo-accent/30">
                   Organizer
@@ -280,20 +280,20 @@ export default function PublicProfilePage() {
               )}
             </div>
             {profile.nationality && !isOrganizer && (
-              <p className="text-muted-foreground text-sm flex items-center gap-1.5 mt-1">
+              <p className="text-[var(--ink-low)] text-sm flex items-center gap-1.5 mt-1">
                 <MapPin size={12} />
                 {profile.nationality}
               </p>
             )}
             {isOrganizer && profile.preferred_areas && (
-              <p className="text-muted-foreground text-sm flex items-center gap-1.5 mt-1 truncate">
+              <p className="text-[var(--ink-low)] text-sm flex items-center gap-1.5 mt-1 truncate">
                 <MapPin size={12} className="shrink-0" />
                 <span className="truncate">{profile.preferred_areas}</span>
               </p>
             )}
             <div className="flex items-center gap-1.5 mt-1">
               <Trophy size={12} className="text-rondo-yellow" />
-              <span className="text-muted-foreground text-sm">
+              <span className="text-[var(--ink-low)] text-sm">
                 {isOrganizer ? `${gamesPlayed} games hosted` : `${gamesPlayed} matches played`}
               </span>
             </div>
@@ -337,23 +337,23 @@ export default function PublicProfilePage() {
         {isOrganizer && (
           <Link
             href={`/organizers/${id}`}
-            className="flex items-center justify-between bg-card border border-border hover:border-rondo-accent/40 rounded-xl p-4 transition-colors"
+            className="flex items-center justify-between bg-[var(--bg-surface)] border border-[var(--stroke)] hover:border-rondo-accent/40 rounded-[var(--r-md)] p-4 transition-colors"
           >
             <div>
-              <p className="text-white text-sm font-bold">View organizer page</p>
-              <p className="text-muted-foreground text-xs mt-0.5">Games, room broadcasts, followers</p>
+              <p className="text-[var(--ink-hi)] text-sm font-bold">View organizer page</p>
+              <p className="text-[var(--ink-low)] text-xs mt-0.5">Games, room broadcasts, followers</p>
             </div>
-            <ChevronRight size={16} className="text-muted-foreground" />
+            <CaretRight size={16} className="text-[var(--ink-low)]" />
           </Link>
         )}
 
         {/* Bio */}
         {profile.bio && (
           <div className="space-y-2">
-            <h3 className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">
+            <h3 className="text-[var(--ink-low)] text-xs uppercase tracking-wider font-semibold">
               {isOrganizer ? "About this organizer" : "About"}
             </h3>
-            <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{profile.bio}</p>
+            <p className="text-[var(--ink-hi)] text-sm leading-relaxed whitespace-pre-wrap">{profile.bio}</p>
           </div>
         )}
 
@@ -361,7 +361,7 @@ export default function PublicProfilePage() {
         {!isOrganizer && playerReels.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">Clips</h3>
+              <h3 className="text-[var(--ink-low)] text-xs uppercase tracking-wider font-semibold">Clips</h3>
               <Link
                 href={`/reels?player=${id}`}
                 className="text-rondo-accent text-xs font-semibold uppercase tracking-wide"
@@ -374,7 +374,7 @@ export default function PublicProfilePage() {
                 <Link
                   key={reel.id}
                   href={`/reels?player=${id}`}
-                  className="relative aspect-[9/16] max-h-48 rounded-xl overflow-hidden bg-black border border-border"
+                  className="relative aspect-[9/16] max-h-48 rounded-[var(--r-md)] overflow-hidden bg-black border border-[var(--stroke)]"
                 >
                   <video
                     src={reel.video_url}
@@ -385,7 +385,7 @@ export default function PublicProfilePage() {
                   />
                   {reel.caption && (
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 p-2">
-                      <p className="text-white text-[10px] line-clamp-1">{reel.caption}</p>
+                      <p className="text-[var(--ink-hi)] text-[10px] line-clamp-1">{reel.caption}</p>
                     </div>
                   )}
                 </Link>
@@ -401,7 +401,7 @@ export default function PublicProfilePage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Wallet size={16} className="text-rondo-accent" />
-                  <h3 className="text-white font-bold text-base">Rondo Wallet</h3>
+                  <h3 className="text-[var(--ink-hi)] font-bold text-base">Rondo Wallet</h3>
                 </div>
                 <Link
                   href="/wallet"
@@ -411,11 +411,11 @@ export default function PublicProfilePage() {
                 </Link>
               </div>
               {walletRows.length > 0 && (
-                <div className="bg-card border border-border rounded-xl overflow-hidden">
+                <div className="bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] overflow-hidden">
                   {walletRows.slice(0, 10).map((row, i) => (
                     <div
                       key={i}
-                      className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-b-0"
+                      className="flex items-center gap-3 px-4 py-3 border-b border-[var(--stroke)] last:border-b-0"
                     >
                       <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${row.direction === "credit" ? "bg-green-500/15" : "bg-red-500/15"}`}>
                         {row.direction === "credit" ? (
@@ -425,7 +425,7 @@ export default function PublicProfilePage() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-white text-sm font-medium">
+                        <p className="text-[var(--ink-hi)] text-sm font-medium">
                           {row.source
                             .split("_")
                             .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
@@ -445,8 +445,8 @@ export default function PublicProfilePage() {
               <section className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <CalendarDays size={16} className="text-rondo-accent" />
-                    <h3 className="text-white font-bold text-base">Matches</h3>
+                    <CalendarBlank size={16} className="text-rondo-accent" />
+                    <h3 className="text-[var(--ink-hi)] font-bold text-base">Matches</h3>
                   </div>
                   <Link href="/my-games" className="text-rondo-accent text-xs font-semibold uppercase tracking-wide">
                     View All
@@ -454,8 +454,8 @@ export default function PublicProfilePage() {
                 </div>
 
                 {upcomingMatches.length === 0 ? (
-                  <div className="bg-card border border-border rounded-xl p-4">
-                    <p className="text-muted-foreground text-sm">No upcoming matches yet.</p>
+                  <div className="bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] p-4">
+                    <p className="text-[var(--ink-low)] text-sm">No upcoming matches yet.</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -464,17 +464,17 @@ export default function PublicProfilePage() {
                         <Link
                           key={entry.id}
                           href={`/games/${entry.game.id}`}
-                          className="flex items-center gap-3 bg-card border border-border hover:border-rondo-accent/40 rounded-xl p-3 transition-colors"
+                          className="flex items-center gap-3 bg-[var(--bg-surface)] border border-[var(--stroke)] hover:border-rondo-accent/40 rounded-[var(--r-md)] p-3 transition-colors"
                         >
                           <div className="min-w-0 flex-1">
-                            <p className="text-white text-sm font-semibold truncate">{entry.game.title}</p>
-                            <p className="text-muted-foreground text-xs truncate">{formatGameDate(entry.game.date_time)}</p>
-                            <p className="text-muted-foreground text-xs truncate">{entry.game.venue_name}</p>
+                            <p className="text-[var(--ink-hi)] text-sm font-semibold truncate">{entry.game.title}</p>
+                            <p className="text-[var(--ink-low)] text-xs truncate">{formatGameDate(entry.game.date_time)}</p>
+                            <p className="text-[var(--ink-low)] text-xs truncate">{entry.game.venue_name}</p>
                           </div>
                           <span className="text-rondo-accent text-xs font-black shrink-0">
                             {formatPrice(entry.game.price_per_player)}
                           </span>
-                          <ChevronRight size={16} className="text-white/40 shrink-0" />
+                          <CaretRight size={16} className="text-[var(--ink-low)] shrink-0" />
                         </Link>
                       ) : null
                     )}
@@ -486,16 +486,16 @@ export default function PublicProfilePage() {
             {isOrganizer && (
               <Link
                 href="/organizer/dashboard"
-                className="flex items-center justify-between bg-rondo-accent/10 border border-rondo-accent/40 rounded-xl p-4"
+                className="flex items-center justify-between bg-rondo-accent/10 border border-rondo-accent/40 rounded-[var(--r-md)] p-4"
               >
                 <div className="flex items-center gap-2.5">
-                  <CalendarDays size={18} className="text-rondo-accent" />
+                  <CalendarBlank size={18} className="text-rondo-accent" />
                   <div>
-                    <p className="text-white font-bold text-sm">Organizer dashboard</p>
-                    <p className="text-muted-foreground text-xs">Create games, manage payouts</p>
+                    <p className="text-[var(--ink-hi)] font-bold text-sm">Organizer dashboard</p>
+                    <p className="text-[var(--ink-low)] text-xs">Create games, manage payouts</p>
                   </div>
                 </div>
-                <ChevronRight size={16} className="text-rondo-accent" />
+                <CaretRight size={16} className="text-rondo-accent" />
               </Link>
             )}
 
@@ -507,7 +507,7 @@ export default function PublicProfilePage() {
                 }
                 router.push("/onboarding/profile");
               }}
-              className="w-full border border-border text-muted-foreground hover:text-white hover:border-border/80 text-sm py-3 rounded-xl active:scale-[0.98] transition-all cursor-pointer min-h-[44px]"
+              className="w-full border border-[var(--stroke)] text-[var(--ink-low)] hover:text-[var(--ink-hi)] hover:border-[var(--stroke)]/80 text-sm py-3 rounded-[var(--r-md)] active:scale-[0.98] transition-all cursor-pointer min-h-[44px]"
             >
               Edit Profile
             </button>
@@ -516,7 +516,7 @@ export default function PublicProfilePage() {
               <button
                 onClick={switchRole}
                 disabled={switchingRole}
-                className="w-full text-center text-muted-foreground hover:text-white text-xs py-1 transition-colors cursor-pointer disabled:opacity-50"
+                className="w-full text-center text-[var(--ink-low)] hover:text-[var(--ink-hi)] text-xs py-1 transition-colors cursor-pointer disabled:opacity-50"
               >
                 {switchingRole
                   ? "Switching..."
@@ -526,7 +526,7 @@ export default function PublicProfilePage() {
               </button>
             )}
 
-            <label className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 cursor-pointer">
+            <label className="flex items-start gap-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-4 cursor-pointer">
               <input
                 type="checkbox"
                 checked={locationHidden}
@@ -534,9 +534,9 @@ export default function PublicProfilePage() {
                 onChange={toggleLocationHidden}
                 className="mt-0.5 h-4 w-4 accent-[#E9FF3A]"
               />
-              <span className="text-sm text-white/80 leading-snug">
+              <span className="text-sm text-[var(--ink-mid)] leading-snug">
                 Hide my location from other players
-                <span className="block text-xs text-muted-foreground mt-0.5">
+                <span className="block text-xs text-[var(--ink-low)] mt-0.5">
                   When on, nearest-player discovery won&apos;t show where you are.
                 </span>
               </span>
@@ -544,13 +544,13 @@ export default function PublicProfilePage() {
 
             <Link
               href="/messages"
-              className="block w-full border border-border text-center text-muted-foreground hover:text-white hover:border-border/80 text-sm py-3 rounded-xl transition-all"
+              className="block w-full border border-[var(--stroke)] text-center text-[var(--ink-low)] hover:text-[var(--ink-hi)] hover:border-[var(--stroke)]/80 text-sm py-3 rounded-[var(--r-md)] transition-all"
             >
               Messages
             </Link>
             <Link
               href="/help"
-              className="block w-full border border-border text-center text-muted-foreground hover:text-white hover:border-border/80 text-sm py-3 rounded-xl transition-all"
+              className="block w-full border border-[var(--stroke)] text-center text-[var(--ink-low)] hover:text-[var(--ink-hi)] hover:border-[var(--stroke)]/80 text-sm py-3 rounded-[var(--r-md)] transition-all"
             >
               Help & Refunds
             </Link>
@@ -561,7 +561,7 @@ export default function PublicProfilePage() {
                 router.push("/");
                 router.refresh();
               }}
-              className="w-full border border-red-500/30 text-red-400 hover:text-red-300 hover:border-red-400/50 text-sm py-3 rounded-xl transition-all cursor-pointer min-h-[44px]"
+              className="w-full border border-red-500/30 text-red-400 hover:text-red-300 hover:border-red-400/50 text-sm py-3 rounded-[var(--r-md)] transition-all cursor-pointer min-h-[44px]"
             >
               Sign Out
             </button>
@@ -574,22 +574,22 @@ export default function PublicProfilePage() {
                 Delete account
               </button>
             ) : (
-              <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 space-y-3">
-                <p className="text-white/80 text-sm">
+              <div className="rounded-[var(--r-md)] border border-red-500/30 bg-red-500/5 p-4 space-y-3">
+                <p className="text-[var(--ink-mid)] text-sm">
                   This permanently deletes your account, profile, and match history. It can&apos;t
                   be undone.
                 </p>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setConfirmDelete(false)}
-                    className="flex-1 border border-border text-muted-foreground text-sm py-2.5 rounded-xl"
+                    className="flex-1 border border-[var(--stroke)] text-[var(--ink-low)] text-sm py-2.5 rounded-[var(--r-md)]"
                   >
                     Keep my account
                   </button>
                   <button
                     onClick={deleteAccount}
                     disabled={deleting}
-                    className="flex-1 bg-red-500/90 text-white text-sm font-bold py-2.5 rounded-xl disabled:opacity-50"
+                    className="flex-1 bg-red-500/90 text-[var(--ink-hi)] text-sm font-bold py-2.5 rounded-[var(--r-md)] disabled:opacity-50"
                   >
                     {deleting ? "Deleting..." : "Delete forever"}
                   </button>

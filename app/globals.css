@@ -301,14 +301,14 @@
 
 .rondo-map-shell {
   background:
-    radial-gradient(circle at 24% 28%, rgba(246, 224, 55, 0.12), transparent 9%),
-    radial-gradient(circle at 72% 38%, rgba(246, 224, 55, 0.1), transparent 8%),
-    radial-gradient(circle at 54% 70%, rgba(246, 224, 55, 0.1), transparent 8%),
-    linear-gradient(28deg, transparent 0 46%, rgba(255, 255, 255, 0.08) 46.4% 47%, transparent 47.4% 100%),
-    linear-gradient(112deg, transparent 0 42%, rgba(255, 255, 255, 0.055) 42.4% 43%, transparent 43.4% 100%),
-    repeating-linear-gradient(8deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 18px),
-    repeating-linear-gradient(98deg, rgba(255, 255, 255, 0.028) 0 1px, transparent 1px 22px),
-    #050505;
+    radial-gradient(circle at 24% 28%, color-mix(in oklch, var(--gold) 12%, transparent), transparent 9%),
+    radial-gradient(circle at 72% 38%, color-mix(in oklch, var(--gold) 10%, transparent), transparent 8%),
+    radial-gradient(circle at 54% 70%, color-mix(in oklch, var(--gold) 10%, transparent), transparent 8%),
+    linear-gradient(28deg, transparent 0 46%, color-mix(in oklch, var(--ink-hi) 8%, transparent) 46.4% 47%, transparent 47.4% 100%),
+    linear-gradient(112deg, transparent 0 42%, color-mix(in oklch, var(--ink-hi) 5.5%, transparent) 42.4% 43%, transparent 43.4% 100%),
+    repeating-linear-gradient(8deg, color-mix(in oklch, var(--ink-hi) 3.5%, transparent) 0 1px, transparent 1px 18px),
+    repeating-linear-gradient(98deg, color-mix(in oklch, var(--ink-hi) 2.8%, transparent) 0 1px, transparent 1px 22px),
+    var(--bg-page);
 }
 
 .rondo-phone-frame {
@@ -326,9 +326,12 @@
 .rondo-hero-title {
   font-family: var(--font-heading);
   font-weight: 900;
-  font-style: italic;
+  font-style: normal;
   text-transform: uppercase;
   line-height: 0.9;
+  letter-spacing: -0.04em;
+  overflow-wrap: anywhere;
+  min-width: 0;
   letter-spacing: 0;
   text-wrap: balance;
 }

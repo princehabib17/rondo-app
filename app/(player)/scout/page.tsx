@@ -20,7 +20,7 @@ import {
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
-import type { Profile, ScoutClip, ScoutReactionKind } from "@/lib/supabase/types";
+import type { ScoutClip, ScoutReactionKind } from "@/lib/supabase/types";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import { cn } from "@/lib/utils";
 import { SCOUT_CLIP_CAPTION_MAX } from "@/lib/scout/clip-schema";
@@ -30,86 +30,6 @@ type ScoutClipWithCounts = ScoutClip & {
   saves: number;
   scouts: number;
 };
-
-const samplePlayers: Profile[] = [
-  {
-    id: "sample-wing",
-    email: null,
-    full_name: "Andre Marquez",
-    avatar_url: null,
-    role: "player",
-    bio: "Explosive winger, loves 1v1s.",
-    nationality: "Philippines",
-    position: "forward",
-    preferred_foot: "right",
-    skill_level: "advanced",
-    preferred_areas: "Makati, BGC",
-    game_preference: "football",
-    organizer_verified: false,
-    location_hidden: false,
-    last_lat: null,
-    last_lng: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: "sample-mid",
-    email: null,
-    full_name: "Kevin Bautista",
-    avatar_url: null,
-    role: "player",
-    bio: "Press-resistant midfielder.",
-    nationality: "Philippines",
-    position: "midfielder",
-    preferred_foot: "left",
-    skill_level: "intermediate",
-    preferred_areas: "Pasig, Ortigas",
-    game_preference: "futsal",
-    organizer_verified: false,
-    location_hidden: false,
-    last_lat: null,
-    last_lng: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-];
-
-const sampleClips: ScoutClipWithCounts[] = [
-  {
-    id: "sample-clip-1",
-    player_id: samplePlayers[0].id,
-    video_url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
-    thumbnail_url: "/feed/hero-soccer.jpg",
-    caption: "First touch, burst, finish. Available for competitive 7v7s this month.",
-    position: "Forward",
-    skill_tags: ["1v1", "Finishing", "Acceleration"],
-    is_public: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    player: samplePlayers[0],
-    scout_clip_reactions: [],
-    likes: 128,
-    saves: 32,
-    scouts: 9,
-  },
-  {
-    id: "sample-clip-2",
-    player_id: samplePlayers[1].id,
-    video_url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
-    thumbnail_url: "/feed/hero-night-court.png",
-    caption: "Small-sided control clips: receive under pressure, turn out, play forward.",
-    position: "Midfielder",
-    skill_tags: ["First touch", "Passing", "Tempo"],
-    is_public: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    player: samplePlayers[1],
-    scout_clip_reactions: [],
-    likes: 91,
-    saves: 21,
-    scouts: 7,
-  },
-];
 
 function countsFor(clip: ScoutClip): ScoutClipWithCounts {
   const reactions = clip.scout_clip_reactions ?? [];
@@ -139,18 +59,18 @@ function ClipAction({
   onClick: () => void;
 }) {
   return (
-    <button type="button" onClick={onClick} className="flex flex-col items-center gap-1 text-white">
+    <button type="button" onClick={onClick} className="flex flex-col items-center gap-1 text-[var(--ink-hi)]">
       <span
         className={cn(
           "grid h-12 w-12 place-items-center rounded-full border backdrop-blur-md transition-colors",
           active
-            ? "border-rondo-accent bg-rondo-accent text-black"
-            : "border-white/16 bg-black/45 text-white"
+            ? "border-[var(--gold)] bg-[var(--gold)] text-[var(--gold-ink)]"
+            : "border-[var(--stroke)] bg-[var(--bg-surface)]/70 text-[var(--ink-hi)]"
         )}
       >
         <Icon size={22} fill={active && Icon === Heart ? "currentColor" : "none"} />
       </span>
-      <span className="font-heading text-[0.68rem] font-black uppercase leading-none text-white/82">
+      <span className="font-heading text-[0.68rem] font-black uppercase leading-none text-[var(--ink-mid)]">
         {count == null ? label : count}
       </span>
     </button>
@@ -236,17 +156,17 @@ function UploadSheet({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[260] flex items-end justify-center bg-black/70 px-3 pb-3 backdrop-blur-sm">
-      <div className="w-full max-w-[430px] rounded-[1.6rem] border border-white/12 bg-[#070707] p-4 shadow-[0_-24px_90px_rgba(0,0,0,0.78)]">
+    <div className="fixed inset-0 z-[260] flex items-end justify-center bg-[var(--bg-page)]/70 px-3 pb-3 backdrop-blur-sm">
+      <div className="w-full max-w-[430px] rounded-[1.6rem] border border-[var(--stroke)] bg-[var(--bg-surface)] p-4 shadow-[0_-24px_90px_color-mix(in_oklch,var(--bg-page)_78%,transparent)]">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <p className="font-heading text-2xl font-black uppercase italic text-white">Upload Clip</p>
-            <p className="text-xs text-white/45">Upload a clip or paste a public video link.</p>
+            <p className="font-heading text-2xl font-black uppercase italic text-[var(--ink-hi)]">Upload Clip</p>
+            <p className="text-xs text-[var(--ink-low)]">Upload a clip or paste a public video link.</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="grid h-10 w-10 place-items-center rounded-full border border-white/10 text-white"
+            className="grid h-10 w-10 place-items-center rounded-full border border-[var(--stroke)] text-[var(--ink-hi)]"
             aria-label="Close upload"
           >
             <X size={18} />
@@ -254,7 +174,7 @@ function UploadSheet({
         </div>
 
         <div className="space-y-3">
-          <label className="flex min-h-20 cursor-pointer items-center justify-center rounded-xl border border-dashed border-rondo-accent/35 bg-rondo-accent/8 px-3 text-center text-xs font-semibold text-rondo-accent">
+          <label className="flex min-h-20 cursor-pointer items-center justify-center rounded-xl border border-dashed border-[var(--gold)]/35 bg-[var(--gold-dim)] px-3 text-center text-xs font-semibold text-[var(--gold)]">
             <input
               type="file"
               accept="video/mp4,video/webm,video/quicktime"
@@ -268,27 +188,27 @@ function UploadSheet({
             value={videoUrl}
             onChange={(e) => setVideoUrl(e.target.value)}
             placeholder="Or paste https://.../highlight.mp4"
-            className="h-12 w-full rounded-xl border border-white/12 bg-white/[0.045] px-3 text-sm text-white outline-none placeholder:text-white/28 focus:border-rondo-accent/55"
+            className="h-12 w-full rounded-xl border border-[var(--stroke)] bg-[var(--bg-inset)] px-3 text-sm text-[var(--ink-hi)] outline-none placeholder:text-[var(--ink-low)] focus:border-[var(--gold)]/55"
           />
           <input
             type="url"
             value={thumbnailUrl}
             onChange={(e) => setThumbnailUrl(e.target.value)}
             placeholder="Optional thumbnail https://..."
-            className="h-12 w-full rounded-xl border border-white/12 bg-white/[0.045] px-3 text-sm text-white outline-none placeholder:text-white/28 focus:border-rondo-accent/55"
+            className="h-12 w-full rounded-xl border border-[var(--stroke)] bg-[var(--bg-inset)] px-3 text-sm text-[var(--ink-hi)] outline-none placeholder:text-[var(--ink-low)] focus:border-[var(--gold)]/55"
           />
           <div className="grid grid-cols-[0.9fr_1.1fr] gap-2">
             <input
               value={position}
               onChange={(e) => setPosition(e.target.value)}
               placeholder="Position"
-              className="h-12 rounded-xl border border-white/12 bg-white/[0.045] px-3 text-sm text-white outline-none placeholder:text-white/28 focus:border-rondo-accent/55"
+              className="h-12 rounded-xl border border-[var(--stroke)] bg-[var(--bg-inset)] px-3 text-sm text-[var(--ink-hi)] outline-none placeholder:text-[var(--ink-low)] focus:border-[var(--gold)]/55"
             />
             <input
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="Tags"
-              className="h-12 rounded-xl border border-white/12 bg-white/[0.045] px-3 text-sm text-white outline-none placeholder:text-white/28 focus:border-rondo-accent/55"
+              className="h-12 rounded-xl border border-[var(--stroke)] bg-[var(--bg-inset)] px-3 text-sm text-[var(--ink-hi)] outline-none placeholder:text-[var(--ink-low)] focus:border-[var(--gold)]/55"
             />
           </div>
           <textarea
@@ -296,7 +216,7 @@ function UploadSheet({
             onChange={(e) => setCaption(e.target.value.slice(0, SCOUT_CLIP_CAPTION_MAX))}
             placeholder="What should scouts notice?"
             rows={3}
-            className="w-full resize-none rounded-xl border border-white/12 bg-white/[0.045] px-3 py-3 text-sm text-white outline-none placeholder:text-white/28 focus:border-rondo-accent/55"
+            className="w-full resize-none rounded-xl border border-[var(--stroke)] bg-[var(--bg-inset)] px-3 py-3 text-sm text-[var(--ink-hi)] outline-none placeholder:text-[var(--ink-low)] focus:border-[var(--gold)]/55"
           />
           <button
             type="button"
@@ -314,7 +234,7 @@ function UploadSheet({
 }
 
 export default function ScoutPage() {
-  const [clips, setClips] = useState<ScoutClipWithCounts[]>(sampleClips);
+  const [clips, setClips] = useState<ScoutClipWithCounts[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [guest, setGuest] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -335,11 +255,9 @@ export default function ScoutPage() {
       const res = await fetch("/api/scout-clips", { cache: "no-store" });
       const json = await res.json();
       const rows = ((json.clips ?? []) as ScoutClip[]).map(countsFor);
-      if (rows.length > 0) {
-        setClips(rows);
-      }
+      setClips(rows);
     } catch {
-      setClips(sampleClips);
+      setClips([]);
     } finally {
       setLoading(false);
     }
@@ -351,7 +269,7 @@ export default function ScoutPage() {
 
   const reactToClip = useCallback(
     async (clip: ScoutClipWithCounts, kind: ScoutReactionKind) => {
-      if (!currentUserId || guest || clip.id.startsWith("sample-")) {
+      if (!currentUserId || guest) {
         toast("Sign in to save scout activity");
         return;
       }
@@ -385,11 +303,11 @@ export default function ScoutPage() {
     containerRef.current?.children[next]?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [activeIndex, clips.length]);
 
-  const profileHref = activeClip?.player_id.startsWith("sample-") ? "/community" : `/profile/${activeClip?.player_id}`;
-  const messageHref = activeClip?.player_id.startsWith("sample-") ? "/messages" : `/messages/${activeClip?.player_id}`;
+  const profileHref = activeClip?.player_id ? `/profile/${activeClip.player_id}` : "/community";
+  const messageHref = activeClip?.player_id ? `/messages/${activeClip.player_id}` : "/messages";
 
   return (
-    <div className="min-h-[100dvh] bg-black text-white">
+    <div className="min-h-[100dvh] rondo-page text-[var(--ink-hi)]">
       <div className="fixed inset-x-0 top-0 z-50 mx-auto flex h-[5.25rem] max-w-[430px] items-center justify-between px-5 pt-3">
         <Link href="/feed" className="flex items-center gap-2" aria-label="Back to feed">
           <Image src="/rondo-logo.png" alt="RONDO" width={34} height={34} className="object-contain" priority />
@@ -398,7 +316,7 @@ export default function ScoutPage() {
         <div className="flex items-center gap-2 pr-1">
           <Link
             href="/community"
-            className="grid h-10 w-10 place-items-center rounded-full border border-white/12 bg-black/45 text-white backdrop-blur"
+            className="grid h-10 w-10 place-items-center rounded-full border border-[var(--stroke)] bg-[var(--bg-surface)]/70 text-[var(--ink-hi)] backdrop-blur"
             aria-label="Search players"
           >
             <Search size={18} />
@@ -406,7 +324,7 @@ export default function ScoutPage() {
           <button
             type="button"
             onClick={() => (guest ? toast("Create an account to upload clips") : setUploadOpen(true))}
-            className="grid h-10 w-10 place-items-center rounded-full bg-rondo-accent text-black shadow-[0_0_28px_rgba(246,224,55,0.35)]"
+            className="grid h-10 w-10 place-items-center rounded-full bg-[var(--gold)] text-[var(--gold-ink)] shadow-[0_0_28px_color-mix(in_oklch,var(--gold)_35%,transparent)]"
             aria-label="Upload scout clip"
           >
             <Plus size={20} />
@@ -414,132 +332,154 @@ export default function ScoutPage() {
         </div>
       </div>
 
-      <div
-        ref={containerRef}
-        onScroll={(e) => {
-          const el = e.currentTarget;
-          setActiveIndex(Math.round(el.scrollTop / Math.max(1, el.clientHeight)));
-        }}
-        className="h-[100dvh] snap-y snap-mandatory overflow-y-auto overflow-x-hidden [scrollbar-width:none]"
-      >
-        {clips.map((clip) => {
-          const sample = clip.id.startsWith("sample-");
-          const liked = userReacted(clip, currentUserId, "like");
-          const saved = userReacted(clip, currentUserId, "save");
-          const scouted = userReacted(clip, currentUserId, "scout");
-          return (
-            <section key={clip.id} className="relative mx-auto h-[100dvh] max-w-[430px] snap-start overflow-hidden bg-black">
-              {clip.thumbnail_url && (
-                <img
-                  src={clip.thumbnail_url}
-                  alt=""
-                  className="absolute inset-0 h-full w-full object-cover opacity-45 blur-[1px]"
-                />
-              )}
-              {sample ? (
-                <img
-                  src={clip.thumbnail_url ?? "/feed/hero-soccer.jpg"}
-                  alt=""
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-              ) : (
-                <video
-                  src={clip.video_url}
-                  poster={clip.thumbnail_url ?? undefined}
-                  className="absolute inset-0 h-full w-full object-cover"
-                  playsInline
-                  muted
-                  loop
-                  autoPlay
-                  controls={false}
-                />
-              )}
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.62)_0%,rgba(0,0,0,0.08)_36%,rgba(0,0,0,0.78)_100%)]" />
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_28%_70%,rgba(246,224,55,0.18),transparent_28%)]" />
-
-              <div className="absolute right-3 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-4">
-                <ClipAction icon={Heart} label="Like" count={clip.likes} active={liked} onClick={() => reactToClip(clip, "like")} />
-                <ClipAction icon={Bookmark} label="Save" count={clip.saves} active={saved} onClick={() => reactToClip(clip, "save")} />
-                <ClipAction icon={ShieldCheck} label="Scout" count={clip.scouts} active={scouted} onClick={() => reactToClip(clip, "scout")} />
-                <Link href={messageHref} className="flex flex-col items-center gap-1 text-white">
-                  <span className="grid h-12 w-12 place-items-center rounded-full border border-white/16 bg-black/45 backdrop-blur-md">
-                    <MessageCircle size={22} />
-                  </span>
-                  <span className="font-heading text-[0.68rem] font-black uppercase leading-none text-white/82">DM</span>
-                </Link>
-              </div>
-
-              <div className="absolute bottom-32 left-0 right-0 z-20 px-4">
-                <div className="max-w-[calc(100%-4.5rem)] space-y-3">
-                  <Link href={profileHref} className="flex items-center gap-3">
-                    {clip.player ? (
-                      <PlayerAvatar profile={clip.player} size="md" linkable={false} />
-                    ) : (
-                      <span className="grid h-11 w-11 place-items-center rounded-full border border-white/16 bg-white/10">
-                        <UserRound size={18} />
-                      </span>
-                    )}
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <p className="truncate font-heading text-2xl font-black uppercase italic leading-none text-white">
-                          {clip.player?.full_name ?? "Player"}
-                        </p>
-                        <Check size={16} className="shrink-0 rounded-full bg-rondo-accent p-0.5 text-black" />
-                      </div>
-                      <p className="mt-1 text-xs font-semibold text-white/58">
-                        {clip.position ?? clip.player?.position ?? "Player"} · {clip.player?.skill_level ?? "Open level"}
-                      </p>
-                    </div>
-                  </Link>
-
-                  <p className="text-sm font-medium leading-snug text-white/88">{clip.caption}</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {clip.skill_tags.slice(0, 4).map((tag) => (
-                      <span
-                        key={tag}
-                        className="rounded-full border border-rondo-accent/25 bg-rondo-accent/12 px-2.5 py-1 text-[0.68rem] font-bold uppercase text-rondo-accent"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </section>
-          );
-        })}
-      </div>
-
-      <div className="fixed bottom-[5.1rem] left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/12 bg-black/50 px-3 py-2 backdrop-blur-md">
-        <button
-          type="button"
-          onClick={() => scrollToActive(-1)}
-          className="grid h-9 w-9 place-items-center rounded-full bg-white/8 text-white"
-          aria-label="Previous clip"
-        >
-          <ChevronUp size={18} />
-        </button>
-        <div className="flex items-center gap-1.5 px-1">
-          {clips.map((clip, i) => (
-            <span
-              key={clip.id}
-              className={cn("h-1.5 rounded-full transition-all", i === activeIndex ? "w-5 bg-rondo-accent" : "w-1.5 bg-white/32")}
-            />
-          ))}
+      {!loading && clips.length === 0 ? (
+        <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 px-6 text-center">
+          <p className="font-heading text-2xl font-black uppercase italic text-[var(--ink-hi)]">
+            No scout clips yet
+          </p>
+          <p className="max-w-xs text-sm text-[var(--ink-low)]">
+            Upload a highlight or browse the community for players.
+          </p>
+          <div className="flex w-full max-w-xs flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => (guest ? toast("Create an account to upload clips") : setUploadOpen(true))}
+              className="rondo-btn rondo-btn-primary"
+            >
+              <Upload size={16} />
+              Upload a clip
+            </button>
+            <Link href="/community" className="rondo-btn rondo-btn-ghost">
+              Browse community
+            </Link>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={() => scrollToActive(1)}
-          className="grid h-9 w-9 rotate-180 place-items-center rounded-full bg-white/8 text-white"
-          aria-label="Next clip"
-        >
-          <ChevronUp size={18} />
-        </button>
-      </div>
+      ) : (
+        <>
+          <div
+            ref={containerRef}
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              setActiveIndex(Math.round(el.scrollTop / Math.max(1, el.clientHeight)));
+            }}
+            className="h-[100dvh] snap-y snap-mandatory overflow-y-auto overflow-x-hidden [scrollbar-width:none]"
+          >
+            {clips.map((clip) => {
+              const liked = userReacted(clip, currentUserId, "like");
+              const saved = userReacted(clip, currentUserId, "save");
+              const scouted = userReacted(clip, currentUserId, "scout");
+              return (
+                <section key={clip.id} className="relative mx-auto h-[100dvh] max-w-[430px] snap-start overflow-hidden bg-[var(--bg-page)]">
+                  {clip.thumbnail_url && (
+                    <img
+                      src={clip.thumbnail_url}
+                      alt=""
+                      className="absolute inset-0 h-full w-full object-cover opacity-45 blur-[1px]"
+                    />
+                  )}
+                  <video
+                    src={clip.video_url}
+                    poster={clip.thumbnail_url ?? undefined}
+                    className="absolute inset-0 h-full w-full object-cover"
+                    playsInline
+                    muted
+                    loop
+                    autoPlay
+                    controls={false}
+                  />
+                  <div className="absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_oklch,var(--bg-page)_62%,transparent)_0%,transparent_36%,color-mix(in_oklch,var(--bg-page)_78%,transparent)_100%)]" />
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_28%_70%,color-mix(in_oklch,var(--gold)_18%,transparent),transparent_28%)]" />
+
+                  <div className="absolute right-3 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-4">
+                    <ClipAction icon={Heart} label="Like" count={clip.likes} active={liked} onClick={() => reactToClip(clip, "like")} />
+                    <ClipAction icon={Bookmark} label="Save" count={clip.saves} active={saved} onClick={() => reactToClip(clip, "save")} />
+                    <ClipAction icon={ShieldCheck} label="Scout" count={clip.scouts} active={scouted} onClick={() => reactToClip(clip, "scout")} />
+                    <Link href={messageHref} className="flex flex-col items-center gap-1 text-[var(--ink-hi)]">
+                      <span className="grid h-12 w-12 place-items-center rounded-full border border-[var(--stroke)] bg-[var(--bg-surface)]/70 backdrop-blur-md">
+                        <MessageCircle size={22} />
+                      </span>
+                      <span className="font-heading text-[0.68rem] font-black uppercase leading-none text-[var(--ink-mid)]">DM</span>
+                    </Link>
+                  </div>
+
+                  <div className="absolute bottom-32 left-0 right-0 z-20 px-4">
+                    <div className="max-w-[calc(100%-4.5rem)] space-y-3">
+                      <Link href={profileHref} className="flex items-center gap-3">
+                        {clip.player ? (
+                          <PlayerAvatar profile={clip.player} size="md" linkable={false} />
+                        ) : (
+                          <span className="grid h-11 w-11 place-items-center rounded-full border border-[var(--stroke)] bg-[var(--bg-surface)]">
+                            <UserRound size={18} />
+                          </span>
+                        )}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <p className="truncate font-heading text-2xl font-black uppercase italic leading-none text-[var(--ink-hi)]">
+                              {clip.player?.full_name ?? "Player"}
+                            </p>
+                            <Check size={16} className="shrink-0 rounded-full bg-[var(--gold)] p-0.5 text-[var(--gold-ink)]" />
+                          </div>
+                          <p className="mt-1 text-xs font-semibold text-[var(--ink-low)]">
+                            {clip.position ?? clip.player?.position ?? "Player"} · {clip.player?.skill_level ?? "Open level"}
+                          </p>
+                        </div>
+                      </Link>
+
+                      <p className="text-sm font-medium leading-snug text-[var(--ink-mid)]">{clip.caption}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {clip.skill_tags.slice(0, 4).map((tag) => (
+                          <span
+                            key={tag}
+                            className="rounded-full border border-[var(--gold)]/25 bg-[var(--gold-dim)] px-2.5 py-1 text-[0.68rem] font-bold uppercase text-[var(--gold)]"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+
+          {clips.length > 0 && (
+            <div className="fixed bottom-[5.1rem] left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-full border border-[var(--stroke)] bg-[var(--bg-surface)]/80 px-3 py-2 backdrop-blur-md">
+              <button
+                type="button"
+                onClick={() => scrollToActive(-1)}
+                className="grid h-9 w-9 place-items-center rounded-full bg-[var(--bg-inset)] text-[var(--ink-hi)]"
+                aria-label="Previous clip"
+              >
+                <ChevronUp size={18} />
+              </button>
+              <div className="flex items-center gap-1.5 px-1">
+                {clips.map((clip, i) => (
+                  <span
+                    key={clip.id}
+                    className={cn(
+                      "h-1.5 rounded-full transition-all",
+                      i === activeIndex ? "w-5 bg-[var(--gold)]" : "w-1.5 bg-[var(--ink-low)]"
+                    )}
+                  />
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => scrollToActive(1)}
+                className="grid h-9 w-9 rotate-180 place-items-center rounded-full bg-[var(--bg-inset)] text-[var(--ink-hi)]"
+                aria-label="Next clip"
+              >
+                <ChevronUp size={18} />
+              </button>
+            </div>
+          )}
+        </>
+      )}
 
       {loading && (
-        <div className="pointer-events-none fixed left-1/2 top-24 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/10 bg-black/60 px-3 py-2 text-xs text-white/70 backdrop-blur">
-          <Loader2 size={14} className="animate-spin text-rondo-accent" />
+        <div className="pointer-events-none fixed left-1/2 top-24 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-[var(--stroke)] bg-[var(--bg-surface)]/80 px-3 py-2 text-xs text-[var(--ink-mid)] backdrop-blur">
+          <Loader2 size={14} className="animate-spin text-[var(--gold)]" />
           Loading clips
         </div>
       )}

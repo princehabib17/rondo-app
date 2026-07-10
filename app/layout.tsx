@@ -19,7 +19,8 @@ export const metadata: Metadata = {
   description: "Join local football games near you",
   keywords: ["sports", "games", "football", "soccer", "local", "community"],
   icons: {
-    icon: "/favicon.ico",
+    icon: [{ url: "/rondo-logo.png", type: "image/png" }],
+    apple: "/rondo-logo.png",
   },
 };
 
@@ -28,7 +29,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#000000",
+  themeColor: "#16160F",
 };
 
 export default function RootLayout({
