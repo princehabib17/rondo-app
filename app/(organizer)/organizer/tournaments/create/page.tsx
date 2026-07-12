@@ -1,18 +1,27 @@
 "use client";
 
+/* Hallmark · genre: app-flow · macrostructure: step-wizard (one thing per screen)
+ * design-system: docs/rondo-design-system.md (Matchday) · designed-as-app
+ * gold roles this flow: primary CTA · money · progress fill
+ */
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  CalendarDays,
+  CalendarBlank,
   Check,
-  ChevronRight,
-  ImagePlus,
-  Loader2,
+  CheckCircle,
+  CoinVertical,
+  Image as ImageIcon,
   MapPin,
+  PencilSimple,
+  Spinner,
+  Strategy,
   Trophy,
   X,
-} from "lucide-react";
+} from "@phosphor-icons/react";
+import { AnimatePresence, motion } from "motion/react";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -25,7 +34,8 @@ import { ImageCropModal } from "@/components/ui/image-crop-modal";
 import { OrganizationPicker } from "@/components/organizer/OrganizationPicker";
 import { TournamentCard } from "@/components/tournament/TournamentCard";
 import type { Tournament } from "@/lib/supabase/types";
-import { StatTile, StepHeader, rondoFieldClass } from "@/components/rondo/primitives";
+import { rondoFieldClass } from "@/components/rondo/primitives";
+import { gentle } from "@/components/motion/springs";
 
 const SAMPLE_COVERS = [
   { label: "Football", src: "/samples/football.svg" },
@@ -46,6 +56,21 @@ const schema = z.object({
 });
 
 type CreateTournamentForm = z.infer<typeof schema>;
+type StepKey = "basics" | "format" | "money" | "schedule" | "review";
+type FormField = keyof CreateTournamentForm;
+
+const STEPS: {
+  key: StepKey;
+  label: string;
+  hint: string;
+  fields: FormField[];
+}[] = [
+  { key: "basics", label: "Name your cup", hint: "The identity teams will rally behind", fields: ["name"] },
+  { key: "format", label: "Pick the format", hint: "Bracket shape and squad limits", fields: ["format", "max_teams", "team_size"] },
+  { key: "money", label: "Set the stakes", hint: "What each team pays to enter", fields: ["entry_fee"] },
+  { key: "schedule", label: "Set the stage", hint: "Venue, date, and kickoff", fields: ["venue_name", "starts_date", "starts_time"] },
+  { key: "review", label: "Kick it off", hint: "One last look before it goes live", fields: [] },
+];
 
 interface NominatimResult {
   display_name: string;
@@ -53,8 +78,6 @@ interface NominatimResult {
   lon: string;
 }
 
-const fieldClass =
-  rondoFieldClass;
 const labelClass = "rondo-label text-[var(--ink-low)]";
 const errorClass = "text-[var(--live)] rondo-meta mt-1 flex items-center gap-2";
 const hintClass = "text-[var(--ink-low)] rondo-meta mt-1";
@@ -78,17 +101,82 @@ function formatTime12h(hhmm: string): string {
   return `${h12}:${String(m).padStart(2, "0")} ${period}`;
 }
 
-function SectionHeading({ index, title, hint }: { index: number; title: string; hint: string }) {
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
   return (
-    <div className="space-y-1">
-      <StepHeader current={index} total={4} label={title} />
-      <p className="rondo-meta text-[var(--ink-low)]">{hint}</p>
+    <p className={errorClass}>
+      <span className="h-2 w-2 shrink-0 rounded-[var(--r-pill)] bg-[var(--live)]" />
+      {message}
+    </p>
+  );
+}
+
+/**
+ * Full-bleed visual band that leads every step. Pure CSS floodlight scene
+ * (design system's stadium language, no external assets); the content inside
+ * reacts live to what the organizer has typed so each screen feels staged,
+ * not like a form.
+ */
+function StepScene({
+  variant,
+  gold,
+  children,
+}: {
+  variant?: 0 | 1 | 2;
+  gold?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={
+        gold
+          ? "rondo-floodlight-scene--gold relative h-52 overflow-hidden rounded-[var(--r-lg)] border border-[var(--stroke)]"
+          : "rondo-floodlight-scene relative h-52 overflow-hidden rounded-[var(--r-lg)] border border-[var(--stroke)]"
+      }
+      data-variant={variant}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** Tiny pure-CSS bracket diagram for the knockout format card. */
+function MiniBracket() {
+  const slot = "h-2 w-7 rounded-[var(--r-pill)] bg-[color-mix(in_oklch,var(--ink-hi)_22%,transparent)]";
+  return (
+    <div className="flex items-center gap-2" aria-hidden>
+      <div className="flex flex-col gap-1.5">
+        <span className={slot} />
+        <span className={slot} />
+        <span className={slot} />
+        <span className={slot} />
+      </div>
+      <div className="flex flex-col gap-4">
+        <span className={slot} />
+        <span className={slot} />
+      </div>
+      <span className="h-2 w-7 rounded-[var(--r-pill)] bg-[var(--gold)]" />
+    </div>
+  );
+}
+
+/** Tiny pure-CSS league table for the round-robin format card. */
+function MiniTable() {
+  const row = "h-2 rounded-[var(--r-pill)] bg-[color-mix(in_oklch,var(--ink-hi)_22%,transparent)]";
+  return (
+    <div className="flex w-24 flex-col gap-1.5" aria-hidden>
+      <span className="h-2 w-full rounded-[var(--r-pill)] bg-[var(--gold)]" />
+      <span className={`${row} w-5/6`} />
+      <span className={`${row} w-4/6`} />
+      <span className={`${row} w-3/6`} />
     </div>
   );
 }
 
 export default function CreateTournamentPage() {
   const router = useRouter();
+  const [stepIndex, setStepIndex] = useState(0);
+  const [direction, setDirection] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [organizationId, setOrganizationId] = useState("");
   const [organizationsReady, setOrganizationsReady] = useState(false);
@@ -108,15 +196,13 @@ export default function CreateTournamentPage() {
   const addressDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
-  // Date
+  // Date + time
   const [pickedDate, setPickedDate] = useState<Date | null>(() => {
     const d = new Date();
     d.setDate(d.getDate() + 7);
     return d;
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
-
-  // Time
   const [startTime, setStartTime] = useState("09:00");
   const [showTimePicker, setShowTimePicker] = useState(false);
 
@@ -125,6 +211,7 @@ export default function CreateTournamentPage() {
     handleSubmit,
     watch,
     setValue,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm<CreateTournamentForm>({
     resolver: zodResolver(schema) as Resolver<CreateTournamentForm>,
@@ -146,7 +233,9 @@ export default function CreateTournamentPage() {
   const totalPlayers = maxTeams * teamSize;
   const prizePoolHint = useMemo(() => entryFee * maxTeams, [entryFee, maxTeams]);
 
-  // Sync picked date to form
+  const step = STEPS[stepIndex];
+  const isReview = step.key === "review";
+
   useEffect(() => {
     if (pickedDate) {
       setValue("starts_date", fnsFormat(pickedDate, "yyyy-MM-dd"));
@@ -218,8 +307,8 @@ export default function CreateTournamentPage() {
     setCoverSampleUrl(src);
   }
 
-  // Live preview object mirrors the row `onSubmit` will create, so the
-  // organizer sees the same card players will see, as they type.
+  // The review card mirrors the row `onSubmit` creates: what the organizer
+  // approves on the last screen is exactly what players will see.
   const previewTournament: Tournament = useMemo(() => {
     const startsAt = pickedDate
       ? new Date(`${fnsFormat(pickedDate, "yyyy-MM-dd")}T${startTime || "09:00"}:00`).toISOString()
@@ -258,8 +347,42 @@ export default function CreateTournamentPage() {
     organizationId,
   ]);
 
+  async function goNext() {
+    setError(null);
+    if (step.fields.length > 0) {
+      const valid = await trigger(step.fields);
+      if (!valid) return;
+    }
+    if (step.key === "basics" && !organizationId) {
+      setError("Pick or create an organization so teams know who's running this.");
+      return;
+    }
+    if (step.key === "schedule" && !pickedDate) {
+      setError("Select a start date.");
+      return;
+    }
+    setDirection(1);
+    setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
+    window.scrollTo({ top: 0 });
+  }
+
   function goBack() {
-    router.back();
+    setError(null);
+    if (stepIndex === 0) {
+      router.back();
+      return;
+    }
+    setDirection(-1);
+    setStepIndex((i) => i - 1);
+    window.scrollTo({ top: 0 });
+  }
+
+  function jumpTo(index: number) {
+    if (index >= stepIndex) return;
+    setError(null);
+    setDirection(-1);
+    setStepIndex(index);
+    window.scrollTo({ top: 0 });
   }
 
   async function onSubmit(input: CreateTournamentForm) {
@@ -296,7 +419,6 @@ export default function CreateTournamentPage() {
       return;
     }
 
-    // Upload cover or use sample
     let bannerUrl: string | null = null;
     if (coverFile && json.tournamentId) {
       const supabase = createClient();
@@ -326,373 +448,478 @@ export default function CreateTournamentPage() {
     setError("Fix the highlighted fields before publishing.");
   }
 
+  const summaryRows: { label: string; value: string; step: number }[] = [
+    { label: "Organization", value: organizationId ? "Selected" : "Missing", step: 0 },
+    { label: "Format", value: format === "single_elimination" ? "Knockout cup" : "League table", step: 1 },
+    { label: "Field", value: `${maxTeams} teams · ${teamSize}-a-side`, step: 1 },
+    { label: "Entry fee", value: entryFee > 0 ? `₱${entryFee} per team` : "Free entry", step: 2 },
+    { label: "Venue", value: values.venue_name?.trim() || "—", step: 3 },
+    {
+      label: "Kickoff",
+      value: pickedDate ? `${fnsFormat(pickedDate, "EEE, MMM d")} · ${formatTime12h(startTime)}` : "—",
+      step: 3,
+    },
+  ];
+
   return (
-    <div className="min-h-[100dvh] rondo-page pb-28">
-      <header className="sticky top-0 z-40 border-b border-[var(--stroke)] rondo-glass-nav px-4 py-3">
-        <div className="mx-auto flex h-12 max-w-lg items-center gap-3">
-          <button
-            type="button"
-            onClick={goBack}
-            className="flex min-h-11 min-w-11 items-center justify-center rounded-[var(--r-pill)] text-[var(--ink-mid)] hover:bg-[var(--bg-inset)] hover:text-[var(--ink-hi)]"
-            aria-label="Back"
-          >
-            <ArrowLeft size={20} />
-          </button>
-          <div className="min-w-0 flex-1">
-            <p className="rondo-label text-[var(--gold)]">
-              Tournament builder
-            </p>
-            <h1 className="rondo-title truncate text-[var(--ink-hi)]">Create cup</h1>
+    <div className="min-h-[100dvh] rondo-page pb-56">
+      {/* ── Header: back + step progress rail ── */}
+      <header className="sticky top-0 z-40 rondo-glass-nav border-b border-[var(--stroke)] px-4 py-3">
+        <div className="mx-auto max-w-lg">
+          <div className="flex h-12 items-center gap-3">
+            <button
+              type="button"
+              onClick={goBack}
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-[var(--r-pill)] text-[var(--ink-mid)] hover:bg-[var(--bg-inset)] hover:text-[var(--ink-hi)]"
+              aria-label={stepIndex === 0 ? "Leave" : "Previous step"}
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <div className="min-w-0 flex-1">
+              <p className="rondo-label text-[var(--gold)]">Tournament builder</p>
+              <h1 className="rondo-title truncate text-[var(--ink-hi)]">
+                {String(stepIndex + 1).padStart(2, "0")} · {step.label}
+              </h1>
+            </div>
+          </div>
+          <div className="mt-2 flex gap-1" role="progressbar" aria-valuemin={1} aria-valuemax={STEPS.length} aria-valuenow={stepIndex + 1} aria-label={`Step ${stepIndex + 1} of ${STEPS.length}`}>
+            {STEPS.map((s, i) => (
+              <span
+                key={s.key}
+                className={`h-1 flex-1 rounded-[var(--r-pill)] transition-colors duration-300 ${
+                  i <= stepIndex ? "bg-[var(--gold)]" : "bg-[var(--bg-inset)]"
+                }`}
+              />
+            ))}
           </div>
         </div>
       </header>
 
-      <div className="mx-auto max-w-lg px-4 pt-6">
-        <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-8">
-          {/* ── LIVE PREVIEW ── */}
-          <section className="space-y-2">
-            <p className={labelClass}>Live preview</p>
-            <div className="pointer-events-none select-none" aria-hidden="true">
-              <TournamentCard tournament={previewTournament} href="#" />
-            </div>
-            <p className={hintClass}>This is what teams will see once you publish.</p>
-          </section>
-
-          {/* ── BASICS ── */}
-          <section className="space-y-5">
-            <SectionHeading index={1} title="Basics" hint="Name, story, and where it posts from" />
-
-            <OrganizationPicker
-              value={organizationId}
-              onChange={setOrganizationId}
-              onReady={setOrganizationsReady}
-            />
-            {!organizationId && organizationsReady && (
-              <p className={hintClass}>Pick or create an organization so teams know who&apos;s running this.</p>
-            )}
-
-            {/* Cover with sample picker */}
-            <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04] p-1.5">
-              {coverPreview ? (
-                <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[calc(2rem-0.375rem)]">
-                  <img src={coverPreview} alt="" className="h-full w-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCoverFile(null);
-                      setCoverPreview(null);
-                      setCoverSampleUrl(null);
-                    }}
-                    className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white"
-                  >
-                    <X size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => coverInputRef.current?.click()}
-                    className="absolute bottom-4 right-4 inline-flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 text-xs font-bold text-white"
-                  >
-                    <ImagePlus size={13} /> Change
-                  </button>
-                </div>
-              ) : (
-                <div className="flex aspect-[16/10] w-full flex-col items-center justify-center gap-4 overflow-hidden rounded-[calc(2rem-0.375rem)] bg-[radial-gradient(circle_at_70%_20%,color-mix(in_oklch,var(--color-rondo-accent)_15%,transparent),transparent_35%),linear-gradient(135deg,var(--color-rondo-card),var(--color-rondo-black))]">
-                  <div className="mb-2 flex h-14 w-14 items-center justify-center rounded-3xl bg-rondo-accent text-rondo-black">
-                    <Trophy size={28} />
-                  </div>
-                  {/* Sample covers */}
-                  <div className="flex gap-3">
-                    {SAMPLE_COVERS.map((s) => (
-                      <button
-                        key={s.label}
-                        type="button"
-                        onClick={() => applySampleCover(s.src)}
-                        className="flex flex-col items-center gap-1.5 group"
-                      >
-                        <div className="w-20 h-12 rounded-lg overflow-hidden border border-white/20 group-hover:border-rondo-accent/60 transition-colors">
-                          <img src={s.src} alt={s.label} className="w-full h-full object-cover" />
-                        </div>
-                        <span className="text-white/40 text-[10px] font-semibold uppercase tracking-wider group-hover:text-rondo-accent transition-colors">
-                          {s.label}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => coverInputRef.current?.click()}
-                    className="inline-flex items-center gap-2 rounded-full bg-rondo-accent px-4 py-2 text-xs font-black uppercase tracking-wide text-rondo-black"
-                  >
-                    <ImagePlus size={14} />
-                    Upload cover
-                  </button>
-                </div>
-              )}
-            </div>
-            <input
-              ref={coverInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) openFileForCover(file);
-                e.target.value = "";
-              }}
-            />
-
-            <div className="space-y-2">
-              <Label className={labelClass}>Tournament name</Label>
-              <input {...register("name")} placeholder="Rondo Summer Cup" className={fieldClass} />
-              {errors.name ? (
-                <p className={errorClass}>
-                  <span className="w-2.5 h-2.5 rounded-full bg-red-400 shrink-0" />
-                  {errors.name.message}
-                </p>
-              ) : (
-                <p className={hintClass}>Shows on the card and the registration page.</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label className={labelClass}>Story and rules</Label>
-              <textarea
-                {...register("description")}
-                rows={5}
-                maxLength={2000}
-                placeholder="Prizes, registration rules, schedule flow, refund policy..."
-                className={`${fieldClass} min-h-32 resize-none`}
-              />
-              <p className={hintClass}>Optional. Captains read this before they register.</p>
-            </div>
-          </section>
-
-          {/* ── FORMAT ── */}
-          <section className="space-y-5">
-            <SectionHeading index={2} title="Format" hint="Bracket shape and squad limits" />
-
-            <div className="grid gap-3">
-              {([
-                {
-                  value: "single_elimination",
-                  title: "Knockout cup",
-                  note: "Fast bracket, high pressure, clear champion. Draws aren't allowed.",
-                },
-                {
-                  value: "round_robin",
-                  title: "League table",
-                  note: "More games, fairer ranking, better for groups.",
-                },
-              ] as const).map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setValue("format", option.value)}
-                  className={`rounded-[1.5rem] border p-4 text-left transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] min-h-[44px] ${
-                    format === option.value
-                      ? "border-rondo-accent bg-rondo-accent/10"
-                      : "border-white/10 bg-white/[0.035]"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-base font-black text-white">{option.title}</p>
-                      <p className="mt-1 text-sm text-white/45">{option.note}</p>
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)}>
+        <div className="mx-auto max-w-lg overflow-x-clip px-4 pt-5">
+          <AnimatePresence mode="wait" custom={direction} initial={false}>
+            <motion.div
+              key={step.key}
+              custom={direction}
+              initial={{ opacity: 0, x: 32 * direction }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -24 * direction }}
+              transition={gentle}
+              className="space-y-6"
+            >
+              {/* ════ STEP 1 · BASICS ════ */}
+              {step.key === "basics" && (
+                <>
+                  <StepScene variant={0}>
+                    <Trophy
+                      size={150}
+                      weight="duotone"
+                      aria-hidden
+                      className="pointer-events-none absolute -bottom-8 -right-6 text-[color-mix(in_oklch,var(--ink-hi)_8%,transparent)]"
+                    />
+                    <div className="absolute inset-x-5 bottom-5">
+                      <p className="rondo-label text-[var(--ink-low)]">{step.hint}</p>
+                      <p className="mt-1 truncate font-heading text-4xl font-bold uppercase leading-none text-[var(--ink-hi)]">
+                        {values.name?.trim() || "Your cup"}
+                      </p>
                     </div>
-                    {format === option.value && <Check size={20} className="text-rondo-accent shrink-0" />}
+                  </StepScene>
+
+                  <div className="space-y-2">
+                    <Label className={labelClass}>Tournament name</Label>
+                    <input {...register("name")} placeholder="Rondo Summer Cup" autoFocus className={rondoFieldClass} />
+                    {errors.name ? (
+                      <FieldError message={errors.name.message} />
+                    ) : (
+                      <p className={hintClass}>Shows on the card and the registration page.</p>
+                    )}
                   </div>
-                </button>
-              ))}
-            </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label className={labelClass}>Teams</Label>
-                <input {...register("max_teams")} type="number" min={2} max={64} className={fieldClass} />
-                {errors.max_teams && (
-                  <p className={errorClass}>
-                    <span className="w-2.5 h-2.5 rounded-full bg-red-400 shrink-0" />
-                    {errors.max_teams.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label className={labelClass}>Players per side</Label>
-                <input {...register("team_size")} type="number" min={1} max={11} className={fieldClass} />
-              </div>
-            </div>
+                  <OrganizationPicker
+                    value={organizationId}
+                    onChange={setOrganizationId}
+                    onReady={setOrganizationsReady}
+                  />
 
-            <StatTile label="Max players across the field" value={totalPlayers || 0} size="lg" />
-          </section>
-
-          {/* ── MONEY ── */}
-          <section className="space-y-5">
-            <SectionHeading index={3} title="Money" hint="What each team pays to enter" />
-
-            <div className="space-y-2">
-              <Label className={labelClass}>Entry fee per team (₱)</Label>
-              <input {...register("entry_fee")} type="number" min={0} step="50" className={fieldClass} />
-              <p className={hintClass}>Set to 0 for a free tournament.</p>
-            </div>
-
-            <StatTile label="Gross entry if the field fills up" value={`₱${prizePoolHint || 0}`} size="lg" />
-          </section>
-
-          {/* ── SCHEDULE ── */}
-          <section className="space-y-5">
-            <SectionHeading index={4} title="Schedule" hint="Venue, date, and kickoff time" />
-
-            <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-1.5">
-              <div className="rounded-[calc(2rem-0.375rem)] bg-[var(--color-rondo-black)] p-5">
-                <div className="mb-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-rondo-accent">Venue</p>
-                    <h3 className="rondo-hero-title mt-1 text-3xl text-white">Where it happens</h3>
+                  {/* Cover */}
+                  <div className="space-y-2">
+                    <Label className={labelClass}>Cover</Label>
+                    {coverPreview ? (
+                      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)]">
+                        <img src={coverPreview} alt="" className="h-full w-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[oklch(0%_0_0_/_0.5)] to-transparent" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCoverFile(null);
+                            setCoverPreview(null);
+                            setCoverSampleUrl(null);
+                          }}
+                          aria-label="Remove cover"
+                          className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-[var(--r-pill)] bg-[color-mix(in_oklch,var(--bg-page)_70%,transparent)] text-[var(--ink-hi)] backdrop-blur-sm"
+                        >
+                          <X size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => coverInputRef.current?.click()}
+                          className="absolute bottom-3 right-3 inline-flex min-h-11 items-center gap-2 rounded-[var(--r-pill)] bg-[color-mix(in_oklch,var(--bg-page)_70%,transparent)] px-4 rondo-meta font-bold text-[var(--ink-hi)] backdrop-blur-sm"
+                        >
+                          <ImageIcon size={14} /> Change
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-4">
+                        <div className="flex items-center gap-3">
+                          {SAMPLE_COVERS.map((s) => (
+                            <button
+                              key={s.label}
+                              type="button"
+                              onClick={() => applySampleCover(s.src)}
+                              className="group flex flex-col items-center gap-1"
+                            >
+                              <span className="block h-12 w-20 overflow-hidden rounded-[var(--r-sm)] border border-[var(--stroke)] transition-colors group-hover:border-[var(--gold)]">
+                                <img src={s.src} alt={s.label} className="h-full w-full object-cover" />
+                              </span>
+                              <span className="rondo-label text-[var(--ink-low)] transition-colors group-hover:text-[var(--gold)]">
+                                {s.label}
+                              </span>
+                            </button>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => coverInputRef.current?.click()}
+                            className="ml-auto inline-flex min-h-11 items-center gap-2 rounded-[var(--r-pill)] bg-[var(--bg-inset)] px-4 rondo-meta font-bold text-[var(--ink-hi)]"
+                          >
+                            <ImageIcon size={16} />
+                            Upload
+                          </button>
+                        </div>
+                        <p className={hintClass}>Optional. A sample scene works fine too.</p>
+                      </div>
+                    )}
+                    <input
+                      ref={coverInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) openFileForCover(file);
+                        e.target.value = "";
+                      }}
+                    />
                   </div>
-                  <MapPin className="text-rondo-accent shrink-0" size={28} />
-                </div>
-                <div className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_25%_35%,color-mix(in_oklch,var(--color-rondo-accent)_18%,transparent),transparent_12%),radial-gradient(circle_at_68%_62%,color-mix(in_oklch,var(--color-rondo-accent)_14%,transparent),transparent_10%),linear-gradient(135deg,var(--color-rondo-dark),var(--color-rondo-black))] p-5">
-                  <p className="text-xs font-bold uppercase tracking-wide text-white/45">Venue preview</p>
-                  <p className="mt-2 text-lg font-black text-white truncate">{values.venue_name || "Pick a venue"}</p>
-                  <p className="mt-1 text-sm text-white/45 truncate">{addressInput || "Address will appear here"}</p>
-                </div>
-              </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label className={labelClass}>Venue name</Label>
-              <input {...register("venue_name")} placeholder="Sparta Futsal Arena" className={fieldClass} />
-              {errors.venue_name && (
-                <p className={errorClass}>
-                  <span className="w-2.5 h-2.5 rounded-full bg-red-400 shrink-0" />
-                  {errors.venue_name.message}
-                </p>
+                  <div className="space-y-2">
+                    <Label className={labelClass}>Story and rules</Label>
+                    <textarea
+                      {...register("description")}
+                      rows={4}
+                      maxLength={2000}
+                      placeholder="Prizes, registration rules, schedule flow, refund policy..."
+                      className={`${rondoFieldClass} min-h-28 resize-none py-3`}
+                    />
+                    <p className={hintClass}>Optional. Captains read this before they register.</p>
+                  </div>
+                </>
               )}
-            </div>
 
-            {/* Address with autocomplete */}
-            <div className="space-y-2">
-              <Label className={labelClass}>Address</Label>
-              <div className="relative" ref={suggestionsRef}>
-                <input
-                  value={addressInput}
-                  onChange={(e) => handleAddressChange(e.target.value)}
-                  onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-                  placeholder="Start typing an address..."
-                  className={`${fieldClass} pr-8`}
-                />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  {addressLoading && <Loader2 size={14} className="text-white/30 animate-spin" />}
-                </div>
-                {showSuggestions && suggestions.length > 0 && (
-                  <div className="absolute left-0 right-0 top-full z-[100] mt-2 overflow-hidden rounded-2xl border border-white/15 bg-[var(--color-rondo-elevated)] shadow-2xl">
-                    {suggestions.map((s, i) => {
-                      const parts = s.display_name.split(",");
+              {/* ════ STEP 2 · FORMAT ════ */}
+              {step.key === "format" && (
+                <>
+                  <StepScene variant={1}>
+                    <Strategy
+                      size={150}
+                      weight="duotone"
+                      aria-hidden
+                      className="pointer-events-none absolute -bottom-8 -right-6 text-[color-mix(in_oklch,var(--ink-hi)_8%,transparent)]"
+                    />
+                    <div className="absolute inset-x-5 bottom-5">
+                      <p className="rondo-label text-[var(--ink-low)]">{step.hint}</p>
+                      <p className="mt-1 font-heading text-4xl font-bold uppercase leading-none text-[var(--ink-hi)]">
+                        {format === "single_elimination" ? "Knockout" : "League"}
+                      </p>
+                      <p className="mt-2 rondo-meta text-[var(--ink-mid)] tabular-nums">
+                        {maxTeams || 0} teams · {teamSize || 0}-a-side · {totalPlayers || 0} players max
+                      </p>
+                    </div>
+                  </StepScene>
+
+                  <div className="grid gap-3">
+                    {(
+                      [
+                        {
+                          value: "single_elimination",
+                          title: "Knockout cup",
+                          note: "Fast bracket, high pressure, clear champion. Draws aren't allowed.",
+                          diagram: <MiniBracket />,
+                        },
+                        {
+                          value: "round_robin",
+                          title: "League table",
+                          note: "Everyone plays everyone. Fairer ranking, more football.",
+                          diagram: <MiniTable />,
+                        },
+                      ] as const
+                    ).map((option) => {
+                      const selected = format === option.value;
                       return (
                         <button
-                          key={i}
+                          key={option.value}
                           type="button"
-                          className="flex w-full items-start gap-3 border-b border-white/[0.06] px-4 py-3 text-left last:border-0 hover:bg-white/[0.06]"
-                          onMouseDown={() => selectSuggestion(s)}
+                          onClick={() => setValue("format", option.value)}
+                          aria-pressed={selected}
+                          className={`min-h-11 rounded-[var(--r-md)] border p-4 text-left transition-colors duration-200 active:scale-[0.98] ${
+                            selected
+                              ? "border-[var(--gold)] bg-[var(--gold-dim)]"
+                              : "border-[var(--stroke)] bg-[var(--bg-surface)]"
+                          }`}
                         >
-                          <MapPin size={14} className="mt-0.5 shrink-0 text-rondo-accent" />
-                          <span>
-                            <span className="block text-sm font-semibold text-white">
-                              {parts.slice(0, 2).join(",").trim()}
-                            </span>
-                            <span className="mt-0.5 block text-xs text-white/40">
-                              {parts.slice(2, 4).join(",").trim()}
-                            </span>
-                          </span>
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="min-w-0">
+                              <p className="rondo-title text-[var(--ink-hi)]">{option.title}</p>
+                              <p className="mt-1 rondo-meta text-[var(--ink-mid)]">{option.note}</p>
+                            </div>
+                            <div className="flex shrink-0 flex-col items-end gap-2">
+                              {selected && <Check size={20} className="text-[var(--gold)]" aria-hidden />}
+                              {option.diagram}
+                            </div>
+                          </div>
                         </button>
                       );
                     })}
                   </div>
-                )}
-                {!addressLoading && addressInput.length >= 3 && suggestions.length === 0 && !showSuggestions && (
-                  <p className={hintClass}>No suggestions. Try a more specific address.</p>
-                )}
-              </div>
-            </div>
 
-            {/* Date drum roll */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className={labelClass}>Start date</Label>
-                <button
-                  type="button"
-                  onClick={() => setShowDatePicker((v) => !v)}
-                  className="text-rondo-accent text-xs font-semibold min-h-[44px] px-1"
-                >
-                  {showDatePicker ? "Done" : pickedDate ? fnsFormat(pickedDate, "MMM d, yyyy") : "Pick date"}
-                </button>
-              </div>
-              {!showDatePicker && (
-                <button
-                  type="button"
-                  onClick={() => setShowDatePicker(true)}
-                  className="flex min-h-[46px] w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3 text-left text-sm font-semibold text-white"
-                >
-                  {pickedDate ? fnsFormat(pickedDate, "EEEE, MMMM d, yyyy") : "Tap to pick a date"}
-                  <CalendarDays size={16} className="text-rondo-accent" />
-                </button>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label className={labelClass}>Teams</Label>
+                      <input {...register("max_teams")} type="number" min={2} max={64} inputMode="numeric" className={rondoFieldClass} />
+                      <FieldError message={errors.max_teams?.message} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className={labelClass}>Players per side</Label>
+                      <input {...register("team_size")} type="number" min={1} max={11} inputMode="numeric" className={rondoFieldClass} />
+                      <FieldError message={errors.team_size?.message} />
+                    </div>
+                  </div>
+                </>
               )}
-              {showDatePicker && (
-                <DateDrumRollPicker
-                  value={pickedDate}
-                  onChange={(d) => {
-                    setPickedDate(d);
-                    setValue("starts_date", fnsFormat(d, "yyyy-MM-dd"));
-                  }}
-                />
+
+              {/* ════ STEP 3 · MONEY ════ */}
+              {step.key === "money" && (
+                <>
+                  <StepScene gold>
+                    <CoinVertical
+                      size={150}
+                      weight="duotone"
+                      aria-hidden
+                      className="pointer-events-none absolute -bottom-8 -right-6 text-[color-mix(in_oklch,var(--gold)_16%,transparent)]"
+                    />
+                    <div className="absolute inset-x-5 bottom-5">
+                      <p className="rondo-label text-[var(--ink-low)]">Gross entry if the field fills</p>
+                      <p className="mt-1 font-heading text-5xl font-bold leading-none tabular-nums text-[var(--gold)]">
+                        ₱{prizePoolHint || 0}
+                      </p>
+                      <p className="mt-2 rondo-meta text-[var(--ink-mid)] tabular-nums">
+                        {entryFee > 0 ? `₱${entryFee} × ${maxTeams} teams` : "Free entry tournament"}
+                      </p>
+                    </div>
+                  </StepScene>
+
+                  <div className="space-y-2">
+                    <Label className={labelClass}>Entry fee per team (₱)</Label>
+                    <input {...register("entry_fee")} type="number" min={0} step="50" inputMode="numeric" className={rondoFieldClass} />
+                    {errors.entry_fee ? (
+                      <FieldError message={errors.entry_fee.message} />
+                    ) : (
+                      <p className={hintClass}>Set to 0 for a free tournament. You collect fees; Rondo just does the math.</p>
+                    )}
+                  </div>
+                </>
               )}
-              <input type="hidden" {...register("starts_date")} />
-              {errors.starts_date && !pickedDate && (
-                <p className={errorClass}>
-                  <span className="w-2.5 h-2.5 rounded-full bg-red-400 shrink-0" />
-                  {errors.starts_date.message}
-                </p>
+
+              {/* ════ STEP 4 · SCHEDULE ════ */}
+              {step.key === "schedule" && (
+                <>
+                  <StepScene variant={2}>
+                    <MapPin
+                      size={150}
+                      weight="duotone"
+                      aria-hidden
+                      className="pointer-events-none absolute -bottom-8 -right-6 text-[color-mix(in_oklch,var(--ink-hi)_8%,transparent)]"
+                    />
+                    <div className="absolute inset-x-5 bottom-5">
+                      <p className="rondo-label text-[var(--ink-low)]">{step.hint}</p>
+                      <p className="mt-1 truncate font-heading text-4xl font-bold uppercase leading-none text-[var(--ink-hi)]">
+                        {values.venue_name?.trim() || "Pick a venue"}
+                      </p>
+                      <p className="mt-2 truncate rondo-meta text-[var(--ink-mid)]">
+                        {pickedDate ? `${fnsFormat(pickedDate, "EEE, MMM d")} · ${formatTime12h(startTime)}` : "Date TBD"}
+                      </p>
+                    </div>
+                  </StepScene>
+
+                  <div className="space-y-2">
+                    <Label className={labelClass}>Venue name</Label>
+                    <input {...register("venue_name")} placeholder="Sparta Futsal Arena" className={rondoFieldClass} />
+                    <FieldError message={errors.venue_name?.message} />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className={labelClass}>Address</Label>
+                    <div className="relative" ref={suggestionsRef}>
+                      <input
+                        value={addressInput}
+                        onChange={(e) => handleAddressChange(e.target.value)}
+                        onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                        placeholder="Start typing an address..."
+                        className={`${rondoFieldClass} pr-10`}
+                      />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {addressLoading && <Spinner size={16} className="animate-spin text-[var(--ink-low)]" aria-hidden />}
+                      </div>
+                      {showSuggestions && suggestions.length > 0 && (
+                        <div className="absolute left-0 right-0 top-full z-[100] mt-2 overflow-hidden rounded-[var(--r-sm)] border border-[var(--stroke)] bg-[var(--bg-inset)]">
+                          {suggestions.map((s, i) => {
+                            const parts = s.display_name.split(",");
+                            return (
+                              <button
+                                key={i}
+                                type="button"
+                                className="flex w-full items-start gap-3 border-b border-[var(--stroke)] px-4 py-3 text-left last:border-0 hover:bg-[var(--bg-surface)]"
+                                onMouseDown={() => selectSuggestion(s)}
+                              >
+                                <MapPin size={14} className="mt-0.5 shrink-0 text-[var(--gold)]" aria-hidden />
+                                <span className="min-w-0">
+                                  <span className="block truncate rondo-body font-bold text-[var(--ink-hi)]">
+                                    {parts.slice(0, 2).join(",").trim()}
+                                  </span>
+                                  <span className="mt-0.5 block truncate rondo-meta text-[var(--ink-low)]">
+                                    {parts.slice(2, 4).join(",").trim()}
+                                  </span>
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                    <p className={hintClass}>Optional but helps out-of-town teams find you.</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className={labelClass}>Start date</Label>
+                    <button
+                      type="button"
+                      onClick={() => setShowDatePicker((v) => !v)}
+                      className="flex min-h-12 w-full items-center justify-between rounded-[var(--r-sm)] bg-[var(--bg-inset)] px-4 text-left rondo-body font-bold text-[var(--ink-hi)]"
+                    >
+                      {pickedDate ? fnsFormat(pickedDate, "EEEE, MMMM d, yyyy") : "Tap to pick a date"}
+                      <CalendarBlank size={16} className="text-[var(--gold)]" aria-hidden />
+                    </button>
+                    {showDatePicker && (
+                      <DateDrumRollPicker
+                        value={pickedDate}
+                        onChange={(d) => {
+                          setPickedDate(d);
+                          setValue("starts_date", fnsFormat(d, "yyyy-MM-dd"));
+                        }}
+                      />
+                    )}
+                    <input type="hidden" {...register("starts_date")} />
+                    {!pickedDate && <FieldError message={errors.starts_date?.message} />}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className={labelClass}>Kickoff time</Label>
+                    <button
+                      type="button"
+                      onClick={() => setShowTimePicker((v) => !v)}
+                      className="flex min-h-12 w-full items-center justify-between rounded-[var(--r-sm)] bg-[var(--bg-inset)] px-4 text-left rondo-body font-bold text-[var(--ink-hi)]"
+                    >
+                      {formatTime12h(startTime)}
+                      <CalendarBlank size={16} className="text-[var(--gold)]" aria-hidden />
+                    </button>
+                    <input type="hidden" {...register("starts_time")} />
+                    {showTimePicker && <DrumRollPicker value={startTime} onChange={handleTimeChange} />}
+                  </div>
+                </>
               )}
-            </div>
 
-            {/* Time */}
-            <div className="space-y-2">
-              <Label className={labelClass}>Start time</Label>
-              <button
-                type="button"
-                onClick={() => setShowTimePicker((v) => !v)}
-                className="flex min-h-[46px] w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3 text-left text-sm font-black text-white"
-              >
-                {formatTime12h(startTime)}
-                <CalendarDays size={16} className="text-rondo-accent" />
-              </button>
-              <input type="hidden" {...register("starts_time")} />
-            </div>
-            {showTimePicker && <DrumRollPicker value={startTime} onChange={handleTimeChange} />}
-          </section>
+              {/* ════ STEP 5 · REVIEW ════ */}
+              {step.key === "review" && (
+                <>
+                  <div className="space-y-2">
+                    <p className={labelClass}>This is what players will see</p>
+                    <div className="pointer-events-none select-none" aria-hidden="true">
+                      <TournamentCard tournament={previewTournament} href="#" />
+                    </div>
+                  </div>
 
-          {error && (
-            <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 flex items-start gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0 mt-1.5" />
-              <p className="text-sm text-red-300">{error}</p>
-            </div>
-          )}
+                  <section className="rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)]">
+                    {summaryRows.map((row) => (
+                      <button
+                        key={row.label}
+                        type="button"
+                        onClick={() => jumpTo(row.step)}
+                        className="flex min-h-14 w-full items-center justify-between gap-3 border-b border-[var(--stroke)] px-4 py-3 text-left last:border-b-0"
+                      >
+                        <span className="rondo-label text-[var(--ink-low)]">{row.label}</span>
+                        <span className="flex min-w-0 items-center gap-2">
+                          <span className="truncate rondo-body font-bold text-[var(--ink-hi)]">{row.value}</span>
+                          <PencilSimple size={14} className="shrink-0 text-[var(--ink-low)]" aria-hidden />
+                        </span>
+                      </button>
+                    ))}
+                  </section>
 
-          <div className="fixed bottom-16 left-0 right-0 z-30 mx-auto max-w-lg px-4 pb-2">
+                  <div className="flex items-start gap-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-4">
+                    <CheckCircle size={20} weight="duotone" className="mt-0.5 shrink-0 text-[var(--gold)]" aria-hidden />
+                    <p className="rondo-meta text-[var(--ink-mid)]">
+                      Publishing opens registration. Captains can register their teams right away, and you can
+                      add teams yourself from the manage screen.
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {error && (
+                <div className="flex items-start gap-2 rounded-[var(--r-sm)] border border-[var(--live)] bg-[color-mix(in_oklch,var(--live)_10%,transparent)] px-4 py-3">
+                  <span className="mt-1.5 h-2 w-2 shrink-0 rounded-[var(--r-pill)] bg-[var(--live)]" />
+                  <p className="rondo-meta text-[var(--ink-hi)]">{error}</p>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* ── Fixed action bar in the thumb zone ── */}
+        <div className="fixed bottom-16 left-0 right-0 z-30 mx-auto max-w-lg px-4 pb-2">
+          {isReview ? (
             <button
               type="submit"
               disabled={isSubmitting || !organizationsReady}
-              className="rondo-btn rondo-btn-primary min-h-12 disabled:opacity-50"
+              className="rondo-btn rondo-btn-primary min-h-12 w-full disabled:opacity-50"
             >
               {isSubmitting ? "Publishing..." : "Publish tournament"}
-              <ChevronRight size={18} />
+              <Trophy size={18} aria-hidden />
             </button>
-          </div>
-        </form>
-      </div>
+          ) : (
+            <button
+              type="button"
+              onClick={goNext}
+              className="rondo-btn rondo-btn-primary min-h-12 w-full"
+            >
+              Continue
+              <span className="rondo-meta font-bold text-[color-mix(in_oklch,var(--gold-ink)_70%,transparent)]">
+                {stepIndex + 1} / {STEPS.length}
+              </span>
+            </button>
+          )}
+        </div>
+      </form>
 
-      {/* Cover crop modal */}
       {cropSrc && (
         <ImageCropModal
           src={cropSrc}

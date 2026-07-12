@@ -2,15 +2,20 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Play, Shield, Trophy } from "@phosphor-icons/react";
+import { ArrowLeft, LinkSimple, Plus, Play, Trash, Trophy, UserPlus } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { subscribeToTournament } from "@/lib/realtime";
-import type { Tournament, TournamentMatch, TournamentTeam } from "@/lib/supabase/types";
+import type {
+  Tournament,
+  TournamentMatch,
+  TournamentTeam,
+  TournamentTeamMember,
+} from "@/lib/supabase/types";
 import { BracketView } from "@/components/tournament/BracketView";
 import { StandingsTable } from "@/components/tournament/StandingsTable";
 import { computeStandings } from "@/lib/tournament/bracket";
-import { EmptyState, MatchCell, StatTile } from "@/components/rondo/primitives";
+import { EmptyState, MatchCell, StatTile, rondoFieldClass } from "@/components/rondo/primitives";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -62,9 +67,133 @@ function Stepper({
   );
 }
 
+interface ScorerRow {
+  key: number;
+  teamId: string;
+  memberId: string; // "" = free-text name
+  name: string;
+  goals: number;
+}
+
+let scorerRowKey = 0;
+
+/**
+ * Per-side goal attribution. Roster members show up as tag options (their
+ * profile collects the top-scorer race); anyone else gets written in by name.
+ */
+function ScorerEditor({
+  teamId,
+  teamName,
+  sideScore,
+  rows,
+  members,
+  onChange,
+}: {
+  teamId: string;
+  teamName: string;
+  sideScore: number;
+  rows: ScorerRow[];
+  members: TournamentTeamMember[];
+  onChange: (rows: ScorerRow[]) => void;
+}) {
+  const sideRows = rows.filter((r) => r.teamId === teamId);
+  const attributed = sideRows.reduce((sum, r) => sum + r.goals, 0);
+  const overAttributed = attributed > sideScore;
+
+  function update(key: number, patch: Partial<ScorerRow>) {
+    onChange(rows.map((r) => (r.key === key ? { ...r, ...patch } : r)));
+  }
+
+  function remove(key: number) {
+    onChange(rows.filter((r) => r.key !== key));
+  }
+
+  function add() {
+    onChange([...rows, { key: ++scorerRowKey, teamId, memberId: "", name: "", goals: 1 }]);
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="rondo-label truncate text-[var(--ink-low)]">{teamName}</p>
+        <p className={`rondo-meta tabular-nums ${overAttributed ? "text-[var(--live)]" : "text-[var(--ink-low)]"}`}>
+          {attributed}/{sideScore} attributed
+        </p>
+      </div>
+      {sideRows.map((row) => (
+        <div key={row.key} className="flex items-center gap-2">
+          <div className="min-w-0 flex-1 space-y-2">
+            <select
+              value={row.memberId}
+              onChange={(e) => update(row.key, { memberId: e.target.value })}
+              className={`${rondoFieldClass} h-11 appearance-none`}
+              aria-label="Scorer"
+            >
+              <option value="">Write a name…</option>
+              {members.map((m) => (
+                <option key={m.user_id} value={m.user_id}>
+                  {m.profile?.full_name ?? "Player"}
+                </option>
+              ))}
+            </select>
+            {row.memberId === "" && (
+              <input
+                value={row.name}
+                onChange={(e) => update(row.key, { name: e.target.value })}
+                placeholder="Scorer's name"
+                className={`${rondoFieldClass} h-11`}
+              />
+            )}
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              onClick={() => update(row.key, { goals: Math.max(1, row.goals - 1) })}
+              aria-label="Fewer goals"
+              className="flex h-11 w-11 items-center justify-center rounded-[var(--r-pill)] border border-[var(--stroke)] bg-[var(--bg-inset)] text-[var(--ink-hi)] active:scale-95"
+            >
+              <span aria-hidden className="text-lg font-black leading-none">−</span>
+            </button>
+            <span className="w-6 text-center font-heading text-xl font-bold tabular-nums text-[var(--ink-hi)]">
+              {row.goals}
+            </span>
+            <button
+              type="button"
+              onClick={() => update(row.key, { goals: Math.min(sideScore, row.goals + 1) })}
+              aria-label="More goals"
+              className="flex h-11 w-11 items-center justify-center rounded-[var(--r-pill)] border border-[var(--stroke)] bg-[var(--bg-inset)] text-[var(--ink-hi)] active:scale-95"
+            >
+              <Plus size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => remove(row.key)}
+              aria-label="Remove scorer"
+              className="flex h-11 w-11 items-center justify-center rounded-[var(--r-pill)] text-[var(--ink-low)] active:scale-95"
+            >
+              <Trash size={16} />
+            </button>
+          </div>
+        </div>
+      ))}
+      {attributed < sideScore && (
+        <button
+          type="button"
+          onClick={add}
+          className="flex min-h-11 items-center gap-2 rounded-[var(--r-pill)] px-3 rondo-meta font-bold text-[var(--gold)]"
+        >
+          <Plus size={14} />
+          Add scorer
+        </button>
+      )}
+    </div>
+  );
+}
+
 function ScoreSheet({
   match,
   teams,
+  members,
   tournamentId,
   isKnockout,
   onClose,
@@ -72,6 +201,7 @@ function ScoreSheet({
 }: {
   match: TournamentMatch;
   teams: TournamentTeam[];
+  members: TournamentTeamMember[];
   tournamentId: string;
   isKnockout: boolean;
   onClose: () => void;
@@ -79,22 +209,53 @@ function ScoreSheet({
 }) {
   const [homeScore, setHomeScore] = useState(match.home_score ?? 0);
   const [awayScore, setAwayScore] = useState(match.away_score ?? 0);
+  const [scorerRows, setScorerRows] = useState<ScorerRow[]>([]);
   const [saving, setSaving] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
-  const home = teams.find((t) => t.id === match.home_team_id)?.name ?? "TBD";
-  const away = teams.find((t) => t.id === match.away_team_id)?.name ?? "TBD";
+  const homeTeam = teams.find((t) => t.id === match.home_team_id);
+  const awayTeam = teams.find((t) => t.id === match.away_team_id);
+  const home = homeTeam?.name ?? "TBD";
+  const away = awayTeam?.name ?? "TBD";
   const isDraw = homeScore === awayScore;
   const knockoutDrawBlocked = isKnockout && isDraw;
 
+  const scorersFor = useCallback(
+    (teamId: string | null) => members.filter((m) => m.team_id === teamId),
+    [members]
+  );
+
+  const attributionInvalid = useMemo(() => {
+    const sum = (teamId: string | null, score: number) => {
+      const total = scorerRows
+        .filter((r) => r.teamId === teamId)
+        .reduce((acc, r) => acc + r.goals, 0);
+      return total > score;
+    };
+    return sum(match.home_team_id, homeScore) || sum(match.away_team_id, awayScore);
+  }, [scorerRows, match.home_team_id, match.away_team_id, homeScore, awayScore]);
+
   async function save() {
-    if (saving || knockoutDrawBlocked) return;
+    if (saving || knockoutDrawBlocked || attributionInvalid) return;
     setSaving(true);
     try {
+      const scorers = scorerRows
+        .filter((r) => r.goals > 0 && (r.memberId || r.name.trim()))
+        .map((r) => ({
+          teamId: r.teamId,
+          scorerId: r.memberId || undefined,
+          scorerName: r.memberId ? undefined : r.name.trim(),
+          goals: r.goals,
+        }));
       const res = await fetch(`/api/tournaments/${tournamentId}/result`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ matchId: match.id, homeScore, awayScore }),
+        body: JSON.stringify({
+          matchId: match.id,
+          homeScore,
+          awayScore,
+          scorers: scorers.length > 0 ? scorers : undefined,
+        }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -111,7 +272,7 @@ function ScoreSheet({
   }
 
   function handlePrimaryTap() {
-    if (knockoutDrawBlocked) return;
+    if (knockoutDrawBlocked || attributionInvalid) return;
     if (isKnockout && !confirming) {
       setConfirming(true);
       return;
@@ -128,7 +289,7 @@ function ScoreSheet({
         className="absolute inset-0 bg-[oklch(0%_0_0_/_0.6)] backdrop-blur-sm animate-in fade-in duration-200"
       />
       <div
-        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg overflow-y-auto rounded-t-[var(--r-lg)] border-t border-[var(--stroke)] bg-[var(--bg-inset)] pb-[calc(env(safe-area-inset-bottom)+1rem)]"
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 max-h-[85dvh] w-full max-w-lg overflow-y-auto rounded-t-[var(--r-lg)] border-t border-[var(--stroke)] bg-[var(--bg-inset)] pb-[calc(env(safe-area-inset-bottom)+1rem)]"
         style={{ animation: "rondoSheetUp 240ms var(--ease-out)" }}
       >
         <div className="mx-auto mt-2 h-1 w-8 rounded-[var(--r-pill)] bg-[var(--gold)]" />
@@ -150,6 +311,38 @@ function ScoreSheet({
               <Stepper label={away} value={awayScore} onChange={setAwayScore} />
             </div>
           </div>
+
+          {(homeScore > 0 || awayScore > 0) && (
+            <div className="space-y-4 border-t border-[var(--stroke)] pt-4">
+              <p className="rondo-label text-[var(--ink-low)]">Who scored? Optional, feeds the top scorer race</p>
+              {homeScore > 0 && match.home_team_id && (
+                <ScorerEditor
+                  teamId={match.home_team_id}
+                  teamName={home}
+                  sideScore={homeScore}
+                  rows={scorerRows}
+                  members={scorersFor(match.home_team_id)}
+                  onChange={setScorerRows}
+                />
+              )}
+              {awayScore > 0 && match.away_team_id && (
+                <ScorerEditor
+                  teamId={match.away_team_id}
+                  teamName={away}
+                  sideScore={awayScore}
+                  rows={scorerRows}
+                  members={scorersFor(match.away_team_id)}
+                  onChange={setScorerRows}
+                />
+              )}
+            </div>
+          )}
+
+          {attributionInvalid && (
+            <p className="rondo-meta text-center text-[var(--live)] bg-[color-mix(in_oklch,var(--live)_10%,transparent)] border border-[var(--live)] rounded-[var(--r-sm)] px-3 py-2">
+              Scorer goals exceed the final score. Remove a scorer or raise the score.
+            </p>
+          )}
 
           {knockoutDrawBlocked && (
             <p className="rondo-meta text-center text-[var(--live)] bg-[color-mix(in_oklch,var(--live)_10%,transparent)] border border-[var(--live)] rounded-[var(--r-sm)] px-3 py-2">
@@ -175,10 +368,94 @@ function ScoreSheet({
             <button
               type="button"
               onClick={handlePrimaryTap}
-              disabled={saving || knockoutDrawBlocked}
+              disabled={saving || knockoutDrawBlocked || attributionInvalid}
               className="rondo-btn rondo-btn-primary flex-1 disabled:opacity-40"
             >
               {saving ? "Saving..." : confirming ? "Confirm final score" : "Save score"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Bottom sheet for typing in a team on a captain's behalf. */
+function AddTeamSheet({
+  tournamentId,
+  onClose,
+  onAdded,
+}: {
+  tournamentId: string;
+  onClose: () => void;
+  onAdded: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    const trimmed = name.trim();
+    if (saving || trimmed.length < 2) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/tournaments/${tournamentId}/teams`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teamName: trimmed }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        toast.error(json.error ?? "Could not add team");
+        return;
+      }
+      toast.success(`${trimmed} added as Team ${json.teamNumber}`);
+      onAdded();
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[70]">
+      <button
+        type="button"
+        aria-label="Close add team"
+        onClick={onClose}
+        className="absolute inset-0 bg-[oklch(0%_0_0_/_0.6)] backdrop-blur-sm animate-in fade-in duration-200"
+      />
+      <div
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg rounded-t-[var(--r-lg)] border-t border-[var(--stroke)] bg-[var(--bg-inset)] pb-[calc(env(safe-area-inset-bottom)+1rem)]"
+        style={{ animation: "rondoSheetUp 240ms var(--ease-out)" }}
+      >
+        <div className="mx-auto mt-2 h-1 w-8 rounded-[var(--r-pill)] bg-[var(--gold)]" />
+        <div className="border-b border-[var(--stroke)] px-5 py-4">
+          <p className="rondo-label text-[var(--gold)]">Walk-up registration</p>
+          <h2 className="rondo-title text-[var(--ink-hi)]">Add a team yourself</h2>
+        </div>
+        <div className="space-y-4 px-5 py-6">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && save()}
+            placeholder="Team name"
+            autoFocus
+            className={rondoFieldClass}
+          />
+          <p className="rondo-meta text-[var(--ink-low)]">
+            Players can still find the team and join its roster from the tournament page.
+          </p>
+          <div className="flex gap-2">
+            <button type="button" onClick={onClose} className="rondo-btn rondo-btn-secondary flex-1">
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={save}
+              disabled={saving || name.trim().length < 2}
+              className="rondo-btn rondo-btn-primary flex-1 disabled:opacity-40"
+            >
+              {saving ? "Adding..." : "Add team"}
             </button>
           </div>
         </div>
@@ -192,11 +469,13 @@ export default function ManageTournamentPage() {
   const router = useRouter();
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [teams, setTeams] = useState<TournamentTeam[]>([]);
+  const [members, setMembers] = useState<TournamentTeamMember[]>([]);
   const [matches, setMatches] = useState<TournamentMatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
   const [confirmStart, setConfirmStart] = useState(false);
   const [activeMatch, setActiveMatch] = useState<TournamentMatch | null>(null);
+  const [addingTeam, setAddingTeam] = useState(false);
 
   const load = useCallback(async () => {
     const supabase = createClient();
@@ -205,21 +484,26 @@ export default function ManageTournamentPage() {
       router.push("/login");
       return;
     }
-    const [{ data: t }, { data: teamRows }, { data: matchRows }] = await Promise.all([
-      supabase.from("tournaments").select("*").eq("id", id).single(),
-      supabase
-        .from("tournament_teams")
-        .select("*")
-        .eq("tournament_id", id)
-        .eq("status", "registered")
-        .order("created_at", { ascending: true }),
-      supabase
-        .from("tournament_matches")
-        .select("*")
-        .eq("tournament_id", id)
-        .order("round", { ascending: true })
-        .order("position", { ascending: true }),
-    ]);
+    const [{ data: t }, { data: teamRows }, { data: matchRows }, { data: memberRows }] =
+      await Promise.all([
+        supabase.from("tournaments").select("*").eq("id", id).single(),
+        supabase
+          .from("tournament_teams")
+          .select("*")
+          .eq("tournament_id", id)
+          .eq("status", "registered")
+          .order("created_at", { ascending: true }),
+        supabase
+          .from("tournament_matches")
+          .select("*")
+          .eq("tournament_id", id)
+          .order("round", { ascending: true })
+          .order("position", { ascending: true }),
+        supabase
+          .from("tournament_team_members")
+          .select("*, profile:profiles(id, full_name, avatar_url)")
+          .eq("tournament_id", id),
+      ]);
 
     if (!t || (t as Tournament).organizer_id !== userData.user.id) {
       router.push("/organizer/tournaments");
@@ -228,6 +512,7 @@ export default function ManageTournamentPage() {
     setTournament(t as Tournament);
     setTeams((teamRows as TournamentTeam[]) ?? []);
     setMatches((matchRows as TournamentMatch[]) ?? []);
+    setMembers((memberRows as TournamentTeamMember[]) ?? []);
     setLoading(false);
   }, [id, router]);
 
@@ -268,6 +553,26 @@ export default function ManageTournamentPage() {
     if (match.status === "bye" || match.status === "completed") return;
     if (!match.home_team_id || !match.away_team_id) return;
     setActiveMatch(match);
+  }
+
+  async function shareInvite() {
+    const url = `${window.location.origin}/tournaments/${id}`;
+    const title = tournament ? `${tournament.name} on Rondo` : "Rondo tournament";
+    const text = "Register your team before the bracket locks.";
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, text, url });
+        return;
+      } catch {
+        // fall through to clipboard when the user dismisses the sheet
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Invite link copied. Send it to your captains");
+    } catch {
+      toast.error("Could not copy the link");
+    }
   }
 
   const isKnockout = tournament?.format === "single_elimination";
@@ -396,20 +701,55 @@ export default function ManageTournamentPage() {
             </section>
 
             <section className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={shareInvite}
+                  className="rondo-btn rondo-btn-secondary min-h-12"
+                >
+                  <LinkSimple size={16} />
+                  Invite captains
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAddingTeam(true)}
+                  className="rondo-btn rondo-btn-secondary min-h-12"
+                >
+                  <UserPlus size={16} />
+                  Add team
+                </button>
+              </div>
+              <p className="rondo-meta text-[var(--ink-low)]">
+                Captains register from the link; or type teams in yourself and players join their
+                rosters later.
+              </p>
+            </section>
+
+            <section className="space-y-3">
               <SectionLabel>Teams ({teams.length})</SectionLabel>
               {teams.length === 0 ? (
-                <EmptyState title="No teams yet" body="Share the tournament page so captains can register." />
+                <EmptyState title="No teams yet" body="Share the invite link so captains can register, or add teams yourself." />
               ) : (
                 <div className="grid grid-cols-2 gap-3">
-                  {teams.map((team) => (
-                    <div
-                      key={team.id}
-                      className="flex min-h-14 items-center gap-2 rounded-[var(--r-md)] border border-[var(--stroke)] bg-card px-3 py-3"
-                    >
-                      <Shield size={16} weight="duotone" className="text-[var(--gold)] shrink-0" />
-                      <span className="rondo-meta font-bold text-[var(--ink-hi)] truncate">{team.name}</span>
-                    </div>
-                  ))}
+                  {teams.map((team) => {
+                    const rosterCount = members.filter((m) => m.team_id === team.id).length;
+                    return (
+                      <div
+                        key={team.id}
+                        className="flex min-h-14 items-center gap-2 rounded-[var(--r-md)] border border-[var(--stroke)] bg-card px-3 py-3"
+                      >
+                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--r-pill)] bg-[var(--bg-inset)] font-heading text-sm font-bold tabular-nums text-[var(--gold)]">
+                          {team.team_number ?? "—"}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block truncate rondo-meta font-bold text-[var(--ink-hi)]">{team.name}</span>
+                          <span className="block rondo-meta text-[var(--ink-low)]">
+                            {rosterCount > 0 ? `${rosterCount} on roster` : "No roster yet"}
+                          </span>
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </section>
@@ -488,11 +828,16 @@ export default function ManageTournamentPage() {
         <ScoreSheet
           match={activeMatch}
           teams={teams}
+          members={members}
           tournamentId={id}
           isKnockout={!!isKnockout}
           onClose={() => setActiveMatch(null)}
           onRecorded={load}
         />
+      )}
+
+      {addingTeam && (
+        <AddTeamSheet tournamentId={id} onClose={() => setAddingTeam(false)} onAdded={load} />
       )}
     </div>
   );
