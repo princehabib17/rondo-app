@@ -274,9 +274,50 @@ export interface TournamentTeam {
   name: string;
   status: "registered" | "withdrawn";
   seed: number | null;
+  team_number: number | null;
+  is_managed?: boolean;
   created_at: string;
   // joined
   captain?: Profile;
+  tournament_team_members?: TournamentTeamMember[];
+}
+
+export interface TournamentTeamMember {
+  id: string;
+  tournament_id: string;
+  team_id: string;
+  user_id: string;
+  role: "captain" | "player";
+  created_at: string;
+  // joined
+  profile?: Profile;
+}
+
+export interface TournamentGoal {
+  id: string;
+  tournament_id: string;
+  match_id: string;
+  team_id: string;
+  scorer_id: string | null;
+  scorer_name: string | null;
+  goals: number;
+  created_at: string;
+  // joined
+  scorer?: Profile | null;
+}
+
+export type TournamentAwardKind = "champion" | "runner_up" | "top_scorer";
+
+export interface TournamentAward {
+  id: string;
+  tournament_id: string;
+  user_id: string;
+  team_id: string | null;
+  kind: TournamentAwardKind;
+  tournament_name: string;
+  team_name: string | null;
+  detail: string | null;
+  created_at: string;
 }
 
 export interface TournamentMatch {

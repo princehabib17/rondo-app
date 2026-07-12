@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Fire, MapTrifold, Trophy } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
-import type { Game } from "@/lib/supabase/types";
+import type { Game, Tournament } from "@/lib/supabase/types";
 import { fetchOpenGames } from "@/lib/supabase/game-queries";
 import { DEFAULT_CAROUSEL_SLIDES } from "@/lib/feed/carousel-slides";
 import type { OrganizerGroup } from "@/lib/feed/organizers";
@@ -13,6 +13,7 @@ import { HeroCarousel } from "@/components/feed/HeroCarousel";
 import { TopOrganizers } from "@/components/feed/TopOrganizers";
 import { FeaturedGameCard } from "@/components/feed/FeaturedGameCard";
 import { NearbyGamesSection } from "@/components/feed/NearbyGamesSection";
+import { TournamentCard } from "@/components/tournament/TournamentCard";
 
 type GamesTab = "nearby" | "upcoming";
 
@@ -21,6 +22,7 @@ const PAGE_SIZE = 20;
 interface FeedPageClientProps {
   initialGames: Game[];
   initialOrganizers: OrganizerGroup[];
+  spotlightTournament: Tournament | null;
   initialNotificationCount: number;
   initialHasMore: boolean;
   shouldExpireReservations: boolean;
@@ -51,6 +53,7 @@ function partitionByTab(games: Game[], tab: GamesTab): Game[] {
 export function FeedPageClient({
   initialGames,
   initialOrganizers,
+  spotlightTournament,
   initialNotificationCount,
   initialHasMore,
   shouldExpireReservations,
@@ -101,7 +104,26 @@ export function FeedPageClient({
     <div className="min-h-[100dvh] rondo-page">
       <FeedHeader notificationCount={notificationCount} />
 
-      <HeroCarousel slides={DEFAULT_CAROUSEL_SLIDES} />
+      {/* Tournaments lead the home screen; the marketing carousel only
+          appears when there is no tournament to spotlight. */}
+      {spotlightTournament ? (
+        <section className="px-4 pt-4">
+          <div className="mb-3 flex items-baseline justify-between">
+            <h2 className="rondo-label text-[var(--ink-low)]">
+              {spotlightTournament.status === "active" ? "Tournament · Live now" : "Tournament spotlight"}
+            </h2>
+            <Link href="/tournaments" className="rondo-meta font-bold text-[var(--gold)]">
+              View all
+            </Link>
+          </div>
+          <TournamentCard
+            tournament={spotlightTournament}
+            href={`/tournaments/${spotlightTournament.id}`}
+          />
+        </section>
+      ) : (
+        <HeroCarousel slides={DEFAULT_CAROUSEL_SLIDES} />
+      )}
 
       <section className="px-4 pt-4">
         <div className="grid grid-cols-2 gap-2">

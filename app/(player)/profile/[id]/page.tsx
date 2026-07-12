@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, UserPlus, UserMinus, MapPin, Trophy, Wallet, CalendarDays, ChevronRight, ArrowUpRight, ArrowDownLeft, MessageCircle } from "lucide-react";
+import { Medal, SoccerBall } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { PUBLIC_PROFILE_SELECT } from "@/lib/supabase/profile-select";
 import { formatGameDate, formatPrice, getFlagEmoji } from "@/lib/utils/format";
-import type { Profile, PlayerReel } from "@/lib/supabase/types";
+import type { Profile, PlayerReel, TournamentAward } from "@/lib/supabase/types";
 import { StatTile } from "@/components/rondo/primitives";
 
 interface ProfileMatchEntry {
@@ -51,6 +52,7 @@ export default function PublicProfilePage() {
   const [locationHidden, setLocationHidden] = useState(false);
   const [playerReels, setPlayerReels] = useState<PlayerReel[]>([]);
   const [trophyRows, setTrophyRows] = useState<ProfileTournamentEntry[]>([]);
+  const [awards, setAwards] = useState<TournamentAward[]>([]);
   const [savingLocation, setSavingLocation] = useState(false);
   const [switchingRole, setSwitchingRole] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -116,6 +118,7 @@ export default function PublicProfilePage() {
         { data: matchesData },
         { data: walletData },
         { data: tournamentRows },
+        { data: awardRows },
       ] = await Promise.all([
         supabase.from("profiles").select(profileSelect).eq("id", id).single(),
         supabase.from("game_players").select("id", { count: "exact", head: true }).eq("user_id", id),
@@ -143,8 +146,15 @@ export default function PublicProfilePage() {
           .select("id, name, seed, tournament:tournaments(id, name, status, starts_at)")
           .eq("captain_id", id)
           .eq("status", "registered")
+          .eq("is_managed", false)
           .order("created_at", { ascending: false })
           .limit(12),
+        supabase
+          .from("tournament_awards")
+          .select("*")
+          .eq("user_id", id)
+          .order("created_at", { ascending: false })
+          .limit(24),
       ]);
 
       const loadedProfile = profileData as unknown as Profile;
@@ -158,6 +168,7 @@ export default function PublicProfilePage() {
       const walletRows = (walletData as Array<{ amount: number; direction: "credit" | "debit"; source: string }> | null) ?? [];
       setWalletRows(walletRows);
       setTrophyRows(((tournamentRows as ProfileTournamentEntry[] | null) ?? []).filter((row) => row.tournament));
+      setAwards((awardRows as TournamentAward[] | null) ?? []);
       // Fetch player reels
       const reelsRes = await fetch(`/api/reels?playerId=${id}&limit=6`);
       if (reelsRes.ok) {
@@ -310,25 +321,68 @@ export default function PublicProfilePage() {
           </div>
         )}
 
-        {!isOrganizer && trophyRows.length > 0 && (
+        {/* Trophy cabinet: real honors granted when tournaments complete. */}
+        {awards.length > 0 && (
           <section className="space-y-3">
-            <h3 className="rondo-label text-[var(--ink-low)]">Trophies</h3>
+            <h3 className="rondo-label text-[var(--ink-low)]">Trophy cabinet</h3>
             <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
-              {trophyRows.map((row) => (
-                <Link
-                  key={row.id}
-                  href={`/tournaments/${row.tournament!.id}/champion`}
-                  className="w-44 shrink-0 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-4"
-                >
-                  <div className="mb-4 grid size-10 place-items-center rounded-[var(--r-pill)] bg-[var(--gold-dim)] text-[var(--gold)]">
-                    <Trophy size={20} />
-                  </div>
-                  <p className="truncate rondo-title text-[var(--ink-hi)]">{row.tournament!.name}</p>
-                  <p className="mt-1 rondo-meta text-[var(--ink-low)]">
-                    {row.tournament!.status === "completed" ? "Completed" : "In the hunt"}
-                  </p>
-                </Link>
-              ))}
+              {awards.map((award) => {
+                const champion = award.kind === "champion";
+                const topScorer = award.kind === "top_scorer";
+                const Icon = champion ? Trophy : topScorer ? SoccerBall : Medal;
+                return (
+                  <Link
+                    key={award.id}
+                    href={`/tournaments/${award.tournament_id}/champion`}
+                    className={`w-44 shrink-0 rounded-[var(--r-md)] border p-4 ${
+                      champion
+                        ? "border-[color-mix(in_oklch,var(--gold)_45%,var(--stroke))] bg-[var(--gold-dim)]"
+                        : "border-[var(--stroke)] bg-[var(--bg-surface)]"
+                    }`}
+                  >
+                    <div
+                      className={`mb-4 grid size-10 place-items-center rounded-[var(--r-pill)] ${
+                        champion || topScorer
+                          ? "bg-[var(--gold-dim)] text-[var(--gold)]"
+                          : "bg-[var(--bg-inset)] text-[var(--ink-mid)]"
+                      }`}
+                    >
+                      <Icon size={20} />
+                    </div>
+                    <p className={`rondo-label ${champion || topScorer ? "text-[var(--gold)]" : "text-[var(--ink-low)]"}`}>
+                      {champion ? "Champions" : topScorer ? "Top scorer" : "Runners-up"}
+                    </p>
+                    <p className="mt-1 truncate rondo-title text-[var(--ink-hi)]">{award.tournament_name}</p>
+                    <p className="mt-1 truncate rondo-meta text-[var(--ink-low)]">
+                      {topScorer ? (award.detail ?? award.team_name ?? "") : award.team_name ? `with ${award.team_name}` : (award.detail ?? "")}
+                    </p>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* Live campaigns: tournaments this player's team is still fighting in. */}
+        {!isOrganizer && trophyRows.some((row) => row.tournament!.status !== "completed") && (
+          <section className="space-y-3">
+            <h3 className="rondo-label text-[var(--ink-low)]">In the hunt</h3>
+            <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
+              {trophyRows
+                .filter((row) => row.tournament!.status !== "completed")
+                .map((row) => (
+                  <Link
+                    key={row.id}
+                    href={`/tournaments/${row.tournament!.id}`}
+                    className="w-44 shrink-0 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-4"
+                  >
+                    <div className="mb-4 grid size-10 place-items-center rounded-[var(--r-pill)] bg-[var(--bg-inset)] text-[var(--ink-mid)]">
+                      <Trophy size={20} />
+                    </div>
+                    <p className="truncate rondo-title text-[var(--ink-hi)]">{row.tournament!.name}</p>
+                    <p className="mt-1 truncate rondo-meta text-[var(--ink-low)]">as {row.name}</p>
+                  </Link>
+                ))}
             </div>
           </section>
         )}

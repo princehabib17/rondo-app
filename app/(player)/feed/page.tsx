@@ -1,12 +1,32 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isGuestUser } from "@/lib/auth/is-guest";
-import type { Game } from "@/lib/supabase/types";
+import type { Game, Tournament } from "@/lib/supabase/types";
 import { fetchTopOrganizers } from "@/lib/feed/organizer-queries";
 import { fetchOpenGames } from "@/lib/supabase/game-queries";
 import { FeedPageClient } from "@/components/feed/FeedPageClient";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 const PAGE_SIZE = 20;
+
+/**
+ * The tournament that leads the home screen: a live one beats one that is
+ * still filling up; among equals the one kicking off soonest wins.
+ */
+async function fetchSpotlightTournament(supabase: SupabaseClient): Promise<Tournament | null> {
+  const { data } = await supabase
+    .from("tournaments")
+    .select("*, tournament_teams(id, status)")
+    .in("status", ["active", "registration"])
+    .order("starts_at", { ascending: true })
+    .limit(12);
+  const tournaments = (data as Tournament[]) ?? [];
+  return (
+    tournaments.find((t) => t.status === "active") ??
+    tournaments.find((t) => t.status === "registration") ??
+    null
+  );
+}
 
 export default async function FeedPage() {
   const supabase = await createClient();
@@ -25,9 +45,10 @@ export default async function FeedPage() {
     }
   }
 
-  const [initialGames, initialOrganizers, unreadCount] = await Promise.all([
+  const [initialGames, initialOrganizers, spotlightTournament, unreadCount] = await Promise.all([
     fetchOpenGames(supabase, { from: 0, to: PAGE_SIZE - 1 }),
     fetchTopOrganizers(supabase),
+    fetchSpotlightTournament(supabase),
     user
       ? supabase
           .from("notifications")
@@ -42,6 +63,7 @@ export default async function FeedPage() {
     <FeedPageClient
       initialGames={initialGames as Game[]}
       initialOrganizers={initialOrganizers}
+      spotlightTournament={spotlightTournament}
       initialNotificationCount={unreadCount}
       initialHasMore={initialGames.length === PAGE_SIZE}
       shouldExpireReservations={Boolean(user && !isGuestUser(user))}

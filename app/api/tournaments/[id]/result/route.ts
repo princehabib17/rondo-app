@@ -4,11 +4,24 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { placeInSlot } from "@/lib/tournament/bracket";
+import { grantTournamentAwards } from "@/lib/tournament/awards";
+
+const scorerSchema = z
+  .object({
+    teamId: z.string().uuid(),
+    scorerId: z.string().uuid().optional(),
+    scorerName: z.string().trim().min(1).max(80).optional(),
+    goals: z.coerce.number().int().min(1).max(99),
+  })
+  .refine((s) => s.scorerId || s.scorerName, {
+    message: "Each scorer needs a tagged player or a name",
+  });
 
 const bodySchema = z.object({
   matchId: z.string().uuid(),
   homeScore: z.coerce.number().int().min(0).max(99),
   awayScore: z.coerce.number().int().min(0).max(99),
+  scorers: z.array(scorerSchema).max(40).optional(),
 });
 
 /**
@@ -34,7 +47,7 @@ export async function POST(
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
-    const { matchId, homeScore, awayScore } = parsed.data;
+    const { matchId, homeScore, awayScore, scorers } = parsed.data;
 
     const service = createServiceClient();
     const { data: tournament } = await service
@@ -78,6 +91,26 @@ export async function POST(
       return NextResponse.json({ error: "Knockout matches can't end in a draw" }, { status: 400 });
     }
 
+    // Scorer tallies can't exceed the goals a side actually scored.
+    if (scorers?.length) {
+      const validTeams = new Set([match.home_team_id, match.away_team_id]);
+      if (scorers.some((s) => !validTeams.has(s.teamId))) {
+        return NextResponse.json({ error: "Scorer team is not in this match" }, { status: 400 });
+      }
+      const homeGoals = scorers
+        .filter((s) => s.teamId === match.home_team_id)
+        .reduce((sum, s) => sum + s.goals, 0);
+      const awayGoals = scorers
+        .filter((s) => s.teamId === match.away_team_id)
+        .reduce((sum, s) => sum + s.goals, 0);
+      if (homeGoals > homeScore || awayGoals > awayScore) {
+        return NextResponse.json(
+          { error: "Scorer goals exceed the final score" },
+          { status: 400 }
+        );
+      }
+    }
+
     const { error: updateError } = await service
       .from("tournament_matches")
       .update({ home_score: homeScore, away_score: awayScore, status: "completed" })
@@ -85,6 +118,24 @@ export async function POST(
 
     if (updateError) {
       return NextResponse.json({ error: updateError.message }, { status: 500 });
+    }
+
+    // Re-recording a league result replaces the match's goal log wholesale.
+    await service.from("tournament_goals").delete().eq("match_id", match.id);
+    if (scorers?.length) {
+      const { error: goalsError } = await service.from("tournament_goals").insert(
+        scorers.map((s) => ({
+          tournament_id: tournamentId,
+          match_id: match.id,
+          team_id: s.teamId,
+          scorer_id: s.scorerId ?? null,
+          scorer_name: s.scorerName ?? null,
+          goals: s.goals,
+        }))
+      );
+      if (goalsError) {
+        return NextResponse.json({ error: goalsError.message }, { status: 500 });
+      }
     }
 
     let tournamentCompleted = false;
@@ -129,6 +180,8 @@ export async function POST(
 
     if (tournamentCompleted) {
       await service.from("tournaments").update({ status: "completed" }).eq("id", tournamentId);
+      // Champions, runners-up, and the top scorer take their honors home.
+      await grantTournamentAwards(service, tournamentId);
     }
 
     // Tell both captains the score went up.

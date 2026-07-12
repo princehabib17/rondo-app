@@ -186,7 +186,14 @@ export function BottomNav() {
                 animate={
                   highlighted ? { scale: [1, 0.84, 1.1, 1] } : { scale: 1 }
                 }
-                transition={snappy}
+                // Springs only support two keyframes; the multi-keyframe pop
+                // needs a tween or motion throws and kills every other
+                // AnimatePresence exit on the page.
+                transition={
+                  highlighted
+                    ? { duration: 0.35, times: [0, 0.3, 0.65, 1], ease: "easeOut" }
+                    : snappy
+                }
                 key={highlighted ? "active" : "inactive"}
                 className="relative z-10"
               >
