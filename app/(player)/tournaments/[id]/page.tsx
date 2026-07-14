@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { subscribeToTournament } from "@/lib/realtime";
-import { computeStandings } from "@/lib/tournament/bracket";
+import { computeChampion } from "@/lib/tournament/bracket";
 import type {
   Tournament,
   TournamentGoal,
@@ -227,6 +227,7 @@ export default function TournamentDetailPage() {
   const [teamName, setTeamName] = useState("");
   const [registering, setRegistering] = useState(false);
   const [openTeam, setOpenTeam] = useState<TournamentTeam | null>(null);
+  const [activeSection, setActiveSection] = useState("overview");
 
   // Data refresh without re-hitting the auth server; also runs on realtime events.
   const refreshData = useCallback(async () => {
@@ -317,32 +318,44 @@ export default function TournamentDetailPage() {
 
   const champion = useMemo(() => {
     if (!tournament || tournament.status !== "completed") return null;
-    if (isKnockout) {
-      const totalRounds = matches.length > 0 ? Math.max(...matches.map((m) => m.round)) : 0;
-      const final = matches.find((m) => m.round === totalRounds);
-      if (!final || final.status !== "completed" || final.home_score == null || final.away_score == null) {
-        return null;
-      }
-      const winnerId =
-        final.home_score > final.away_score
-          ? final.home_team_id
-          : final.away_score > final.home_score
-            ? final.away_team_id
-            : null;
-      if (!winnerId) return null;
-      return {
-        name: teams.find((t) => t.id === winnerId)?.name ?? "Champion",
-        line: `Won the final ${final.home_score} - ${final.away_score}`,
-      };
+    return computeChampion(tournament.format, teams, matches);
+  }, [tournament, matches, teams]);
+
+  // Only list a section chip when the section actually renders below —
+  // "Schedule" only exists for round-robin, "Bracket"/"Standings" only once
+  // the draw is made, so a knockout tournament during registration just
+  // shows "Overview" and "Squad".
+  const navItems = useMemo(() => {
+    const items: { id: string; label: string }[] = [{ id: "overview", label: "Overview" }];
+    if (matches.length > 0) {
+      items.push({ id: isKnockout ? "bracket" : "standings", label: isKnockout ? "Bracket" : "Standings" });
+      if (!isKnockout) items.push({ id: "schedule", label: "Schedule" });
     }
-    const standings = computeStandings(teams.map((t) => t.id), matches);
-    const top = standings[0];
-    if (!top || top.played === 0) return null;
-    return {
-      name: teams.find((t) => t.id === top.teamId)?.name ?? "Champion",
-      line: `Finished top with ${top.points} points`,
-    };
-  }, [tournament, isKnockout, matches, teams]);
+    if (goals.length > 0) items.push({ id: "topscorers", label: "Scorers" });
+    items.push({ id: "squad", label: "Squad" });
+    return items;
+  }, [matches.length, isKnockout, goals.length]);
+
+  // Scroll-spy: highlight whichever section chip actually matches what's on
+  // screen, instead of always pointing at "Overview".
+  useEffect(() => {
+    const elements = navItems
+      .map((item) => document.getElementById(item.id))
+      .filter((el): el is HTMLElement => el !== null);
+    if (elements.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) setActiveSection(visible[0].target.id);
+      },
+      { rootMargin: "-130px 0px -60% 0px", threshold: 0 }
+    );
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [navItems]);
 
   if (loading) {
     return (
@@ -384,13 +397,13 @@ export default function TournamentDetailPage() {
         </div>
       </header>
 
-      <TournamentHero tournament={tournament} teamCount={teams.length} />
+      <TournamentHero tournament={tournament} teamCount={teams.length} matches={matches} />
 
       <nav className="sticky top-[73px] z-20 border-b border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_92%,transparent)] px-4 py-2 backdrop-blur-md">
         <div className="mx-auto flex max-w-lg gap-2 overflow-x-auto [scrollbar-width:none]">
-          {["Overview", isKnockout ? "Bracket" : "Standings", "Schedule", "Squad"].map((item, index) => (
-            <a key={item} href={`#${item.toLowerCase()}`} className="rondo-chip shrink-0" data-active={index === 0}>
-              {item}
+          {navItems.map((item) => (
+            <a key={item.id} href={`#${item.id}`} className="rondo-chip shrink-0" data-active={activeSection === item.id}>
+              {item.label}
             </a>
           ))}
           <Link href={`/tournaments/${id}/room`} className="rondo-chip shrink-0">
@@ -413,7 +426,7 @@ export default function TournamentDetailPage() {
             <Trophy size={32} weight="duotone" className="mx-auto mb-2 text-[var(--gold)]" />
             <p className="rondo-label text-[var(--gold)]">Champion</p>
             <p className="mt-1 font-heading text-4xl font-bold uppercase text-[var(--ink-hi)]">{champion.name}</p>
-            <p className="mt-2 rondo-meta text-[var(--ink-mid)]">{champion.line}</p>
+            <p className="mt-2 rondo-meta text-[var(--ink-mid)]">{champion.detail}</p>
           </section>
         )}
 
@@ -422,7 +435,7 @@ export default function TournamentDetailPage() {
           <div className="grid gap-3">
             <StatTile label="Teams" value={teams.length} unit={`/ ${tournament.max_teams}`} size="lg" />
             <div className="grid grid-cols-2 gap-3">
-              <StatTile label="Matches" value={matches.length || "Draw soon"} size="sm" />
+              <StatTile label="Matches" value={matches.length} size="sm" />
               <StatTile
                 label="Goals"
                 value={matches.reduce((sum, match) => sum + (match.home_score ?? 0) + (match.away_score ?? 0), 0)}
@@ -542,8 +555,10 @@ export default function TournamentDetailPage() {
         />
       )}
 
+      {/* bottom-6rem (not 4rem): clears the floating BottomNav pill, which
+          occupies 24-84px from the viewport edge, not just its top 64px. */}
       {showActionCard && (
-        <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 rondo-sticky-action">
+        <div className="fixed inset-x-0 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-30 rondo-sticky-action">
           <div className="mx-auto max-w-lg px-4 py-3">
             {tournament.status !== "registration" ? (
               <div className="flex min-h-[44px] items-center gap-2 text-sm text-white/50">

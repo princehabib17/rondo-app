@@ -20,7 +20,7 @@ import {
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
-import type { Profile, ScoutClip, ScoutReactionKind } from "@/lib/supabase/types";
+import type { ScoutClip, ScoutReactionKind } from "@/lib/supabase/types";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import { cn } from "@/lib/utils";
 import { SCOUT_CLIP_CAPTION_MAX } from "@/lib/scout/clip-schema";
@@ -30,86 +30,6 @@ type ScoutClipWithCounts = ScoutClip & {
   saves: number;
   scouts: number;
 };
-
-const samplePlayers: Profile[] = [
-  {
-    id: "sample-wing",
-    email: null,
-    full_name: "Andre Marquez",
-    avatar_url: null,
-    role: "player",
-    bio: "Explosive winger, loves 1v1s.",
-    nationality: "Philippines",
-    position: "forward",
-    preferred_foot: "right",
-    skill_level: "advanced",
-    preferred_areas: "Makati, BGC",
-    game_preference: "football",
-    organizer_verified: false,
-    location_hidden: false,
-    last_lat: null,
-    last_lng: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: "sample-mid",
-    email: null,
-    full_name: "Kevin Bautista",
-    avatar_url: null,
-    role: "player",
-    bio: "Press-resistant midfielder.",
-    nationality: "Philippines",
-    position: "midfielder",
-    preferred_foot: "left",
-    skill_level: "intermediate",
-    preferred_areas: "Pasig, Ortigas",
-    game_preference: "futsal",
-    organizer_verified: false,
-    location_hidden: false,
-    last_lat: null,
-    last_lng: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-];
-
-const sampleClips: ScoutClipWithCounts[] = [
-  {
-    id: "sample-clip-1",
-    player_id: samplePlayers[0].id,
-    video_url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
-    thumbnail_url: "/feed/hero-soccer.jpg",
-    caption: "First touch, burst, finish. Available for competitive 7v7s this month.",
-    position: "Forward",
-    skill_tags: ["1v1", "Finishing", "Acceleration"],
-    is_public: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    player: samplePlayers[0],
-    scout_clip_reactions: [],
-    likes: 128,
-    saves: 32,
-    scouts: 9,
-  },
-  {
-    id: "sample-clip-2",
-    player_id: samplePlayers[1].id,
-    video_url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
-    thumbnail_url: "/feed/hero-night-court.png",
-    caption: "Small-sided control clips: receive under pressure, turn out, play forward.",
-    position: "Midfielder",
-    skill_tags: ["First touch", "Passing", "Tempo"],
-    is_public: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    player: samplePlayers[1],
-    scout_clip_reactions: [],
-    likes: 91,
-    saves: 21,
-    scouts: 7,
-  },
-];
 
 function countsFor(clip: ScoutClip): ScoutClipWithCounts {
   const reactions = clip.scout_clip_reactions ?? [];
@@ -314,7 +234,7 @@ function UploadSheet({
 }
 
 export default function ScoutPage() {
-  const [clips, setClips] = useState<ScoutClipWithCounts[]>(sampleClips);
+  const [clips, setClips] = useState<ScoutClipWithCounts[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [guest, setGuest] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -334,12 +254,9 @@ export default function ScoutPage() {
 
       const res = await fetch("/api/scout-clips", { cache: "no-store" });
       const json = await res.json();
-      const rows = ((json.clips ?? []) as ScoutClip[]).map(countsFor);
-      if (rows.length > 0) {
-        setClips(rows);
-      }
+      setClips(((json.clips ?? []) as ScoutClip[]).map(countsFor));
     } catch {
-      setClips(sampleClips);
+      setClips([]);
     } finally {
       setLoading(false);
     }
@@ -351,7 +268,7 @@ export default function ScoutPage() {
 
   const reactToClip = useCallback(
     async (clip: ScoutClipWithCounts, kind: ScoutReactionKind) => {
-      if (!currentUserId || guest || clip.id.startsWith("sample-")) {
+      if (!currentUserId || guest) {
         toast("Sign in to save scout activity");
         return;
       }
@@ -385,8 +302,34 @@ export default function ScoutPage() {
     containerRef.current?.children[next]?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [activeIndex, clips.length]);
 
-  const profileHref = activeClip?.player_id.startsWith("sample-") ? "/community" : `/profile/${activeClip?.player_id}`;
-  const messageHref = activeClip?.player_id.startsWith("sample-") ? "/messages" : `/messages/${activeClip?.player_id}`;
+  const profileHref = `/profile/${activeClip?.player_id}`;
+  const messageHref = `/messages/${activeClip?.player_id}`;
+
+  if (!loading && clips.length === 0) {
+    return (
+      <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-black px-8 text-center text-white">
+        <p className="font-heading text-2xl font-black uppercase italic">No Clips Yet</p>
+        <p className="font-body text-sm text-white/50">
+          Nobody&apos;s posted a scout clip yet. Check back soon.
+        </p>
+        {!guest && (
+          <button
+            type="button"
+            onClick={() => setUploadOpen(true)}
+            className="mt-4 rounded-xl bg-rondo-accent px-6 py-3 font-bold text-black"
+          >
+            Be the first — post a clip
+          </button>
+        )}
+        <UploadSheet
+          open={uploadOpen}
+          onClose={() => setUploadOpen(false)}
+          onCreated={loadClips}
+          currentUserId={currentUserId}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[100dvh] bg-black text-white">
@@ -423,7 +366,6 @@ export default function ScoutPage() {
         className="h-[100dvh] snap-y snap-mandatory overflow-y-auto overflow-x-hidden [scrollbar-width:none]"
       >
         {clips.map((clip) => {
-          const sample = clip.id.startsWith("sample-");
           const liked = userReacted(clip, currentUserId, "like");
           const saved = userReacted(clip, currentUserId, "save");
           const scouted = userReacted(clip, currentUserId, "scout");
@@ -436,24 +378,16 @@ export default function ScoutPage() {
                   className="absolute inset-0 h-full w-full object-cover opacity-45 blur-[1px]"
                 />
               )}
-              {sample ? (
-                <img
-                  src={clip.thumbnail_url ?? "/feed/hero-soccer.jpg"}
-                  alt=""
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-              ) : (
-                <video
-                  src={clip.video_url}
-                  poster={clip.thumbnail_url ?? undefined}
-                  className="absolute inset-0 h-full w-full object-cover"
-                  playsInline
-                  muted
-                  loop
-                  autoPlay
-                  controls={false}
-                />
-              )}
+              <video
+                src={clip.video_url}
+                poster={clip.thumbnail_url ?? undefined}
+                className="absolute inset-0 h-full w-full object-cover"
+                playsInline
+                muted
+                loop
+                autoPlay
+                controls={false}
+              />
               <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.62)_0%,rgba(0,0,0,0.08)_36%,rgba(0,0,0,0.78)_100%)]" />
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_28%_70%,rgba(246,224,55,0.18),transparent_28%)]" />
 

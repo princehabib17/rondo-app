@@ -14,7 +14,7 @@ import type {
 } from "@/lib/supabase/types";
 import { BracketView } from "@/components/tournament/BracketView";
 import { StandingsTable } from "@/components/tournament/StandingsTable";
-import { computeStandings } from "@/lib/tournament/bracket";
+import { computeChampion } from "@/lib/tournament/bracket";
 import { EmptyState, MatchCell, StatTile, rondoFieldClass } from "@/components/rondo/primitives";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -584,24 +584,8 @@ export default function ManageTournamentPage() {
 
   const champion = useMemo(() => {
     if (!tournament || tournament.status !== "completed") return null;
-    if (isKnockout) {
-      const finalRound = matches.length ? Math.max(...matches.map((m) => m.round)) : 0;
-      const finalMatch = matches.find((m) => m.round === finalRound && m.status === "completed");
-      if (!finalMatch || finalMatch.home_score == null || finalMatch.away_score == null) return null;
-      const winnerId = finalMatch.home_score > finalMatch.away_score ? finalMatch.home_team_id : finalMatch.away_team_id;
-      const winner = teams.find((t) => t.id === winnerId);
-      if (!winner) return null;
-      return { name: winner.name, detail: `${finalMatch.home_score} - ${finalMatch.away_score} in the final` };
-    }
-    const standings = computeStandings(
-      teams.map((t) => t.id),
-      matches
-    );
-    const top = standings[0];
-    const winner = top ? teams.find((t) => t.id === top.teamId) : null;
-    if (!winner || !top) return null;
-    return { name: winner.name, detail: `${top.won}W ${top.drawn}D ${top.lost}L · ${top.points} pts` };
-  }, [tournament, isKnockout, matches, teams]);
+    return computeChampion(tournament.format, teams, matches);
+  }, [tournament, matches, teams]);
 
   if (loading || !tournament) {
     return (

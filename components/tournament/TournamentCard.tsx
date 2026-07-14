@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CalendarBlank, Crown, MapPin, SoccerBall, Trophy, Users } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import type { Tournament, TournamentStatus } from "@/lib/supabase/types";
+import type { LiveSummary } from "@/lib/tournament/bracket";
 import { formatGameDate, formatPrice } from "@/lib/utils/format";
 
 /** Shared status → copy/tone map, reused by TournamentHero. */
@@ -61,6 +62,10 @@ interface TournamentCardProps {
   tournament: Tournament;
   href: string;
   variant?: "live" | "open" | "upcoming" | "completed";
+  /** Winner line for a completed tournament, when known. */
+  champion?: { name: string; detail?: string | null } | null;
+  /** Real round/progress for a live tournament, when known. */
+  liveSummary?: LiveSummary | null;
 }
 
 function variantFor(tournament: Tournament): NonNullable<TournamentCardProps["variant"]> {
@@ -70,7 +75,13 @@ function variantFor(tournament: Tournament): NonNullable<TournamentCardProps["va
   return "upcoming";
 }
 
-export function TournamentCard({ tournament, href, variant = variantFor(tournament) }: TournamentCardProps) {
+export function TournamentCard({
+  tournament,
+  href,
+  variant = variantFor(tournament),
+  champion,
+  liveSummary,
+}: TournamentCardProps) {
   const teamCount = tournament.tournament_teams?.filter((t) => t.status === "registered").length ?? 0;
   const capacity = Math.min(100, Math.round((teamCount / Math.max(tournament.max_teams, 1)) * 100));
   const full = teamCount >= tournament.max_teams;
@@ -118,11 +129,11 @@ export function TournamentCard({ tournament, href, variant = variantFor(tourname
           <StatusRibbon status={tournament.status} />
         </div>
 
-        {isLive && (
+        {isLive && liveSummary && (
           <div className="absolute inset-x-3 bottom-12">
             <p className="rondo-label text-[var(--live)]">Now playing</p>
-            <p className="mt-1 font-heading text-[2.5rem] font-bold leading-none tabular-nums text-[var(--ink-hi)]">
-              Live
+            <p className="mt-1 truncate font-heading text-[2.5rem] font-bold leading-none text-[var(--ink-hi)]">
+              {liveSummary.roundLabel}
             </p>
           </div>
         )}
@@ -157,22 +168,34 @@ export function TournamentCard({ tournament, href, variant = variantFor(tourname
           )}
         </div>
 
-        <div className="grid grid-cols-[1fr_auto] items-center gap-3">
-          <div className="h-1.5 overflow-hidden rounded-[var(--r-pill)] bg-[var(--bg-inset)]">
-            <div
-              className={cn("h-full rounded-[var(--r-pill)] transition-[width]", full ? "bg-[var(--ink-low)]" : "bg-[var(--gold)]")}
-              style={{ width: `${capacity}%` }}
-            />
-          </div>
+        <div className={cn("items-center gap-3", variant === "open" ? "grid grid-cols-[1fr_auto]" : "flex justify-end")}>
+          {/* The fill bar reads as "registration filling up" — only true while
+              registration is actually open. Live/completed just state the count. */}
+          {variant === "open" && (
+            <div className="h-1.5 overflow-hidden rounded-[var(--r-pill)] bg-[var(--bg-inset)]">
+              <div
+                className={cn("h-full rounded-[var(--r-pill)] transition-[width]", full ? "bg-[var(--ink-low)]" : "bg-[var(--gold)]")}
+                style={{ width: `${capacity}%` }}
+              />
+            </div>
+          )}
           <span className="flex shrink-0 items-center gap-1 rondo-meta font-bold text-[var(--ink-mid)]">
             <Users size={16} className="text-[var(--ink-low)]" aria-hidden />
-            {variant === "open" ? `${spotsLeft} spots left` : `${teamCount}/${tournament.max_teams}`}
+            {variant === "open" ? `${spotsLeft} spots left` : `${teamCount}/${tournament.max_teams} teams`}
           </span>
         </div>
 
         {isCompleted && (
-          <p className="rondo-meta text-[var(--ink-low)]">
-            Champions show here once the final score is locked.
+          <p className="rondo-meta text-[var(--ink-hi)]">
+            {champion ? (
+              <>
+                <Trophy size={14} weight="fill" className="mr-1 inline-block text-[var(--gold)]" aria-hidden />
+                <span className="font-bold">{champion.name}</span>
+                {champion.detail && <span className="text-[var(--ink-low)]"> · {champion.detail}</span>}
+              </>
+            ) : (
+              <span className="text-[var(--ink-low)]">Final score locked.</span>
+            )}
           </p>
         )}
       </div>

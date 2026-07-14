@@ -118,6 +118,7 @@ export default function PublicProfilePage() {
         { data: matchesData },
         { data: walletData },
         { data: tournamentRows },
+        { data: membershipRows },
         { data: awardRows },
       ] = await Promise.all([
         supabase.from("profiles").select(profileSelect).eq("id", id).single(),
@@ -149,6 +150,13 @@ export default function PublicProfilePage() {
           .eq("is_managed", false)
           .order("created_at", { ascending: false })
           .limit(12),
+        // Roster memberships, not just captaincies — a player who joined a
+        // team's roster (without captaining it) is still "on" that team.
+        supabase
+          .from("tournament_team_members")
+          .select("team_id, team:tournament_teams(id, name), tournament:tournaments(id, name, status, starts_at)")
+          .eq("user_id", id)
+          .limit(24),
         supabase
           .from("tournament_awards")
           .select("*")
@@ -160,15 +168,48 @@ export default function PublicProfilePage() {
       const loadedProfile = profileData as unknown as Profile;
       setProfile(loadedProfile);
       setLocationHidden(Boolean(loadedProfile?.location_hidden));
-      setGamesPlayed(count ?? 0);
       setIsFollowing(!!followData);
       const entries = ((matchesData as ProfileMatchEntry[] | null) ?? []).filter((entry) => !!entry.game);
       setRecentMatches(entries);
 
       const walletRows = (walletData as Array<{ amount: number; direction: "credit" | "debit"; source: string }> | null) ?? [];
       setWalletRows(walletRows);
-      setTrophyRows(((tournamentRows as ProfileTournamentEntry[] | null) ?? []).filter((row) => row.tournament));
+
+      const captainEntries = ((tournamentRows as ProfileTournamentEntry[] | null) ?? []).filter((row) => row.tournament);
+      const memberships =
+        (membershipRows as
+          | { team_id: string; team: { id: string; name: string } | null; tournament: ProfileTournamentEntry["tournament"] }[]
+          | null) ?? [];
+      const membershipEntries: ProfileTournamentEntry[] = memberships
+        .filter((row) => row.tournament && row.team)
+        .map((row) => ({ id: row.team_id, name: row.team!.name, seed: null, tournament: row.tournament }));
+
+      // Merge captain + roster entries, one card per tournament (captaincy wins the tiebreak).
+      const seenTournaments = new Set<string>();
+      const mergedTrophyRows: ProfileTournamentEntry[] = [];
+      for (const entry of [...captainEntries, ...membershipEntries]) {
+        if (seenTournaments.has(entry.tournament!.id)) continue;
+        seenTournaments.add(entry.tournament!.id);
+        mergedTrophyRows.push(entry);
+      }
+      setTrophyRows(mergedTrophyRows);
       setAwards((awardRows as TournamentAward[] | null) ?? []);
+
+      // "Matches played" undercounted badly without this: it only ever
+      // counted pickup games, so a tournament champion could show "0 matches
+      // played" one line above their trophy cabinet.
+      const teamIds = [...new Set([...captainEntries.map((e) => e.id), ...memberships.map((m) => m.team_id)])];
+      let tournamentMatchesPlayed = 0;
+      if (teamIds.length > 0) {
+        const idList = teamIds.join(",");
+        const { count: matchCount } = await supabase
+          .from("tournament_matches")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "completed")
+          .or(`home_team_id.in.(${idList}),away_team_id.in.(${idList})`);
+        tournamentMatchesPlayed = matchCount ?? 0;
+      }
+      setGamesPlayed((count ?? 0) + tournamentMatchesPlayed);
       // Fetch player reels
       const reelsRes = await fetch(`/api/reels?playerId=${id}&limit=6`);
       if (reelsRes.ok) {
@@ -237,7 +278,7 @@ export default function PublicProfilePage() {
     .slice(0, 3);
 
   return (
-    <div className="min-h-[100dvh] pb-8">
+    <div className="min-h-[100dvh] pb-24">
       <header className="sticky top-0 bg-background/90 backdrop-blur-md border-b border-border z-40 px-4 py-3 flex items-center gap-3">
         <button onClick={() => router.back()} className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white hover:text-rondo-yellow transition-colors cursor-pointer" aria-label="Back">
           <ArrowLeft size={20} />

@@ -6,7 +6,6 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   Bell,
-  Bookmark,
   CircleDollarSign,
   Clock3,
   MapPinned,
@@ -115,24 +114,15 @@ export default function FeedMapPage() {
             </Link>
           </div>
 
-          <div className="flex min-w-0 gap-3">
-            <label className="flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-inset)] px-4 text-[var(--ink-low)]">
-              <Search size={24} className="shrink-0 text-[var(--ink-hi)]" />
-              <span className="sr-only">Search games or venues</span>
-              <input
-                type="search"
-                placeholder="Search games or venues"
-                className="min-w-0 flex-1 bg-transparent rondo-body text-[var(--ink-hi)] outline-none placeholder:text-[var(--ink-low)]"
-              />
-            </label>
-            <Link
-              href="/saved"
-              className="inline-flex min-h-14 w-14 shrink-0 items-center justify-center rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-inset)] px-0 text-[var(--ink-hi)]"
-              aria-label="Saved games"
-            >
-              <Bookmark size={20} />
-            </Link>
-          </div>
+          <label className="flex min-h-14 min-w-0 items-center gap-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-inset)] px-4 text-[var(--ink-low)]">
+            <Search size={24} className="shrink-0 text-[var(--ink-hi)]" />
+            <span className="sr-only">Search games or venues</span>
+            <input
+              type="search"
+              placeholder="Search games or venues"
+              className="min-w-0 flex-1 bg-transparent rondo-body text-[var(--ink-hi)] outline-none placeholder:text-[var(--ink-low)]"
+            />
+          </label>
 
           <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
             <button type="button" className="rondo-chip" data-active="true">

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bookmark, Calendar, MapPin, Clock } from "lucide-react";
+import { Bookmark, Calendar, MapPin, Clock, Trophy } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatGameDate, formatPrice } from "@/lib/utils/format";
 import { Badge } from "@/components/ui/badge";
@@ -24,9 +24,47 @@ interface MyGame {
   };
 }
 
+interface MyTournament {
+  teamId: string;
+  teamName: string;
+  tournament: {
+    id: string;
+    name: string;
+    status: string;
+    starts_at: string;
+  };
+}
+
+const TOURNAMENT_STATUS_LABEL: Record<string, string> = {
+  registration: "Open for teams",
+  active: "Live",
+  completed: "Completed",
+  cancelled: "Cancelled",
+};
+
+function TournamentRow({ entry }: { entry: MyTournament }) {
+  return (
+    <Link href={`/tournaments/${entry.tournament.id}`} className="block cursor-pointer">
+      <div className="rondo-surface p-4 hover:border-rondo-accent/30 active:scale-[0.98] transition-[transform,border-color] duration-200 space-y-2">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="text-white font-bold text-sm leading-tight flex-1">{entry.tournament.name}</h3>
+          <Badge variant="secondary" className="text-xs h-5 shrink-0">
+            {TOURNAMENT_STATUS_LABEL[entry.tournament.status] ?? entry.tournament.status}
+          </Badge>
+        </div>
+        <div className="flex items-center gap-2 text-muted-foreground text-xs">
+          <Trophy size={11} />
+          <span>Playing as {entry.teamName}</span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 export default function MyMatchesPage() {
   const router = useRouter();
   const [entries, setEntries] = useState<MyGame[]>([]);
+  const [tournamentEntries, setTournamentEntries] = useState<MyTournament[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,12 +72,53 @@ export default function MyMatchesPage() {
       const supabase = createClient();
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) { router.push("/login"); return; }
-      const { data } = await supabase
-        .from("game_players")
-        .select("id, game_id, payment_status, joined_at, game:games(id, title, venue_name, date_time, price_per_player, status, format)")
-        .eq("user_id", userData.user.id)
-        .order("joined_at", { ascending: false });
+      const uid = userData.user.id;
+
+      const [{ data }, { data: captainRows }, { data: memberRows }] = await Promise.all([
+        supabase
+          .from("game_players")
+          .select("id, game_id, payment_status, joined_at, game:games(id, title, venue_name, date_time, price_per_player, status, format)")
+          .eq("user_id", uid)
+          .order("joined_at", { ascending: false }),
+        // Registered captains + rostered players both count as "on" a team —
+        // this page previously only ever knew about pickup games.
+        supabase
+          .from("tournament_teams")
+          .select("id, name, tournament:tournaments(id, name, status, starts_at)")
+          .eq("captain_id", uid)
+          .eq("status", "registered")
+          .eq("is_managed", false),
+        supabase
+          .from("tournament_team_members")
+          .select("team_id, team:tournament_teams(id, name), tournament:tournaments(id, name, status, starts_at)")
+          .eq("user_id", uid),
+      ]);
+
       setEntries((data as unknown as MyGame[]) ?? []);
+
+      const captainEntries: MyTournament[] = (
+        (captainRows as { id: string; name: string; tournament: MyTournament["tournament"] | null }[] | null) ?? []
+      )
+        .filter((row) => row.tournament)
+        .map((row) => ({ teamId: row.id, teamName: row.name, tournament: row.tournament! }));
+
+      const memberEntries: MyTournament[] = (
+        (memberRows as
+          | { team_id: string; team: { id: string; name: string } | null; tournament: MyTournament["tournament"] | null }[]
+          | null) ?? []
+      )
+        .filter((row) => row.tournament && row.team)
+        .map((row) => ({ teamId: row.team_id, teamName: row.team!.name, tournament: row.tournament! }));
+
+      const seen = new Set<string>();
+      const mergedTournaments: MyTournament[] = [];
+      for (const entry of [...captainEntries, ...memberEntries]) {
+        if (seen.has(entry.tournament.id)) continue;
+        seen.add(entry.tournament.id);
+        mergedTournaments.push(entry);
+      }
+      mergedTournaments.sort((a, b) => new Date(b.tournament.starts_at).getTime() - new Date(a.tournament.starts_at).getTime());
+      setTournamentEntries(mergedTournaments);
       setLoading(false);
     }
     load();
@@ -159,7 +238,7 @@ export default function MyMatchesPage() {
           <div className="space-y-3">
             {[0,1,2].map((i) => <div key={i} className="h-24 bg-card border border-border rounded-xl animate-pulse" />)}
           </div>
-        ) : entries.length === 0 ? (
+        ) : entries.length === 0 && tournamentEntries.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center space-y-3">
             <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center">
               <Bookmark size={24} className="text-muted-foreground" />
@@ -170,6 +249,19 @@ export default function MyMatchesPage() {
           </div>
         ) : (
           <>
+            {tournamentEntries.length > 0 && (
+              <section className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Trophy size={14} className="text-rondo-yellow" />
+                  <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+                    Tournaments ({tournamentEntries.length})
+                  </h2>
+                </div>
+                {tournamentEntries.map((e) => (
+                  <TournamentRow key={e.tournament.id} entry={e} />
+                ))}
+              </section>
+            )}
             {upcoming.length > 0 && (
               <section className="space-y-3">
                 <div className="flex items-center gap-2">

@@ -14,6 +14,7 @@ import { TopOrganizers } from "@/components/feed/TopOrganizers";
 import { FeaturedGameCard } from "@/components/feed/FeaturedGameCard";
 import { NearbyGamesSection } from "@/components/feed/NearbyGamesSection";
 import { TournamentCard } from "@/components/tournament/TournamentCard";
+import type { LiveSummary } from "@/lib/tournament/bracket";
 
 type GamesTab = "nearby" | "upcoming";
 
@@ -23,6 +24,7 @@ interface FeedPageClientProps {
   initialGames: Game[];
   initialOrganizers: OrganizerGroup[];
   spotlightTournament: Tournament | null;
+  spotlightLiveSummary: LiveSummary | null;
   initialNotificationCount: number;
   initialHasMore: boolean;
   shouldExpireReservations: boolean;
@@ -54,6 +56,7 @@ export function FeedPageClient({
   initialGames,
   initialOrganizers,
   spotlightTournament,
+  spotlightLiveSummary,
   initialNotificationCount,
   initialHasMore,
   shouldExpireReservations,
@@ -119,6 +122,7 @@ export function FeedPageClient({
           <TournamentCard
             tournament={spotlightTournament}
             href={`/tournaments/${spotlightTournament.id}`}
+            liveSummary={spotlightLiveSummary}
           />
         </section>
       ) : (
