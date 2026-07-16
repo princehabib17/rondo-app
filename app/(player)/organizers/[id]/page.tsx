@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Calendar, Megaphone, MapPin, Radio } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
-import { formatGameHeadline, formatRelativeTime } from "@/lib/utils/format";
+import { formatGameDate, formatRelativeTime } from "@/lib/utils/format";
 import type { Announcement, Game, Profile } from "@/lib/supabase/types";
 import { getOrganizerInitials } from "@/lib/feed/organizers";
 import { resolveOrganizer } from "@/lib/organizers/resolve-organizer";
@@ -294,9 +294,13 @@ export default function OrganizerHubPage() {
                 className="block bg-[#141414] border border-white/10 rounded-xl p-4 hover:border-rondo-accent/30 transition-colors"
               >
                 <h3 className="font-heading text-white font-black italic uppercase text-base mb-2">
-                  {formatGameHeadline(game.date_time)}
+                  {game.title}
                 </h3>
                 <div className="space-y-1 font-body text-white/50 text-xs">
+                  <div className="flex items-center gap-2">
+                    <Calendar size={12} />
+                    <span>{formatGameDate(game.date_time)}</span>
+                  </div>
                   <div className="flex items-center gap-2">
                     <MapPin size={12} />
                     <span>{game.venue_name}</span>

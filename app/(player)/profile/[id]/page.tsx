@@ -8,7 +8,7 @@ import { Medal, SoccerBall } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { PUBLIC_PROFILE_SELECT } from "@/lib/supabase/profile-select";
-import { formatGameHeadline, formatPrice, getFlagEmoji } from "@/lib/utils/format";
+import { formatGameDate, formatPrice, getFlagEmoji } from "@/lib/utils/format";
 import type { Profile, PlayerReel, TournamentAward } from "@/lib/supabase/types";
 import { StatTile } from "@/components/rondo/primitives";
 
@@ -562,7 +562,8 @@ export default function PublicProfilePage() {
                           className="flex items-center gap-3 bg-card border border-border hover:border-rondo-accent/40 rounded-xl p-3 transition-colors"
                         >
                           <div className="min-w-0 flex-1">
-                            <p className="text-white text-sm font-semibold truncate">{formatGameHeadline(entry.game.date_time)}</p>
+                            <p className="text-white text-sm font-semibold truncate">{entry.game.title}</p>
+                            <p className="text-muted-foreground text-xs truncate">{formatGameDate(entry.game.date_time)}</p>
                             <p className="text-muted-foreground text-xs truncate">{entry.game.venue_name}</p>
                           </div>
                           <span className="text-rondo-accent text-xs font-black shrink-0">

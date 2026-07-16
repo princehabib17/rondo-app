@@ -4,11 +4,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, MapPin, MapTrifold } from "@phosphor-icons/react";
 import { motion } from "motion/react";
-import { formatGameHeadline, formatPrice } from "@/lib/utils/format";
+import { formatGameTime, formatPrice } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
 import { getOrganizerInitials } from "@/lib/feed/organizers";
 import { GameBadges } from "@/components/feed/GameBadges";
 import { getPlayerCount, isFull, type Coords } from "@/lib/feed/filters";
+import { format } from "date-fns";
 import { bouncy } from "@/components/motion/springs";
 
 interface NearbyGameRowProps {
@@ -29,6 +30,10 @@ function PlayerProgress({ current, max }: { current: number; max: number }) {
       />
     </div>
   );
+}
+
+function formatShortDate(dateString: string): string {
+  return format(new Date(dateString), "EEE, MMM d");
 }
 
 export function NearbyGameRow({ game, coords = null }: NearbyGameRowProps) {
@@ -67,25 +72,24 @@ export function NearbyGameRow({ game, coords = null }: NearbyGameRowProps) {
       </div>
 
       <div className="flex-1 min-w-0">
-        {/* When — the headline. Games have no name, so the date/time a
-            player can actually make is the first thing they need to see. */}
         <div className="flex items-start justify-between gap-2">
           <h3 className="truncate font-heading text-base font-black uppercase leading-tight text-[var(--ink-hi)]">
-            {formatGameHeadline(game.date_time)}
+            {game.title}
           </h3>
           <span className="shrink-0 font-heading text-xs font-black text-[var(--gold)]">
             {game.price_per_player === 0 ? "Free" : formatPrice(game.price_per_player)}
           </span>
         </div>
-        {/* Where — second: can they get there. */}
         <p className="mt-0.5 truncate rondo-meta text-[var(--ink-low)]">{game.venue_name}</p>
 
         <GameBadges game={game} coords={coords} className="mt-1.5" />
 
-        {/* Spots — urgency, third: still worth a glance, quieter than the headline. */}
         <div className="mt-1.5 flex items-center justify-between">
+          <span className="rondo-meta text-[var(--ink-low)]">
+            {formatShortDate(game.date_time)} / {formatGameTime(game.date_time)}
+          </span>
           <span className={`rondo-meta ${full ? "text-[var(--ink-low)]" : "text-[var(--ink-mid)]"}`}>
-            {full ? "Full" : `${spotsLeft} left`} · {playerCount}/{game.max_players}
+            {full ? "Full" : `${spotsLeft} left`} / {playerCount}/{game.max_players}
           </span>
         </div>
         <PlayerProgress current={playerCount} max={game.max_players} />

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Megaphone } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { formatGameHeadline, formatRelativeTime } from "@/lib/utils/format";
+import { formatRelativeTime } from "@/lib/utils/format";
 import type { Announcement, Profile } from "@/lib/supabase/types";
 
 type AnnouncementRow = Announcement & {
@@ -14,7 +14,7 @@ type AnnouncementRow = Announcement & {
 export default function OrganizerRoomPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const [dateTime, setDateTime] = useState<string | null>(null);
+  const [title, setTitle] = useState("");
   const [rows, setRows] = useState<AnnouncementRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -22,14 +22,14 @@ export default function OrganizerRoomPage() {
     async function load() {
       const supabase = createClient();
       const [{ data: game }, { data: announcements }] = await Promise.all([
-        supabase.from("games").select("date_time").eq("id", id).single(),
+        supabase.from("games").select("title").eq("id", id).single(),
         supabase
           .from("announcements")
           .select("*, organizer:profiles!organizer_id(id, full_name, avatar_url)")
           .eq("game_id", id)
           .order("created_at", { ascending: false }),
       ]);
-      if (game) setDateTime(game.date_time);
+      if (game) setTitle(game.title);
       setRows((announcements as AnnouncementRow[]) ?? []);
       setLoading(false);
     }
@@ -51,9 +51,7 @@ export default function OrganizerRoomPage() {
           <h1 className="font-heading text-white font-black italic text-sm uppercase truncate">
             Organizer room
           </h1>
-          <p className="font-body text-white/45 text-xs truncate">
-            {dateTime ? formatGameHeadline(dateTime) : ""}
-          </p>
+          <p className="font-body text-white/45 text-xs truncate">{title}</p>
         </div>
       </header>
 

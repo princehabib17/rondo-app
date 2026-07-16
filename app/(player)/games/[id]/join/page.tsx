@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Check, CircleDollarSign, MapPin, Users } from "lucide-react";
+import { ArrowLeft, Calendar, Check, MapPin, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
-import { formatGameHeadline, formatPrice } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
 
 type TeamWithPlayers = {
@@ -156,7 +155,7 @@ export default function JoinMatchPage() {
         userId: userData.user.id,
         type: "join_requested",
         title: "Request sent",
-        body: `Your request to join ${formatGameHeadline(game.date_time)} is pending approval.`,
+        body: `Your request to join ${game.title} is pending approval.`,
         link: `/games/${id}/confirmed`,
       });
     }
@@ -244,19 +243,18 @@ export default function JoinMatchPage() {
               <p className="text-[10px] font-black uppercase tracking-[0.22em] text-rondo-yellow">
                 Team selection
               </p>
-              {/* When leads — no game name to lead with instead. */}
               <h2 className="mt-1 font-heading text-2xl font-black uppercase italic leading-none text-white">
-                {formatGameHeadline(game.date_time)}
+                {game.title}
               </h2>
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs text-white/55">
               <div className="rounded-xl bg-black/25 p-3">
-                <MapPin size={14} className="mb-1 text-rondo-yellow" />
-                <p className="truncate">{game.venue_name}</p>
+                <Calendar size={14} className="mb-1 text-rondo-yellow" />
+                <p>{new Date(game.date_time).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</p>
               </div>
               <div className="rounded-xl bg-black/25 p-3">
-                <CircleDollarSign size={14} className="mb-1 text-rondo-yellow" />
-                <p>{game.price_per_player === 0 ? "Free" : formatPrice(game.price_per_player)}</p>
+                <MapPin size={14} className="mb-1 text-rondo-yellow" />
+                <p className="truncate">{game.venue_name}</p>
               </div>
             </div>
             <p className="font-body text-sm leading-5 text-white/55">

@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Megaphone, Timer, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
-import { formatGameHeadline } from "@/lib/utils/format";
+import { formatGameDate } from "@/lib/utils/format";
 import type { Game, Team, GamePlayer, Profile, GameWaitlistEntry } from "@/lib/supabase/types";
 
 interface ManagedGame extends Game {
@@ -172,8 +172,8 @@ export default function ManageGamePage() {
           <ArrowLeft size={20} />
         </button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-white font-bold text-sm truncate">{formatGameHeadline(game.date_time)}</h1>
-          <p className="text-muted-foreground text-xs truncate">{game.venue_name}</p>
+          <h1 className="text-white font-bold text-sm truncate">{game.title}</h1>
+          <p className="text-muted-foreground text-xs">{formatGameDate(game.date_time)}</p>
         </div>
       </header>
 

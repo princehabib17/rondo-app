@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { MatchTeamsRoster } from "@/components/match/MatchTeamsRoster";
 import { MatchRulesPanel } from "@/components/match/MatchRulesPanel";
-import { formatGameDate, formatGameHeadline, formatPrice } from "@/lib/utils/format";
+import { formatGameDate, formatPrice } from "@/lib/utils/format";
 import { PUBLIC_PROFILE_SELECT } from "@/lib/supabase/profile-select";
 import {
   getMatchStatusBanner,
@@ -142,7 +142,7 @@ export default function MatchDetailPage() {
           <ArrowLeft size={20} />
         </button>
         <h1 className="font-heading text-white font-black italic text-base uppercase flex-1 truncate">
-          {formatGameHeadline(game.date_time)}
+          {game.title}
         </h1>
         <span className="font-heading text-rondo-accent font-black text-sm shrink-0">
           {game.price_per_player === 0 ? "Free" : formatPrice(game.price_per_player)}
@@ -175,12 +175,11 @@ export default function MatchDetailPage() {
         <MatchRulesPanel game={game} organizer={game.organizer} gamesHosted={gamesHosted} />
 
         <div className="space-y-3">
-          {/* When leads — it's the first thing a player needs to decide with. */}
           <div className="flex items-center gap-3">
-            <Calendar size={18} className="text-rondo-accent shrink-0" />
+            <Calendar size={16} className="text-rondo-accent shrink-0" />
             <div>
               <p className="text-white/45 text-[10px] uppercase">When</p>
-              <p className="text-white text-base font-bold">{formatGameDate(game.date_time)}</p>
+              <p className="text-white text-sm font-semibold">{formatGameDate(game.date_time)}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -191,15 +190,17 @@ export default function MatchDetailPage() {
               <p className="text-white/50 text-xs">{game.venue_address}</p>
             </div>
           </div>
-          {/* Spots — still worth a glance, quieter than When/Where. */}
           <div className="flex items-center gap-3">
-            <Users size={14} className="text-white/45 shrink-0" />
-            <p className="text-white/60 text-xs">
-              {game.max_players - left} / {game.max_players} filled
-              {left > 0 && (
-                <span className="text-rondo-accent ml-2">{left} left</span>
-              )}
-            </p>
+            <Users size={16} className="text-rondo-accent shrink-0" />
+            <div>
+              <p className="text-white/45 text-[10px] uppercase">Spots</p>
+              <p className="text-white text-sm font-semibold">
+                {game.max_players - left} / {game.max_players} filled
+                {left > 0 && (
+                  <span className="text-rondo-accent ml-2">{left} left</span>
+                )}
+              </p>
+            </div>
           </div>
         </div>
 
