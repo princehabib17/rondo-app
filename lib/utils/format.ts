@@ -8,6 +8,28 @@ export function formatGameTime(dateString: string): string {
   return format(new Date(dateString), "h:mm a");
 }
 
+/**
+ * Games have no name — the date/time IS the headline. "Today · 8:00 PM" for
+ * same-day games (the case players care most about), "Tomorrow · 7:00 PM"
+ * for next-day, otherwise a short weekday/date so it stays scannable in a
+ * card title slot.
+ */
+export function formatGameHeadline(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const time = format(date, "h:mm a");
+
+  if (date.toDateString() === now.toDateString()) {
+    return `Today · ${time}`;
+  }
+  const tomorrow = new Date(now);
+  tomorrow.setDate(now.getDate() + 1);
+  if (date.toDateString() === tomorrow.toDateString()) {
+    return `Tomorrow · ${time}`;
+  }
+  return format(date, "EEE, MMM d '·' h:mm a");
+}
+
 export function formatRelativeTime(dateString: string): string {
   return formatDistanceToNow(new Date(dateString), { addSuffix: true });
 }

@@ -5,9 +5,9 @@ import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import Link from "next/link";
-import { Clock, MapPin, Users, X } from "@phosphor-icons/react";
+import { MapPin, Users, X } from "@phosphor-icons/react";
 import type { Game } from "@/lib/supabase/types";
-import { formatGameTime, formatPrice } from "@/lib/utils/format";
+import { formatGameHeadline, formatPrice } from "@/lib/utils/format";
 
 const METRO_MANILA: [number, number] = [14.5995, 120.9842];
 
@@ -127,16 +127,13 @@ export default function GameMap({ games }: GameMapProps) {
             </div>
 
             <div className="min-w-0 rounded-r-[var(--r-md)] border border-l-0 border-[var(--stroke)] bg-[var(--bg-inset)] p-3">
-              <p className="rondo-title truncate text-[var(--ink-hi)] mb-1">{selected.title}</p>
+              {/* When leads — no name to lead with instead. */}
+              <p className="rondo-title truncate text-[var(--ink-hi)] mb-1">{formatGameHeadline(selected.date_time)}</p>
               <div className="flex items-center gap-1 text-[var(--gold)] mb-2">
                 <MapPin size={12} />
                 <span className="truncate rondo-meta">{selected.venue_name}</span>
               </div>
               <div className="flex flex-wrap gap-x-3 gap-y-1 rondo-meta text-[var(--ink-low)] mb-3">
-                <span className="flex items-center gap-1">
-                  <Clock size={14} className="text-[var(--gold)]" />
-                  {formatGameTime(selected.date_time)}
-                </span>
                 <span className="flex items-center gap-1">
                   <Users size={14} className="text-[var(--gold)]" />
                   {selected.game_players?.length ?? 0}/{selected.max_players}

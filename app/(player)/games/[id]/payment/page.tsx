@@ -5,7 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, CreditCard, Loader2, MapPin, Zap } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { formatPrice } from "@/lib/utils/format";
+import { formatGameHeadline, formatPrice } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
 
 function payIdempotencyKey(gameId: string) {
@@ -147,8 +147,8 @@ function PaymentForm() {
 
       <div className="px-4 py-6 space-y-5 max-w-lg mx-auto">
         <div className="rondo-surface p-4">
-          <p className="font-body text-white/50 text-xs uppercase mb-1">Match</p>
-          <p className="font-heading text-white font-black text-lg">{game.title}</p>
+          <p className="font-body text-white/50 text-xs uppercase mb-1">When</p>
+          <p className="font-heading text-white font-black text-lg">{formatGameHeadline(game.date_time)}</p>
           <p className="font-body text-white/50 text-sm flex items-center gap-1.5 mt-2">
             <MapPin size={12} />
             {game.venue_name}

@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { PUBLIC_PROFILE_SELECT } from "@/lib/supabase/profile-select";
 import type { Post, PostComment } from "@/lib/supabase/types";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
-import { formatRelativeTime } from "@/lib/utils/format";
+import { formatGameHeadline, formatRelativeTime } from "@/lib/utils/format";
 import { COMMENT_BODY_MAX } from "@/lib/social/post-schema";
 import { Chip, KudosButton } from "@/components/rondo/primitives";
 
@@ -140,7 +140,7 @@ export function PostCard({ post, currentUserId, onDeleted }: PostCardProps) {
           )}
           {post.game && (
             <Link href={`/games/${post.game.id}`}>
-              <Chip label={post.game.title} variant="ghost" size="sm" />
+              <Chip label={formatGameHeadline(post.game.date_time)} variant="ghost" size="sm" />
             </Link>
           )}
         </div>

@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, ArrowUp, MessageCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { subscribeToMessages } from "@/lib/realtime";
-import { formatRelativeTime } from "@/lib/utils/format";
+import { formatGameHeadline, formatRelativeTime } from "@/lib/utils/format";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import { cn } from "@/lib/utils";
 import type { Message, Profile } from "@/lib/supabase/types";
@@ -59,7 +59,7 @@ export default function LegacyChatRedirectPage() {
       // Fetch game info including organizer_id for access check
       const { data: game } = await supabase
         .from("games")
-        .select("title, organizer_id, game_players(user_id)")
+        .select("date_time, organizer_id, game_players(user_id)")
         .eq("id", id)
         .single();
 
@@ -68,7 +68,7 @@ export default function LegacyChatRedirectPage() {
         return;
       }
 
-      setGameTitle(game.title);
+      setGameTitle(formatGameHeadline(game.date_time));
       const players = game.game_players as { user_id: string }[];
       setPlayerCount(players.length);
 

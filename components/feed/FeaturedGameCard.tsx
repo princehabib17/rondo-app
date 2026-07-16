@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { CalendarBlank, MapPin, SoccerBall, Users } from "@phosphor-icons/react";
+import { MapPin, SoccerBall, Users } from "@phosphor-icons/react";
 import { motion } from "motion/react";
-import { formatGameDate, formatPrice } from "@/lib/utils/format";
+import { formatGameHeadline, formatPrice } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
 import { getOrganizerInitials } from "@/lib/feed/organizers";
 import { GameBadges } from "@/components/feed/GameBadges";
@@ -75,8 +75,10 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
 
         <div className="space-y-4 p-4">
           <div>
+            {/* When — the headline. No game name exists to lead with, and
+                timing is the first thing a player needs to decide with. */}
             <h3 className="font-heading text-3xl font-black uppercase leading-[0.9] tracking-[-0.02em] text-[var(--ink-hi)]">
-              {game.title}
+              {formatGameHeadline(game.date_time)}
             </h3>
             <div className="mt-2 flex items-center gap-2 rondo-meta text-[var(--ink-low)]">
               {game.organization?.logo_url ? (
@@ -96,11 +98,8 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
             </div>
           </div>
 
+          {/* Where, then how full — date already covered by the headline above. */}
           <div className="grid gap-2 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-inset)] p-3 rondo-meta text-[var(--ink-mid)]">
-            <span className="flex items-center gap-1.5">
-              <CalendarBlank size={14} weight="duotone" className="shrink-0 text-[var(--gold)]" />
-              {formatGameDate(game.date_time)}
-            </span>
             <span className="flex items-center gap-1.5">
               <MapPin size={14} weight="duotone" className="shrink-0 text-[var(--gold)]" />
               {game.venue_name}

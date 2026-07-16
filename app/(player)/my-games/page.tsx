@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bookmark, Calendar, MapPin, Clock, Trophy } from "lucide-react";
+import { Bookmark, MapPin, Clock, Trophy } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { formatGameDate, formatPrice } from "@/lib/utils/format";
+import { formatGameHeadline, formatPrice } from "@/lib/utils/format";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 
@@ -195,19 +195,15 @@ export default function MyMatchesPage() {
     return (
       <Link href={href} className="block cursor-pointer">
         <div className="rondo-surface p-4 hover:border-rondo-accent/30 active:scale-[0.98] transition-[transform,border-color] duration-200 space-y-2">
+          {/* When leads, price alongside it — venue is the only other line
+              worth a glance since the date's already in the headline. */}
           <div className="flex items-start justify-between gap-3">
-            <h3 className="text-white font-bold text-sm leading-tight flex-1">{entry.game.title}</h3>
+            <h3 className="text-white font-bold text-sm leading-tight flex-1">{formatGameHeadline(entry.game.date_time)}</h3>
             <span className="text-rondo-yellow font-black text-sm whitespace-nowrap">{formatPrice(entry.game.price_per_player)}</span>
           </div>
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2 text-muted-foreground text-xs">
-              <Calendar size={11} />
-              <span>{formatGameDate(entry.game.date_time)}</span>
-            </div>
-            <div className="flex items-center gap-2 text-muted-foreground text-xs">
-              <MapPin size={11} />
-              <span>{entry.game.venue_name}</span>
-            </div>
+          <div className="flex items-center gap-2 text-muted-foreground text-xs">
+            <MapPin size={11} />
+            <span>{entry.game.venue_name}</span>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <Badge variant="secondary" className="text-xs h-5">{entry.game.format}</Badge>

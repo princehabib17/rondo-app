@@ -12,13 +12,13 @@ import { toast } from "sonner";
 import { motion } from "motion/react";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
-import { formatGameDate, formatPrice } from "@/lib/utils/format";
+import { formatGameHeadline, formatPrice } from "@/lib/utils/format";
 import { bouncy } from "@/components/motion/springs";
 
 interface OrgGame {
   id: string;
-  title: string;
   date_time: string;
+  venue_name: string;
   price_per_player: number;
   max_players: number;
   status: string;
@@ -78,7 +78,7 @@ export default function OrganizerDashboardPage() {
         supabase
           .from("games")
           .select(
-            "id, title, date_time, price_per_player, max_players, status, format, banner_url, game_players(id, payment_status)"
+            "id, date_time, venue_name, price_per_player, max_players, status, format, banner_url, game_players(id, payment_status)"
           )
           .eq("organizer_id", userData.user.id)
           .order("date_time", { ascending: false }),
@@ -226,10 +226,10 @@ export default function OrganizerDashboardPage() {
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <h2 className="font-heading text-xl font-black uppercase italic leading-none text-white">
-                  {nextGame.title}
+                  {formatGameHeadline(nextGame.date_time)}
                 </h2>
-                <p className="mt-1 font-body text-xs text-white/45">
-                  {formatGameDate(nextGame.date_time)}
+                <p className="mt-1 truncate font-body text-xs text-white/45">
+                  {nextGame.venue_name}
                 </p>
               </div>
               <Link
@@ -352,13 +352,13 @@ export default function OrganizerDashboardPage() {
                         {game.status.replace("_", " ")}
                       </span>
 
-                      {/* Title + meta overlaid at bottom */}
+                      {/* When leads, venue below — games have no name. */}
                       <div className="absolute bottom-0 left-0 right-0 p-4">
                         <h3 className="font-heading text-xl font-black uppercase italic leading-none text-white">
-                          {game.title}
+                          {formatGameHeadline(game.date_time)}
                         </h3>
-                        <p className="mt-1 font-body text-xs text-white/50">
-                          {formatGameDate(game.date_time)}
+                        <p className="mt-1 truncate font-body text-xs text-white/50">
+                          {game.venue_name}
                         </p>
                       </div>
                     </div>
