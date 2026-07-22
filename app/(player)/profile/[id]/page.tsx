@@ -11,6 +11,7 @@ import { PUBLIC_PROFILE_SELECT } from "@/lib/supabase/profile-select";
 import { formatGameDate, formatPrice, getFlagEmoji } from "@/lib/utils/format";
 import type { Profile, PlayerReel, TournamentAward } from "@/lib/supabase/types";
 import { StatTile } from "@/components/rondo/primitives";
+import { PasskeyManager } from "@/components/auth/PasskeyManager";
 
 interface ProfileMatchEntry {
   id: string;
@@ -636,6 +637,8 @@ export default function PublicProfilePage() {
                 </span>
               </span>
             </label>
+
+            {!isGuest && <PasskeyManager />}
 
             <Link
               href="/messages"

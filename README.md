@@ -59,8 +59,9 @@ Or run `supabase/RUN_ALL_IN_SUPABASE.sql` as one file (safe to re-run).
 
 - **Auth**
   - New user: welcome -> signup -> otp -> onboarding -> feed
-  - Returning user: login -> feed
+  - Returning user: login (passkey / phone / email / social) -> feed
   - Guest: feed browsing only, gated on action routes
+  - Passkeys: register from Profile → Passkeys; sign in from `/login` via Face ID, Touch ID, Windows Hello, or a security key
 - **Player**
   - Browse feed/map -> open game -> join/reserve/pay -> confirmed -> invite/chat
   - Browse tournaments -> register a team -> follow bracket/standings
@@ -120,6 +121,7 @@ with range queries.
 
 - Verify all migrations are applied in Supabase.
 - Verify Auth providers (including anonymous) are configured as intended.
+- Enable **Authentication → Passkeys** in the Supabase Dashboard (Relying Party ID = your bare domain, Origins = production + localhost).
 - Verify PayMongo secret + webhook secret are correct in deployment env.
 - Run `npm run build` before release.
 - Smoke-test key flows: guest gate, signup/login, join/pay, organizer manage, help tickets, notifications.

@@ -8,6 +8,7 @@ import { Phone } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { GuestScoutLinks } from "@/components/auth/GuestScoutLinks";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
+import { PasskeySignInButton } from "@/components/auth/PasskeySignInButton";
 import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
 import { isLikelyPhoneNumber, normalizePhoneNumber } from "@/lib/auth/phone";
 import { formatAuthError } from "@/lib/auth/format-auth-error";
@@ -153,8 +154,41 @@ export default function LoginPage() {
 
       <h1 className="rondo-hero-title text-4xl mb-2">Log in</h1>
       <p className="font-body text-white/50 text-sm mb-8">
-        Sign in with phone OTP, email, or social.
+        Sign in with passkey, phone OTP, email, or social.
       </p>
+
+      <div className="mb-6">
+        <PasskeySignInButton
+          disabled={sending}
+          onError={setError}
+          onSuccess={async (userId) => {
+            const next = safeNext(new URLSearchParams(window.location.search).get("next"));
+            if (next) {
+              router.replace(next);
+              return;
+            }
+            const supabase = createClient();
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("role")
+              .eq("id", userId)
+              .single();
+            router.replace(profile?.role ? "/feed" : "/onboarding/slides");
+            router.refresh();
+          }}
+        />
+      </div>
+
+      <div className="relative mb-6">
+        <div className="absolute inset-0 flex items-center" aria-hidden>
+          <div className="w-full border-t border-white/10" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="bg-[var(--bg-page,#0a0a0a)] px-3 text-[10px] uppercase tracking-wider text-white/40">
+            Or continue with
+          </span>
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 gap-2 mb-6">
         <button
