@@ -16,7 +16,7 @@ export function TopOrganizers({ organizers, loading = false }: TopOrganizersProp
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ShieldCheck size={18} weight="duotone" className="text-[var(--gold)]" />
-          <h2 className="rondo-label text-[var(--ink-hi)]">
+          <h2 className="font-heading text-lg font-black uppercase text-[var(--ink-hi)]">
             Top Organizers
           </h2>
         </div>

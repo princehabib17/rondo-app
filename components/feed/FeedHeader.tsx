@@ -11,13 +11,7 @@ export function FeedHeader({ notificationCount = 0 }: FeedHeaderProps) {
     <header className="sticky top-0 z-40 border-b border-[var(--stroke)] rondo-glass-nav">
       <div className="mx-auto flex max-w-lg items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2.5">
-          <Image src="/rondo-logo.png" alt="RONDO" width={32} height={32} className="object-contain" priority />
-          <div>
-            <span className="block font-heading text-sm font-black uppercase tracking-wide text-[var(--ink-hi)]">
-              Rondo
-            </span>
-            <span className="rondo-meta -mt-0.5 block text-[var(--ink-low)]">Street feed</span>
-          </div>
+          <Image src="/rondo-logo.png" alt="RONDO" width={48} height={48} className="object-contain" priority />
         </div>
         <div className="flex items-center gap-1.5">
           <Link

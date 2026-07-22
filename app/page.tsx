@@ -29,7 +29,7 @@ export default function HomePage() {
 
   return (
     <main className="relative min-h-[100dvh] overflow-hidden rondo-page text-[var(--ink-hi)]">
-      <div className="absolute inset-0 opacity-55">
+      <div className="absolute inset-0 opacity-75">
         <Image
           src="/feed/hero-night-court.png"
           alt=""
@@ -39,7 +39,7 @@ export default function HomePage() {
           sizes="100vw"
         />
       </div>
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_oklch,var(--bg-page)_72%,transparent)_0%,color-mix(in_oklch,var(--bg-page)_42%,transparent)_38%,var(--bg-page)_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_oklch,var(--bg-page)_55%,transparent)_0%,color-mix(in_oklch,var(--bg-page)_42%,transparent)_38%,var(--bg-page)_100%)]" />
       <div className="absolute inset-0 rondo-map-shell opacity-40 mix-blend-screen" />
 
       <div className="pointer-events-none absolute inset-x-0 top-20 flex justify-center overflow-hidden" aria-hidden>
@@ -56,11 +56,8 @@ export default function HomePage() {
           transition={gentle}
         >
           <div className="flex items-center gap-2.5">
-            <Image src="/rondo-logo.png" alt="Rondo" width={42} height={42} priority className="object-contain" />
-            <div>
-              <p className="rondo-label text-[var(--gold)]">Rondo</p>
-              <p className="rondo-meta text-[var(--ink-low)]">Street football network</p>
-            </div>
+            <Image src="/rondo-logo.png" alt="Rondo" width={48} height={48} priority className="object-contain" />
+            <p className="font-heading text-sm font-black uppercase tracking-wide text-[var(--ink-hi)]">Rondo</p>
           </div>
           <Link href="/login" className="rondo-chip bg-[color-mix(in_oklch,var(--bg-page)_70%,transparent)]">
             Log in
@@ -75,11 +72,6 @@ export default function HomePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...gentle, delay: 0.1 }}
         >
-          <div className="inline-flex items-center gap-2 rounded-[var(--r-pill)] border border-[color-mix(in_oklch,var(--gold)_38%,transparent)] bg-[color-mix(in_oklch,var(--gold)_12%,transparent)] px-3 py-1.5">
-            <span className="rondo-live-dot" />
-            <span className="rondo-label text-[var(--gold)]">Find the next run</span>
-          </div>
-
           <div className="space-y-3">
             <h1 className="font-heading text-[4.5rem] font-black uppercase leading-[0.78] tracking-[-0.04em] text-[var(--ink-hi)] sm:text-[5.4rem]">
               Own the street
@@ -91,13 +83,13 @@ export default function HomePage() {
 
           <div className="grid grid-cols-3 gap-2">
             {[
-              { icon: MapPin, label: "Street map" },
+              { icon: MapPin, label: "Live map" },
               { icon: Users, label: "Open squads" },
               { icon: Trophy, label: "Brackets" },
             ].map(({ icon: Icon, label }) => (
               <div key={label} className="rounded-[var(--r-md)] border border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_74%,transparent)] p-3 backdrop-blur-md">
                 <Icon size={20} weight="duotone" className="mb-4 text-[var(--gold)]" aria-hidden />
-                <p className="rondo-label text-[var(--ink-mid)]">{label}</p>
+                <p className="font-body text-sm font-semibold text-[var(--ink-hi)]">{label}</p>
               </div>
             ))}
           </div>

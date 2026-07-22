@@ -38,7 +38,7 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <SoccerBall size={18} weight="duotone" className="text-[var(--gold)]" />
-          <h2 className="rondo-label text-[var(--ink-hi)]">Featured match</h2>
+          <h2 className="font-heading text-lg font-black uppercase text-[var(--ink-hi)]">Featured match</h2>
         </div>
         <span className="rondo-label text-[var(--gold)]">{spotsLeft} open</span>
       </div>

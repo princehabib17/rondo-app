@@ -79,15 +79,15 @@
 
 :root {
   /* Matchday ground */
-  --bg-page: oklch(11% 0.008 102);
-  --bg-surface: oklch(15.5% 0.01 102);
-  --bg-inset: oklch(19% 0.012 102);
-  --stroke: oklch(26% 0.012 102);
+  --bg-page: oklch(16% 0.008 102);
+  --bg-surface: oklch(21% 0.01 102);
+  --bg-inset: oklch(26% 0.012 102);
+  --stroke: oklch(34% 0.012 102);
 
   /* Matchday ink */
   --ink-hi: oklch(97% 0 0);
-  --ink-mid: oklch(78% 0.008 102);
-  --ink-low: oklch(58% 0.01 102);
+  --ink-mid: oklch(84% 0.008 102);
+  --ink-low: oklch(68% 0.01 102);
 
   /* Matchday accent */
   --gold: oklch(86% 0.115 96);

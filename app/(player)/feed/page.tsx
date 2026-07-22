@@ -58,6 +58,10 @@ export default async function FeedPage() {
     if (!profile?.role) {
       redirect("/onboarding/slides");
     }
+
+    if (profile.role === "organizer") {
+      redirect("/organizer/dashboard");
+    }
   }
 
   const [initialGames, initialOrganizers, spotlightTournament, unreadCount] = await Promise.all([
