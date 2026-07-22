@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation";
 import {
   CalendarDays,
   Home,
-  LayoutDashboard,
   MapPinned,
   Radio,
+  Trophy,
   User,
   Users,
 } from "lucide-react";
@@ -61,18 +61,20 @@ const playerTabs: TabDef[] = [
 
 const organizerTabs: TabDef[] = [
   {
-    href: "/feed",
-    icon: Home,
-    label: "Feed",
-    isActive: (p) => p === "/feed",
-  },
-  {
     href: "/organizer/dashboard",
-    icon: LayoutDashboard,
-    label: "Dashboard",
+    icon: Home,
+    label: "Home",
     isActive: (p) =>
       p === "/organizer/dashboard" ||
-      (p.startsWith("/organizer") && !p.startsWith("/organizer/room")),
+      (p.startsWith("/organizer") &&
+        !p.startsWith("/organizer/room") &&
+        !p.startsWith("/organizer/tournaments")),
+  },
+  {
+    href: "/organizer/tournaments",
+    icon: Trophy,
+    label: "Tournaments",
+    isActive: (p) => p.startsWith("/organizer/tournaments"),
   },
   {
     href: "/organizer/room",
