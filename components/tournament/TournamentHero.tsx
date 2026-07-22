@@ -3,10 +3,37 @@
 import { differenceInDays, differenceInHours, differenceInMinutes } from "date-fns";
 import { CalendarBlank, Clock, MapPin, Shield, Trophy, Users } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
-import type { Tournament } from "@/lib/supabase/types";
+import type { Tournament, TournamentMatch } from "@/lib/supabase/types";
 import { formatGameDate, formatPrice } from "@/lib/utils/format";
 import { FORMAT_LABEL, TOURNAMENT_STATUS_META, sceneVariant, statusToneClasses } from "@/components/tournament/TournamentCard";
+import { computeLiveSummary } from "@/lib/tournament/bracket";
 import { Chip, StatTile } from "@/components/rondo/primitives";
+
+/**
+ * The hero's middle stat tile. "Spots left" only means something while
+ * registration is open — once it closes, the field is fixed, so a live or
+ * finished tournament shows real progress instead of a stale capacity count.
+ */
+function progressStat(
+  tournament: Tournament,
+  teamCount: number,
+  matches: Pick<TournamentMatch, "round" | "status">[]
+): { label: string; value: string | number } {
+  if (tournament.status === "registration") {
+    return { label: "Left", value: Math.max(0, tournament.max_teams - teamCount) };
+  }
+
+  const summary = computeLiveSummary(tournament.format, teamCount, matches);
+  if (!summary) return { label: "Matches", value: 0 };
+
+  if (tournament.status === "active" && tournament.format === "single_elimination") {
+    return { label: "Round", value: summary.roundLabel };
+  }
+  if (tournament.status === "active") {
+    return { label: "Played", value: `${summary.matchesPlayed}/${summary.matchesTotal}` };
+  }
+  return { label: "Matches", value: summary.matchesTotal };
+}
 
 /** Compact "Starts in 3d" chip copy; null once the start time has passed. */
 function formatCountdown(startsAt: string): string | null {
@@ -25,12 +52,13 @@ function formatCountdown(startsAt: string): string | null {
 interface TournamentHeroProps {
   tournament: Tournament;
   teamCount: number;
+  matches?: Pick<TournamentMatch, "round" | "status">[];
 }
 
-export function TournamentHero({ tournament, teamCount }: TournamentHeroProps) {
+export function TournamentHero({ tournament, teamCount, matches = [] }: TournamentHeroProps) {
   const meta = TOURNAMENT_STATUS_META[tournament.status];
   const countdown = tournament.status === "registration" ? formatCountdown(tournament.starts_at) : null;
-  const spotsLeft = Math.max(0, tournament.max_teams - teamCount);
+  const middleStat = progressStat(tournament, teamCount, matches);
 
   return (
     <div
@@ -80,7 +108,7 @@ export function TournamentHero({ tournament, teamCount }: TournamentHeroProps) {
 
           <div className="grid grid-cols-3 gap-3 sm:w-64">
             <StatTile label="Teams" value={teamCount} size="sm" className="col-span-1 p-3" />
-            <StatTile label="Left" value={spotsLeft} size="sm" className="col-span-1 p-3" />
+            <StatTile label={middleStat.label} value={middleStat.value} size="sm" className="col-span-1 p-3" />
             <StatTile label="Fee" value={tournament.entry_fee > 0 ? formatPrice(tournament.entry_fee) : "Free"} size="sm" className="col-span-1 p-3" />
           </div>
         </div>

@@ -115,7 +115,7 @@ export default function TournamentChampionPage() {
         </section>
 
         <div className="mt-6 grid grid-cols-3 gap-3">
-          <StatTile label="Wins" value={champion?.wins ?? 0} size="sm" />
+          <StatTile label={(champion?.wins ?? 0) === 1 ? "Win" : "Wins"} value={champion?.wins ?? 0} size="sm" />
           <StatTile label="Teams" value={teams.length} size="sm" />
           <StatTile label="Matches" value={matches.length} size="sm" />
         </div>

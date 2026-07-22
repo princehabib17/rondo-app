@@ -5,6 +5,7 @@ import type { Game, Tournament } from "@/lib/supabase/types";
 import { fetchTopOrganizers } from "@/lib/feed/organizer-queries";
 import { fetchOpenGames } from "@/lib/supabase/game-queries";
 import { FeedPageClient } from "@/components/feed/FeedPageClient";
+import { computeLiveSummary, type LiveSummary } from "@/lib/tournament/bracket";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 const PAGE_SIZE = 20;
@@ -26,6 +27,20 @@ async function fetchSpotlightTournament(supabase: SupabaseClient): Promise<Tourn
     tournaments.find((t) => t.status === "registration") ??
     null
   );
+}
+
+/** Real round/progress for the spotlighted tournament, when it's live. */
+async function fetchSpotlightLiveSummary(
+  supabase: SupabaseClient,
+  tournament: Tournament | null
+): Promise<LiveSummary | null> {
+  if (!tournament || tournament.status !== "active") return null;
+  const { data } = await supabase
+    .from("tournament_matches")
+    .select("round, status")
+    .eq("tournament_id", tournament.id);
+  const teamCount = tournament.tournament_teams?.filter((t) => t.status === "registered").length ?? 0;
+  return computeLiveSummary(tournament.format, teamCount, data ?? []);
 }
 
 export default async function FeedPage() {
@@ -58,12 +73,14 @@ export default async function FeedPage() {
           .then((result) => result.count ?? 0)
       : Promise.resolve(0),
   ]);
+  const spotlightLiveSummary = await fetchSpotlightLiveSummary(supabase, spotlightTournament);
 
   return (
     <FeedPageClient
       initialGames={initialGames as Game[]}
       initialOrganizers={initialOrganizers}
       spotlightTournament={spotlightTournament}
+      spotlightLiveSummary={spotlightLiveSummary}
       initialNotificationCount={unreadCount}
       initialHasMore={initialGames.length === PAGE_SIZE}
       shouldExpireReservations={Boolean(user && !isGuestUser(user))}

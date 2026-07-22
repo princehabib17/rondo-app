@@ -9,6 +9,8 @@ interface TopOrganizersProps {
 }
 
 export function TopOrganizers({ organizers, loading = false }: TopOrganizersProps) {
+  if (!loading && organizers.length === 0) return null;
+
   return (
     <section className="px-4 pt-6">
       <div className="mb-4 flex items-center justify-between">

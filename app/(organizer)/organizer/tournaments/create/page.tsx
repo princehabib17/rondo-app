@@ -895,7 +895,10 @@ export default function CreateTournamentPage() {
         </div>
 
         {/* ── Fixed action bar in the thumb zone ── */}
-        <div className="fixed bottom-16 left-0 right-0 z-30 mx-auto max-w-lg px-4 pb-2">
+        {/* bottom-24 (not bottom-16): the floating BottomNav pill sits at
+            bottom-6 with a 60px height, i.e. it occupies 24-84px from the
+            viewport edge — bottom-16 (64px) would render this bar underneath it. */}
+        <div className="fixed bottom-24 left-0 right-0 z-30 mx-auto max-w-lg px-4 pb-2">
           {isReview ? (
             <button
               type="submit"

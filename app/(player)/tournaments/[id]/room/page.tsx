@@ -7,7 +7,7 @@ import { ArrowLeft, ChatCircleText, Megaphone, PaperPlaneRight } from "@phosphor
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { PUBLIC_PROFILE_SELECT } from "@/lib/supabase/profile-select";
-import type { Tournament, TournamentMessage, TournamentTeam } from "@/lib/supabase/types";
+import type { Tournament, TournamentMessage, TournamentTeam, TournamentTeamMember } from "@/lib/supabase/types";
 import { EmptyState } from "@/components/rondo/primitives";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import { formatRelativeTime } from "@/lib/utils/format";
@@ -17,6 +17,7 @@ export default function TournamentRoomPage() {
   const { id } = useParams<{ id: string }>();
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [teams, setTeams] = useState<TournamentTeam[]>([]);
+  const [members, setMembers] = useState<TournamentTeamMember[]>([]);
   const [messages, setMessages] = useState<TournamentMessage[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [body, setBody] = useState("");
@@ -25,26 +26,29 @@ export default function TournamentRoomPage() {
 
   const load = useCallback(async () => {
     const supabase = createClient();
-    const [{ data: userData }, { data: t }, { data: teamRows }, { data: messageRows }] = await Promise.all([
-      supabase.auth.getUser(),
-      supabase.from("tournaments").select("*").eq("id", id).single(),
-      supabase
-        .from("tournament_teams")
-        .select("*")
-        .eq("tournament_id", id)
-        .eq("status", "registered")
-        .order("created_at", { ascending: true }),
-      supabase
-        .from("tournament_messages")
-        .select(`*, author:profiles!user_id(${PUBLIC_PROFILE_SELECT})`)
-        .eq("tournament_id", id)
-        .order("created_at", { ascending: true })
-        .limit(100),
-    ]);
+    const [{ data: userData }, { data: t }, { data: teamRows }, { data: memberRows }, { data: messageRows }] =
+      await Promise.all([
+        supabase.auth.getUser(),
+        supabase.from("tournaments").select("*").eq("id", id).single(),
+        supabase
+          .from("tournament_teams")
+          .select("*")
+          .eq("tournament_id", id)
+          .eq("status", "registered")
+          .order("created_at", { ascending: true }),
+        supabase.from("tournament_team_members").select("*").eq("tournament_id", id),
+        supabase
+          .from("tournament_messages")
+          .select(`*, author:profiles!user_id(${PUBLIC_PROFILE_SELECT})`)
+          .eq("tournament_id", id)
+          .order("created_at", { ascending: true })
+          .limit(100),
+      ]);
 
     setUserId(userData.user?.id ?? null);
     setTournament((t as Tournament) ?? null);
     setTeams((teamRows as TournamentTeam[]) ?? []);
+    setMembers((memberRows as TournamentTeamMember[]) ?? []);
     setMessages((messageRows as TournamentMessage[]) ?? []);
     setLoading(false);
   }, [id]);
@@ -68,10 +72,14 @@ export default function TournamentRoomPage() {
     };
   }, [id, load]);
 
-  const myTeam = useMemo(
-    () => (userId ? teams.find((team) => team.captain_id === userId) ?? null : null),
-    [teams, userId]
-  );
+  // Roster membership makes you "in" here, not just captaining the team.
+  const myTeam = useMemo(() => {
+    if (!userId) return null;
+    const captained = teams.find((team) => team.captain_id === userId && !team.is_managed);
+    if (captained) return captained;
+    const membership = members.find((m) => m.user_id === userId);
+    return membership ? teams.find((team) => team.id === membership.team_id) ?? null : null;
+  }, [teams, members, userId]);
   const canPost = !!userId && !!tournament && (tournament.organizer_id === userId || !!myTeam);
 
   async function send() {
@@ -117,7 +125,7 @@ export default function TournamentRoomPage() {
       <main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4 py-6">
         <div className="mb-4 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-4">
           <p className="rondo-meta text-[var(--ink-mid)]">
-            {myTeam ? `You're in with ${myTeam.name}.` : "Captains and organizers can post here."}
+            {myTeam ? `You're in with ${myTeam.name}.` : "Team rosters and organizers can post here."}
           </p>
         </div>
 
@@ -165,7 +173,9 @@ export default function TournamentRoomPage() {
         )}
       </main>
 
-      <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 rondo-sticky-action">
+      {/* bottom-6rem (not 4rem): clears the floating BottomNav pill, which
+          occupies 24-84px from the viewport edge, not just its top 64px. */}
+      <div className="fixed inset-x-0 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-30 rondo-sticky-action">
         <div className="mx-auto flex max-w-lg gap-2 px-4 py-3">
           <input
             value={body}
@@ -177,7 +187,7 @@ export default function TournamentRoomPage() {
               }
             }}
             disabled={!canPost}
-            placeholder={canPost ? "Message the room" : "Join this tournament to post"}
+            placeholder={canPost ? "Message the room" : "Join a team's roster to post"}
             className="h-12 min-w-0 flex-1 rounded-[var(--r-sm)] border border-transparent bg-[var(--bg-inset)] px-4 rondo-body text-[var(--ink-hi)] outline-none placeholder:text-[var(--ink-low)] focus:border-[var(--gold)] disabled:opacity-50"
           />
           <button

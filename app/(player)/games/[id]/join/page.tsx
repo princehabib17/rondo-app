@@ -215,7 +215,7 @@ export default function JoinMatchPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] rondo-page pb-28">
+    <div className="min-h-[100dvh] rondo-page pb-56">
       <header className="sticky top-0 rondo-glass-nav border-b border-white/5 z-40 px-4 py-3 flex items-center gap-3">
         <button
           type="button"
@@ -322,7 +322,10 @@ export default function JoinMatchPage() {
         {error && <p className="text-red-400 text-sm text-center">{error}</p>}
       </div>
 
-      <div className="fixed bottom-16 left-0 right-0 max-w-lg mx-auto px-4 pb-6 pt-3 rondo-glass-nav z-30 space-y-2">
+      {/* bottom-24 (not bottom-16): the floating BottomNav pill sits at
+          bottom-6 with a 60px height, occupying 24-84px from the viewport
+          edge — bottom-16 (64px) rendered this bar underneath it. */}
+      <div className="fixed bottom-24 left-0 right-0 max-w-lg mx-auto px-4 pb-6 pt-3 rondo-glass-nav z-30 space-y-2">
         <button
           type="button"
           onClick={onPrimary}

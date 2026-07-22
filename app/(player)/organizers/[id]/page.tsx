@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Calendar, Megaphone, MapPin, Radio } from "lucide-react";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { formatGameDate, formatRelativeTime } from "@/lib/utils/format";
 import type { Announcement, Game, Profile } from "@/lib/supabase/types";
@@ -65,6 +66,7 @@ export default function OrganizerHubPage() {
     const resolved = await resolveOrganizer(supabase, id);
 
     if (!resolved) {
+      toast.error("That organizer page doesn't exist anymore.");
       router.replace("/feed");
       return;
     }

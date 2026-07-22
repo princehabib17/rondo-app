@@ -48,16 +48,32 @@ export default function NotificationsPage() {
           <p className="text-white/55 text-sm">No notifications yet.</p>
         </div>
       ) : (
-        notifications.map((item) => (
-          <Link
-            key={item.id}
-            href={item.link ?? "/feed"}
-            className="block rondo-surface p-3 hover:border-rondo-accent/25 transition-[border-color] duration-200"
-          >
-            <p className="text-white text-sm font-semibold">{item.title}</p>
-            <p className="text-white/70 text-xs mt-1">{item.body}</p>
-          </Link>
-        ))
+        notifications.map((item) => {
+          // notifications state holds what was fetched before this visit's
+          // mark-all-read write, so read_at here still reflects "was this
+          // unread when the user opened the page" — worth keeping visible.
+          const unread = item.read_at == null;
+          return (
+            <Link
+              key={item.id}
+              href={item.link ?? "/feed"}
+              className={`flex items-start gap-3 rounded-[var(--r-md)] border p-3 transition-[border-color] duration-200 hover:border-rondo-accent/25 ${
+                unread ? "border-rondo-accent/30 bg-rondo-accent/[0.06]" : "border-border bg-card"
+              }`}
+            >
+              <span
+                className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${unread ? "bg-rondo-accent" : "bg-transparent"}`}
+                aria-hidden
+              />
+              <span className="min-w-0 flex-1">
+                <p className={`text-sm ${unread ? "font-bold text-white" : "font-semibold text-white/80"}`}>
+                  {item.title}
+                </p>
+                <p className="mt-1 text-xs text-white/70">{item.body}</p>
+              </span>
+            </Link>
+          );
+        })
       )}
       </div>
     </div>
