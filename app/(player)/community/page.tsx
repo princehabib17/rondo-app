@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MapPin, Users } from "lucide-react";
+import { MapPin, UsersThree } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import type { Post, Profile } from "@/lib/supabase/types";
@@ -11,6 +11,7 @@ import { PUBLIC_PROFILE_SELECT } from "@/lib/supabase/profile-select";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import { PostCard } from "@/components/social/PostCard";
 import { PostComposer } from "@/components/social/PostComposer";
+import { EmptyState, RondoButton } from "@/components/rondo/primitives";
 import { formatPlayerDistance, sortProfilesByDistance, type NearbyPlayer } from "@/lib/location/nearby";
 import type { Coords } from "@/lib/feed/filters";
 import { cn } from "@/lib/utils";
@@ -20,27 +21,30 @@ const POSTS_PAGE_SIZE = 20;
 function PlayerList({ title, players }: { title: string; players: Profile[] }) {
   return (
     <section className="space-y-3">
-      <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-        {title} ({players.length})
+      <h2 className="rondo-label text-[var(--ink-low)]">
+        {title} · {players.length}
       </h2>
       {players.length === 0 ? (
         <div className="rondo-surface p-4">
-          <p className="text-muted-foreground text-sm">No players yet.</p>
+          <p className="rondo-meta text-[var(--ink-low)]">No players yet.</p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {players.map((player) => (
+        <div className="overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)]">
+          {players.map((player, i) => (
             <Link
               key={player.id}
               href={`/profile/${player.id}`}
-              className="flex items-center gap-3 bg-card border border-border hover:border-rondo-accent/40 rounded-xl p-3 transition-colors"
+              className={cn(
+                "flex min-h-14 items-center gap-3 px-4 py-3 transition-colors active:bg-[var(--bg-inset)]",
+                i > 0 && "border-t border-[var(--stroke)]"
+              )}
             >
               <PlayerAvatar profile={player} size="sm" showFlag linkable={false} />
               <div className="min-w-0">
-                <p className="text-white text-sm font-semibold truncate">
+                <p className="truncate rondo-body font-bold text-[var(--ink-hi)]">
                   {player.full_name ?? "Player"}
                 </p>
-                <p className="text-muted-foreground text-xs truncate">
+                <p className="truncate rondo-meta text-[var(--ink-low)]">
                   {player.nationality ?? "No nationality yet"}
                 </p>
               </div>
@@ -221,13 +225,13 @@ export default function CommunityPage() {
 
   return (
     <div className="min-h-[100dvh] rondo-page pb-24">
-      <header className="sticky top-0 rondo-glass-nav border-b border-[var(--stroke)] z-40 px-4 py-3">
-        <div className="flex items-center justify-between gap-2 max-w-lg mx-auto">
+      <header className="sticky top-0 z-40 border-b border-[var(--stroke)] rondo-glass-nav px-4 py-3">
+        <div className="mx-auto flex max-w-lg items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
-            <Users size={18} className="text-[var(--gold)]" />
+            <UsersThree size={20} weight="duotone" className="text-[var(--gold)]" aria-hidden />
             <h1 className="rondo-title text-[var(--ink-hi)]">Community</h1>
           </div>
-          <div className="flex gap-1.5">
+          <div className="flex gap-1.5 rounded-[var(--r-pill)] border border-[var(--stroke)] bg-[var(--bg-inset)] p-1">
             {(
               [
                 { value: "feed", label: "Feed" },
@@ -239,10 +243,10 @@ export default function CommunityPage() {
                 type="button"
                 onClick={() => setTab(value)}
                 className={cn(
-                  "rounded-[var(--r-pill)] border px-3 py-1 rondo-label transition-colors",
+                  "rounded-[var(--r-pill)] px-3 py-1.5 rondo-label transition-colors",
                   tab === value
-                    ? "border-[var(--gold)] bg-[var(--gold-dim)] text-[var(--gold)]"
-                    : "border-[var(--stroke)] text-[var(--ink-low)]"
+                    ? "bg-[var(--gold)] text-[var(--gold-ink)]"
+                    : "text-[var(--ink-low)]"
                 )}
               >
                 {label}
@@ -252,37 +256,40 @@ export default function CommunityPage() {
         </div>
       </header>
 
-      <div className="px-4 py-5 space-y-6 max-w-lg mx-auto">
+      <div className="mx-auto max-w-lg space-y-6 py-5">
         {tab === "feed" ? (
           <>
-            {isGuest ? (
-              <div className="rondo-surface p-4 space-y-2">
-                <p className="text-white/70 text-sm">
-                  Create an account to post results, highlights, and shout-outs.
-                </p>
-                <Link href="/signup" className="text-rondo-accent text-xs font-bold">
-                  Sign up →
-                </Link>
-              </div>
-            ) : (
-              <PostComposer onPosted={() => loadPosts()} />
-            )}
+            <div className="px-4">
+              {isGuest ? (
+                <div className="rondo-surface space-y-3 p-4">
+                  <p className="rondo-body text-[var(--ink-mid)]">
+                    Create an account to post results, highlights, and shout-outs.
+                  </p>
+                  <RondoButton href="/signup">Sign up</RondoButton>
+                </div>
+              ) : (
+                <PostComposer onPosted={() => loadPosts()} />
+              )}
+            </div>
 
             {postsLoading ? (
-              <div className="space-y-3">
+              <div className="divide-y divide-[var(--stroke)] border-y border-[var(--stroke)]">
                 {[0, 1, 2].map((i) => (
-                  <div key={i} className="h-28 bg-card border border-border rounded-xl animate-pulse" />
+                  <div key={i} className="h-28 rondo-shimmer" />
                 ))}
               </div>
             ) : posts.length === 0 ? (
-              <div className="rondo-surface p-6 text-center space-y-1">
-                <p className="text-white/70 text-sm font-semibold">Nothing here yet</p>
-                <p className="text-muted-foreground text-xs">
-                  Be the first to share a result or a highlight from your last match.
-                </p>
+              <div className="px-4">
+                <div className="rondo-surface p-6">
+                  <EmptyState
+                    title="No posts yet"
+                    body="Score first, brag later. Share a result or highlight from your last match."
+                    action={!isGuest ? undefined : <RondoButton href="/signup">Sign up</RondoButton>}
+                  />
+                </div>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="divide-y divide-[var(--stroke)] border-y border-[var(--stroke)]">
                 {posts.map((post) => (
                   <PostCard
                     key={post.id}
@@ -294,14 +301,14 @@ export default function CommunityPage() {
                   />
                 ))}
                 {hasMorePosts && (
-                  <div ref={sentinelRef}>
+                  <div ref={sentinelRef} className="px-4 py-3">
                     <button
                       type="button"
                       onClick={loadMorePosts}
                       disabled={loadingMore}
-                      className="w-full rounded-xl border border-white/10 py-2.5 text-white/60 text-xs font-semibold disabled:opacity-50"
+                      className="rondo-btn rondo-btn-secondary disabled:opacity-50"
                     >
-                      {loadingMore ? "Loading..." : "Load more"}
+                      {loadingMore ? "Loading" : "Load more"}
                     </button>
                   </div>
                 )}
@@ -309,18 +316,16 @@ export default function CommunityPage() {
             )}
           </>
         ) : (
-          <>
+          <div className="space-y-6 px-4">
             <section className="space-y-3">
               <div className="flex items-center justify-between gap-2">
-                <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-                  Players near you
-                </h2>
+                <h2 className="rondo-label text-[var(--ink-low)]">Players near you</h2>
                 {nearby.length === 0 && (
                   <button
                     type="button"
                     onClick={findNearbyPlayers}
                     disabled={locating}
-                    className="text-rondo-accent text-xs font-semibold disabled:opacity-50"
+                    className="rondo-meta font-bold text-[var(--gold)] disabled:opacity-50"
                   >
                     {locating ? "Locating..." : "Find nearby"}
                   </button>
@@ -328,41 +333,46 @@ export default function CommunityPage() {
               </div>
 
               {nearby.length === 0 ? (
-                <div className="rondo-surface p-4 space-y-2">
-                  <p className="text-white/70 text-sm">
+                <div className="rondo-surface space-y-3 p-4">
+                  <p className="rondo-body text-[var(--ink-mid)]">
                     Distance is only shown when you ask. We never track you in the background.
                   </p>
-                  <p className="text-muted-foreground text-xs">
+                  <p className="rondo-meta text-[var(--ink-low)]">
                     Players who hide location won&apos;t appear. Turn off hiding in your profile if you
                     want to be discoverable.
                   </p>
                   {locationDenied && (
-                    <p className="text-amber-200/80 text-xs">Location permission was denied.</p>
+                    <p className="rondo-meta text-[var(--live)]">Location permission was denied.</p>
                   )}
                   <button
                     type="button"
                     onClick={findNearbyPlayers}
                     disabled={locating}
-                    className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-rondo-accent text-black px-4 py-2 text-xs font-bold disabled:opacity-50"
+                    className="rondo-btn rondo-btn-primary disabled:opacity-50"
                   >
-                    <MapPin size={13} />
+                    <MapPin size={16} weight="bold" aria-hidden />
                     {locating ? "Locating..." : "Use my location once"}
                   </button>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {nearby.map((player) => (
+                <div className="overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)]">
+                  {nearby.map((player, i) => (
                     <Link
                       key={player.id}
                       href={`/profile/${player.id}`}
-                      className="flex items-center gap-3 bg-card border border-border hover:border-rondo-accent/40 rounded-xl p-3 transition-colors"
+                      className={cn(
+                        "flex min-h-14 items-center gap-3 px-4 py-3 transition-colors active:bg-[var(--bg-inset)]",
+                        i > 0 && "border-t border-[var(--stroke)]"
+                      )}
                     >
                       <PlayerAvatar profile={player} size="sm" showFlag linkable={false} />
                       <div className="min-w-0 flex-1">
-                        <p className="text-white text-sm font-semibold truncate">
+                        <p className="truncate rondo-body font-bold text-[var(--ink-hi)]">
                           {player.full_name ?? "Player"}
                         </p>
-                        <p className="text-rondo-accent text-xs">{formatPlayerDistance(player.distanceKm)}</p>
+                        <p className="rondo-meta text-[var(--gold)]">
+                          {formatPlayerDistance(player.distanceKm)}
+                        </p>
                       </div>
                     </Link>
                   ))}
@@ -373,16 +383,16 @@ export default function CommunityPage() {
             {loading ? (
               <div className="space-y-3">
                 {[0, 1, 2].map((i) => (
-                  <div key={i} className="h-16 bg-card border border-border rounded-xl animate-pulse" />
+                  <div key={i} className="h-16 rounded-[var(--r-md)] rondo-shimmer" />
                 ))}
               </div>
             ) : (
               <>
                 <PlayerList title="Friends" players={following} />
-                <PlayerList title="Following You" players={followers} />
+                <PlayerList title="Following you" players={followers} />
               </>
             )}
-          </>
+          </div>
         )}
       </div>
     </div>

@@ -12,11 +12,24 @@ import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { COMMENT_BODY_MAX } from "@/lib/social/post-schema";
 import { Chip, KudosButton } from "@/components/rondo/primitives";
+import { cn } from "@/lib/utils";
 
 interface PostCardProps {
   post: Post;
   currentUserId: string | null;
   onDeleted: (postId: string) => void;
+}
+
+function compactRelative(dateString: string): string {
+  return formatRelativeTime(dateString)
+    .replace("about ", "")
+    .replace("less than a minute ago", "now")
+    .replace(" minutes ago", "m")
+    .replace(" minute ago", "m")
+    .replace(" hours ago", "h")
+    .replace(" hour ago", "h")
+    .replace(" days ago", "d")
+    .replace(" day ago", "d");
 }
 
 export function PostCard({ post, currentUserId, onDeleted }: PostCardProps) {
@@ -31,8 +44,9 @@ export function PostCard({ post, currentUserId, onDeleted }: PostCardProps) {
   const [commentBody, setCommentBody] = useState("");
   const [sendingComment, setSendingComment] = useState(false);
 
+  const isPinnedResult = post.kind === "match_result";
+
   async function toggleLike() {
-    // Optimistic flip; revert on failure.
     const wasLiked = liked;
     setLiked(!wasLiked);
     setLikeCount((c) => c + (wasLiked ? -1 : 1));
@@ -95,7 +109,12 @@ export function PostCard({ post, currentUserId, onDeleted }: PostCardProps) {
   }
 
   return (
-    <article className="rondo-surface space-y-3 p-4">
+    <article
+      className={cn(
+        "space-y-3 px-4 py-4",
+        isPinnedResult && "border-l-2 border-l-[var(--gold)] bg-[color-mix(in_oklch,var(--gold)_4%,transparent)]"
+      )}
+    >
       <div className="flex items-start gap-3">
         {post.author && (
           <Link href={`/profile/${post.author_id}`}>
@@ -103,7 +122,7 @@ export function PostCard({ post, currentUserId, onDeleted }: PostCardProps) {
           </Link>
         )}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <Link
               href={`/profile/${post.author_id}`}
               className="rondo-body truncate font-bold text-[var(--ink-hi)]"
@@ -117,7 +136,33 @@ export function PostCard({ post, currentUserId, onDeleted }: PostCardProps) {
               <Chip label="Result" variant="outline" size="sm" icon={<Trophy size={14} />} />
             )}
           </div>
-          <p className="rondo-meta text-[var(--ink-low)]">{formatRelativeTime(post.created_at)}</p>
+          <p className="rondo-meta text-[var(--ink-low)]">
+            {post.tournament ? (
+              <>
+                {compactRelative(post.created_at)}
+                {" · "}
+                <Link
+                  href={`/tournaments/${post.tournament.id}`}
+                  className="font-bold text-[var(--gold)] hover:underline"
+                >
+                  {post.tournament.name}
+                </Link>
+              </>
+            ) : post.game ? (
+              <>
+                {compactRelative(post.created_at)}
+                {" · "}
+                <Link
+                  href={`/games/${post.game.id}`}
+                  className="font-bold text-[var(--ink-mid)] hover:underline"
+                >
+                  {post.game.title}
+                </Link>
+              </>
+            ) : (
+              compactRelative(post.created_at)
+            )}
+          </p>
         </div>
         {currentUserId === post.author_id && (
           <button
@@ -131,22 +176,9 @@ export function PostCard({ post, currentUserId, onDeleted }: PostCardProps) {
         )}
       </div>
 
-      {(post.tournament || post.game) && (
-        <div className="flex flex-wrap gap-2">
-          {post.tournament && (
-            <Link href={`/tournaments/${post.tournament.id}`}>
-              <Chip label={post.tournament.name} variant="outline" size="sm" icon={<Trophy size={14} />} />
-            </Link>
-          )}
-          {post.game && (
-            <Link href={`/games/${post.game.id}`}>
-              <Chip label={post.game.title} variant="ghost" size="sm" />
-            </Link>
-          )}
-        </div>
-      )}
-
-      <p className="whitespace-pre-wrap break-words rondo-body text-[var(--ink-mid)]">{post.body}</p>
+      <p className="whitespace-pre-wrap break-words rondo-body text-[var(--ink-hi)] line-clamp-3">
+        {post.body}
+      </p>
 
       {post.media_url && (
         <a href={post.media_url} target="_blank" rel="noopener noreferrer" className="block">
@@ -169,7 +201,7 @@ export function PostCard({ post, currentUserId, onDeleted }: PostCardProps) {
           className="inline-flex min-h-11 items-center gap-2 rondo-meta font-bold text-[var(--ink-low)] transition-colors hover:text-[var(--ink-mid)]"
         >
           <ChatCircle size={20} />
-          {commentCount}
+          <span className="tabular-nums">{commentCount}</span>
         </button>
       </div>
 
