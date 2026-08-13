@@ -114,7 +114,7 @@ export default function ReelsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] bg-[var(--bg-page)] flex items-center justify-center">
+      <div className="rondo-night flex min-h-[100dvh] items-center justify-center">
         <div className="w-10 h-10 border-2 border-[var(--gold)] border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -122,7 +122,7 @@ export default function ReelsPage() {
 
   if (reels.length === 0) {
     return (
-      <div className="min-h-[100dvh] bg-[var(--bg-page)] flex flex-col items-center justify-center gap-4 px-8 text-center">
+      <div className="rondo-night flex min-h-[100dvh] flex-col items-center justify-center gap-4 px-8 text-center">
         <p className="font-heading text-[var(--ink-hi)] font-black italic text-2xl uppercase">No Clips Yet</p>
         <p className="font-body text-[var(--ink-low)] text-sm">
           No clips posted yet. Check back soon.
@@ -140,7 +140,7 @@ export default function ReelsPage() {
   }
 
   return (
-    <div className="relative bg-[var(--bg-page)] overflow-hidden" style={{ height: "100dvh" }}>
+    <div className="rondo-night relative overflow-hidden" style={{ height: "100dvh" }}>
       {/* Scroll container — vertical snap */}
       <div
         ref={containerRef}

@@ -78,25 +78,27 @@
 }
 
 :root {
-  /* Matchday ground */
-  --bg-page: oklch(16% 0.008 102);
-  --bg-surface: oklch(21% 0.01 102);
-  --bg-inset: oklch(26% 0.012 102);
-  --stroke: oklch(34% 0.012 102);
+  /* Strava-newest athletic canvas. Light feed first.
+     Gold is the Rondo action pulse (not Strava orange). Night tokens
+     stay for maps, reels, and tournament floodlights. */
+  --bg-page: oklch(99.2% 0.004 102);
+  --bg-surface: oklch(100% 0 0);
+  --bg-inset: oklch(96.2% 0.006 102);
+  --stroke: oklch(90% 0.008 102);
 
-  /* Matchday ink */
-  --ink-hi: oklch(97% 0 0);
-  --ink-mid: oklch(84% 0.008 102);
-  --ink-low: oklch(68% 0.01 102);
+  --ink-hi: oklch(18% 0.014 102);
+  --ink-mid: oklch(42% 0.016 102);
+  --ink-low: oklch(56% 0.014 102);
 
-  /* Matchday accent */
-  --gold: oklch(86% 0.115 96);
-  --gold-ink: oklch(20% 0.02 96);
-  --gold-dim: color-mix(in oklch, var(--gold) 14%, transparent);
+  --gold: oklch(68% 0.16 72);
+  --gold-ink: oklch(99% 0 0);
+  --gold-dim: color-mix(in oklch, var(--gold) 12%, transparent);
 
-  /* Matchday semantic */
-  --live: oklch(62% 0.19 25);
-  --ok: oklch(70% 0.14 155);
+  --live: oklch(54% 0.2 25);
+  --ok: oklch(48% 0.13 155);
+
+  --bg-night: oklch(18% 0.012 102);
+  --night-ink: oklch(97% 0 0);
 
   /* Scale */
   --r-sm: 10px;
@@ -146,7 +148,7 @@
   --sidebar-ring: var(--gold);
 }
 
-/* Dark class mirrors root (RONDO is always dark) */
+/* Light product; .dark only used if a screen opts in. */
 .dark {
   --background: var(--bg-page);
   --foreground: var(--ink-hi);
@@ -288,15 +290,15 @@
 .rondo-page {
   background-color: var(--bg-page);
   background-image:
-    radial-gradient(ellipse 90% 60% at 18% -12%, color-mix(in oklch, var(--gold) 10%, transparent), transparent 45%),
-    radial-gradient(ellipse 80% 50% at 82% 0%, color-mix(in oklch, var(--gold) 5%, transparent), transparent 48%),
-    linear-gradient(180deg, var(--bg-page) 0%, oklch(9% 0.008 102) 54%, var(--bg-page) 100%);
+    radial-gradient(ellipse 90% 50% at 12% -18%, color-mix(in oklch, var(--gold) 8%, transparent), transparent 42%),
+    linear-gradient(180deg, var(--bg-page) 0%, var(--bg-inset) 100%);
 }
 
 .rondo-surface {
   background: var(--bg-surface);
   border: 1px solid var(--stroke);
   border-radius: var(--r-md);
+  box-shadow: 0 1px 3px color-mix(in oklch, var(--ink-hi) 8%, transparent);
 }
 
 .rondo-map-shell {
@@ -308,7 +310,7 @@
     linear-gradient(112deg, transparent 0 42%, rgba(255, 255, 255, 0.055) 42.4% 43%, transparent 43.4% 100%),
     repeating-linear-gradient(8deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 18px),
     repeating-linear-gradient(98deg, rgba(255, 255, 255, 0.028) 0 1px, transparent 1px 22px),
-    #050505;
+    var(--bg-night);
 }
 
 .rondo-phone-frame {
@@ -490,7 +492,7 @@
 }
 
 .rondo-street-tiles {
-  filter: sepia(0.16) saturate(0.82) contrast(1.08) brightness(0.78);
+  filter: saturate(0.92) contrast(1.04) brightness(1.02);
 }
 
 .leaflet-control-attribution {
@@ -550,40 +552,59 @@
 /* Pure-CSS "floodlight" stadium scene used by tournament cards/hero — no
    external images. Three deterministic variants for visual rhythm in lists,
    plus a --gold variant reserved for winner/champion contexts. */
+.rondo-night {
+  --bg-page: var(--bg-night);
+  --bg-surface: oklch(22% 0.012 102);
+  --bg-inset: oklch(26% 0.012 102);
+  --stroke: oklch(34% 0.012 102);
+  --ink-hi: var(--night-ink);
+  --ink-mid: oklch(84% 0.008 102);
+  --ink-low: oklch(68% 0.01 102);
+  background-color: var(--bg-night);
+  color: var(--night-ink);
+}
+
 .rondo-floodlight-scene {
+  --bg-page: var(--bg-night);
+  --bg-surface: oklch(22% 0.012 102);
+  --stroke: oklch(34% 0.012 102);
+  --ink-hi: var(--night-ink);
+  --ink-mid: oklch(84% 0.008 102);
+  --ink-low: oklch(68% 0.01 102);
   position: relative;
+  color: var(--night-ink);
   background:
-    radial-gradient(120% 140% at 12% -25%, color-mix(in oklch, var(--ink-hi) 15%, transparent), transparent 42%),
-    radial-gradient(120% 140% at 88% -25%, color-mix(in oklch, var(--ink-hi) 9%, transparent), transparent 46%),
+    radial-gradient(120% 140% at 12% -25%, color-mix(in oklch, var(--night-ink) 15%, transparent), transparent 42%),
+    radial-gradient(120% 140% at 88% -25%, color-mix(in oklch, var(--night-ink) 9%, transparent), transparent 46%),
     radial-gradient(80% 70% at 50% 120%, color-mix(in oklch, var(--color-team-green) 20%, transparent), transparent 65%),
-    repeating-linear-gradient(90deg, color-mix(in oklch, var(--ink-hi) 3%, transparent) 0 2px, transparent 2px 34px),
-    var(--bg-page);
+    repeating-linear-gradient(90deg, color-mix(in oklch, var(--night-ink) 3%, transparent) 0 2px, transparent 2px 34px),
+    var(--bg-night);
 }
 
 .rondo-floodlight-scene[data-variant="1"] {
   background:
-    radial-gradient(120% 140% at 85% -25%, color-mix(in oklch, var(--ink-hi) 15%, transparent), transparent 42%),
-    radial-gradient(120% 140% at 15% -20%, color-mix(in oklch, var(--ink-hi) 9%, transparent), transparent 46%),
+    radial-gradient(120% 140% at 85% -25%, color-mix(in oklch, var(--night-ink) 15%, transparent), transparent 42%),
+    radial-gradient(120% 140% at 15% -20%, color-mix(in oklch, var(--night-ink) 9%, transparent), transparent 46%),
     radial-gradient(80% 70% at 50% 120%, color-mix(in oklch, var(--color-team-blue) 16%, transparent), transparent 65%),
-    repeating-linear-gradient(90deg, color-mix(in oklch, var(--ink-hi) 3%, transparent) 0 2px, transparent 2px 34px),
-    var(--bg-page);
+    repeating-linear-gradient(90deg, color-mix(in oklch, var(--night-ink) 3%, transparent) 0 2px, transparent 2px 34px),
+    var(--bg-night);
 }
 
 .rondo-floodlight-scene[data-variant="2"] {
   background:
-    radial-gradient(130% 120% at 50% -30%, color-mix(in oklch, var(--ink-hi) 13%, transparent), transparent 44%),
-    radial-gradient(60% 70% at 15% 112%, color-mix(in oklch, var(--ink-hi) 6%, transparent), transparent 55%),
+    radial-gradient(130% 120% at 50% -30%, color-mix(in oklch, var(--night-ink) 13%, transparent), transparent 44%),
+    radial-gradient(60% 70% at 15% 112%, color-mix(in oklch, var(--night-ink) 6%, transparent), transparent 55%),
     radial-gradient(60% 70% at 85% 112%, color-mix(in oklch, var(--color-team-purple) 16%, transparent), transparent 55%),
-    repeating-linear-gradient(90deg, color-mix(in oklch, var(--ink-hi) 3%, transparent) 0 2px, transparent 2px 34px),
-    var(--bg-page);
+    repeating-linear-gradient(90deg, color-mix(in oklch, var(--night-ink) 3%, transparent) 0 2px, transparent 2px 34px),
+    var(--bg-night);
 }
 
 .rondo-floodlight-scene--gold {
   background:
     radial-gradient(120% 140% at 50% -30%, color-mix(in oklch, var(--gold) 24%, transparent), transparent 55%),
-    radial-gradient(70% 90% at 50% 118%, color-mix(in oklch, var(--ink-hi) 5%, transparent), transparent 60%),
-    repeating-linear-gradient(90deg, color-mix(in oklch, var(--ink-hi) 3.5%, transparent) 0 2px, transparent 2px 34px),
-    var(--bg-page);
+    radial-gradient(70% 90% at 50% 118%, color-mix(in oklch, var(--night-ink) 5%, transparent), transparent 60%),
+    repeating-linear-gradient(90deg, color-mix(in oklch, var(--night-ink) 3.5%, transparent) 0 2px, transparent 2px 34px),
+    var(--bg-night);
 }
 
 .rondo-trophy-mark {

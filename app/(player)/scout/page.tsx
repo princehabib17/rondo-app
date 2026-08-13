@@ -307,7 +307,7 @@ export default function ScoutPage() {
 
   if (!loading && clips.length === 0) {
     return (
-      <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-[var(--bg-page)] px-8 text-center text-[var(--ink-hi)]">
+      <div className="rondo-night flex min-h-[100dvh] flex-col items-center justify-center gap-4 px-8 text-center text-[var(--ink-hi)]">
         <p className="font-heading text-2xl font-black uppercase italic">No Clips Yet</p>
         <p className="font-body text-sm text-[var(--ink-low)]">
           Nobody&apos;s posted a scout clip yet. Check back soon.
@@ -332,7 +332,7 @@ export default function ScoutPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[var(--bg-page)] text-[var(--ink-hi)]">
+    <div className="rondo-night min-h-[100dvh] text-[var(--ink-hi)]">
       <div className="fixed inset-x-0 top-0 z-50 mx-auto flex h-[5.25rem] max-w-[430px] items-center justify-between px-5 pt-3">
         <Link href="/feed" className="flex items-center gap-2" aria-label="Back to feed">
           <Image src="/rondo-logo.png" alt="RONDO" width={34} height={34} className="object-contain" priority />

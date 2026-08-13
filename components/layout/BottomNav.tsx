@@ -138,7 +138,7 @@ export function BottomNav() {
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       aria-label="Primary"
     >
-      <div className="flex h-[60px] items-center gap-1 rounded-[26px] border border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_88%,transparent)] px-2 backdrop-blur-xl">
+      <div className="flex h-[60px] items-center gap-1 rounded-[26px] border border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-surface)_92%,transparent)] px-2 shadow-[0_8px_28px_color-mix(in_oklch,var(--ink-hi)_12%,transparent)] backdrop-blur-xl">
         {tabs.map(({ href, icon: Icon, label, isActive }) => {
           const active = isActive(pathname);
           const pending = pendingHref === href && !active;

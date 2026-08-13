@@ -55,7 +55,7 @@ describe("Matchday token guard", () => {
     expect(violations).toEqual([]);
   });
 
-  it("defines the required Matchday tokens", () => {
+  it("defines the required athletic tokens", () => {
     const globals = readFileSync(join(repoRoot, "app/globals.css"), "utf8");
     for (const token of [
       "--bg-page",
@@ -70,6 +70,8 @@ describe("Matchday token guard", () => {
       "--gold-dim",
       "--live",
       "--ok",
+      "--bg-night",
+      "--night-ink",
     ]) {
       expect(globals).toContain(token);
     }
