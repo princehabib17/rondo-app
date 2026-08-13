@@ -361,9 +361,9 @@ export default function TournamentDetailPage() {
     return (
       <div className="min-h-[100dvh] rondo-page px-4 py-5">
         <div className="mx-auto max-w-lg space-y-3">
-          <div className="h-40 rounded-3xl rondo-shimmer" />
-          <div className="h-24 rounded-2xl rondo-shimmer" />
-          <div className="h-24 rounded-2xl rondo-shimmer" />
+          <div className="h-40 rounded-[var(--r-lg)] rondo-shimmer" />
+          <div className="h-24 rounded-[var(--r-md)] rondo-shimmer" />
+          <div className="h-24 rounded-[var(--r-md)] rondo-shimmer" />
         </div>
       </div>
     );
@@ -372,8 +372,8 @@ export default function TournamentDetailPage() {
   if (notFound || !tournament) {
     return (
       <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-3 rondo-page px-4">
-        <p className="text-sm text-white/70">Tournament not found.</p>
-        <Link href="/tournaments" className="text-sm font-semibold text-rondo-accent">
+        <p className="text-sm text-[var(--ink-mid)]">Tournament not found.</p>
+        <Link href="/tournaments" className="text-sm font-semibold text-[var(--gold)]">
           Back to tournaments
         </Link>
       </div>
@@ -561,7 +561,7 @@ export default function TournamentDetailPage() {
         <div className="fixed inset-x-0 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-30 rondo-sticky-action">
           <div className="mx-auto max-w-lg px-4 py-3">
             {tournament.status !== "registration" ? (
-              <div className="flex min-h-[44px] items-center gap-2 text-sm text-white/50">
+              <div className="flex min-h-[44px] items-center gap-2 text-sm text-[var(--ink-low)]">
                 <Lock size={14} className="shrink-0" />
                 {tournament.status === "active" && "Registration closed. Tournament underway."}
                 {tournament.status === "completed" && "Tournament completed."}
@@ -586,7 +586,7 @@ export default function TournamentDetailPage() {
                 Create an account to register
               </Link>
             ) : !canRegister ? (
-              <div className="flex min-h-[44px] items-center gap-2 text-sm text-white/50">
+              <div className="flex min-h-[44px] items-center gap-2 text-sm text-[var(--ink-low)]">
                 <Lock size={14} className="shrink-0" />
                 Tournament full. All {tournament.max_teams} team slots are taken.
               </div>

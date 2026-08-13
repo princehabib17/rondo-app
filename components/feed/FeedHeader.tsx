@@ -28,7 +28,7 @@ export function FeedHeader({ notificationCount = 0 }: FeedHeaderProps) {
           >
             <Bell size={20} weight="duotone" />
             {notificationCount > 0 && (
-              <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--live)] px-1 text-[10px] font-bold text-white">
+              <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--live)] px-1 text-[10px] font-bold text-[var(--ink-hi)]">
                 {notificationCount > 9 ? "9+" : notificationCount}
               </span>
             )}

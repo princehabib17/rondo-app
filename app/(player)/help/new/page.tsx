@@ -51,9 +51,9 @@ export default function NewHelpTicketPage() {
 
   return (
     <div className="min-h-[100dvh] p-4 max-w-lg mx-auto">
-      <h1 className="text-white font-bold text-xl mb-4">Create Help Ticket</h1>
+      <h1 className="text-[var(--ink-hi)] font-bold text-xl mb-4">Create Help Ticket</h1>
       <form onSubmit={handleSubmit} className="space-y-3">
-        <select value={type} onChange={(e) => setType(e.target.value)} className="w-full bg-card border border-border rounded-xl p-3 text-white">
+        <select value={type} onChange={(e) => setType(e.target.value)} className="w-full bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] p-3 text-[var(--ink-hi)]">
           <option value="payment_issue">Payment issue</option>
           <option value="refund_request">Refund request</option>
           <option value="game_cancelled">Match cancelled</option>
@@ -62,13 +62,13 @@ export default function NewHelpTicketPage() {
           <option value="app_issue">App issue</option>
           <option value="other">Other</option>
         </select>
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} required className="w-full h-28 bg-card border border-border rounded-xl p-3 text-white" placeholder="Describe the issue..." />
-        <label className="flex items-center gap-2 text-sm text-white/80">
+        <textarea value={description} onChange={(e) => setDescription(e.target.value)} required className="w-full h-28 bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] p-3 text-[var(--ink-hi)]" placeholder="Describe the issue..." />
+        <label className="flex items-center gap-2 text-sm text-[var(--ink-hi)]">
           <input type="checkbox" checked={refundRequested} onChange={(e) => setRefundRequested(e.target.checked)} />
           This ticket includes a refund request
         </label>
-        {error && <p className="text-red-400 text-sm">{error}</p>}
-        <button disabled={saving || !description.trim()} className="w-full bg-rondo-accent text-black font-black py-3 rounded-xl disabled:opacity-50">
+        {error && <p className="text-[var(--live)] text-sm">{error}</p>}
+        <button disabled={saving || !description.trim()} className="w-full bg-[var(--gold)] text-[var(--gold-ink)] font-black py-3 rounded-[var(--r-md)] disabled:opacity-50">
           {saving ? "Submitting..." : "Submit Ticket"}
         </button>
       </form>

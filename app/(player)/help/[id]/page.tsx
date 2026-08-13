@@ -87,22 +87,22 @@ export default function HelpTicketDetailPage() {
   }
 
   if (!ticket) {
-    return <div className="min-h-[100dvh] p-4 text-white/70">Loading ticket...</div>;
+    return <div className="min-h-[100dvh] p-4 text-[var(--ink-mid)]">Loading ticket...</div>;
   }
 
   const ticketClosed = ["resolved", "refunded", "closed"].includes(ticket.status);
 
   return (
     <div className="min-h-[100dvh] p-4 max-w-lg mx-auto space-y-3">
-      <h1 className="text-white font-bold text-xl capitalize">{ticket.type.replaceAll("_", " ")}</h1>
-      <p className="text-white/70 text-sm capitalize">Status: {ticket.status.replaceAll("_", " ")}</p>
-      <div className="bg-card border border-border rounded-xl p-3 text-white text-sm whitespace-pre-wrap">
+      <h1 className="text-[var(--ink-hi)] font-bold text-xl capitalize">{ticket.type.replaceAll("_", " ")}</h1>
+      <p className="text-[var(--ink-mid)] text-sm capitalize">Status: {ticket.status.replaceAll("_", " ")}</p>
+      <div className="bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] p-3 text-[var(--ink-hi)] text-sm whitespace-pre-wrap">
         {ticket.description}
       </div>
       {ticket.admin_note && (
-        <div className="bg-card border border-border rounded-xl p-3">
-          <p className="text-xs text-white/60 mb-1">Admin note</p>
-          <p className="text-sm text-white">{ticket.admin_note}</p>
+        <div className="bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] p-3">
+          <p className="text-xs text-[var(--ink-mid)] mb-1">Admin note</p>
+          <p className="text-sm text-[var(--ink-hi)]">{ticket.admin_note}</p>
         </div>
       )}
 
@@ -110,17 +110,17 @@ export default function HelpTicketDetailPage() {
         <div
           key={entry.id}
           className={cn(
-            "rounded-xl border border-border p-3 space-y-1",
-            entry.author_id === userId ? "bg-card" : "bg-rondo-accent/5 border-rondo-accent/20"
+            "rounded-[var(--r-md)] border border-[var(--stroke)] p-3 space-y-1",
+            entry.author_id === userId ? "bg-[var(--bg-surface)]" : "bg-[var(--gold)]/5 border-[var(--gold)]/20"
           )}
         >
           <div className="flex items-center justify-between gap-2">
-            <p className="text-xs font-semibold text-white/70">
+            <p className="text-xs font-semibold text-[var(--ink-mid)]">
               {entry.author_id === userId ? "You" : "Rondo Support"}
             </p>
-            <span className="text-white/40 text-[11px]">{formatRelativeTime(entry.created_at)}</span>
+            <span className="text-[var(--ink-low)] text-[11px]">{formatRelativeTime(entry.created_at)}</span>
           </div>
-          <p className="text-sm text-white whitespace-pre-wrap">{entry.body}</p>
+          <p className="text-sm text-[var(--ink-hi)] whitespace-pre-wrap">{entry.body}</p>
         </div>
       ))}
 
@@ -136,14 +136,14 @@ export default function HelpTicketDetailPage() {
               }
             }}
             placeholder="Add a reply…"
-            className="flex-1 bg-black/30 border border-white/10 rounded-full px-4 py-2.5 text-white text-sm placeholder:text-white/30 outline-none focus:border-rondo-accent/40"
+            className="flex-1 bg-[var(--bg-page)]/30 border border-[var(--stroke)] rounded-full px-4 py-2.5 text-[var(--ink-hi)] text-sm placeholder:text-[var(--ink-low)] outline-none focus:border-[var(--gold)]/40"
           />
           <button
             type="button"
             onClick={sendReply}
             disabled={!reply.trim() || sending}
             aria-label="Send reply"
-            className="rounded-full bg-rondo-accent text-black p-2.5 disabled:opacity-40"
+            className="rounded-full bg-[var(--gold)] text-[var(--gold-ink)] p-2.5 disabled:opacity-40"
           >
             <Send size={15} />
           </button>

@@ -238,12 +238,12 @@ export default function PlayerSetupPage() {
               <div className="space-y-2">
                 <label className={labelClass}>Age</label>
                 <input {...register("age")} placeholder="24" className={inputClass} />
-                {errors.age && <p className="text-red-400 text-xs font-body">{errors.age.message}</p>}
+                {errors.age && <p className="text-[var(--live)] text-xs font-body">{errors.age.message}</p>}
               </div>
               <div className="space-y-2">
                 <label className={labelClass}>Gender</label>
                 <input {...register("gender")} placeholder="Male" className={inputClass} />
-                {errors.gender && <p className="text-red-400 text-xs font-body">{errors.gender.message}</p>}
+                {errors.gender && <p className="text-[var(--live)] text-xs font-body">{errors.gender.message}</p>}
               </div>
             </div>
           )}
@@ -251,14 +251,14 @@ export default function PlayerSetupPage() {
           <div className="space-y-2">
             <label className={labelClass}>{isOrganizer ? "Contact number" : "Phone number"}</label>
             <input {...register("phone")} type="tel" placeholder="0917 123 4567" className={inputClass} />
-            {errors.phone && <p className="text-red-400 text-xs font-body">{errors.phone.message}</p>}
+            {errors.phone && <p className="text-[var(--live)] text-xs font-body">{errors.phone.message}</p>}
           </div>
 
           {!isOrganizer && (
             <div className="space-y-2">
               <label className={labelClass}>Address</label>
               <input {...register("address")} placeholder="Taguig City" className={inputClass} />
-              {errors.address && <p className="text-red-400 text-xs font-body">{errors.address.message}</p>}
+              {errors.address && <p className="text-[var(--live)] text-xs font-body">{errors.address.message}</p>}
             </div>
           )}
 
@@ -270,7 +270,7 @@ export default function PlayerSetupPage() {
               ))}
             </select>
             {errors.nationality && (
-              <p className="text-red-400 text-xs font-body">{errors.nationality.message}</p>
+              <p className="text-[var(--live)] text-xs font-body">{errors.nationality.message}</p>
             )}
           </div>
 
@@ -320,7 +320,7 @@ export default function PlayerSetupPage() {
           <div className="space-y-2">
             <label className={labelClass}>
               {isOrganizer ? "About your games" : "Tell us more about you"}
-              <span className="text-white/30 normal-case text-[11px] ml-1">(optional)</span>
+              <span className="text-[var(--ink-low)] normal-case text-[11px] ml-1">(optional)</span>
             </label>
             <textarea
               {...register("bio")}
@@ -335,7 +335,7 @@ export default function PlayerSetupPage() {
             />
           </div>
 
-          {error && <p className="text-red-400 text-sm text-center font-body">{error}</p>}
+          {error && <p className="text-[var(--live)] text-sm text-center font-body">{error}</p>}
         </div>
 
         <div className="mt-8 grid gap-2">

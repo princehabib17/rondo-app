@@ -40,14 +40,14 @@ export function SuggestedProfiles() {
     <section className="px-4 pt-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Users size={16} className="text-rondo-accent" />
-          <h2 className="font-heading text-white font-black italic text-sm uppercase tracking-wide">
+          <Users size={16} className="text-[var(--gold)]" />
+          <h2 className="font-heading text-[var(--ink-hi)] font-black italic text-sm uppercase tracking-wide">
             Suggested Players
           </h2>
         </div>
         <Link
           href="/reels"
-          className="flex items-center gap-0.5 font-body text-white/40 text-xs hover:text-rondo-accent transition-colors"
+          className="flex items-center gap-0.5 font-body text-[var(--ink-low)] text-xs hover:text-[var(--gold)] transition-colors"
         >
           See Reels
           <ChevronRight size={13} strokeWidth={2.5} />
@@ -58,8 +58,8 @@ export function SuggestedProfiles() {
         {loading
           ? Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex flex-col items-center gap-2 shrink-0 w-[72px]">
-                <div className="w-14 h-14 rounded-full bg-white/10 animate-pulse" />
-                <div className="h-2.5 w-12 rounded bg-white/10 animate-pulse" />
+                <div className="w-14 h-14 rounded-full bg-[var(--bg-inset)] animate-pulse" />
+                <div className="h-2.5 w-12 rounded bg-[var(--bg-inset)] animate-pulse" />
               </div>
             ))
           : players.map((player) => {
@@ -71,11 +71,11 @@ export function SuggestedProfiles() {
                   className="flex flex-col items-center gap-2 shrink-0 w-[72px] group"
                 >
                   <div className="relative">
-                    <div className="w-14 h-14 rounded-full bg-secondary border border-white/10 flex items-center justify-center overflow-hidden group-hover:border-rondo-accent/50 transition-colors">
+                    <div className="w-14 h-14 rounded-full bg-[var(--bg-inset)] border border-[var(--stroke)] flex items-center justify-center overflow-hidden group-hover:border-[var(--gold)]/50 transition-colors">
                       {player.avatar_url ? (
                         <img src={player.avatar_url} alt="" className="w-full h-full object-cover" />
                       ) : (
-                        <span className="font-heading text-white font-black text-sm">
+                        <span className="font-heading text-[var(--ink-hi)] font-black text-sm">
                           {(player.full_name ?? "?")[0]}
                         </span>
                       )}
@@ -85,11 +85,11 @@ export function SuggestedProfiles() {
                     )}
                   </div>
                   <div className="text-center">
-                    <p className="font-body text-white/80 text-[10px] leading-tight line-clamp-1">
+                    <p className="font-body text-[var(--ink-hi)] text-[10px] leading-tight line-clamp-1">
                       {player.full_name}
                     </p>
                     {player.position && (
-                      <p className="font-body text-white/40 text-[9px] capitalize">{player.position}</p>
+                      <p className="font-body text-[var(--ink-low)] text-[9px] capitalize">{player.position}</p>
                     )}
                   </div>
                 </Link>

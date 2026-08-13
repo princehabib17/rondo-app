@@ -59,30 +59,30 @@ export default function OrganizerGamePaymentsPage() {
   return (
     <div className="min-h-[100dvh] p-4 max-w-lg mx-auto space-y-4">
       <header className="flex items-center gap-3">
-        <button onClick={() => router.back()} aria-label="Back" className="w-10 h-10 rounded-lg border border-border text-white flex items-center justify-center">
+        <button onClick={() => router.back()} aria-label="Back" className="w-10 h-10 rounded-[var(--r-sm)] border border-[var(--stroke)] text-[var(--ink-hi)] flex items-center justify-center">
           <ArrowLeft size={18} />
         </button>
-        <h1 className="text-white font-bold">Payments</h1>
+        <h1 className="text-[var(--ink-hi)] font-bold">Payments</h1>
       </header>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-card border border-border rounded-xl p-3 text-xs text-white/70">Paid: <span className="text-white font-bold">{stats.paid}</span></div>
-        <div className="bg-card border border-border rounded-xl p-3 text-xs text-white/70">Reserved: <span className="text-white font-bold">{stats.reserved}</span></div>
-        <div className="bg-card border border-border rounded-xl p-3 text-xs text-white/70">Unpaid: <span className="text-white font-bold">{stats.unpaid}</span></div>
-        <div className="bg-card border border-border rounded-xl p-3 text-xs text-white/70">Refund Req: <span className="text-white font-bold">{stats.refundRequested}</span></div>
+        <div className="bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] p-3 text-xs text-[var(--ink-mid)]">Paid: <span className="text-[var(--ink-hi)] font-bold">{stats.paid}</span></div>
+        <div className="bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] p-3 text-xs text-[var(--ink-mid)]">Reserved: <span className="text-[var(--ink-hi)] font-bold">{stats.reserved}</span></div>
+        <div className="bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] p-3 text-xs text-[var(--ink-mid)]">Unpaid: <span className="text-[var(--ink-hi)] font-bold">{stats.unpaid}</span></div>
+        <div className="bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] p-3 text-xs text-[var(--ink-mid)]">Refund Req: <span className="text-[var(--ink-hi)] font-bold">{stats.refundRequested}</span></div>
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-4 text-sm text-white/80">
-        Expected: <span className="text-white font-bold">{formatPrice(stats.expected)}</span>
+      <div className="bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] p-4 text-sm text-[var(--ink-hi)]">
+        Expected: <span className="text-[var(--ink-hi)] font-bold">{formatPrice(stats.expected)}</span>
         <br />
-        Collected: <span className="text-white font-bold">{formatPrice(stats.collected)}</span>
+        Collected: <span className="text-[var(--ink-hi)] font-bold">{formatPrice(stats.collected)}</span>
       </div>
 
       <div className="space-y-2">
         {entries.map((entry) => (
-          <div key={entry.id} className="bg-card border border-border rounded-xl p-3 flex items-center justify-between">
-            <span className="text-white text-sm">{entry.profile?.full_name ?? "Player"}</span>
-            <span className="text-xs text-white/70 capitalize">{entry.payment_status.replaceAll("_", " ")}</span>
+          <div key={entry.id} className="bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] p-3 flex items-center justify-between">
+            <span className="text-[var(--ink-hi)] text-sm">{entry.profile?.full_name ?? "Player"}</span>
+            <span className="text-xs text-[var(--ink-mid)] capitalize">{entry.payment_status.replaceAll("_", " ")}</span>
           </div>
         ))}
       </div>

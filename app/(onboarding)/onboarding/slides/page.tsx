@@ -35,7 +35,7 @@ export default function OnboardingSlidesPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-black flex flex-col px-5 py-7 max-w-sm mx-auto rondo-phone-frame">
+    <div className="min-h-[100dvh] bg-[var(--bg-page)] flex flex-col px-5 py-7 max-w-sm mx-auto rondo-phone-frame">
       <OnboardingHeader />
 
       <div className="flex-1 flex items-center justify-center py-8">
@@ -60,8 +60,8 @@ export default function OnboardingSlidesPage() {
               key={i}
               className={`rounded-full transition-all ${
                 i === current
-                  ? "w-2 h-2 bg-rondo-accent"
-                  : "w-1.5 h-1.5 bg-rondo-accent/35"
+                  ? "w-2 h-2 bg-[var(--gold)]"
+                  : "w-1.5 h-1.5 bg-[var(--gold)]/35"
               }`}
             />
           ))}

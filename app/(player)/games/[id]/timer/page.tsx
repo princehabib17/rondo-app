@@ -65,7 +65,7 @@ export default function PlayerTimerPage() {
   }, [timer, soundEnabled, schedule, announcedRound]);
 
   return (
-    <div className="min-h-[100dvh] bg-rondo-yellow flex flex-col">
+    <div className="min-h-[100dvh] bg-[var(--gold)] flex flex-col">
       {/* Header */}
       <header className="px-4 py-3 flex items-center gap-3">
         <button
@@ -123,7 +123,7 @@ export default function PlayerTimerPage() {
       {/* Next up */}
       {nextRound && (
         <div className="px-6 pb-8">
-          <div className="bg-rondo-black/10 rounded-2xl p-4">
+          <div className="bg-rondo-black/10 rounded-[var(--r-md)] p-4">
             <p className="text-rondo-black/60 text-xs font-semibold uppercase tracking-wider mb-2">Next Up</p>
             <div className="flex items-center gap-2 text-rondo-black font-bold">
               <span>{nextRound.team_a_name}</span>

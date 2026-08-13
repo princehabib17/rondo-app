@@ -18,7 +18,7 @@ export default function ProfileRedirectPage() {
 
   return (
     <RondoPage className="flex items-center justify-center">
-      <Loader2 className="w-8 h-8 text-rondo-accent animate-spin" aria-label="Loading profile" />
+      <Loader2 className="w-8 h-8 text-[var(--gold)] animate-spin" aria-label="Loading profile" />
     </RondoPage>
   );
 }

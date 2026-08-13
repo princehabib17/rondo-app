@@ -736,7 +736,7 @@ export default function PublicProfilePage() {
                   <button
                     onClick={deleteAccount}
                     disabled={deleting}
-                    className="flex-1 rounded-[var(--r-pill)] bg-[var(--live)] py-2.5 rondo-meta font-bold text-white disabled:opacity-50"
+                    className="flex-1 rounded-[var(--r-pill)] bg-[var(--live)] py-2.5 rondo-meta font-bold text-[var(--ink-hi)] disabled:opacity-50"
                   >
                     {deleting ? "Deleting..." : "Delete forever"}
                   </button>

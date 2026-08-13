@@ -44,12 +44,12 @@ export function ContinueAsGuestLink() {
         type="button"
         onClick={handleGuest}
         disabled={loading}
-        className="min-h-11 px-2 font-body text-sm font-semibold text-white/55 transition-colors hover:text-rondo-accent disabled:opacity-50"
+        className="min-h-11 px-2 font-body text-sm font-semibold text-[var(--ink-mid)] transition-colors hover:text-[var(--gold)] disabled:opacity-50"
       >
         {loading ? "Opening guest access..." : "Continue as guest"}
       </button>
       {error && (
-        <p className="mt-2 text-center text-xs leading-relaxed text-red-400" role="alert">
+        <p className="mt-2 text-center text-xs leading-relaxed text-[var(--live)]" role="alert">
           {error}
         </p>
       )}

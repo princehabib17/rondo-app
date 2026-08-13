@@ -36,7 +36,7 @@ const statusStyle: Record<string, string> = {
   refund_pending: "bg-purple-400/15 text-purple-300",
   resolved: "bg-emerald-400/15 text-emerald-300",
   refunded: "bg-emerald-400/15 text-emerald-300",
-  closed: "bg-white/10 text-white/50",
+  closed: "bg-[var(--bg-inset)] text-[var(--ink-low)]",
 };
 
 export default function AdminTicketsPage() {
@@ -77,30 +77,30 @@ export default function AdminTicketsPage() {
 
   return (
     <div className="min-h-[100dvh] rondo-page pb-10">
-      <header className="sticky top-0 rondo-glass-nav border-b border-white/5 z-40 px-4 py-3">
+      <header className="sticky top-0 rondo-glass-nav border-b border-[var(--stroke)] z-40 px-4 py-3">
         <div className="flex items-center gap-2.5 max-w-lg mx-auto">
-          <LifeBuoy size={18} className="text-rondo-accent" />
-          <h1 className="text-white font-black text-lg">Support Tickets</h1>
-          <span className="text-muted-foreground text-xs ml-auto">admin</span>
+          <LifeBuoy size={18} className="text-[var(--gold)]" />
+          <h1 className="text-[var(--ink-hi)] font-black text-lg">Support Tickets</h1>
+          <span className="text-[var(--ink-low)] text-xs ml-auto">admin</span>
         </div>
       </header>
 
       <div className="px-4 py-5 space-y-4 max-w-lg mx-auto">
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2">
-            <Search size={14} className="text-white/30 shrink-0" />
+          <div className="flex items-center gap-2 flex-1 bg-[var(--bg-page)]/30 border border-[var(--stroke)] rounded-[var(--r-sm)] px-3 py-2">
+            <Search size={14} className="text-[var(--ink-low)] shrink-0" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search description, type, or user…"
-              className="flex-1 bg-transparent text-white text-sm placeholder:text-white/30 outline-none"
+              className="flex-1 bg-transparent text-[var(--ink-hi)] text-sm placeholder:text-[var(--ink-low)] outline-none"
             />
           </div>
           <button
             type="button"
             onClick={() => setNewestFirst((v) => !v)}
             aria-label="Toggle sort order"
-            className="rounded-lg border border-white/10 p-2 text-white/50"
+            className="rounded-[var(--r-sm)] border border-[var(--stroke)] p-2 text-[var(--ink-low)]"
             title={newestFirst ? "Newest first" : "Oldest first"}
           >
             <ArrowDownUp size={15} />
@@ -116,8 +116,8 @@ export default function AdminTicketsPage() {
               className={cn(
                 "rounded-full border px-3 py-1 text-xs font-semibold capitalize shrink-0 transition-colors",
                 statusFilter === status
-                  ? "border-rondo-accent/60 bg-rondo-accent/15 text-rondo-accent"
-                  : "border-white/10 text-white/40"
+                  ? "border-[var(--gold)]/60 bg-[var(--gold)]/15 text-[var(--gold)]"
+                  : "border-[var(--stroke)] text-[var(--ink-low)]"
               )}
             >
               {status.replaceAll("_", " ")}
@@ -128,12 +128,12 @@ export default function AdminTicketsPage() {
         {loading ? (
           <div className="space-y-2">
             {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="h-20 bg-card border border-border rounded-xl animate-pulse" />
+              <div key={i} className="h-20 bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] animate-pulse" />
             ))}
           </div>
         ) : visible.length === 0 ? (
           <div className="rondo-surface p-6 text-center">
-            <p className="text-white/55 text-sm">No tickets match.</p>
+            <p className="text-[var(--ink-mid)] text-sm">No tickets match.</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -141,23 +141,23 @@ export default function AdminTicketsPage() {
               <Link
                 key={ticket.id}
                 href={`/admin/tickets/${ticket.id}`}
-                className="block rondo-surface p-3 space-y-1.5 hover:border-rondo-accent/40 border border-transparent transition-colors"
+                className="block rondo-surface p-3 space-y-1.5 hover:border-[var(--gold)]/40 border border-transparent transition-colors"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-white text-sm font-semibold capitalize truncate">
+                  <p className="text-[var(--ink-hi)] text-sm font-semibold capitalize truncate">
                     {ticket.type.replaceAll("_", " ")}
                   </p>
                   <span
                     className={cn(
                       "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide shrink-0",
-                      statusStyle[ticket.status] ?? "bg-white/10 text-white/50"
+                      statusStyle[ticket.status] ?? "bg-[var(--bg-inset)] text-[var(--ink-low)]"
                     )}
                   >
                     {ticket.status.replaceAll("_", " ")}
                   </span>
                 </div>
-                <p className="text-white/60 text-xs line-clamp-2">{ticket.description}</p>
-                <p className="text-muted-foreground text-[11px]">
+                <p className="text-[var(--ink-mid)] text-xs line-clamp-2">{ticket.description}</p>
+                <p className="text-[var(--ink-low)] text-[11px]">
                   {ticket.user?.full_name ?? "Unknown user"} · {formatRelativeTime(ticket.created_at)}
                 </p>
               </Link>

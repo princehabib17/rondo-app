@@ -591,7 +591,7 @@ export default function ManageTournamentPage() {
     return (
       <div className="min-h-[100dvh] rondo-page px-4 py-5 space-y-3 max-w-lg mx-auto">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-24 bg-card border border-border rounded-xl animate-pulse" />
+          <div key={i} className="h-24 bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] animate-pulse" />
         ))}
       </div>
     );
@@ -720,7 +720,7 @@ export default function ManageTournamentPage() {
                     return (
                       <div
                         key={team.id}
-                        className="flex min-h-14 items-center gap-2 rounded-[var(--r-md)] border border-[var(--stroke)] bg-card px-3 py-3"
+                        className="flex min-h-14 items-center gap-2 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] px-3 py-3"
                       >
                         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--r-pill)] bg-[var(--bg-inset)] font-heading text-sm font-bold tabular-nums text-[var(--gold)]">
                           {team.team_number ?? "—"}
@@ -778,7 +778,7 @@ export default function ManageTournamentPage() {
                                 awayScore={match.away_score}
                                 state={done ? "final" : "scheduled"}
                                 kickoff={done ? null : "Tap"}
-                                className="rounded-[var(--r-md)] border border-[var(--stroke)] bg-card"
+                                className="rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)]"
                               />
                             </button>
                           );

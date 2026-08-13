@@ -56,18 +56,18 @@ function DrumColumn({
     <div className="relative flex-1 select-none" style={{ height: 3 * ITEM_H }}>
       {/* selection highlight band */}
       <div
-        className="pointer-events-none absolute inset-x-0 z-10 border-y border-white/15 bg-white/[0.06] rounded-lg"
+        className="pointer-events-none absolute inset-x-0 z-10 border-y border-[var(--stroke)] bg-white/[0.06] rounded-lg"
         style={{ top: ITEM_H, height: ITEM_H }}
       />
       {/* top fade */}
       <div
         className="pointer-events-none absolute inset-x-0 top-0 z-20"
-        style={{ height: ITEM_H, background: "linear-gradient(to bottom, #050505 30%, transparent)" }}
+        style={{ height: ITEM_H, background: "linear-gradient(to bottom, oklch(16% 0.008 102) 30%, transparent)" }}
       />
       {/* bottom fade */}
       <div
         className="pointer-events-none absolute inset-x-0 bottom-0 z-20"
-        style={{ height: ITEM_H, background: "linear-gradient(to top, #050505 30%, transparent)" }}
+        style={{ height: ITEM_H, background: "linear-gradient(to top, oklch(16% 0.008 102) 30%, transparent)" }}
       />
       <div
         ref={scrollRef}
@@ -86,7 +86,7 @@ function DrumColumn({
           <div
             key={i}
             className={`flex items-center justify-center font-semibold text-base transition-colors duration-100 ${
-              i === selectedIndex ? "text-white" : "text-white/25"
+              i === selectedIndex ? "text-[var(--ink-hi)]" : "text-[var(--ink-low)]"
             }`}
             style={{ height: ITEM_H, scrollSnapAlign: "center" }}
             onPointerDown={(e) => {
@@ -145,19 +145,19 @@ export function DateDrumRollPicker({ value, onChange }: DateDrumRollPickerProps)
   }
 
   return (
-    <div className="flex items-center gap-1 rounded-2xl bg-white/[0.04] border border-white/10 px-2 py-2">
+    <div className="flex items-center gap-1 rounded-2xl bg-white/[0.04] border border-[var(--stroke)] px-2 py-2">
       <DrumColumn
         items={MONTHS}
         selectedIndex={monthIdx}
         onSelect={(i) => emit(i, dayIdx, yearIdx)}
       />
-      <div className="w-px h-8 bg-white/10 shrink-0" />
+      <div className="w-px h-8 bg-[var(--bg-inset)] shrink-0" />
       <DrumColumn
         items={DAYS}
         selectedIndex={Math.min(dayIdx, DAYS.length - 1)}
         onSelect={(i) => emit(monthIdx, i, yearIdx)}
       />
-      <div className="w-px h-8 bg-white/10 shrink-0" />
+      <div className="w-px h-8 bg-[var(--bg-inset)] shrink-0" />
       <DrumColumn
         items={YEARS}
         selectedIndex={yearIdx}

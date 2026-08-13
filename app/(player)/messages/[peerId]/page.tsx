@@ -71,38 +71,38 @@ export default function DirectMessageThreadPage() {
   if (loading) {
     return (
       <div className="min-h-[100dvh] rondo-page flex items-center justify-center">
-        <p className="text-white/50 text-sm">Loading…</p>
+        <p className="text-[var(--ink-low)] text-sm">Loading…</p>
       </div>
     );
   }
 
   return (
     <div className="min-h-[100dvh] rondo-page flex flex-col pb-24">
-      <header className="sticky top-0 rondo-glass-nav border-b border-white/5 z-40 px-4 py-3 flex items-center gap-3">
+      <header className="sticky top-0 rondo-glass-nav border-b border-[var(--stroke)] z-40 px-4 py-3 flex items-center gap-3">
         <button
           type="button"
           onClick={() => router.back()}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--ink-hi)]"
           aria-label="Back"
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-white font-bold text-sm truncate flex-1">
+        <h1 className="text-[var(--ink-hi)] font-bold text-sm truncate flex-1">
           {peer?.full_name ?? "Player"}
         </h1>
       </header>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 max-w-lg mx-auto w-full">
         {messages.length === 0 && (
-          <p className="text-center text-white/40 text-sm py-8">Say hello — this is a private 1:1 chat.</p>
+          <p className="text-center text-[var(--ink-low)] text-sm py-8">Say hello — this is a private 1:1 chat.</p>
         )}
         {messages.map((m) => {
           const mine = m.sender_id === currentUserId;
           return (
             <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
               <div
-                className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${
-                  mine ? "bg-rondo-accent text-black" : "bg-white/10 text-white"
+                className={`max-w-[80%] rounded-[var(--r-md)] px-4 py-2.5 text-sm ${
+                  mine ? "bg-[var(--gold)] text-[var(--gold-ink)]" : "bg-[var(--bg-inset)] text-[var(--ink-hi)]"
                 }`}
               >
                 {m.body}
@@ -122,7 +122,7 @@ export default function DirectMessageThreadPage() {
           onChange={(e) => setBody(e.target.value)}
           placeholder="Message…"
           maxLength={2000}
-          className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-white/35 min-h-[48px]"
+          className="flex-1 bg-[var(--bg-inset)] border border-[var(--stroke)] rounded-[var(--r-md)] px-4 py-3 text-[var(--ink-hi)] text-sm placeholder:text-[var(--ink-low)] min-h-[48px]"
         />
         <button
           type="submit"

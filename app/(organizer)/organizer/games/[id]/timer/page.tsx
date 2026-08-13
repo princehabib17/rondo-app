@@ -104,7 +104,7 @@ export default function OrganizerTimerPage() {
   const teamB = teams.find((t) => t.id === timer?.current_team_b_id);
 
   return (
-    <div className="min-h-[100dvh] bg-rondo-yellow flex flex-col">
+    <div className="min-h-[100dvh] bg-[var(--gold)] flex flex-col">
       <header className="px-4 py-3 flex items-center gap-3">
         <button
           onClick={() => router.back()}
@@ -127,7 +127,7 @@ export default function OrganizerTimerPage() {
             <p className="text-rondo-black/60 text-sm">Timer not initialized</p>
             <button
               onClick={initTimer}
-              className="bg-rondo-black text-rondo-yellow font-black uppercase tracking-widest text-sm px-8 py-4 rounded-xl active:scale-[0.98] transition-all cursor-pointer min-h-[52px]"
+              className="bg-rondo-black text-[var(--gold)] font-black uppercase tracking-widest text-sm px-8 py-4 rounded-[var(--r-md)] active:scale-[0.98] transition-all cursor-pointer min-h-[52px]"
             >
               Initialize Timer
             </button>
@@ -166,7 +166,7 @@ export default function OrganizerTimerPage() {
                 <button
                   onClick={handleStart}
                   disabled={actionLoading}
-                  className="bg-rondo-black text-rondo-yellow rounded-full w-16 h-16 flex items-center justify-center active:scale-[0.95] transition-all cursor-pointer disabled:opacity-50"
+                  className="bg-rondo-black text-[var(--gold)] rounded-full w-16 h-16 flex items-center justify-center active:scale-[0.95] transition-all cursor-pointer disabled:opacity-50"
                   aria-label="Start"
                 >
                   <Play size={28} fill="currentColor" />
@@ -199,7 +199,7 @@ export default function OrganizerTimerPage() {
           {schedule.map((r) => (
             <div
               key={r.round}
-              className={`flex items-center gap-2 py-2 px-3 rounded-lg text-sm ${
+              className={`flex items-center gap-2 py-2 px-3 rounded-[var(--r-sm)] text-sm ${
                 r.round === currentRound
                   ? "bg-rondo-black/10 text-rondo-black font-bold"
                   : "text-rondo-black/50"

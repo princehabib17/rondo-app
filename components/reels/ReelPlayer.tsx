@@ -61,7 +61,7 @@ export function ReelPlayer({
 
   return (
     <div
-      className="relative w-full bg-black flex-shrink-0 overflow-hidden"
+      className="relative w-full bg-[var(--bg-page)] flex-shrink-0 overflow-hidden"
       style={{ height: "100dvh", scrollSnapAlign: "start" }}
     >
       <video
@@ -80,7 +80,7 @@ export function ReelPlayer({
       {/* Mute toggle */}
       <button
         onClick={toggleMute}
-        className="absolute top-14 right-4 w-10 h-10 rounded-full bg-black/40 flex items-center justify-center text-white z-10"
+        className="absolute top-14 right-4 w-10 h-10 rounded-full bg-[var(--bg-surface)] flex items-center justify-center text-[var(--ink-hi)] z-10"
       >
         {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
       </button>
@@ -92,11 +92,11 @@ export function ReelPlayer({
           <div className="flex-1 min-w-0">
             <Link href={`/profile/${player?.id}`} className="flex items-center gap-2 mb-2">
               <div className="relative shrink-0">
-                <div className="w-10 h-10 rounded-full bg-secondary border border-white/20 overflow-hidden flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-[var(--bg-inset)] border border-[var(--stroke)] overflow-hidden flex items-center justify-center">
                   {player?.avatar_url ? (
                     <img src={player.avatar_url} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-white font-black text-sm">
+                    <span className="text-[var(--ink-hi)] font-black text-sm">
                       {(player?.full_name ?? "?")[0]}
                     </span>
                   )}
@@ -106,18 +106,18 @@ export function ReelPlayer({
                 )}
               </div>
               <div>
-                <p className="text-white font-bold text-sm leading-tight drop-shadow-md">
+                <p className="text-[var(--ink-hi)] font-bold text-sm leading-tight drop-shadow-md">
                   {player?.full_name}
                 </p>
                 {(reel.position ?? player?.position) && (
-                  <p className="text-white/60 text-xs capitalize">
+                  <p className="text-[var(--ink-mid)] text-xs capitalize">
                     {reel.position ?? player?.position}
                   </p>
                 )}
               </div>
             </Link>
             {reel.caption && (
-              <p className="text-white/90 text-sm leading-snug line-clamp-2 drop-shadow-md">
+              <p className="text-[var(--ink-hi)] text-sm leading-snug line-clamp-2 drop-shadow-md">
                 {reel.caption}
               </p>
             )}
@@ -133,9 +133,9 @@ export function ReelPlayer({
               <Heart
                 size={28}
                 strokeWidth={1.75}
-                className={liked ? "fill-red-500 text-red-500" : "text-white drop-shadow-md"}
+                className={liked ? "fill-red-500 text-red-500" : "text-[var(--ink-hi)] drop-shadow-md"}
               />
-              <span className="text-white text-xs font-semibold drop-shadow-md">{likeCount}</span>
+              <span className="text-[var(--ink-hi)] text-xs font-semibold drop-shadow-md">{likeCount}</span>
             </button>
 
             {currentUserId && (
@@ -148,11 +148,11 @@ export function ReelPlayer({
                   strokeWidth={1.75}
                   className={
                     isShortlisted
-                      ? "fill-rondo-accent text-rondo-accent"
-                      : "text-white drop-shadow-md"
+                      ? "fill-[var(--gold)] text-[var(--gold)]"
+                      : "text-[var(--ink-hi)] drop-shadow-md"
                   }
                 />
-                <span className="text-white text-xs font-semibold drop-shadow-md">
+                <span className="text-[var(--ink-hi)] text-xs font-semibold drop-shadow-md">
                   {isShortlisted ? "Saved" : "Save"}
                 </span>
               </button>

@@ -21,11 +21,11 @@ const payoutStatusStyle: Record<PayoutHistoryEntry["status"], string> = {
   pending: "bg-amber-400/15 text-amber-300",
   approved: "bg-sky-400/15 text-sky-300",
   paid: "bg-emerald-400/15 text-emerald-300",
-  rejected: "bg-red-400/15 text-red-300",
+  rejected: "bg-red-400/15 text-[var(--live)]",
 };
 
 const inputClass =
-  "w-full rounded-xl border border-white/10 bg-black/35 px-4 py-3.5 font-body text-sm text-white placeholder:text-white/30 outline-none transition focus:border-rondo-accent";
+  "w-full rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-page)]/35 px-4 py-3.5 font-body text-sm text-[var(--ink-hi)] placeholder:text-[var(--ink-low)] outline-none transition focus:border-[var(--gold)]";
 
 export default function PayoutPage() {
   const router = useRouter();
@@ -86,16 +86,16 @@ export default function PayoutPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[#050505]">
-      <header className="sticky top-0 z-40 border-b border-white/5 bg-black/85 px-5 py-3 backdrop-blur-xl">
+    <div className="min-h-[100dvh] bg-[var(--bg-page)]">
+      <header className="sticky top-0 z-40 border-b border-[var(--stroke)] bg-[var(--bg-page)]/85 px-5 py-3 backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <Link
             href="/organizer/dashboard"
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/6 text-white/70 transition active:scale-[0.97]"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--bg-inset)] text-[var(--ink-mid)] transition active:scale-[0.97]"
           >
             <ArrowLeft size={16} />
           </Link>
-          <p className="font-body text-[10px] font-black uppercase tracking-[0.26em] text-rondo-accent">
+          <p className="font-body text-[10px] font-black uppercase tracking-[0.26em] text-[var(--gold)]">
             Wallet Ops
           </p>
         </div>
@@ -107,10 +107,10 @@ export default function PayoutPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={bouncy}
         >
-          <h1 className="font-heading text-4xl font-black uppercase italic leading-none text-white">
+          <h1 className="font-heading text-4xl font-black uppercase italic leading-none text-[var(--ink-hi)]">
             Request Payout
           </h1>
-          <p className="mt-2 font-body text-sm text-white/40">
+          <p className="mt-2 font-body text-sm text-[var(--ink-low)]">
             Funds are transferred within 2–3 business days.
           </p>
         </motion.section>
@@ -149,12 +149,12 @@ export default function PayoutPage() {
           />
           <button
             onClick={submitPayoutRequest}
-            className="min-h-[52px] w-full rounded-xl bg-rondo-accent font-body text-sm font-black uppercase tracking-wider text-black transition active:scale-[0.98]"
+            className="min-h-[52px] w-full rounded-[var(--r-md)] bg-[var(--gold)] font-body text-sm font-black uppercase tracking-wider text-[var(--gold-ink)] transition active:scale-[0.98]"
           >
             Submit Payout
           </button>
           {payoutMessage && (
-            <p className="text-center font-body text-xs text-white/60">{payoutMessage}</p>
+            <p className="text-center font-body text-xs text-[var(--ink-mid)]">{payoutMessage}</p>
           )}
         </motion.section>
 
@@ -165,18 +165,18 @@ export default function PayoutPage() {
             transition={{ ...bouncy, delay: 0.1 }}
             className="space-y-3"
           >
-            <h2 className="font-heading text-lg font-black uppercase italic text-white">
+            <h2 className="font-heading text-lg font-black uppercase italic text-[var(--ink-hi)]">
               Recent Requests
             </h2>
             <div className="space-y-2">
               {payoutHistory.map((entry) => (
                 <div
                   key={entry.id}
-                  className="flex items-center justify-between gap-2 rounded-xl border border-white/6 bg-white/[0.03] p-4 font-body text-xs"
+                  className="flex items-center justify-between gap-2 rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.03] p-4 font-body text-xs"
                 >
                   <div className="min-w-0">
-                    <p className="font-black text-white">{formatPrice(entry.amount)}</p>
-                    <p className="mt-0.5 truncate text-white/40">
+                    <p className="font-black text-[var(--ink-hi)]">{formatPrice(entry.amount)}</p>
+                    <p className="mt-0.5 truncate text-[var(--ink-low)]">
                       {entry.bank_name ?? "No bank"} · {formatGameDate(entry.created_at)}
                     </p>
                   </div>

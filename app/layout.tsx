@@ -38,7 +38,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`dark ${barlowCondensed.variable} ${manrope.variable}`}>
-      <body className="overflow-x-hidden font-body bg-background text-foreground antialiased">
+      <body className="overflow-x-hidden font-body bg-[var(--bg-page)] text-[var(--ink-hi)] antialiased">
         {children}
         <Toaster position="top-center" />
       </body>

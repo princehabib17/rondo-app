@@ -168,8 +168,8 @@ export default function JoinMatchPage() {
       <div className="min-h-[100dvh] rondo-page p-4 space-y-4">
         <div className="h-8 w-32 rondo-shimmer rounded" />
         <div className="grid grid-cols-2 gap-3">
-          <div className="h-40 rondo-shimmer rounded-xl" />
-          <div className="h-40 rondo-shimmer rounded-xl" />
+          <div className="h-40 rondo-shimmer rounded-[var(--r-md)]" />
+          <div className="h-40 rondo-shimmer rounded-[var(--r-md)]" />
         </div>
       </div>
     );
@@ -200,13 +200,13 @@ export default function JoinMatchPage() {
   if (teams.length === 0) {
     return (
       <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 text-center gap-4">
-        <p className="text-white font-bold text-lg">No teams yet</p>
-        <p className="text-muted-foreground text-sm max-w-xs">
+        <p className="text-[var(--ink-hi)] font-bold text-lg">No teams yet</p>
+        <p className="text-[var(--ink-low)] text-sm max-w-xs">
           The organizer hasn&apos;t set up teams for this game. Check back closer to kick-off.
         </p>
         <button
           onClick={() => router.back()}
-          className="w-full max-w-xs border border-border text-white text-sm py-4 rounded-xl cursor-pointer min-h-[44px]"
+          className="w-full max-w-xs border border-[var(--stroke)] text-[var(--ink-hi)] text-sm py-4 rounded-[var(--r-md)] cursor-pointer min-h-[44px]"
         >
           Go Back
         </button>
@@ -216,22 +216,22 @@ export default function JoinMatchPage() {
 
   return (
     <div className="min-h-[100dvh] rondo-page pb-56">
-      <header className="sticky top-0 rondo-glass-nav border-b border-white/5 z-40 px-4 py-3 flex items-center gap-3">
+      <header className="sticky top-0 rondo-glass-nav border-b border-[var(--stroke)] z-40 px-4 py-3 flex items-center gap-3">
         <button
           type="button"
           onClick={() => router.back()}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--ink-hi)]"
           aria-label="Back"
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="font-heading text-white font-black italic text-sm uppercase">
+        <h1 className="font-heading text-[var(--ink-hi)] font-black italic text-sm uppercase">
           {claimSpot ? "Claim spot" : waitlistOnly ? "Waitlist" : "Choose slot"}
         </h1>
       </header>
 
       <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
-        <section className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04]">
+        <section className="overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.04]">
           {game.banner_url && (
             <div className="relative h-36">
               <img src={game.banner_url} alt="" className="h-full w-full object-cover" />
@@ -240,24 +240,24 @@ export default function JoinMatchPage() {
           )}
           <div className="space-y-3 p-4">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-rondo-yellow">
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gold)]">
                 Team selection
               </p>
-              <h2 className="mt-1 font-heading text-2xl font-black uppercase italic leading-none text-white">
+              <h2 className="mt-1 font-heading text-2xl font-black uppercase italic leading-none text-[var(--ink-hi)]">
                 {game.title}
               </h2>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-xs text-white/55">
-              <div className="rounded-xl bg-black/25 p-3">
-                <Calendar size={14} className="mb-1 text-rondo-yellow" />
+            <div className="grid grid-cols-2 gap-2 text-xs text-[var(--ink-mid)]">
+              <div className="rounded-[var(--r-md)] bg-[var(--bg-page)]/25 p-3">
+                <Calendar size={14} className="mb-1 text-[var(--gold)]" />
                 <p>{new Date(game.date_time).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</p>
               </div>
-              <div className="rounded-xl bg-black/25 p-3">
-                <MapPin size={14} className="mb-1 text-rondo-yellow" />
+              <div className="rounded-[var(--r-md)] bg-[var(--bg-page)]/25 p-3">
+                <MapPin size={14} className="mb-1 text-[var(--gold)]" />
                 <p className="truncate">{game.venue_name}</p>
               </div>
             </div>
-            <p className="font-body text-sm leading-5 text-white/55">
+            <p className="font-body text-sm leading-5 text-[var(--ink-mid)]">
               {waitlistOnly
                 ? "Everyone on the waitlist gets notified when a spot opens. First to accept gets in."
                 : claimSpot
@@ -281,21 +281,21 @@ export default function JoinMatchPage() {
                 disabled={full && !waitlistOnly}
                 onClick={() => setSelectedTeamId(team.id)}
                 className={cn(
-                  "relative rounded-xl border-2 p-4 text-left transition-all min-h-[44px]",
+                  "relative rounded-[var(--r-md)] border-2 p-4 text-left transition-all min-h-[44px]",
                   full && !waitlistOnly && "opacity-45 cursor-not-allowed",
                   isSelected
-                    ? "border-rondo-accent bg-rondo-accent/10"
-                    : "border-white/12 bg-white/5 hover:border-white/25"
+                    ? "border-[var(--gold)] bg-[var(--gold)]/10"
+                    : "border-[var(--stroke)] bg-[var(--bg-inset)] hover:border-[var(--stroke)]"
                 )}
               >
                 {isSelected && (
-                  <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-rondo-accent flex items-center justify-center">
-                    <Check size={14} className="text-black" />
+                  <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-[var(--gold)] flex items-center justify-center">
+                    <Check size={14} className="text-[var(--gold-ink)]" />
                   </div>
                 )}
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-4 h-4 rounded-full shrink-0" style={{ backgroundColor: team.color }} />
-                  <span className="text-white font-bold text-sm truncate">{team.name}</span>
+                  <span className="text-[var(--ink-hi)] font-bold text-sm truncate">{team.name}</span>
                 </div>
                 <div className="flex flex-wrap gap-1 mb-2">
                   {players?.map((gp) =>
@@ -310,7 +310,7 @@ export default function JoinMatchPage() {
                     ) : null
                   )}
                 </div>
-                <div className="flex items-center gap-1.5 text-white/50 text-xs">
+                <div className="flex items-center gap-1.5 text-[var(--ink-low)] text-xs">
                   <Users size={11} />
                   <span>{full ? "Full" : `${left} spot${left === 1 ? "" : "s"} left`}</span>
                 </div>
@@ -319,7 +319,7 @@ export default function JoinMatchPage() {
           })}
         </div>
 
-        {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+        {error && <p className="text-[var(--live)] text-sm text-center">{error}</p>}
       </div>
 
       {/* bottom-24 (not bottom-16): the floating BottomNav pill sits at
@@ -339,7 +339,7 @@ export default function JoinMatchPage() {
             type="button"
             onClick={handleLeaveWaitlist}
             disabled={joining || leaving}
-            className="w-full text-white/50 hover:text-white text-sm py-2 disabled:opacity-40"
+            className="w-full text-[var(--ink-low)] hover:text-[var(--ink-hi)] text-sm py-2 disabled:opacity-40"
           >
             {leaving ? "Leaving…" : "Leave waitlist"}
           </button>

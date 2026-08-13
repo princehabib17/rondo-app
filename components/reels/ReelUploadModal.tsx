@@ -67,22 +67,22 @@ export function ReelUploadModal({ userId, onClose, onUploaded }: ReelUploadModal
   }
 
   return (
-    <div className="fixed inset-0 z-[300] bg-black/80 flex items-end sm:items-center justify-center p-4">
-      <div className="w-full max-w-sm bg-card border border-border rounded-2xl overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <h2 className="font-heading text-white font-black italic text-base uppercase">Post a Clip</h2>
-          <button onClick={onClose} className="text-white/50 hover:text-white transition-colors">
+    <div className="fixed inset-0 z-[300] bg-[var(--bg-page)]/80 flex items-end sm:items-center justify-center p-4">
+      <div className="w-full max-w-sm bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--stroke)]">
+          <h2 className="font-heading text-[var(--ink-hi)] font-black italic text-base uppercase">Post a Clip</h2>
+          <button onClick={onClose} className="text-[var(--ink-low)] hover:text-[var(--ink-hi)] transition-colors">
             <X size={20} />
           </button>
         </div>
 
         <div className="p-4 space-y-4">
           {previewUrl ? (
-            <div className="relative rounded-xl overflow-hidden bg-black" style={{ aspectRatio: "9/16", maxHeight: 240 }}>
+            <div className="relative rounded-[var(--r-md)] overflow-hidden bg-[var(--bg-page)]" style={{ aspectRatio: "9/16", maxHeight: 240 }}>
               <video src={previewUrl} muted playsInline className="w-full h-full object-cover" />
               <button
                 onClick={() => { setFile(null); setPreviewUrl(null); }}
-                className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/60 flex items-center justify-center text-white"
+                className="absolute top-2 right-2 w-8 h-8 rounded-full bg-[var(--bg-page)]/60 flex items-center justify-center text-[var(--ink-hi)]"
               >
                 <X size={14} />
               </button>
@@ -90,7 +90,7 @@ export function ReelUploadModal({ userId, onClose, onUploaded }: ReelUploadModal
           ) : (
             <button
               onClick={() => fileRef.current?.click()}
-              className="w-full border-2 border-dashed border-white/20 rounded-xl flex flex-col items-center justify-center gap-2 text-white/40 hover:border-rondo-accent/40 hover:text-rondo-accent transition-colors py-10"
+              className="w-full border-2 border-dashed border-[var(--stroke)] rounded-[var(--r-md)] flex flex-col items-center justify-center gap-2 text-[var(--ink-low)] hover:border-[var(--gold)]/40 hover:text-[var(--gold)] transition-colors py-10"
             >
               <Upload size={28} />
               <span className="font-body text-sm">Tap to choose a video</span>
@@ -111,13 +111,13 @@ export function ReelUploadModal({ userId, onClose, onUploaded }: ReelUploadModal
             onChange={(e) => setCaption(e.target.value.slice(0, 300))}
             placeholder="Add a caption… (optional)"
             rows={2}
-            className="w-full bg-background border border-border rounded-xl px-3 py-2 text-white text-sm placeholder:text-white/30 resize-none outline-none focus:border-rondo-accent/40"
+            className="w-full bg-[var(--bg-page)] border border-[var(--stroke)] rounded-[var(--r-md)] px-3 py-2 text-[var(--ink-hi)] text-sm placeholder:text-[var(--ink-low)] resize-none outline-none focus:border-[var(--gold)]/40"
           />
 
           <button
             onClick={upload}
             disabled={!file || uploading}
-            className="w-full bg-rondo-accent text-black font-bold py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-40"
+            className="w-full bg-[var(--gold)] text-[var(--gold-ink)] font-bold py-3 rounded-[var(--r-md)] flex items-center justify-center gap-2 disabled:opacity-40"
           >
             {uploading ? <><Loader2 size={16} className="animate-spin" /> Uploading…</> : "Post Clip"}
           </button>
