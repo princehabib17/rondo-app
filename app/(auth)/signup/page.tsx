@@ -172,7 +172,7 @@ export default function SignupPage() {
         Already have an account?{" "}
         <Link
           href={`/login${nextParam ? `?next=${encodeURIComponent(nextParam)}` : ""}`}
-          className="text-[var(--gold)] font-semibold hover:underline"
+          className="text-[var(--gold-text)] font-semibold hover:underline"
         >
           Log in
         </Link>

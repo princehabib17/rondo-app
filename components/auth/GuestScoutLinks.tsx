@@ -68,7 +68,7 @@ export function GuestScoutLinks() {
           type="button"
           onClick={handleScout}
           disabled={guestLoading || scoutLoading}
-          className="flex flex-col items-center gap-1.5 rounded-[var(--r-md)] border border-[var(--gold)]/40 bg-[var(--gold)]/5 px-2 py-3 text-[var(--gold)] transition-colors hover:bg-[var(--gold)]/10 disabled:opacity-40"
+          className="flex flex-col items-center gap-1.5 rounded-[var(--r-md)] border border-[var(--gold)]/40 bg-[var(--gold)]/5 px-2 py-3 text-[var(--gold-text)] transition-colors hover:bg-[var(--gold)]/10 disabled:opacity-40"
         >
           <UserSearch size={18} />
           <span className="font-body text-xs font-semibold">

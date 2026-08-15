@@ -285,7 +285,7 @@ export default function LoginPage() {
         First time here?{" "}
         <Link
           href={`/signup${nextParam ? `?next=${encodeURIComponent(nextParam)}` : ""}`}
-          className="text-[var(--gold)] font-semibold hover:underline"
+          className="text-[var(--gold-text)] font-semibold hover:underline"
         >
           Create account
         </Link>

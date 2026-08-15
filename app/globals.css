@@ -89,9 +89,10 @@
   --ink-mid: oklch(38% 0.016 255);
   --ink-low: oklch(50% 0.012 255);
 
-  --gold: oklch(56% 0.15 88);
-  --gold-ink: oklch(99% 0 0);
-  --gold-dim: color-mix(in oklch, var(--gold) 12%, transparent);
+  --gold: oklch(80% 0.155 96);
+  --gold-ink: oklch(16% 0.02 255);
+  --gold-text: oklch(46% 0.12 85);
+  --gold-dim: color-mix(in oklch, var(--gold) 18%, transparent);
 
   --live: oklch(54% 0.2 25);
   --ok: oklch(48% 0.13 155);
@@ -355,7 +356,7 @@
 .rondo-chip[data-active="true"] {
   border-color: var(--gold);
   background: var(--gold-dim);
-  color: var(--gold);
+  color: var(--gold-text);
 }
 
 .rondo-btn {

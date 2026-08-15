@@ -133,7 +133,7 @@ export function Chip({ label, variant = "ghost", size = "md", className, icon }:
         "inline-flex items-center justify-center gap-1 rounded-[var(--r-pill)] rondo-label",
         size === "md" ? "h-8 px-3" : "h-6 px-2 text-[0.625rem]",
         variant === "gold" && "bg-[var(--gold)] text-[var(--gold-ink)]",
-        variant === "outline" && "border border-[var(--gold)] text-[var(--gold)]",
+        variant === "outline" && "border border-[var(--gold)] text-[var(--gold-text)]",
         variant === "ghost" && "border border-[var(--stroke)] text-[var(--ink-low)]",
         variant === "live" && "bg-[color-mix(in_oklch,var(--live)_16%,transparent)] text-[var(--live)]",
         className

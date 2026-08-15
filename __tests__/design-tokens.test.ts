@@ -67,6 +67,7 @@ describe("Matchday token guard", () => {
       "--ink-low",
       "--gold",
       "--gold-ink",
+      "--gold-text",
       "--gold-dim",
       "--live",
       "--ok",

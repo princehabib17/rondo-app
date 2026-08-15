@@ -57,7 +57,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="flex flex-1 flex-col justify-end gap-3 px-4 pb-8 pt-6">
+      <section className="flex flex-col gap-3 px-4 py-5">
         <Link href="/signup" className="rondo-btn rondo-btn-primary">
           Create account
           <ArrowRight size={18} weight="bold" aria-hidden />
