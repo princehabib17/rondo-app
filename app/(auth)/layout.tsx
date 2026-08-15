@@ -1,9 +1,7 @@
-import { RondoPage } from "@/components/rondo/primitives";
-
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <RondoPage className="mx-auto flex w-full max-w-md flex-col justify-center px-5 py-8">
+    <div className="rondo-page mx-auto flex min-h-[100dvh] w-full max-w-md flex-col justify-center px-5 py-8">
       {children}
-    </RondoPage>
+    </div>
   );
 }
