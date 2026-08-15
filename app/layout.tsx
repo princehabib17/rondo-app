@@ -19,7 +19,8 @@ export const metadata: Metadata = {
   description: "Join local football games near you",
   keywords: ["sports", "games", "football", "soccer", "local", "community"],
   icons: {
-    icon: "/favicon.ico",
+    icon: [{ url: "/rondo-logo.png", type: "image/png" }],
+    apple: "/rondo-logo.png",
   },
 };
 

@@ -2,11 +2,12 @@
 
 import { useEffect, useRef, useState, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, CreditCard, Loader2, MapPin, Zap } from "lucide-react";
+import { ArrowLeft, CreditCard, Loader2, Lock, MapPin, ShieldCheck, Zap } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { formatPrice } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
+import { RondoButton } from "@/components/rondo/primitives";
 
 function payIdempotencyKey(gameId: string) {
   const storageKey = `rondo_pay_idem_${gameId}`;
@@ -142,10 +143,21 @@ function PaymentForm() {
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="font-heading text-[var(--ink-hi)] font-black italic text-base uppercase">Pay from wallet</h1>
+        <div className="min-w-0 flex-1">
+          <h1 className="font-heading text-[var(--ink-hi)] font-black text-base uppercase">Secure payment</h1>
+          <p className="rondo-meta text-[var(--ink-low)]">PayMongo · Rondo Wallet</p>
+        </div>
+        <Lock size={18} className="text-[var(--gold)]" aria-hidden />
       </header>
 
       <div className="px-4 py-6 space-y-5 max-w-lg mx-auto">
+        <div className="flex items-center gap-2 rounded-[var(--r-md)] border border-[color-mix(in_oklch,var(--gold)_28%,var(--stroke))] bg-[color-mix(in_oklch,var(--gold)_8%,var(--bg-surface))] px-3 py-2.5">
+          <ShieldCheck size={18} className="shrink-0 text-[var(--gold)]" aria-hidden />
+          <p className="rondo-meta text-[var(--ink-mid)]">
+            Encrypted checkout. Match fees settle in your wallet — never pay organizers in-app.
+          </p>
+        </div>
+
         <div className="rondo-surface p-4">
           <p className="font-body text-[var(--ink-low)] text-xs uppercase mb-1">Match</p>
           <p className="font-heading text-[var(--ink-hi)] font-black text-lg">{game.title}</p>
@@ -154,17 +166,15 @@ function PaymentForm() {
             {game.venue_name}
           </p>
           <div className="flex justify-between items-end mt-4 pt-4 border-t border-[var(--stroke)]">
-            <span className="font-body text-[var(--ink-low)] text-sm">Price</span>
+            <span className="font-body text-[var(--ink-low)] text-sm">Amount due</span>
             <span className="font-heading text-[var(--gold)] font-black text-2xl">{formatPrice(price)}</span>
           </div>
         </div>
 
         <div className="space-y-3">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gold)]">
-              Payment decision
-            </p>
-            <h2 className="font-heading text-2xl font-black uppercase italic text-[var(--ink-hi)]">
+            <p className="rondo-label text-[var(--gold)]">Payment decision</p>
+            <h2 className="font-heading text-2xl font-black uppercase text-[var(--ink-hi)]">
               Confirm your spot
             </h2>
           </div>
@@ -172,7 +182,7 @@ function PaymentForm() {
           <button
             onClick={handlePayOnline}
             disabled={paying}
-            className="w-full rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.04] p-4 text-left transition-all hover:border-[var(--gold)]/40 active:scale-[0.98] disabled:opacity-50"
+            className="w-full rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-4 text-left transition-all hover:border-[var(--gold)]/40 active:scale-[0.98] disabled:opacity-50"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-[var(--gold)]/10 flex items-center justify-center">
@@ -190,7 +200,7 @@ function PaymentForm() {
             </div>
           </button>
 
-          <div className="rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.04] p-4">
+          <div className="rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-4">
             <div className="flex items-center gap-3">
               <div className="flex-1 min-w-0">
                 <p className="font-body text-[var(--ink-low)] text-xs uppercase">Wallet balance</p>
@@ -206,7 +216,7 @@ function PaymentForm() {
                 style={{ width: `${Math.min(100, Math.round((balanceCentavos / Math.max(price, 1)) * 100))}%` }}
               />
             </div>
-            <p className={`mt-2 text-xs ${hasEnoughBalance ? "text-emerald-300" : "text-[var(--ink-low)]"}`}>
+            <p className={`mt-2 text-xs ${hasEnoughBalance ? "text-[var(--ok)]" : "text-[var(--ink-low)]"}`}>
               {hasEnoughBalance
                 ? "Your wallet covers this match."
                 : `${formatPrice(Math.max(price - balanceCentavos, 0))} more needed before wallet payment.`}
@@ -221,28 +231,19 @@ function PaymentForm() {
           </div>
         )}
 
-        <button
-          type="button"
-          onClick={handlePayWithWallet}
-          disabled={paying || !hasEnoughBalance}
-          className="w-full bg-[var(--gold)] text-[var(--gold-ink)] font-heading font-black uppercase tracking-widest text-sm py-4 rounded-[var(--r-md)] disabled:opacity-40 flex items-center justify-center gap-2 min-h-[52px]"
-        >
-          {!paying && (
-            <>
-              <Zap size={18} />
-              Pay {formatPrice(price)}
-            </>
-          )}
-        </button>
+        <RondoButton onClick={handlePayWithWallet} disabled={paying || !hasEnoughBalance} variant="primary">
+          <Zap size={18} aria-hidden />
+          Pay {formatPrice(price)}
+        </RondoButton>
 
         {error && (
-          <div className="bg-red-950/40 border border-red-800/50 rounded-[var(--r-md)] p-4">
-            <p className="text-red-200 text-sm text-center">{error}</p>
+          <div className="rounded-[var(--r-md)] border border-[color-mix(in_oklch,var(--live)_40%,transparent)] bg-[color-mix(in_oklch,var(--live)_12%,transparent)] p-4">
+            <p className="text-[var(--live)] text-sm text-center">{error}</p>
           </div>
         )}
 
         <p className="font-body text-[var(--ink-low)] text-xs text-center leading-relaxed">
-          Match fees come from your Rondo Wallet. Top-ups use PayMongo for GCash, Maya, and cards; that money lands in your wallet before it is applied to the match.
+          Secured by PayMongo. Top-ups land in your Rondo Wallet before they are applied to the match.
         </p>
       </div>
     </div>

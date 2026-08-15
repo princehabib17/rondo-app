@@ -176,7 +176,10 @@ function WalletContent() {
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="font-heading text-[var(--ink-hi)] font-black italic text-lg uppercase">Wallet</h1>
+        <div className="min-w-0 flex-1">
+          <h1 className="font-heading text-[var(--ink-hi)] font-black text-lg uppercase">Wallet</h1>
+          <p className="rondo-meta text-[var(--ink-low)]">PayMongo secured</p>
+        </div>
       </header>
 
       <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
