@@ -142,7 +142,7 @@ export default function FeedMapPage() {
         <button
           type="button"
           onClick={fetchGames}
-          className="rondo-sticky-action absolute bottom-4 left-1/2 z-20 inline-flex -translate-x-1/2 items-center gap-2 rounded-[var(--r-pill)] bg-[var(--gold)] px-6 py-3 font-heading text-sm font-bold uppercase text-[var(--gold-ink)]"
+          className="absolute bottom-4 left-1/2 z-20 inline-flex -translate-x-1/2 items-center gap-2 rounded-[var(--r-pill)] bg-[var(--gold)] px-6 py-3 font-heading text-sm font-bold uppercase text-[var(--gold-ink)]"
         >
           <MapPin size={18} weight="duotone" />
           Show games here

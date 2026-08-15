@@ -7,19 +7,43 @@ import { motion, useReducedMotion } from "motion/react";
 import { createClient } from "@/lib/supabase/client";
 import type { Tournament, TournamentStatus } from "@/lib/supabase/types";
 import { TournamentCard, TournamentCardSkeleton } from "@/components/tournament/TournamentCard";
+import { fetchTournamentChampions, type ChampionSummary } from "@/lib/tournament/champions";
+import { fetchTournamentLiveSummaries } from "@/lib/tournament/liveSummary";
+import type { LiveSummary } from "@/lib/tournament/bracket";
 import { gentle } from "@/components/motion/springs";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/rondo/primitives";
 
 const FILTERS: { value: TournamentStatus | "all"; label: string }[] = [
-  { value: "all", label: "Nearby" },
+  { value: "all", label: "All" },
   { value: "registration", label: "Open" },
   { value: "active", label: "Live" },
   { value: "completed", label: "Completed" },
 ];
 
+/** Live and open brackets lead the list; finished cups sink to the bottom,
+ * most recent first — a month-old result shouldn't outrank today's match. */
+const STATUS_PRIORITY: Record<TournamentStatus, number> = {
+  active: 0,
+  registration: 1,
+  completed: 2,
+  cancelled: 3,
+};
+
+function sortForDisplay(tournaments: Tournament[]): Tournament[] {
+  return [...tournaments].sort((a, b) => {
+    const priorityDiff = STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status];
+    if (priorityDiff !== 0) return priorityDiff;
+    const aTime = new Date(a.starts_at).getTime();
+    const bTime = new Date(b.starts_at).getTime();
+    return a.status === "completed" ? bTime - aTime : aTime - bTime;
+  });
+}
+
 export default function TournamentsPage() {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [champions, setChampions] = useState<Map<string, ChampionSummary>>(new Map());
+  const [liveSummaries, setLiveSummaries] = useState<Map<string, LiveSummary>>(new Map());
   const [filter, setFilter] = useState<TournamentStatus | "all">("all");
   const [loading, setLoading] = useState(true);
   const reducedMotion = useReducedMotion();
@@ -33,8 +57,20 @@ export default function TournamentsPage() {
         .neq("status", "cancelled")
         .order("starts_at", { ascending: true })
         .limit(50);
-      setTournaments((data as Tournament[]) ?? []);
+      const rows = sortForDisplay((data as Tournament[]) ?? []);
+      setTournaments(rows);
       setLoading(false);
+      const completed = rows.filter((t) => t.status === "completed");
+      if (completed.length > 0) {
+        setChampions(await fetchTournamentChampions(supabase, completed));
+      }
+      const active = rows.filter((t) => t.status === "active");
+      if (active.length > 0) {
+        const teamCounts = new Map(
+          active.map((t) => [t.id, t.tournament_teams?.filter((tm) => tm.status === "registered").length ?? 0])
+        );
+        setLiveSummaries(await fetchTournamentLiveSummaries(supabase, active, teamCounts));
+      }
     }
     load();
   }, []);
@@ -146,7 +182,12 @@ export default function TournamentsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ ...gentle, delay: Math.min(index, 5) * 0.05 }}
               >
-                <TournamentCard tournament={tournament} href={`/tournaments/${tournament.id}`} />
+                <TournamentCard
+                  tournament={tournament}
+                  href={`/tournaments/${tournament.id}`}
+                  champion={champions.get(tournament.id) ?? null}
+                  liveSummary={liveSummaries.get(tournament.id) ?? null}
+                />
               </motion.div>
             ))}
           </div>

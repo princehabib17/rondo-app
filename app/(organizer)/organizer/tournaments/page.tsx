@@ -7,11 +7,16 @@ import { ArrowLeft, Plus, Trophy } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import type { Tournament } from "@/lib/supabase/types";
 import { TournamentCard } from "@/components/tournament/TournamentCard";
+import { fetchTournamentChampions, type ChampionSummary } from "@/lib/tournament/champions";
+import { fetchTournamentLiveSummaries } from "@/lib/tournament/liveSummary";
+import type { LiveSummary } from "@/lib/tournament/bracket";
 import { EmptyState, StatTile } from "@/components/rondo/primitives";
 
 export default function OrganizerTournamentsPage() {
   const router = useRouter();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [champions, setChampions] = useState<Map<string, ChampionSummary>>(new Map());
+  const [liveSummaries, setLiveSummaries] = useState<Map<string, LiveSummary>>(new Map());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,8 +32,20 @@ export default function OrganizerTournamentsPage() {
         .select("*, tournament_teams(id, status)")
         .eq("organizer_id", userData.user.id)
         .order("created_at", { ascending: false });
-      setTournaments((data as Tournament[]) ?? []);
+      const rows = (data as Tournament[]) ?? [];
+      setTournaments(rows);
       setLoading(false);
+      const completed = rows.filter((t) => t.status === "completed");
+      if (completed.length > 0) {
+        setChampions(await fetchTournamentChampions(supabase, completed));
+      }
+      const active = rows.filter((t) => t.status === "active");
+      if (active.length > 0) {
+        const teamCounts = new Map(
+          active.map((t) => [t.id, t.tournament_teams?.filter((tm) => tm.status === "registered").length ?? 0])
+        );
+        setLiveSummaries(await fetchTournamentLiveSummaries(supabase, active, teamCounts));
+      }
     }
     load();
   }, [router]);
@@ -89,6 +106,8 @@ export default function OrganizerTournamentsPage() {
                 key={tournament.id}
                 tournament={tournament}
                 href={`/organizer/tournaments/${tournament.id}/manage`}
+                champion={champions.get(tournament.id) ?? null}
+                liveSummary={liveSummaries.get(tournament.id) ?? null}
               />
             ))}
           </div>

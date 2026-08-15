@@ -114,7 +114,7 @@ export default function ReelsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] rondo-page flex items-center justify-center">
+      <div className="rondo-night flex min-h-[100dvh] items-center justify-center">
         <div className="w-10 h-10 border-2 border-[var(--gold)] border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -122,7 +122,7 @@ export default function ReelsPage() {
 
   if (reels.length === 0) {
     return (
-      <div className="min-h-[100dvh] rondo-page flex flex-col items-center justify-center gap-4 px-8 text-center">
+      <div className="rondo-night flex min-h-[100dvh] flex-col items-center justify-center gap-4 px-8 text-center">
         <p className="font-heading text-[var(--ink-hi)] font-black italic text-2xl uppercase">No Clips Yet</p>
         <p className="font-body text-[var(--ink-low)] text-sm">
           No clips posted yet. Check back soon.
@@ -130,24 +130,17 @@ export default function ReelsPage() {
         {isPlayer && (
           <button
             onClick={() => setShowUpload(true)}
-            className="rondo-btn rondo-btn-primary mt-4 !w-auto px-6"
+            className="mt-4 bg-[var(--gold)] text-[var(--gold-ink)] font-bold px-6 py-3 rounded-[var(--r-md)]"
           >
             Be the first — post a clip
           </button>
-        )}
-        {showUpload && currentUserId && (
-          <ReelUploadModal
-            userId={currentUserId}
-            onClose={() => setShowUpload(false)}
-            onUploaded={() => fetchReels(true)}
-          />
         )}
       </div>
     );
   }
 
   return (
-    <div className="relative bg-[var(--bg-page)] overflow-hidden" style={{ height: "100dvh" }}>
+    <div className="rondo-night relative overflow-hidden" style={{ height: "100dvh" }}>
       {/* Scroll container — vertical snap */}
       <div
         ref={containerRef}
@@ -178,7 +171,6 @@ export default function ReelsPage() {
         <button
           onClick={() => setShowUpload(true)}
           className="absolute top-14 right-4 w-10 h-10 rounded-full bg-[var(--gold)] text-[var(--gold-ink)] flex items-center justify-center shadow-lg z-20"
-          aria-label="Upload reel"
         >
           <PlusCircle size={20} />
         </button>

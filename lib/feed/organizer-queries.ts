@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { OrganizerGroup } from "@/lib/feed/organizers";
-import { PLACEHOLDER_ORGANIZERS } from "@/lib/feed/organizers";
 import { PLACEHOLDER_ORGANIZER_SEEDS } from "@/lib/seed/placeholder-organizers";
 import type { Profile } from "@/lib/supabase/types";
 
@@ -33,14 +32,16 @@ export async function fetchTopOrganizers(
             .limit(limit)
         ).data as OrganizerRow[] | null);
 
-  const realOrganizers = rows
-    ?.filter((profile) => (profile.games?.length ?? 0) > 0)
-    .map((profile) => ({
-      id: SLUG_BY_EMAIL[profile.email ?? ""] ?? profile.id,
-      full_name: profile.full_name,
-      avatar_url: profile.avatar_url,
-      verified: profile.organizer_verified ?? true,
-    }));
-
-  return realOrganizers && realOrganizers.length > 0 ? realOrganizers : PLACEHOLDER_ORGANIZERS;
+  // No invented brands here: when nobody real has hosted a game yet, the
+  // caller shows an honest empty state instead of fictional organizer cards.
+  return (
+    rows
+      ?.filter((profile) => (profile.games?.length ?? 0) > 0)
+      .map((profile) => ({
+        id: SLUG_BY_EMAIL[profile.email ?? ""] ?? profile.id,
+        full_name: profile.full_name,
+        avatar_url: profile.avatar_url,
+        verified: profile.organizer_verified ?? true,
+      })) ?? []
+  );
 }

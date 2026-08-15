@@ -1,4 +1,4 @@
-import type { TournamentMatch } from "@/lib/supabase/types";
+import type { Tournament, TournamentMatch, TournamentTeam } from "@/lib/supabase/types";
 
 /** A fixture slot produced by the generators, before it is persisted. */
 export interface FixtureSlot {
@@ -199,4 +199,86 @@ export function roundLabel(round: number, totalRounds: number): string {
   if (remaining === 1) return "Semifinals";
   if (remaining === 2) return "Quarterfinals";
   return `Round ${round}`;
+}
+
+export interface LiveSummary {
+  roundLabel: string;
+  matchesPlayed: number;
+  matchesTotal: number;
+}
+
+/**
+ * Real progress for an active tournament — current round (knockout) or
+ * matches played (league) — computed from actual matches. Used wherever a
+ * card wants to say something true about a live tournament instead of the
+ * literal word "Live".
+ */
+export function computeLiveSummary(
+  format: Tournament["format"],
+  teamCount: number,
+  matches: Pick<TournamentMatch, "round" | "status">[]
+): LiveSummary | null {
+  const playable = matches.filter((m) => m.status !== "bye");
+  if (playable.length === 0) return null;
+
+  const matchesPlayed = playable.filter((m) => m.status === "completed").length;
+
+  if (format === "single_elimination") {
+    const currentRound = playable
+      .filter((m) => m.status === "scheduled")
+      .reduce((min, m) => Math.min(min, m.round), Infinity);
+    const round = Number.isFinite(currentRound) ? currentRound : Math.max(...playable.map((m) => m.round));
+    return { roundLabel: roundLabel(round, totalEliminationRounds(teamCount)), matchesPlayed, matchesTotal: playable.length };
+  }
+
+  const currentMatchday = playable
+    .filter((m) => m.status === "scheduled")
+    .reduce((min, m) => Math.min(min, m.round), Infinity);
+  const matchday = Number.isFinite(currentMatchday) ? currentMatchday : Math.max(...playable.map((m) => m.round));
+  return { roundLabel: `Matchday ${matchday}`, matchesPlayed, matchesTotal: playable.length };
+}
+
+export interface ChampionResult {
+  teamId: string;
+  name: string;
+  detail: string;
+}
+
+/**
+ * The winning team for a finished tournament, derived straight from matches
+ * and teams — no dependency on award snapshots, so it works even when a
+ * champion team has no rostered members to award. Shared by the manage page,
+ * the player detail page, and any list that wants to show a real winner
+ * instead of a "champion pending" placeholder.
+ */
+export function computeChampion(
+  format: Tournament["format"],
+  teams: Pick<TournamentTeam, "id" | "name">[],
+  matches: Pick<TournamentMatch, "round" | "home_team_id" | "away_team_id" | "home_score" | "away_score" | "status">[]
+): ChampionResult | null {
+  if (format === "single_elimination") {
+    if (matches.length === 0) return null;
+    const finalRound = Math.max(...matches.map((m) => m.round));
+    const final = matches.find((m) => m.round === finalRound && m.status === "completed");
+    if (!final || final.home_score == null || final.away_score == null) return null;
+    const winnerId =
+      final.home_score > final.away_score
+        ? final.home_team_id
+        : final.away_score > final.home_score
+          ? final.away_team_id
+          : null;
+    const winner = winnerId ? teams.find((t) => t.id === winnerId) : null;
+    if (!winner) return null;
+    return { teamId: winner.id, name: winner.name, detail: `${final.home_score} - ${final.away_score} in the final` };
+  }
+
+  const standings = computeStandings(
+    teams.map((t) => t.id),
+    matches
+  );
+  const top = standings[0];
+  if (!top || top.played === 0) return null;
+  const winner = teams.find((t) => t.id === top.teamId);
+  if (!winner) return null;
+  return { teamId: winner.id, name: winner.name, detail: `${top.won}W ${top.drawn}D ${top.lost}L · ${top.points} pts` };
 }

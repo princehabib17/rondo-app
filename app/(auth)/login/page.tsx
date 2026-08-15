@@ -8,6 +8,7 @@ import { Phone } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { GuestScoutLinks } from "@/components/auth/GuestScoutLinks";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
+import { PasskeySignInButton } from "@/components/auth/PasskeySignInButton";
 import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
 import { isLikelyPhoneNumber, normalizePhoneNumber } from "@/lib/auth/phone";
 import { formatAuthError } from "@/lib/auth/format-auth-error";
@@ -152,16 +153,49 @@ export default function LoginPage() {
       </div>
 
       <h1 className="rondo-hero-title text-4xl mb-2">Log in</h1>
-      <p className="font-body text-white/50 text-sm mb-8">
-        Sign in with phone OTP, email, or social.
+      <p className="font-body text-[var(--ink-low)] text-sm mb-8">
+        Sign in with passkey, phone OTP, email, or social.
       </p>
+
+      <div className="mb-6">
+        <PasskeySignInButton
+          disabled={sending}
+          onError={setError}
+          onSuccess={async (userId) => {
+            const next = safeNext(new URLSearchParams(window.location.search).get("next"));
+            if (next) {
+              router.replace(next);
+              return;
+            }
+            const supabase = createClient();
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("role")
+              .eq("id", userId)
+              .single();
+            router.replace(profile?.role ? "/feed" : "/onboarding/slides");
+            router.refresh();
+          }}
+        />
+      </div>
+
+      <div className="relative mb-6">
+        <div className="absolute inset-0 flex items-center" aria-hidden>
+          <div className="w-full border-t border-[var(--stroke)]" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="bg-[var(--bg-page,#0a0a0a)] px-3 text-[10px] uppercase tracking-wider text-[var(--ink-low)]">
+            Or continue with
+          </span>
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 gap-2 mb-6">
         <button
           type="button"
           onClick={() => setMode("phone")}
-          className={`rounded-lg py-2 text-xs font-semibold uppercase tracking-wider ${
-            mode === "phone" ? "bg-rondo-accent text-black" : "bg-white/5 text-white/60"
+          className={`rounded-[var(--r-sm)] py-2 text-xs font-semibold uppercase tracking-wider ${
+            mode === "phone" ? "bg-[var(--gold)] text-[var(--gold-ink)]" : "bg-[var(--bg-inset)] text-[var(--ink-mid)]"
           }`}
         >
           Phone
@@ -169,8 +203,8 @@ export default function LoginPage() {
         <button
           type="button"
           onClick={() => setMode("email")}
-          className={`rounded-lg py-2 text-xs font-semibold uppercase tracking-wider ${
-            mode === "email" ? "bg-rondo-accent text-black" : "bg-white/5 text-white/60"
+          className={`rounded-[var(--r-sm)] py-2 text-xs font-semibold uppercase tracking-wider ${
+            mode === "email" ? "bg-[var(--gold)] text-[var(--gold-ink)]" : "bg-[var(--bg-inset)] text-[var(--ink-mid)]"
           }`}
         >
           Email
@@ -180,11 +214,11 @@ export default function LoginPage() {
       <form onSubmit={sendOtp} className="space-y-5">
         {mode === "phone" ? (
         <div className="space-y-2">
-          <label htmlFor="phone" className="font-body text-white/70 text-xs uppercase tracking-wider">
+          <label htmlFor="phone" className="font-body text-[var(--ink-mid)] text-xs uppercase tracking-wider">
             Phone number
           </label>
           <div className="relative">
-            <Phone size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/35" />
+            <Phone size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ink-low)]" />
             <input
               id="phone"
               value={phone}
@@ -200,7 +234,7 @@ export default function LoginPage() {
         ) : (
           <>
             <div className="space-y-2">
-              <label htmlFor="email" className="font-body text-white/70 text-xs uppercase tracking-wider">
+              <label htmlFor="email" className="font-body text-[var(--ink-mid)] text-xs uppercase tracking-wider">
                 Email
               </label>
               <input
@@ -214,7 +248,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="password" className="font-body text-white/70 text-xs uppercase tracking-wider">
+              <label htmlFor="password" className="font-body text-[var(--ink-mid)] text-xs uppercase tracking-wider">
                 Password
               </label>
               <input
@@ -231,7 +265,7 @@ export default function LoginPage() {
         )}
 
         {error && (
-          <p className="text-red-400 text-sm text-center" role="alert">
+          <p className="text-[var(--live)] text-sm text-center" role="alert">
             {error}
           </p>
         )}
@@ -241,11 +275,11 @@ export default function LoginPage() {
         </RondoButton>
       </form>
 
-      <p className="text-center text-white/55 text-sm mt-8">
+      <p className="text-center text-[var(--ink-mid)] text-sm mt-8">
         First time here?{" "}
         <Link
           href={`/signup${nextParam ? `?next=${encodeURIComponent(nextParam)}` : ""}`}
-          className="text-rondo-accent font-semibold hover:underline"
+          className="text-[var(--gold)] font-semibold hover:underline"
         >
           Create account
         </Link>

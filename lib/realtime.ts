@@ -30,6 +30,36 @@ export function subscribeToTournament(tournamentId: string, onChange: () => void
       },
       onChange
     )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "tournament_teams",
+        filter: `tournament_id=eq.${tournamentId}`,
+      },
+      onChange
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "tournament_team_members",
+        filter: `tournament_id=eq.${tournamentId}`,
+      },
+      onChange
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "tournament_goals",
+        filter: `tournament_id=eq.${tournamentId}`,
+      },
+      onChange
+    )
     .subscribe();
   return () => {
     supabase.removeChannel(channel);

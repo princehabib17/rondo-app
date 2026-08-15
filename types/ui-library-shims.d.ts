@@ -69,6 +69,7 @@ declare module "lucide-react" {
   export const Share2: LucideIcon;
   export const Shield: LucideIcon;
   export const ShieldCheck: LucideIcon;
+  export const ScanFace: LucideIcon;
   export const SlidersHorizontal: LucideIcon;
   export const Star: LucideIcon;
   export const Timer: LucideIcon;

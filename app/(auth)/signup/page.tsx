@@ -113,17 +113,17 @@ export default function SignupPage() {
       </div>
 
       <h1 className="rondo-hero-title text-4xl mb-2">Join Rondo</h1>
-      <p className="font-body text-white/50 text-sm mb-8">
+      <p className="font-body text-[var(--ink-low)] text-sm mb-8">
         Create your account with your phone number. No password.
       </p>
 
       <form onSubmit={sendOtp} className="space-y-5">
         <div className="space-y-2">
-          <label htmlFor="fullName" className="font-body text-white/70 text-xs uppercase tracking-wider">
+          <label htmlFor="fullName" className="font-body text-[var(--ink-mid)] text-xs uppercase tracking-wider">
             Full name
           </label>
           <div className="relative">
-            <UserRound size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/35" />
+            <UserRound size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ink-low)]" />
             <input
               id="fullName"
               value={fullName}
@@ -135,11 +135,11 @@ export default function SignupPage() {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="phone" className="font-body text-white/70 text-xs uppercase tracking-wider">
+          <label htmlFor="phone" className="font-body text-[var(--ink-mid)] text-xs uppercase tracking-wider">
             Phone number
           </label>
           <div className="relative">
-            <Phone size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/35" />
+            <Phone size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ink-low)]" />
             <input
               id="phone"
               value={phone}
@@ -154,7 +154,7 @@ export default function SignupPage() {
         </div>
 
         {error && (
-          <p className="text-red-400 text-sm text-center" role="alert">
+          <p className="text-[var(--live)] text-sm text-center" role="alert">
             {error}
           </p>
         )}
@@ -164,11 +164,11 @@ export default function SignupPage() {
         </RondoButton>
       </form>
 
-      <p className="text-center text-white/55 text-sm mt-8">
+      <p className="text-center text-[var(--ink-mid)] text-sm mt-8">
         Already have an account?{" "}
         <Link
           href={`/login${nextParam ? `?next=${encodeURIComponent(nextParam)}` : ""}`}
-          className="text-rondo-accent font-semibold hover:underline"
+          className="text-[var(--gold)] font-semibold hover:underline"
         >
           Log in
         </Link>

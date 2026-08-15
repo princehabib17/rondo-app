@@ -3,16 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Broadcast,
   CalendarBlank,
   House,
-  SquaresFour,
   MapPin,
-  Broadcast,
+  Trophy,
   User,
   UsersThree,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { motion, AnimatePresence } from "motion/react";
 import { snappy } from "@/components/motion/springs";
@@ -61,18 +61,20 @@ const playerTabs: TabDef[] = [
 
 const organizerTabs: TabDef[] = [
   {
-    href: "/feed",
-    icon: House,
-    label: "Feed",
-    isActive: (p) => p === "/feed",
-  },
-  {
     href: "/organizer/dashboard",
-    icon: SquaresFour,
-    label: "Dashboard",
+    icon: House,
+    label: "Home",
     isActive: (p) =>
       p === "/organizer/dashboard" ||
-      (p.startsWith("/organizer") && !p.startsWith("/organizer/room")),
+      (p.startsWith("/organizer") &&
+        !p.startsWith("/organizer/room") &&
+        !p.startsWith("/organizer/tournaments")),
+  },
+  {
+    href: "/organizer/tournaments",
+    icon: Trophy,
+    label: "Tournaments",
+    isActive: (p) => p.startsWith("/organizer/tournaments"),
   },
   {
     href: "/organizer/room",
@@ -92,6 +94,8 @@ export function BottomNav() {
   const pathname = usePathname();
   const [role, setRole] = useState<UserRole>(null);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const [visible, setVisible] = useState(true);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
     async function fetchRole() {
@@ -113,15 +117,28 @@ export function BottomNav() {
     setPendingHref(null);
   }, [pathname]);
 
+  useEffect(() => {
+    const onScroll = () => {
+      const current = window.scrollY;
+      setVisible(current < lastScrollY.current || current < 50);
+      lastScrollY.current = current;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   const isOrganizerRoute = pathname.startsWith("/organizer");
   const tabs = isOrganizerRoute || role === "organizer" ? organizerTabs : playerTabs;
 
   return (
-    <nav
-      className="fixed bottom-5 left-1/2 z-[200] -translate-x-1/2"
+    <motion.nav
+      animate={{ y: visible ? 0 : 100, opacity: visible ? 1 : 0 }}
+      transition={snappy}
+      className="fixed bottom-6 left-1/2 z-[200] -translate-x-1/2"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      aria-label="Primary"
     >
-      <div className="rondo-glass-nav flex h-[60px] items-center gap-1 rounded-[var(--r-lg)] border border-[var(--stroke)] px-2 shadow-[0_8px_40px_color-mix(in_oklch,var(--bg-page)_65%,transparent)]">
+      <div className="flex h-[60px] items-center gap-1 rounded-[26px] border border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-surface)_92%,transparent)] px-2 shadow-[0_8px_28px_color-mix(in_oklch,var(--ink-hi)_12%,transparent)] backdrop-blur-xl">
         {tabs.map(({ href, icon: Icon, label, isActive }) => {
           const active = isActive(pathname);
           const pending = pendingHref === href && !active;
@@ -135,13 +152,13 @@ export function BottomNav() {
               onClick={() => {
                 if (!active) setPendingHref(href);
               }}
-              className="relative flex h-11 w-[52px] items-center justify-center rounded-[var(--r-md)]"
+              className="relative flex h-11 w-[52px] items-center justify-center rounded-[14px]"
             >
               <AnimatePresence>
                 {highlighted && (
                   <motion.span
                     layoutId="nav-pill"
-                    className="absolute inset-0 rounded-[var(--r-md)] bg-[var(--gold-dim)]"
+                    className="absolute inset-0 rounded-[14px] border border-[color-mix(in_oklch,var(--gold)_28%,var(--stroke))] bg-[var(--gold-dim)]"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -152,23 +169,28 @@ export function BottomNav() {
 
               <motion.div
                 animate={highlighted ? { scale: [1, 0.84, 1.1, 1] } : { scale: 1 }}
-                transition={snappy}
+                transition={
+                  highlighted
+                    ? { duration: 0.35, times: [0, 0.3, 0.65, 1], ease: "easeOut" }
+                    : snappy
+                }
                 key={highlighted ? "active" : "inactive"}
                 className="relative z-10"
               >
                 <Icon
                   size={22}
-                  weight={highlighted ? "fill" : "duotone"}
+                  weight={highlighted ? "fill" : "regular"}
                   className={cn(
                     "transition-colors duration-150",
                     highlighted ? "text-[var(--gold)]" : "text-[var(--ink-low)]"
                   )}
+                  aria-hidden
                 />
               </motion.div>
             </Link>
           );
         })}
       </div>
-    </nav>
+    </motion.nav>
   );
 }

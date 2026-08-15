@@ -57,31 +57,31 @@ export default function InvitePage() {
 
   return (
     <div className="min-h-[100dvh] pb-8">
-      <header className="sticky top-0 bg-background/90 backdrop-blur-md border-b border-border z-40 px-4 py-3 flex items-center gap-3">
+      <header className="sticky top-0 bg-[var(--bg-page)]/90 backdrop-blur-md border-b border-[var(--stroke)] z-40 px-4 py-3 flex items-center gap-3">
         <button
           onClick={() => router.back()}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white hover:text-rondo-yellow transition-colors cursor-pointer"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--ink-hi)] hover:text-[var(--gold)] transition-colors cursor-pointer"
           aria-label="Back"
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-white font-bold text-base">Bring Your Squad</h1>
+        <h1 className="text-[var(--ink-hi)] font-bold text-base">Bring Your Squad</h1>
       </header>
 
       <div className="px-4 py-8 space-y-8 max-w-lg mx-auto text-center">
         <div className="space-y-2">
-          <div className="w-16 h-16 rounded-full bg-rondo-yellow/10 border border-rondo-yellow/20 flex items-center justify-center mx-auto">
-            <Users size={28} className="text-rondo-yellow" />
+          <div className="w-16 h-16 rounded-full bg-[var(--gold)]/10 border border-[var(--gold)]/20 flex items-center justify-center mx-auto">
+            <Users size={28} className="text-[var(--gold)]" />
           </div>
-          <h2 className="text-white font-black text-2xl tracking-tight">Bring Your Squad!</h2>
-          <p className="text-muted-foreground text-sm">
+          <h2 className="text-[var(--ink-hi)] font-black text-2xl tracking-tight">Bring Your Squad!</h2>
+          <p className="text-[var(--ink-low)] text-sm">
             Share this match with your friends so they can join too
           </p>
         </div>
 
         <button
           onClick={handleShare}
-          className="w-full bg-rondo-yellow text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-xl active:scale-[0.98] transition-all cursor-pointer min-h-[52px] flex items-center justify-center gap-2"
+          className="w-full bg-[var(--gold)] text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-[var(--r-md)] active:scale-[0.98] transition-all cursor-pointer min-h-[52px] flex items-center justify-center gap-2"
         >
           {copied ? (
             <>
@@ -98,14 +98,14 @@ export default function InvitePage() {
 
         <button
           onClick={() => router.push(`/games/${id}/confirmed`)}
-          className="w-full border border-border text-muted-foreground hover:text-white hover:border-border/80 text-sm py-4 rounded-xl active:scale-[0.98] transition-all cursor-pointer min-h-[52px] flex items-center justify-center gap-2"
+          className="w-full border border-[var(--stroke)] text-[var(--ink-low)] hover:text-[var(--ink-hi)] hover:border-[var(--stroke)]/80 text-sm py-4 rounded-[var(--r-md)] active:scale-[0.98] transition-all cursor-pointer min-h-[52px] flex items-center justify-center gap-2"
         >
           Skip <ChevronRight size={16} />
         </button>
 
         {players.length > 0 && (
           <div className="text-left space-y-3">
-            <p className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">
+            <p className="text-[var(--ink-low)] text-xs uppercase tracking-wider font-semibold">
               Already Joined ({players.length})
             </p>
             <div className="flex flex-wrap gap-3">
@@ -118,7 +118,7 @@ export default function InvitePage() {
                       showFlag
                       linkable
                     />
-                    <span className="text-muted-foreground text-[10px] max-w-[44px] truncate text-center">
+                    <span className="text-[var(--ink-low)] text-[10px] max-w-[44px] truncate text-center">
                       {gp.profile.full_name?.split(" ")[0]}
                     </span>
                   </div>

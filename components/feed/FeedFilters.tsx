@@ -62,13 +62,13 @@ export function FeedFiltersBar({
             "shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
             activeCount > 0
               ? "bg-[var(--gold)] text-[var(--gold-ink)] border-[var(--gold)]"
-              : "bg-[var(--bg-surface)] text-[var(--ink-mid)] border-[var(--stroke)] hover:border-[var(--ink-low)]"
+              : "bg-[var(--bg-inset)] text-[var(--ink-hi)] border-[var(--stroke)] hover:border-[var(--stroke)]"
           )}
         >
           <SlidersHorizontal size={13} strokeWidth={2.5} />
           Filters
           {activeCount > 0 && (
-            <span className="ml-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[var(--gold-ink)]/20 text-[var(--gold-ink)] text-[10px] flex items-center justify-center">
+            <span className="ml-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[var(--bg-page)]/20 text-[var(--gold-ink)] text-[10px] flex items-center justify-center">
               {activeCount}
             </span>
           )}
@@ -81,8 +81,8 @@ export function FeedFiltersBar({
           className={cn(
             "shrink-0 inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
             hasLocation
-              ? "bg-[var(--gold-dim)] text-[var(--gold)] border-[var(--gold)]/30"
-              : "bg-[var(--bg-surface)] text-[var(--ink-low)] border-[var(--stroke)] hover:border-[var(--ink-low)]"
+              ? "bg-[var(--gold)]/15 text-[var(--gold)] border-[var(--gold)]/30"
+              : "bg-[var(--bg-inset)] text-[var(--ink-mid)] border-[var(--stroke)] hover:border-[var(--stroke)]"
           )}
         >
           <MapPin size={12} />
@@ -99,8 +99,8 @@ export function FeedFiltersBar({
               className={cn(
                 "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
                 active
-                  ? "bg-[var(--ink-hi)] text-[var(--bg-page)] border-[var(--ink-hi)]"
-                  : "bg-[var(--bg-surface)] text-[var(--ink-mid)] border-[var(--stroke)] hover:border-[var(--ink-low)]"
+                  ? "bg-[var(--gold)] text-[var(--gold-ink)] border-[var(--gold)]"
+                  : "bg-[var(--bg-inset)] text-[var(--ink-mid)] border-[var(--stroke)] hover:border-[color-mix(in_oklch,var(--gold)_25%,var(--stroke))]"
               )}
             >
               {area}
@@ -117,7 +117,7 @@ export function FeedFiltersBar({
               key={chip.key}
               type="button"
               onClick={() => onChange(clearChip(filters, chip.key))}
-              className="shrink-0 inline-flex items-center gap-1 rounded-full bg-[var(--gold-dim)] border border-[var(--gold)]/25 text-[var(--gold)] px-2.5 py-1 text-[11px] font-semibold"
+              className="shrink-0 inline-flex items-center gap-1 rounded-full bg-[var(--gold)]/15 border border-[var(--gold)]/25 text-[var(--gold)] px-2.5 py-1 text-[11px] font-semibold"
             >
               {chip.label}
               <X size={11} strokeWidth={3} />
@@ -151,7 +151,7 @@ export function FeedFiltersBar({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="rondo-label text-[var(--ink-low)] mb-2">
+    <h3 className="font-heading text-[var(--ink-low)] text-[11px] uppercase tracking-wider mb-2">
       {children}
     </h3>
   );
@@ -174,7 +174,7 @@ function OptionChip({
         "rounded-full border px-3 py-2 text-xs font-semibold transition-colors",
         active
           ? "bg-[var(--gold)] text-[var(--gold-ink)] border-[var(--gold)]"
-          : "bg-[var(--bg-surface)] text-[var(--ink-mid)] border-[var(--stroke)] hover:border-[var(--ink-low)]"
+          : "bg-[var(--bg-inset)] text-[var(--ink-mid)] border-[var(--stroke)] hover:border-[var(--stroke)]"
       )}
     >
       {children}
@@ -260,10 +260,10 @@ function FilterSheet({
         className="absolute inset-0 bg-[var(--bg-page)]/70 backdrop-blur-sm animate-in fade-in duration-200"
       />
       <div
-        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg max-h-[88dvh] overflow-y-auto rounded-t-3xl bg-[var(--bg-surface)] border-t border-[var(--stroke)] shadow-2xl"
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg max-h-[88dvh] overflow-y-auto rounded-t-3xl bg-rondo-elevated border-t border-[var(--stroke)] shadow-2xl"
         style={{ animation: "rondoSheetUp 280ms cubic-bezier(0.32,0.72,0,1)" }}
       >
-        <div className="sticky top-0 z-10 bg-[var(--bg-surface)]/95 backdrop-blur-md flex items-center justify-between px-5 py-4 border-b border-[var(--stroke)]">
+        <div className="sticky top-0 z-10 bg-rondo-elevated/95 backdrop-blur-md flex items-center justify-between px-5 py-4 border-b border-[var(--stroke)]">
           <h2 className="font-heading text-[var(--ink-hi)] font-black italic text-lg uppercase">Filters</h2>
           <button
             type="button"
@@ -285,7 +285,7 @@ function FilterSheet({
                 disabled={locating}
                 className={cn(
                   "inline-flex items-center gap-1 text-[11px] font-semibold",
-                  hasLocation ? "text-[var(--gold)]" : "text-[var(--ink-low)] hover:text-[var(--ink-hi)]"
+                  hasLocation ? "text-[var(--gold)]" : "text-[var(--ink-mid)] hover:text-[var(--ink-hi)]"
                 )}
               >
                 <MapPin size={12} />
@@ -315,7 +315,7 @@ function FilterSheet({
                       "inline-flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-semibold transition-colors",
                       active
                         ? "bg-[var(--gold)] text-[var(--gold-ink)] border-[var(--gold)]"
-                        : "bg-[var(--bg-surface)] text-[var(--ink-mid)] border-[var(--stroke)] hover:border-[var(--ink-low)]"
+                        : "bg-[var(--bg-inset)] text-[var(--ink-mid)] border-[var(--stroke)] hover:border-[var(--stroke)]"
                     )}
                   >
                     {active && <Check size={12} strokeWidth={3} />}
@@ -414,11 +414,11 @@ function FilterSheet({
 
         </div>
 
-        <div className="sticky bottom-0 bg-[var(--bg-surface)]/95 backdrop-blur-md border-t border-[var(--stroke)] px-5 py-4 flex items-center gap-3">
+        <div className="sticky bottom-0 bg-rondo-elevated/95 backdrop-blur-md border-t border-[var(--stroke)] px-5 py-4 flex items-center gap-3">
           <button
             type="button"
             onClick={() => onChange(DEFAULT_FILTERS)}
-            className="text-[var(--ink-low)] hover:text-[var(--ink-hi)] text-sm font-semibold px-2"
+            className="text-[var(--ink-mid)] hover:text-[var(--ink-hi)] text-sm font-semibold px-2"
           >
             Reset
           </button>

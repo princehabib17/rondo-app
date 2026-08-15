@@ -1,17 +1,20 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isGuestUser } from "@/lib/auth/is-guest";
-import type { Game } from "@/lib/supabase/types";
-import { fetchTopOrganizers } from "@/lib/feed/organizer-queries";
 import { fetchOpenGames } from "@/lib/supabase/game-queries";
+import {
+  fetchAroundYouTournaments,
+  fetchHomeNextUp,
+  fetchRecentMatches,
+  fetchYourTournaments,
+} from "@/lib/feed/home-queries";
 import { FeedPageClient } from "@/components/feed/FeedPageClient";
-
-const PAGE_SIZE = 20;
 
 export default async function FeedPage() {
   const supabase = await createClient();
   const { data: userData } = await supabase.auth.getUser();
   const user = userData.user;
+  const userId = user && !isGuestUser(user) ? user.id : null;
 
   if (user && !isGuestUser(user)) {
     const { data: profile } = await supabase
@@ -23,11 +26,17 @@ export default async function FeedPage() {
     if (!profile?.role) {
       redirect("/onboarding/slides");
     }
+
+    if (profile.role === "organizer") {
+      redirect("/organizer/dashboard");
+    }
   }
 
-  const [initialGames, initialOrganizers, unreadCount] = await Promise.all([
-    fetchOpenGames(supabase, { from: 0, to: PAGE_SIZE - 1 }),
-    fetchTopOrganizers(supabase),
+  const [nextUp, yourTournaments, openGames, recentMatches, unreadCount] = await Promise.all([
+    fetchHomeNextUp(supabase, userId),
+    fetchYourTournaments(supabase, userId),
+    fetchOpenGames(supabase, { from: 0, to: 11 }),
+    fetchRecentMatches(supabase, userId),
     user
       ? supabase
           .from("notifications")
@@ -38,13 +47,20 @@ export default async function FeedPage() {
       : Promise.resolve(0),
   ]);
 
+  const aroundYou = await fetchAroundYouTournaments(
+    supabase,
+    yourTournaments.map((t) => t.id)
+  );
+
   return (
     <FeedPageClient
-      initialGames={initialGames as Game[]}
-      initialOrganizers={initialOrganizers}
+      nextUp={nextUp}
+      yourTournaments={yourTournaments}
+      aroundYou={aroundYou}
+      recentMatches={recentMatches}
+      openGames={openGames}
       initialNotificationCount={unreadCount}
-      initialHasMore={initialGames.length === PAGE_SIZE}
-      shouldExpireReservations={Boolean(user && !isGuestUser(user))}
+      shouldExpireReservations={Boolean(userId)}
     />
   );
 }

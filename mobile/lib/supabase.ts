@@ -12,6 +12,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
+    // Opt into Supabase Auth passkeys (WebAuthn). Native Face ID / Touch ID
+    // still needs a platform authenticator plugin; web builds use the browser API.
+    experimental: { passkey: true },
   },
 });
 

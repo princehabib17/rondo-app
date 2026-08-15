@@ -39,7 +39,7 @@ export default function HomePage() {
 
   return (
     <main className="relative min-h-[100dvh] overflow-hidden rondo-page text-[var(--ink-hi)]">
-      <div className="absolute inset-0 opacity-60">
+      <div className="absolute inset-0 opacity-70">
         <Image
           src="/feed/hero-night-court.png"
           alt="Night football court under floodlights"
@@ -49,7 +49,7 @@ export default function HomePage() {
           sizes="100vw"
         />
       </div>
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_oklch,var(--bg-page)_68%,transparent)_0%,color-mix(in_oklch,var(--bg-page)_38%,transparent)_42%,var(--bg-page)_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_oklch,var(--bg-page)_55%,transparent)_0%,color-mix(in_oklch,var(--bg-page)_42%,transparent)_38%,var(--bg-page)_100%)]" />
 
       <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-lg flex-col justify-end px-4 pb-8 pt-5 sm:justify-center">
         <motion.div className="mb-auto flex items-center justify-between sm:mb-10" {...enter(0)}>

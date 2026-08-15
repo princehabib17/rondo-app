@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Calendar, Megaphone, MapPin, Radio } from "lucide-react";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { formatGameDate, formatRelativeTime } from "@/lib/utils/format";
 import type { Announcement, Game, Profile } from "@/lib/supabase/types";
@@ -65,6 +66,7 @@ export default function OrganizerHubPage() {
     const resolved = await resolveOrganizer(supabase, id);
 
     if (!resolved) {
+      toast.error("That organizer page doesn't exist anymore.");
       router.replace("/feed");
       return;
     }
@@ -175,8 +177,8 @@ export default function OrganizerHubPage() {
 
   if (loading || !organizer) {
     return (
-      <div className="min-h-[100dvh] bg-black flex items-center justify-center">
-        <div className="w-2 h-2 rounded-full bg-rondo-accent animate-ping" />
+      <div className="min-h-[100dvh] bg-[var(--bg-page)] flex items-center justify-center">
+        <div className="w-2 h-2 rounded-full bg-[var(--gold)] animate-ping" />
       </div>
     );
   }
@@ -184,28 +186,28 @@ export default function OrganizerHubPage() {
   const canBroadcast = !isPlaceholder && currentUserId === organizer.id;
 
   return (
-    <div className="min-h-[100dvh] bg-black pb-8">
-      <header className="sticky top-0 z-10 bg-black/95 backdrop-blur-md border-b border-white/5 px-4 py-3">
+    <div className="min-h-[100dvh] bg-[var(--bg-page)] pb-8">
+      <header className="sticky top-0 z-10 bg-[var(--bg-page)]/95 backdrop-blur-md border-b border-[var(--stroke)] px-4 py-3">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => router.back()}
-            className="w-10 h-10 flex items-center justify-center text-white/80 hover:text-white"
+            className="w-10 h-10 flex items-center justify-center text-[var(--ink-hi)] hover:text-[var(--ink-hi)]"
             aria-label="Back"
           >
             <ArrowLeft size={20} />
           </button>
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-full bg-[#1c1c1c] border border-white/10 flex items-center justify-center shrink-0">
-              <span className="font-heading text-white font-black text-sm">
+            <div className="w-10 h-10 rounded-full bg-[var(--bg-inset)] border border-[var(--stroke)] flex items-center justify-center shrink-0">
+              <span className="font-heading text-[var(--ink-hi)] font-black text-sm">
                 {getOrganizerInitials(organizer.full_name)}
               </span>
             </div>
             <div className="min-w-0">
-              <h1 className="font-heading text-white font-black italic text-lg uppercase truncate">
+              <h1 className="font-heading text-[var(--ink-hi)] font-black italic text-lg uppercase truncate">
                 {organizer.full_name}
               </h1>
-              <p className="font-body text-white/50 text-xs">Organizer group</p>
+              <p className="font-body text-[var(--ink-low)] text-xs">Organizer group</p>
             </div>
           </div>
         </div>
@@ -213,12 +215,12 @@ export default function OrganizerHubPage() {
 
       <section className="px-4 pt-5">
         {canBroadcast && (
-          <form onSubmit={handleBroadcastSubmit} className="mb-4 bg-[#141414] border border-white/10 rounded-xl p-4 space-y-3">
-            <h3 className="font-heading text-white text-sm font-black uppercase">Post Broadcast</h3>
+          <form onSubmit={handleBroadcastSubmit} className="mb-4 bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] p-4 space-y-3">
+            <h3 className="font-heading text-[var(--ink-hi)] text-sm font-black uppercase">Post Broadcast</h3>
             <select
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value as BroadcastCategory)}
-              className="w-full bg-black border border-white/10 text-white rounded-lg px-3 py-2 text-sm"
+              className="w-full bg-[var(--bg-page)] border border-[var(--stroke)] text-[var(--ink-hi)] rounded-[var(--r-sm)] px-3 py-2 text-sm"
             >
               <option value="general">General</option>
               <option value="game_on">Game On</option>
@@ -231,13 +233,13 @@ export default function OrganizerHubPage() {
               onChange={(e) => setNewBody(e.target.value)}
               maxLength={500}
               placeholder="Share updates with your players..."
-              className="w-full h-24 bg-black border border-white/10 text-white rounded-lg p-3 text-sm resize-none"
+              className="w-full h-24 bg-[var(--bg-page)] border border-[var(--stroke)] text-[var(--ink-hi)] rounded-[var(--r-sm)] p-3 text-sm resize-none"
             />
-            {postError && <p className="text-red-400 text-xs">{postError}</p>}
+            {postError && <p className="text-[var(--live)] text-xs">{postError}</p>}
             <button
               type="submit"
               disabled={sending || !newBody.trim()}
-              className="w-full bg-rondo-accent text-black font-heading font-black uppercase tracking-widest text-xs py-3 rounded-lg disabled:opacity-50"
+              className="w-full bg-[var(--gold)] text-[var(--gold-ink)] font-heading font-black uppercase tracking-widest text-xs py-3 rounded-[var(--r-sm)] disabled:opacity-50"
             >
               {sending ? "Posting..." : "Post Broadcast"}
             </button>
@@ -245,12 +247,12 @@ export default function OrganizerHubPage() {
         )}
 
         <div className="flex items-center gap-2 mb-3">
-          <Megaphone size={15} className="text-rondo-accent" />
-          <h2 className="font-heading text-white font-black italic text-sm uppercase">Broadcasts</h2>
+          <Megaphone size={15} className="text-[var(--gold)]" />
+          <h2 className="font-heading text-[var(--ink-hi)] font-black italic text-sm uppercase">Broadcasts</h2>
         </div>
 
         {broadcasts.length === 0 ? (
-          <p className="font-body text-white/40 text-sm bg-[#141414] border border-white/10 rounded-xl p-4">
+          <p className="font-body text-[var(--ink-low)] text-sm bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] p-4">
             No broadcasts yet. Only the organizer can post updates here.
           </p>
         ) : (
@@ -258,13 +260,13 @@ export default function OrganizerHubPage() {
             {broadcasts.map((item) => (
               <article
                 key={item.id}
-                className="bg-[#141414] border border-white/10 rounded-xl p-4"
+                className="bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] p-4"
               >
-                <p className="font-heading text-rondo-accent text-[10px] uppercase tracking-wider mb-1">
+                <p className="font-heading text-[var(--gold)] text-[10px] uppercase tracking-wider mb-1">
                   {CATEGORY_LABEL[item.category]}
                 </p>
-                <p className="font-body text-white/90 text-sm leading-relaxed">{item.body}</p>
-                <p className="font-body text-white/40 text-xs mt-2">
+                <p className="font-body text-[var(--ink-hi)] text-sm leading-relaxed">{item.body}</p>
+                <p className="font-body text-[var(--ink-low)] text-xs mt-2">
                   {formatRelativeTime(item.created_at)}
                 </p>
               </article>
@@ -275,26 +277,26 @@ export default function OrganizerHubPage() {
 
       <section className="px-4 pt-6">
         <div className="flex items-center gap-2 mb-3">
-          <Calendar size={15} className="text-rondo-accent" />
-          <h2 className="font-heading text-white font-black italic text-sm uppercase">
+          <Calendar size={15} className="text-[var(--gold)]" />
+          <h2 className="font-heading text-[var(--ink-hi)] font-black italic text-sm uppercase">
             Upcoming Games
           </h2>
         </div>
 
         {games.length === 0 ? (
-          <p className="font-body text-white/40 text-sm">No upcoming games from this organizer.</p>
+          <p className="font-body text-[var(--ink-low)] text-sm">No upcoming games from this organizer.</p>
         ) : (
           <div className="space-y-3">
             {games.map((game) => (
               <Link
                 key={game.id}
                 href={`/games/${game.id}`}
-                className="block bg-[#141414] border border-white/10 rounded-xl p-4 hover:border-rondo-accent/30 transition-colors"
+                className="block bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] p-4 hover:border-[var(--gold)]/30 transition-colors"
               >
-                <h3 className="font-heading text-white font-black italic uppercase text-base mb-2">
+                <h3 className="font-heading text-[var(--ink-hi)] font-black italic uppercase text-base mb-2">
                   {game.title}
                 </h3>
-                <div className="space-y-1 font-body text-white/50 text-xs">
+                <div className="space-y-1 font-body text-[var(--ink-low)] text-xs">
                   <div className="flex items-center gap-2">
                     <Calendar size={12} />
                     <span>{formatGameDate(game.date_time)}</span>
@@ -313,12 +315,12 @@ export default function OrganizerHubPage() {
       {/* Room section — organizer's broadcast room updates */}
       <section className="px-4 pt-6 pb-8">
         <div className="flex items-center gap-2 mb-3">
-          <Radio size={15} className="text-rondo-accent" />
-          <h2 className="font-heading text-white font-black italic text-sm uppercase">Room</h2>
+          <Radio size={15} className="text-[var(--gold)]" />
+          <h2 className="font-heading text-[var(--ink-hi)] font-black italic text-sm uppercase">Room</h2>
         </div>
 
         {roomBroadcasts.length === 0 ? (
-          <p className="font-body text-white/40 text-sm bg-[#141414] border border-white/10 rounded-xl p-4">
+          <p className="font-body text-[var(--ink-low)] text-sm bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] p-4">
             No updates yet.
           </p>
         ) : (
@@ -326,10 +328,10 @@ export default function OrganizerHubPage() {
             {roomBroadcasts.map((item) => (
               <article
                 key={item.id}
-                className="bg-[#141414] border border-white/10 rounded-xl p-4"
+                className="bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] p-4"
               >
-                <p className="font-body text-white/90 text-sm leading-relaxed">{item.body}</p>
-                <p className="font-body text-white/40 text-xs mt-2">
+                <p className="font-body text-[var(--ink-hi)] text-sm leading-relaxed">{item.body}</p>
+                <p className="font-body text-[var(--ink-low)] text-xs mt-2">
                   {formatRelativeTime(item.created_at)}
                 </p>
               </article>

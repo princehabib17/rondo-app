@@ -39,7 +39,7 @@ export function PlayerAvatar({ profile, size = "md", showFlag = true, linkable =
       <div
         className={cn(
           sizeClasses[size],
-          "rounded-full bg-secondary border border-border flex items-center justify-center overflow-hidden cursor-pointer hover:border-rondo-yellow/60 transition-colors"
+          "rounded-full bg-[var(--bg-inset)] border border-[var(--stroke)] flex items-center justify-center overflow-hidden cursor-pointer hover:border-[var(--gold)]/60 transition-colors"
         )}
       >
         {profile.avatar_url ? (
@@ -49,7 +49,7 @@ export function PlayerAvatar({ profile, size = "md", showFlag = true, linkable =
             className="w-full h-full object-cover"
           />
         ) : (
-          <span className="text-muted-foreground font-semibold">{initials}</span>
+          <span className="text-[var(--ink-low)] font-semibold">{initials}</span>
         )}
       </div>
       {showFlag && flag && (
@@ -77,7 +77,7 @@ export function PlayerAvatarStack({ profiles, max = 4 }: { profiles: Profile[]; 
         <PlayerAvatar key={p.id} profile={p} size="sm" showFlag={false} linkable />
       ))}
       {overflow > 0 && (
-        <div className="w-9 h-9 rounded-full bg-secondary border border-border flex items-center justify-center text-xs text-muted-foreground font-medium">
+        <div className="w-9 h-9 rounded-full bg-[var(--bg-inset)] border border-[var(--stroke)] flex items-center justify-center text-xs text-[var(--ink-low)] font-medium">
           +{overflow}
         </div>
       )}

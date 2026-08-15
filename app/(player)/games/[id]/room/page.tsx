@@ -38,46 +38,46 @@ export default function OrganizerRoomPage() {
 
   return (
     <div className="min-h-[100dvh] rondo-page pb-24">
-      <header className="sticky top-0 z-40 rondo-glass-nav border-b border-white/5 px-4 py-3 flex items-center gap-3">
+      <header className="sticky top-0 z-40 rondo-glass-nav border-b border-[var(--stroke)] px-4 py-3 flex items-center gap-3">
         <button
           type="button"
           onClick={() => router.back()}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--ink-hi)]"
           aria-label="Back"
         >
           <ArrowLeft size={20} />
         </button>
         <div className="flex-1 min-w-0">
-          <h1 className="font-heading text-white font-black italic text-sm uppercase truncate">
+          <h1 className="font-heading text-[var(--ink-hi)] font-black italic text-sm uppercase truncate">
             Organizer room
           </h1>
-          <p className="font-body text-white/45 text-xs truncate">{title}</p>
+          <p className="font-body text-[var(--ink-low)] text-xs truncate">{title}</p>
         </div>
       </header>
 
       <div className="px-4 py-6 max-w-lg mx-auto space-y-4">
-        <p className="font-body text-white/50 text-sm">
+        <p className="font-body text-[var(--ink-low)] text-sm">
           Updates from the organizer. Read-only — no squad chat here.
         </p>
 
         {loading ? (
           <div className="space-y-3">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="h-20 rondo-surface rondo-shimmer rounded-xl" />
+              <div key={i} className="h-20 rondo-surface rondo-shimmer rounded-[var(--r-md)]" />
             ))}
           </div>
         ) : rows.length === 0 ? (
           <div className="rondo-surface p-8 text-center">
-            <Megaphone size={28} className="text-white/30 mx-auto mb-3" />
-            <p className="text-white/60 text-sm">No announcements yet.</p>
+            <Megaphone size={28} className="text-[var(--ink-low)] mx-auto mb-3" />
+            <p className="text-[var(--ink-mid)] text-sm">No announcements yet.</p>
           </div>
         ) : (
           rows.map((row) => (
             <article key={row.id} className="rondo-surface p-4">
-              <p className="text-white/40 text-[10px] uppercase mb-2">
+              <p className="text-[var(--ink-low)] text-[10px] uppercase mb-2">
                 {row.organizer?.full_name ?? "Organizer"} · {formatRelativeTime(row.created_at)}
               </p>
-              <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{row.body}</p>
+              <p className="text-[var(--ink-hi)] text-sm leading-relaxed whitespace-pre-wrap">{row.body}</p>
             </article>
           ))
         )}

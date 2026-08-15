@@ -15,8 +15,8 @@ type MessageWithProfile = Message;
 function MessageSkeleton({ align }: { align: "left" | "right" }) {
   return (
     <div className={cn("flex items-end gap-2", align === "right" && "flex-row-reverse")}>
-      <div className="w-7 h-7 rounded-full bg-white/10 animate-pulse shrink-0" />
-      <div className={cn("h-10 w-48 rounded-2xl bg-white/10 animate-pulse", align === "right" && "rounded-br-sm")} />
+      <div className="w-7 h-7 rounded-full bg-[var(--bg-inset)] animate-pulse shrink-0" />
+      <div className={cn("h-10 w-48 rounded-[var(--r-md)] bg-[var(--bg-inset)] animate-pulse", align === "right" && "rounded-br-sm")} />
     </div>
   );
 }
@@ -170,22 +170,22 @@ export default function LegacyChatRedirectPage() {
   return (
     <div className="min-h-[100dvh] flex flex-col max-w-lg mx-auto">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-zinc-950/85 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center gap-3 shrink-0">
+      <header className="sticky top-0 z-40 bg-zinc-950/85 backdrop-blur-md border-b border-[var(--stroke)] px-4 py-3 flex items-center gap-3 shrink-0">
         <button
           onClick={() => router.back()}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white hover:text-rondo-yellow transition-colors cursor-pointer active:scale-[0.95]"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--ink-hi)] hover:text-[var(--gold)] transition-colors cursor-pointer active:scale-[0.95]"
           aria-label="Go back"
         >
           <ArrowLeft size={20} />
         </button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-white font-bold text-sm truncate">{gameTitle || "Game Chat"}</h1>
-          <p className="text-muted-foreground text-xs">{playerCount} players</p>
+          <h1 className="text-[var(--ink-hi)] font-bold text-sm truncate">{gameTitle || "Game Chat"}</h1>
+          <p className="text-[var(--ink-low)] text-xs">{playerCount} players</p>
         </div>
         {isConnected ? (
-          <div className="flex items-center gap-1.5 bg-rondo-yellow/10 border border-rondo-yellow/20 rounded-full px-3 py-1">
+          <div className="flex items-center gap-1.5 bg-[var(--gold)]/10 border border-[var(--gold)]/20 rounded-full px-3 py-1">
             <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-rondo-yellow text-xs font-semibold">Live</span>
+            <span className="text-[var(--gold)] text-xs font-semibold">Live</span>
           </div>
         ) : (
           <button
@@ -193,7 +193,7 @@ export default function LegacyChatRedirectPage() {
             className="flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 rounded-full px-3 py-1 active:scale-[0.96] transition-transform"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-red-400 text-xs font-semibold">Retry</span>
+            <span className="text-[var(--live)] text-xs font-semibold">Retry</span>
           </button>
         )}
       </header>
@@ -208,11 +208,11 @@ export default function LegacyChatRedirectPage() {
           </div>
         ) : groups.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full py-16 gap-3">
-            <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-              <MessageCircle size={24} className="text-muted-foreground" />
+            <div className="w-14 h-14 rounded-full bg-[var(--bg-inset)] border border-[var(--stroke)] flex items-center justify-center">
+              <MessageCircle size={24} className="text-[var(--ink-low)]" />
             </div>
-            <p className="text-white font-semibold text-sm">No messages yet</p>
-            <p className="text-muted-foreground text-xs text-center max-w-[220px]">
+            <p className="text-[var(--ink-hi)] font-semibold text-sm">No messages yet</p>
+            <p className="text-[var(--ink-low)] text-xs text-center max-w-[220px]">
               Be the first to say something to your squad.
             </p>
           </div>
@@ -227,7 +227,7 @@ export default function LegacyChatRedirectPage() {
                   {group.profile ? (
                     <PlayerAvatar profile={group.profile} size="xs" showFlag={false} linkable />
                   ) : (
-                    <div className="w-7 h-7 rounded-full bg-secondary border border-border flex items-center justify-center text-[10px] text-muted-foreground font-bold">
+                    <div className="w-7 h-7 rounded-full bg-[var(--bg-inset)] border border-[var(--stroke)] flex items-center justify-center text-[10px] text-[var(--ink-low)] font-bold">
                       ?
                     </div>
                   )}
@@ -237,7 +237,7 @@ export default function LegacyChatRedirectPage() {
                 <div className={cn("flex flex-col gap-1 max-w-[72%]", isOwn && "items-end")}>
                   {/* Sender name */}
                   {!isOwn && (
-                    <span className="text-muted-foreground text-[10px] font-medium px-1">
+                    <span className="text-[var(--ink-low)] text-[10px] font-medium px-1">
                       {group.profile?.full_name ?? "Player"}
                     </span>
                   )}
@@ -248,8 +248,8 @@ export default function LegacyChatRedirectPage() {
                       className={cn(
                         "px-3.5 py-2 text-sm leading-relaxed break-words",
                         isOwn
-                          ? "bg-rondo-yellow text-rondo-black font-medium rounded-2xl rounded-br-sm"
-                          : "bg-zinc-800 text-white rounded-2xl rounded-bl-sm",
+                          ? "bg-[var(--gold)] text-rondo-black font-medium rounded-[var(--r-md)] rounded-br-sm"
+                          : "bg-zinc-800 text-[var(--ink-hi)] rounded-[var(--r-md)] rounded-bl-sm",
                         mi === 0 && isOwn && "rounded-tr-2xl",
                         mi === 0 && !isOwn && "rounded-tl-2xl"
                       )}
@@ -259,7 +259,7 @@ export default function LegacyChatRedirectPage() {
                   ))}
 
                   {/* Timestamp under last bubble */}
-                  <span className="text-muted-foreground text-[10px] px-1">
+                  <span className="text-[var(--ink-low)] text-[10px] px-1">
                     {formatRelativeTime(lastMsg.created_at)}
                   </span>
                 </div>
@@ -271,7 +271,7 @@ export default function LegacyChatRedirectPage() {
       </div>
 
       {/* Input bar — sits above bottom nav */}
-      <div className="sticky bottom-16 left-0 right-0 bg-zinc-950/90 backdrop-blur-md border-t border-white/10 px-4 py-3 flex items-end gap-3 shrink-0">
+      <div className="sticky bottom-16 left-0 right-0 bg-zinc-950/90 backdrop-blur-md border-t border-[var(--stroke)] px-4 py-3 flex items-end gap-3 shrink-0">
         <textarea
           ref={inputRef}
           value={input}
@@ -279,14 +279,14 @@ export default function LegacyChatRedirectPage() {
           onKeyDown={handleKeyDown}
           rows={1}
           placeholder="Say something..."
-          className="flex-1 resize-none bg-zinc-800 border border-white/10 rounded-2xl px-4 py-3 text-white text-sm placeholder:text-muted-foreground focus:outline-none focus:border-rondo-yellow/40 transition-colors max-h-24 leading-relaxed min-h-[44px]"
+          className="flex-1 resize-none bg-zinc-800 border border-[var(--stroke)] rounded-[var(--r-md)] px-4 py-3 text-[var(--ink-hi)] text-sm placeholder:text-[var(--ink-low)] focus:outline-none focus:border-[var(--gold)]/40 transition-colors max-h-24 leading-relaxed min-h-[44px]"
           style={{ fieldSizing: "content" } as React.CSSProperties}
         />
         <button
           onClick={sendMessage}
           disabled={!input.trim() || sending || isGuest}
           aria-label="Send message"
-          className="min-w-[44px] min-h-[44px] rounded-full bg-rondo-yellow flex items-center justify-center active:scale-[0.92] transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer hover:brightness-95 shrink-0"
+          className="min-w-[44px] min-h-[44px] rounded-full bg-[var(--gold)] flex items-center justify-center active:scale-[0.92] transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer hover:brightness-95 shrink-0"
         >
           <ArrowUp size={18} className="text-rondo-black" strokeWidth={2.5} />
         </button>

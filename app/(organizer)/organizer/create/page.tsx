@@ -8,8 +8,8 @@ export default function CreateHubPage() {
   const router = useRouter();
 
   return (
-    <div className="min-h-[100dvh] rondo-page pb-12">
-      <header className="sticky top-0 rondo-glass-nav border-b border-[var(--stroke)] z-40 px-4 py-3 flex items-center gap-3">
+    <div className="min-h-[100dvh] bg-[var(--bg-page)] pb-12">
+      <header className="sticky top-0 bg-[var(--bg-page)]/90 backdrop-blur-md border-b border-[var(--stroke)] z-40 px-4 py-3 flex items-center gap-3">
         <button
           onClick={() => router.back()}
           className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--ink-hi)] hover:text-[var(--gold)] transition-colors"
@@ -31,11 +31,11 @@ export default function CreateHubPage() {
         {/* Create Match card */}
         <Link
           href="/organizer/create/match"
-          className="group block overflow-hidden rounded-2xl border border-[var(--stroke)] bg-[var(--bg-surface)] transition-all hover:border-[var(--gold)]/40 active:scale-[0.99]"
+          className="group block overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.035] transition-all hover:border-[var(--gold)]/40 active:scale-[0.99]"
         >
-          <div className="relative h-36 overflow-hidden bg-[radial-gradient(circle_at_18%_28%,color-mix(in_oklch,var(--gold)_22%,transparent),transparent_48%),linear-gradient(135deg,var(--bg-surface),var(--bg-page))]">
+          <div className="relative h-36 overflow-hidden bg-[radial-gradient(circle_at_18%_28%,rgba(233,255,58,0.22),transparent_48%),linear-gradient(135deg,#161606,#050505)]">
             <div className="absolute inset-0 flex items-center px-5">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--gold-dim)] text-[var(--gold)] ring-1 ring-[var(--gold)]/20">
+              <div className="flex h-16 w-16 items-center justify-center rounded-[var(--r-md)] bg-[var(--gold)]/15 text-[var(--gold)] ring-1 ring-[color-mix(in_oklch,var(--gold)_20%,transparent)]">
                 <ClipboardList size={28} />
               </div>
             </div>
@@ -60,11 +60,11 @@ export default function CreateHubPage() {
         {/* Build Tournament card */}
         <Link
           href="/organizer/tournaments/create"
-          className="group block overflow-hidden rounded-2xl border border-[var(--stroke)] bg-[var(--bg-surface)] transition-all hover:border-[var(--gold)]/40 active:scale-[0.99]"
+          className="group block overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.035] transition-all hover:border-[var(--gold)]/40 active:scale-[0.99]"
         >
-          <div className="relative h-36 overflow-hidden bg-[radial-gradient(circle_at_82%_22%,color-mix(in_oklch,var(--gold)_16%,transparent),transparent_46%),linear-gradient(135deg,var(--bg-surface),var(--bg-page))]">
+          <div className="relative h-36 overflow-hidden bg-[radial-gradient(circle_at_82%_22%,rgba(245,197,24,0.16),transparent_46%),linear-gradient(135deg,#111,#060606)]">
             <div className="absolute inset-0 flex items-center px-5">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--gold-dim)] text-[var(--gold)] ring-1 ring-[var(--gold)]/20">
+              <div className="flex h-16 w-16 items-center justify-center rounded-[var(--r-md)] bg-[var(--gold)]/15 text-[var(--gold)] ring-1 ring-[color-mix(in_oklch,var(--gold)_20%,transparent)]">
                 <Trophy size={28} />
               </div>
             </div>
@@ -89,11 +89,11 @@ export default function CreateHubPage() {
         {/* Organization card */}
         <Link
           href="/organizer/organizations"
-          className="group block overflow-hidden rounded-2xl border border-[var(--stroke)] bg-[var(--bg-surface)] transition-all hover:border-[var(--stroke)] active:scale-[0.99]"
+          className="group block overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.035] transition-all hover:border-[var(--stroke)] active:scale-[0.99]"
         >
-          <div className="relative h-36 overflow-hidden bg-[radial-gradient(circle_at_50%_50%,color-mix(in_oklch,var(--ink-hi)_7%,transparent),transparent_55%),linear-gradient(135deg,var(--bg-surface),var(--bg-page))]">
+          <div className="relative h-36 overflow-hidden bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.07),transparent_55%),linear-gradient(135deg,#101010,#050505)]">
             <div className="absolute inset-0 flex items-center px-5">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--bg-inset)] text-[var(--ink-mid)] ring-1 ring-[var(--stroke)]">
+              <div className="flex h-16 w-16 items-center justify-center rounded-[var(--r-md)] bg-[var(--bg-inset)] text-[var(--ink-mid)] ring-1 ring-[var(--stroke)]">
                 <Building2 size={28} />
               </div>
             </div>

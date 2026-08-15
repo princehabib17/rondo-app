@@ -5,12 +5,11 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { OnboardingHeader } from "@/components/onboarding/OnboardingHeader";
-import { RondoButton } from "@/components/rondo/primitives";
 
 const slides = [
-  { image: "/onboarding/secure.png", title: "Secure your spot", body: "Reserve and pay before kick-off." },
-  { image: "/onboarding/map.png", title: "Find games near you", body: "Open the map and join nearby runs." },
-  { image: "/onboarding/players.png", title: "See who's playing", body: "Check rosters before you commit." },
+  { image: "/onboarding/secure.png", title: "SECURE YOUR SPOT" },
+  { image: "/onboarding/map.png", title: "FIND GAMES NEAR YOU" },
+  { image: "/onboarding/players.png", title: "SEE WHO'S PLAYING" },
 ];
 
 export default function OnboardingSlidesPage() {
@@ -36,40 +35,45 @@ export default function OnboardingSlidesPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-[100dvh] w-full max-w-sm flex-col px-5 py-7 rondo-phone-frame">
+    <div className="min-h-[100dvh] bg-[var(--bg-page)] flex flex-col px-5 py-7 max-w-sm mx-auto rondo-phone-frame">
       <OnboardingHeader />
 
-      <div className="mb-4 mt-4 flex gap-1.5">
-        {slides.map((_, i) => (
-          <div
-            key={i}
-            className={`h-1 flex-1 rounded-full transition-colors ${
-              i <= current ? "bg-[var(--gold)]" : "bg-[var(--bg-inset)]"
-            }`}
-          />
-        ))}
-      </div>
-
-      <div className="flex flex-1 items-center justify-center py-8">
+      <div className="flex-1 flex items-center justify-center py-8">
         <Image
           src={slide.image}
           alt=""
           width={300}
           height={300}
-          className="h-auto w-full max-w-[240px] object-contain"
+          className="object-contain w-full max-w-[240px] h-auto drop-shadow-[0_20px_45px_rgba(246,224,55,0.12)]"
           priority
         />
       </div>
 
-      <div className="space-y-5 pb-5">
-        <div className="space-y-2 text-center">
-          <h1 className="rondo-hero-title text-[1.9rem] leading-none text-[var(--ink-hi)]">{slide.title}</h1>
-          <p className="rondo-body text-[var(--ink-mid)]">{slide.body}</p>
+      <div className="pb-5 space-y-7">
+        <h1 className="rondo-hero-title text-[1.9rem] leading-none text-center">
+          {slide.title}
+        </h1>
+
+        <div className="flex justify-center gap-2.5">
+          {slides.map((_, i) => (
+            <div
+              key={i}
+              className={`rounded-full transition-all ${
+                i === current
+                  ? "w-2 h-2 bg-[var(--gold)]"
+                  : "w-1.5 h-1.5 bg-[var(--gold)]/35"
+              }`}
+            />
+          ))}
         </div>
 
-        <RondoButton onClick={handleNext} variant="primary">
-          {isLast ? "Continue" : "Next"}
-        </RondoButton>
+        <button
+          type="button"
+          onClick={handleNext}
+          className="rondo-btn rondo-btn-primary"
+        >
+          NEXT
+        </button>
       </div>
     </div>
   );

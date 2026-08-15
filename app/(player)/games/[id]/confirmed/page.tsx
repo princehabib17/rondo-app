@@ -2,11 +2,10 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { CalendarBlank, CheckCircle, ShareNetwork, ShieldCheck } from "@phosphor-icons/react";
+import { CheckCircle2, Calendar, Share2, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatGameDate } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
-import { RondoButton } from "@/components/rondo/primitives";
 
 type PaymentState =
   | "loading"
@@ -17,28 +16,6 @@ type PaymentState =
   | "rejected"
   | "venue"
   | "error";
-
-function StatusShell({
-  title,
-  body,
-  children,
-}: {
-  title: string;
-  body: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rondo-page flex min-h-[100dvh] flex-col items-center justify-center px-6 text-center">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="space-y-3">
-          <h1 className="font-heading text-2xl font-black uppercase text-[var(--ink-hi)]">{title}</h1>
-          <p className="rondo-body text-[var(--ink-mid)]">{body}</p>
-        </div>
-        <div className="space-y-3">{children}</div>
-      </div>
-    </div>
-  );
-}
 
 function ConfirmedContent() {
   const { id } = useParams<{ id: string }>();
@@ -51,6 +28,7 @@ function ConfirmedContent() {
     let cancelled = false;
 
     async function confirmPayment() {
+      // Guard first — component may have unmounted between polling intervals
       if (cancelled) return;
 
       const supabase = createClient();
@@ -90,6 +68,7 @@ function ConfirmedContent() {
         return;
       }
 
+      // PayMongo appends ?checkout_session_id=xxx to the success URL automatically.
       const sessionId = searchParams.get("checkout_session_id") ?? undefined;
       const res = await fetch("/api/payments/confirm", {
         method: "POST",
@@ -126,129 +105,145 @@ function ConfirmedContent() {
 
   if (paymentState === "loading") {
     return (
-      <div className="rondo-page flex min-h-[100dvh] flex-col items-center justify-center gap-4 px-6 text-center">
-        <div className="h-10 w-10 rounded-full border-2 border-[var(--gold)] border-t-transparent animate-spin" />
-        <p className="rondo-meta text-[var(--ink-low)]">Confirming your spot…</p>
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 text-center gap-4">
+        <Loader2 size={40} className="text-[var(--gold)] animate-spin" />
+        <p className="text-[var(--ink-low)] text-sm">Confirming your spot...</p>
       </div>
     );
   }
 
   if (paymentState === "pending") {
     return (
-      <StatusShell
-        title="Still confirming"
-        body="If you finished paying, wait a moment. Otherwise go back and try again."
-      >
-        <RondoButton onClick={() => router.push("/my-games")} variant="secondary">
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 text-center space-y-6 max-w-sm">
+        <Loader2 size={40} className="text-[var(--gold)] animate-spin" />
+        <div>
+          <h1 className="text-[var(--ink-hi)] font-bold text-xl">Still confirming</h1>
+          <p className="text-[var(--ink-low)] text-sm mt-2">
+            If you finished paying, wait a moment. Otherwise go back and try again.
+          </p>
+        </div>
+        <button
+          onClick={() => router.push("/my-games")}
+          className="w-full border border-[var(--stroke)] text-[var(--ink-hi)] text-sm py-4 rounded-[var(--r-md)] cursor-pointer min-h-[52px]"
+        >
           My Matches
-        </RondoButton>
-      </StatusShell>
+        </button>
+      </div>
     );
   }
 
   if (paymentState === "error") {
     return (
-      <StatusShell title="Could not confirm" body="Try again or contact support with your receipt.">
-        <RondoButton onClick={() => router.push(`/games/${id}/payment`)} variant="primary">
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 text-center gap-4">
+        <p className="text-destructive text-sm">Could not confirm payment. Try again or contact support.</p>
+        <button
+          onClick={() => router.push(`/games/${id}/payment`)}
+          className="w-full border border-[var(--stroke)] text-[var(--ink-hi)] text-sm py-4 rounded-[var(--r-md)] cursor-pointer"
+        >
           Back to payment
-        </RondoButton>
-        <RondoButton onClick={() => router.push("/help/new")} variant="secondary">
+        </button>
+        <button
+          onClick={() => router.push("/help/new")}
+          className="w-full border border-[var(--stroke)] text-[var(--ink-hi)] text-sm py-4 rounded-[var(--r-md)] cursor-pointer"
+        >
           Contact Help
-        </RondoButton>
-      </StatusShell>
+        </button>
+      </div>
     );
   }
 
   if (paymentState === "reserved") {
     return (
-      <StatusShell
-        title="Spot reserved"
-        body="Your slot is reserved. Complete payment before kick-off to keep your place."
-      >
-        <RondoButton onClick={() => router.push(`/games/${id}/payment`)} variant="primary">
-          Pay now
-        </RondoButton>
-        <RondoButton onClick={() => router.push("/my-games")} variant="secondary">
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 text-center space-y-6 max-w-sm">
+        <h1 className="text-[var(--ink-hi)] font-bold text-2xl">Spot Reserved</h1>
+        <p className="text-[var(--ink-low)] text-sm">
+          Your slot is reserved. Complete payment before kick-off to keep your place.
+        </p>
+        <button onClick={() => router.push(`/games/${id}/payment`)} className="w-full bg-[var(--gold)] text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-[var(--r-md)]">
+          Pay Now
+        </button>
+        <button onClick={() => router.push("/my-games")} className="w-full border border-[var(--stroke)] text-[var(--ink-hi)] text-sm py-4 rounded-[var(--r-md)]">
           My Matches
-        </RondoButton>
-      </StatusShell>
+        </button>
+      </div>
     );
   }
 
   if (paymentState === "pending_approval") {
     return (
-      <StatusShell
-        title="Pending approval"
-        body="Your request is with the organizer. You will get an update once reviewed."
-      >
-        <RondoButton onClick={() => router.push("/my-games")} variant="secondary">
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 text-center space-y-6 max-w-sm">
+        <h1 className="text-[var(--ink-hi)] font-bold text-2xl">Pending Approval</h1>
+        <p className="text-[var(--ink-low)] text-sm">
+          Your request is with the organizer. You will get an update once reviewed.
+        </p>
+        <button onClick={() => router.push("/my-games")} className="w-full border border-[var(--stroke)] text-[var(--ink-hi)] text-sm py-4 rounded-[var(--r-md)]">
           My Matches
-        </RondoButton>
-      </StatusShell>
+        </button>
+      </div>
     );
   }
 
   if (paymentState === "rejected") {
     return (
-      <StatusShell
-        title="Request not approved"
-        body="This slot request was declined by the organizer. Try another match or contact support."
-      >
-        <RondoButton onClick={() => router.push("/help/new")} variant="secondary">
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 text-center space-y-6 max-w-sm">
+        <h1 className="text-[var(--ink-hi)] font-bold text-2xl">Request Not Approved</h1>
+        <p className="text-[var(--ink-low)] text-sm">
+          This slot request was declined by the organizer. Try another match or contact support.
+        </p>
+        <button onClick={() => router.push("/help/new")} className="w-full border border-[var(--stroke)] text-[var(--ink-hi)] text-sm py-4 rounded-[var(--r-md)]">
           Contact Help
-        </RondoButton>
-      </StatusShell>
+        </button>
+      </div>
     );
   }
 
   if (paymentState === "venue") {
     return (
-      <StatusShell
-        title="Joined — pay at venue"
-        body="You are in the match. Settle payment with the organizer on match day."
-      >
-        <RondoButton onClick={() => router.push(`/games/${id}/room`)} variant="primary">
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 text-center space-y-6 max-w-sm">
+        <h1 className="text-[var(--ink-hi)] font-bold text-2xl">Joined - Pay at Venue</h1>
+        <p className="text-[var(--ink-low)] text-sm">
+          You are in the match. Please settle payment with the organizer on match day.
+        </p>
+        <button onClick={() => router.push(`/games/${id}/room`)} className="w-full bg-[var(--gold)] text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-[var(--r-md)]">
           Organizer room
-        </RondoButton>
-      </StatusShell>
+        </button>
+      </div>
     );
   }
 
   return (
-    <div className="rondo-page flex min-h-[100dvh] flex-col items-center justify-center px-6 text-center">
-      <div className="w-full max-w-sm space-y-8">
-        <div className="space-y-4">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[var(--gold-dim)]">
-            <CheckCircle size={40} weight="fill" className="text-[var(--gold)]" aria-hidden />
-          </div>
-          <div>
-            <h1 className="font-heading text-4xl font-black uppercase leading-none tracking-tight text-[var(--ink-hi)]">
-              Match
-              <br />
-              confirmed
-            </h1>
-            {game && (
-              <div className="mt-4 flex items-center justify-center gap-2 rondo-meta text-[var(--ink-mid)]">
-                <CalendarBlank size={14} weight="duotone" aria-hidden />
-                <span>See you on {formatGameDate(game.date_time)}</span>
-              </div>
-            )}
-          </div>
-          <div className="inline-flex items-center gap-2 rounded-[var(--r-pill)] border border-[var(--stroke)] bg-[var(--bg-surface)] px-3 py-1.5">
-            <ShieldCheck size={14} weight="duotone" className="text-[var(--gold)]" aria-hidden />
-            <span className="rondo-meta text-[var(--ink-mid)]">Payment secured</span>
-          </div>
+    <div className="min-h-[100dvh] flex flex-col items-center justify-center px-6 text-center space-y-8">
+      <div className="space-y-4">
+        <CheckCircle2 size={64} className="text-[var(--gold)] mx-auto" strokeWidth={1.5} />
+        <div>
+          <h1 className="text-[var(--ink-hi)] font-black text-4xl tracking-tight uppercase leading-none">
+            Match
+            <br />
+            Confirmed
+          </h1>
+          {game && (
+            <div className="flex items-center justify-center gap-2 mt-4 text-[var(--ink-low)] text-sm">
+              <Calendar size={14} />
+              <span>See you on {formatGameDate(game.date_time)}</span>
+            </div>
+          )}
         </div>
+      </div>
 
-        <div className="space-y-3">
-          <RondoButton onClick={() => router.push(`/games/${id}/invite`)} variant="primary">
-            <ShareNetwork size={18} weight="duotone" aria-hidden />
-            Invite friends
-          </RondoButton>
-          <RondoButton onClick={() => router.push("/feed")} variant="secondary">
-            Back to home
-          </RondoButton>
-        </div>
+      <div className="space-y-3 w-full max-w-xs">
+        <button
+          onClick={() => router.push(`/games/${id}/invite`)}
+          className="w-full bg-[var(--gold)] text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-[var(--r-md)] active:scale-[0.98] transition-all cursor-pointer min-h-[52px] flex items-center justify-center gap-2"
+        >
+          <Share2 size={18} />
+          Invite Friends
+        </button>
+        <button
+          onClick={() => router.push("/feed")}
+          className="w-full border border-[var(--stroke)] text-[var(--ink-low)] hover:text-[var(--ink-hi)] text-sm py-4 rounded-[var(--r-md)] active:scale-[0.98] transition-all cursor-pointer min-h-[52px]"
+        >
+          Back to Home
+        </button>
       </div>
     </div>
   );

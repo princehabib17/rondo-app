@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { isGuestUser } from "@/lib/auth/is-guest";
+import { insertTeamWithNumber } from "@/lib/tournament/teams";
 
 const bodySchema = z.object({
   teamName: z.string().trim().min(2).max(60),
@@ -60,25 +61,43 @@ export async function POST(
       return NextResponse.json({ error: "This tournament is full" }, { status: 409 });
     }
 
-    const { data: team, error: insertError } = await service
+    // One self-registered team per captain (organizer-managed teams exempt).
+    const { count: captained } = await service
       .from("tournament_teams")
-      .insert({
-        tournament_id: tournamentId,
-        captain_id: userId,
-        name: parsed.data.teamName,
-      })
-      .select("id")
-      .single();
-
-    if (insertError) {
-      if (insertError.code === "23505") {
-        const reason = insertError.message.includes("captain")
-          ? "You already registered a team in this tournament"
-          : "That team name is taken";
-        return NextResponse.json({ error: reason }, { status: 409 });
-      }
-      return NextResponse.json({ error: insertError.message }, { status: 500 });
+      .select("id", { count: "exact", head: true })
+      .eq("tournament_id", tournamentId)
+      .eq("captain_id", userId)
+      .eq("is_managed", false);
+    if ((captained ?? 0) > 0) {
+      return NextResponse.json(
+        { error: "You already registered a team in this tournament" },
+        { status: 409 }
+      );
     }
+
+    const { teamId, teamNumber, errorCode, errorMessage } = await insertTeamWithNumber(service, {
+      tournamentId,
+      captainId: userId,
+      name: parsed.data.teamName,
+    });
+
+    if (!teamId) {
+      if (errorCode === "23505") {
+        return NextResponse.json({ error: "That team name is taken" }, { status: 409 });
+      }
+      return NextResponse.json({ error: errorMessage ?? "Registration failed" }, { status: 500 });
+    }
+
+    // The captain is the roster's first member.
+    await service.from("tournament_team_members").upsert(
+      {
+        tournament_id: tournamentId,
+        team_id: teamId,
+        user_id: userId,
+        role: "captain",
+      },
+      { onConflict: "tournament_id,user_id", ignoreDuplicates: true }
+    );
 
     await service.from("notifications").insert({
       user_id: tournament.organizer_id,
@@ -88,7 +107,7 @@ export async function POST(
       link: `/organizer/tournaments/${tournamentId}/manage`,
     });
 
-    return NextResponse.json({ ok: true, teamId: team?.id });
+    return NextResponse.json({ ok: true, teamId, teamNumber });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Registration failed";
     return NextResponse.json({ error: message }, { status: 500 });

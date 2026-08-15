@@ -18,6 +18,12 @@ const PUBLIC_PREFIXES = [
   "/api/auth/phone",
   "/api/auth/signup",
   "/api/seed",
+  // GET on these is intentionally public (their handlers don't require a
+  // user); gating them here just meant every anonymous/guest visit to a
+  // profile, reels, or scout page threw a console 401 for a request the
+  // route would have happily answered.
+  "/api/reels",
+  "/api/scout-clips",
 ];
 
 const PUBLIC_BROWSE_PREFIXES = [
@@ -65,6 +71,13 @@ function isPublicRoute(pathname: string): boolean {
     return true;
   }
   if (pathname.startsWith("/games/")) {
+    return !GUEST_BLOCKED_SUFFIXES.some((suffix) => pathname.endsWith(suffix));
+  }
+  // Tournaments are the app's other showcase surface: brackets, standings, and
+  // rosters should be as browsable as games are. Actions (registering,
+  // joining a roster) are still enforced by their own API routes, and the
+  // room stays gated by the shared /room suffix rule below, same as games.
+  if (pathname === "/tournaments" || pathname.startsWith("/tournaments/")) {
     return !GUEST_BLOCKED_SUFFIXES.some((suffix) => pathname.endsWith(suffix));
   }
   return PUBLIC_ROUTES.some(

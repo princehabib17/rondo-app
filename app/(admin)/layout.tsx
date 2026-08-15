@@ -39,7 +39,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return (
       <div className="min-h-[100dvh] rondo-page px-4 py-5 space-y-3 max-w-lg mx-auto">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-20 bg-card border border-border rounded-xl animate-pulse" />
+          <div key={i} className="h-20 bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] animate-pulse" />
         ))}
       </div>
     );

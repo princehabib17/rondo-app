@@ -29,10 +29,10 @@ interface OrgGame {
 
 const statusColor: Record<string, string> = {
   open: "text-emerald-300 bg-emerald-400/10",
-  full: "text-rondo-yellow bg-rondo-yellow/10",
+  full: "text-[var(--gold)] bg-[var(--gold)]/10",
   in_progress: "text-sky-300 bg-sky-400/10",
-  completed: "text-white/45 bg-white/8",
-  cancelled: "text-red-300 bg-red-400/10",
+  completed: "text-[var(--ink-low)] bg-[var(--bg-inset)]",
+  cancelled: "text-[var(--live)] bg-red-400/10",
 };
 
 function getGreeting() {
@@ -44,11 +44,11 @@ function getGreeting() {
 
 // Deterministic gradient per game id for no-image fallback
 const gradients = [
-  "from-emerald-900/80 to-[var(--bg-page)]",
-  "from-sky-900/80 to-[var(--bg-page)]",
-  "from-violet-900/80 to-[var(--bg-page)]",
-  "from-amber-900/80 to-[var(--bg-page)]",
-  "from-rose-900/80 to-[var(--bg-page)]",
+  "from-[color-mix(in_oklch,var(--gold)_18%,var(--bg-page))] to-[var(--bg-page)]",
+  "from-[color-mix(in_oklch,var(--ink-hi)_10%,var(--bg-page))] to-[var(--bg-page)]",
+  "from-[color-mix(in_oklch,var(--ink-hi)_8%,var(--bg-page))] to-[var(--bg-page)]",
+  "from-[color-mix(in_oklch,var(--gold)_22%,var(--bg-page))] to-[var(--bg-page)]",
+  "from-[color-mix(in_oklch,var(--live)_16%,var(--bg-page))] to-[var(--bg-page)]",
 ];
 function gameGradient(id: string) {
   const n = id.charCodeAt(0) + id.charCodeAt(id.length - 1);
@@ -140,16 +140,16 @@ export default function OrganizerDashboardPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] rondo-page">
+    <div className="min-h-[100dvh] bg-[var(--bg-page)]">
       {/* Sticky minimal header */}
-      <header className="sticky top-0 z-40 border-b border-[var(--stroke)] rondo-glass-nav px-5 py-3">
+      <header className="sticky top-0 z-40 border-b border-[var(--stroke)] bg-[var(--bg-page)]/85 px-5 py-3 backdrop-blur-xl">
         <div className="flex items-center justify-between gap-3">
           <p className="font-body text-[10px] font-black uppercase tracking-[0.26em] text-[var(--gold)]">
             Organizer
           </p>
           <Link
             href="/organizer/create/match"
-            className="rondo-btn rondo-btn-primary !w-auto !min-h-[36px] px-4 text-[11px]"
+            className="inline-flex min-h-[36px] items-center rounded-full bg-[var(--gold)] px-4 text-[11px] font-black uppercase tracking-wider text-[var(--gold-ink)] transition active:scale-[0.97]"
           >
             + Create
           </Link>
@@ -187,25 +187,25 @@ export default function OrganizerDashboardPage() {
           <div className="flex w-max gap-2">
             <Link
               href="/organizer/create/match"
-              className="rondo-btn rondo-btn-primary !w-auto !min-h-10 px-5 text-xs"
+              className="inline-flex h-10 items-center rounded-full bg-[var(--gold)] px-5 font-body text-xs font-black uppercase tracking-wider text-[var(--gold-ink)] transition active:scale-[0.97]"
             >
               Create Match
             </Link>
             <Link
               href="/organizer/tournaments"
-              className="inline-flex h-10 items-center rounded-full border border-[var(--stroke)] bg-[var(--bg-surface)] px-5 font-body text-xs font-black uppercase tracking-wider text-[var(--ink-hi)] transition active:scale-[0.97]"
+              className="inline-flex h-10 items-center rounded-full border border-[var(--stroke)] bg-[var(--bg-inset)] px-5 font-body text-xs font-black uppercase tracking-wider text-[var(--ink-hi)] transition active:scale-[0.97]"
             >
               Tournaments
             </Link>
             <Link
               href="/organizer/organizations"
-              className="inline-flex h-10 items-center rounded-full border border-[var(--stroke)] bg-[var(--bg-surface)] px-5 font-body text-xs font-black uppercase tracking-wider text-[var(--ink-hi)] transition active:scale-[0.97]"
+              className="inline-flex h-10 items-center rounded-full border border-[var(--stroke)] bg-[var(--bg-inset)] px-5 font-body text-xs font-black uppercase tracking-wider text-[var(--ink-hi)] transition active:scale-[0.97]"
             >
               Organizations
             </Link>
             <Link
               href="/organizer/payout"
-              className="inline-flex h-10 items-center rounded-full border border-[var(--stroke)] bg-[var(--bg-surface)] px-5 font-body text-xs font-black uppercase tracking-wider text-[var(--ink-hi)] transition active:scale-[0.97]"
+              className="inline-flex h-10 items-center rounded-full border border-[var(--stroke)] bg-[var(--bg-inset)] px-5 font-body text-xs font-black uppercase tracking-wider text-[var(--ink-hi)] transition active:scale-[0.97]"
             >
               Payout
             </Link>
@@ -218,7 +218,7 @@ export default function OrganizerDashboardPage() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...bouncy, delay: 0.1 }}
-            className="rounded-2xl border border-[var(--gold)]/20 bg-[var(--gold-dim)] p-4"
+            className="rounded-[var(--r-md)] border border-[var(--gold)]/20 bg-[var(--gold)]/8 p-4"
           >
             <p className="mb-1 font-body text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gold)]">
               Next up
@@ -234,7 +234,7 @@ export default function OrganizerDashboardPage() {
               </div>
               <Link
                 href={`/organizer/games/${nextGame.id}/manage`}
-                className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-[var(--bg-page)]/40 px-3 py-2 font-body text-[10px] font-black uppercase tracking-wider text-[var(--ink-hi)] transition active:scale-[0.97]"
+                className="inline-flex shrink-0 items-center gap-1 rounded-[var(--r-md)] bg-[var(--bg-surface)] px-3 py-2 font-body text-[10px] font-black uppercase tracking-wider text-[var(--ink-hi)] transition active:scale-[0.97]"
               >
                 Manage
                 <ArrowUpRight size={12} />
@@ -267,7 +267,7 @@ export default function OrganizerDashboardPage() {
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
-                  className="h-52 animate-pulse rounded-2xl border border-[var(--stroke)] bg-[var(--bg-surface)]"
+                  className="h-52 animate-pulse rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.03]"
                 />
               ))}
             </div>
@@ -276,7 +276,7 @@ export default function OrganizerDashboardPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={bouncy}
-              className="rounded-2xl border border-dashed border-[var(--stroke)] bg-[var(--bg-surface)]/50 px-5 py-16 text-center"
+              className="rounded-[var(--r-md)] border border-dashed border-[var(--stroke)] bg-white/[0.02] px-5 py-16 text-center"
             >
               <p className="font-heading text-2xl font-black uppercase italic text-[var(--ink-hi)]">
                 No games yet
@@ -286,7 +286,7 @@ export default function OrganizerDashboardPage() {
               </p>
               <Link
                 href="/organizer/create/match"
-                className="rondo-btn rondo-btn-primary mt-6 !w-auto !min-h-[44px] px-6 text-xs"
+                className="mt-6 inline-flex min-h-[44px] items-center rounded-[var(--r-md)] bg-[var(--gold)] px-6 font-body text-xs font-black uppercase tracking-wider text-[var(--gold-ink)]"
               >
                 Create First Game
               </Link>
@@ -304,7 +304,7 @@ export default function OrganizerDashboardPage() {
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ ...bouncy, delay: 0.08 + i * 0.04 }}
-                    className="overflow-hidden rounded-2xl border border-[var(--stroke)] bg-[var(--bg-surface)] transition hover:border-[var(--gold)]/25"
+                    className="overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.03] transition hover:border-[var(--gold)]/25"
                   >
                     {/* Image — dominant, full width */}
                     <div className="relative h-44">
@@ -319,7 +319,7 @@ export default function OrganizerDashboardPage() {
                           className={`h-full w-full bg-gradient-to-br ${gameGradient(game.id)}`}
                         />
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-page)]/90 via-[var(--bg-page)]/20 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
 
                       {/* Cover upload */}
                       <label
@@ -347,7 +347,7 @@ export default function OrganizerDashboardPage() {
 
                       {/* Status badge */}
                       <span
-                        className={`absolute left-3 top-3 rounded-full px-2.5 py-1 font-body text-[10px] font-black uppercase tracking-wide ${statusColor[game.status] ?? "bg-white/8 text-white/45"}`}
+                        className={`absolute left-3 top-3 rounded-full px-2.5 py-1 font-body text-[10px] font-black uppercase tracking-wide ${statusColor[game.status] ?? "bg-[var(--bg-inset)] text-[var(--ink-low)]"}`}
                       >
                         {game.status.replace("_", " ")}
                       </span>
@@ -374,7 +374,7 @@ export default function OrganizerDashboardPage() {
                           {game.format}
                         </Badge>
                         {/* Capacity bar */}
-                        <div className="h-1 w-16 overflow-hidden rounded-full bg-[var(--stroke)]">
+                        <div className="h-1 w-16 overflow-hidden rounded-full bg-[var(--bg-inset)]">
                           <div
                             className="h-full rounded-full bg-[var(--gold)] transition-all duration-500"
                             style={{ width: `${capacity}%` }}
@@ -387,7 +387,7 @@ export default function OrganizerDashboardPage() {
                         </span>
                         <Link
                           href={`/organizer/games/${game.id}/manage`}
-                          className="inline-flex min-h-[32px] items-center gap-0.5 rounded-lg bg-[var(--bg-inset)] px-3 font-body text-[10px] font-black uppercase tracking-wider text-[var(--ink-hi)] transition active:scale-[0.97]"
+                          className="inline-flex min-h-[32px] items-center gap-0.5 rounded-[var(--r-sm)] bg-[var(--bg-inset)] px-3 font-body text-[10px] font-black uppercase tracking-wider text-[var(--ink-hi)] transition active:scale-[0.97]"
                         >
                           Manage
                           <ArrowUpRight size={11} />

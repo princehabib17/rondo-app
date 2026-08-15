@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies, headers } from "next/headers";
+import { PASSKEY_AUTH_OPTIONS } from "@/lib/auth/passkey-options";
 
 export async function createClient() {
   const cookieStore = await cookies();
@@ -21,6 +22,7 @@ export async function createClient() {
       ...(authHeader
         ? { global: { headers: { Authorization: authHeader } } }
         : {}),
+      auth: PASSKEY_AUTH_OPTIONS,
       cookies: {
         getAll() {
           return cookieStore.getAll();

@@ -29,17 +29,17 @@ export default function AnnouncePage() {
 
   return (
     <div className="min-h-[100dvh] pb-8">
-      <header className="sticky top-0 bg-background/90 backdrop-blur-md border-b border-border z-40 px-4 py-3 flex items-center gap-3">
-        <button onClick={() => router.back()} className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white hover:text-rondo-yellow cursor-pointer" aria-label="Back">
+      <header className="sticky top-0 bg-[var(--bg-page)]/90 backdrop-blur-md border-b border-[var(--stroke)] z-40 px-4 py-3 flex items-center gap-3">
+        <button onClick={() => router.back()} className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--ink-hi)] hover:text-[var(--gold)] cursor-pointer" aria-label="Back">
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-white font-bold text-base">Announce</h1>
+        <h1 className="text-[var(--ink-hi)] font-bold text-base">Announce</h1>
       </header>
 
       <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
-        <div className="flex items-start gap-3 p-4 bg-rondo-yellow/5 border border-rondo-yellow/20 rounded-xl">
-          <Megaphone size={16} className="text-rondo-yellow mt-0.5 shrink-0" />
-          <p className="text-muted-foreground text-sm">This message will be broadcast to all players in this game. They will see it in the feed.</p>
+        <div className="flex items-start gap-3 p-4 bg-[var(--gold)]/5 border border-[var(--gold)]/20 rounded-[var(--r-md)]">
+          <Megaphone size={16} className="text-[var(--gold)] mt-0.5 shrink-0" />
+          <p className="text-[var(--ink-low)] text-sm">This message will be broadcast to all players in this game. They will see it in the feed.</p>
         </div>
 
         <div className="space-y-2">
@@ -47,22 +47,22 @@ export default function AnnouncePage() {
             value={body}
             onChange={(e) => setBody(e.target.value)}
             placeholder="Write your announcement here..."
-            className="w-full bg-secondary border border-border text-white rounded-xl p-4 text-sm resize-none h-36 focus:border-rondo-yellow focus:outline-none placeholder:text-muted-foreground"
+            className="w-full bg-[var(--bg-inset)] border border-[var(--stroke)] text-[var(--ink-hi)] rounded-[var(--r-md)] p-4 text-sm resize-none h-36 focus:border-[var(--gold)] focus:outline-none placeholder:text-[var(--ink-low)]"
             maxLength={500}
             aria-label="Announcement text"
           />
-          <p className="text-muted-foreground text-xs text-right">{body.length}/500</p>
+          <p className="text-[var(--ink-low)] text-xs text-right">{body.length}/500</p>
         </div>
 
         {sent ? (
           <div className="text-center py-4">
-            <p className="text-green-400 font-semibold">Announcement sent!</p>
+            <p className="text-[var(--ok)] font-semibold">Announcement sent!</p>
           </div>
         ) : (
           <button
             onClick={handleSend}
             disabled={!body.trim() || sending}
-            className="w-full bg-rondo-yellow text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-xl active:scale-[0.98] transition-all disabled:opacity-40 cursor-pointer min-h-[52px] flex items-center justify-center gap-2"
+            className="w-full bg-[var(--gold)] text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-[var(--r-md)] active:scale-[0.98] transition-all disabled:opacity-40 cursor-pointer min-h-[52px] flex items-center justify-center gap-2"
           >
             <Send size={16} />
             {sending ? "Sending..." : "Send Announcement"}

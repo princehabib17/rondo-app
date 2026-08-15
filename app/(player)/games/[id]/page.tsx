@@ -88,8 +88,8 @@ export default function MatchDetailPage() {
         <div className="h-52 rondo-shimmer" />
         <div className="p-4 space-y-4 max-w-lg mx-auto">
           <div className="h-6 w-2/3 rondo-shimmer rounded" />
-          <div className="h-24 rondo-shimmer rounded-xl" />
-          <div className="h-40 rondo-shimmer rounded-xl" />
+          <div className="h-24 rondo-shimmer rounded-[var(--r-md)]" />
+          <div className="h-40 rondo-shimmer rounded-[var(--r-md)]" />
         </div>
       </div>
     );
@@ -98,7 +98,7 @@ export default function MatchDetailPage() {
   if (!game) {
     return (
       <div className="min-h-[100dvh] rondo-page flex items-center justify-center">
-        <p className="text-white/50">Match not found</p>
+        <p className="text-[var(--ink-low)]">Match not found</p>
       </div>
     );
   }
@@ -131,12 +131,12 @@ export default function MatchDetailPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] rondo-page pb-36">
+    <div className="min-h-[100dvh] rondo-page pb-40">
       <header className="sticky top-0 z-40 rondo-glass-nav border-b border-[var(--stroke)] px-4 py-3 flex items-center gap-3">
         <button
           type="button"
           onClick={() => router.back()}
-          className="w-10 h-10 flex items-center justify-center text-[var(--ink-hi)] hover:bg-[var(--bg-inset)] rounded-lg transition-colors active:scale-[0.95]"
+          className="w-10 h-10 flex items-center justify-center text-[var(--ink-hi)] hover:bg-[var(--bg-inset)] rounded-[var(--r-sm)] transition-colors active:scale-[0.95]"
           aria-label="Go back"
         >
           <ArrowLeft size={20} />
@@ -149,10 +149,10 @@ export default function MatchDetailPage() {
         </span>
       </header>
 
-      <div className="relative h-48 bg-[var(--bg-surface)]">
-        {game.banner_url ? (
+      <div className={`relative h-48 ${game.banner_url ? "bg-[var(--bg-inset)]" : "rondo-floodlight-scene"}`}>
+        {game.banner_url && (
           <img src={game.banner_url} alt="" className="w-full h-full object-cover" />
-        ) : null}
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-rondo-page via-rondo-page/40 to-transparent" />
         <span className="absolute bottom-3 left-4 font-heading text-[var(--ink-hi)] text-2xl font-black italic uppercase">
           {game.format}
@@ -162,7 +162,7 @@ export default function MatchDetailPage() {
       <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
         {banner && (
           <div
-            className={`rounded-xl px-4 py-3 text-sm font-medium border ${
+            className={`rounded-[var(--r-md)] px-4 py-3 text-sm font-medium border ${
               banner.tone === "error"
                 ? "bg-red-950/40 border-red-800/50 text-red-200"
                 : "bg-amber-950/30 border-amber-700/40 text-amber-100"
@@ -178,14 +178,14 @@ export default function MatchDetailPage() {
           <div className="flex items-center gap-3">
             <Calendar size={16} className="text-[var(--gold)] shrink-0" />
             <div>
-              <p className="rondo-label text-[var(--ink-low)]">When</p>
+              <p className="text-[var(--ink-low)] text-[10px] uppercase">When</p>
               <p className="text-[var(--ink-hi)] text-sm font-semibold">{formatGameDate(game.date_time)}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <MapPin size={16} className="text-[var(--gold)] shrink-0" />
             <div>
-              <p className="rondo-label text-[var(--ink-low)]">Where</p>
+              <p className="text-[var(--ink-low)] text-[10px] uppercase">Where</p>
               <p className="text-[var(--ink-hi)] text-sm font-semibold">{game.venue_name}</p>
               <p className="text-[var(--ink-low)] text-xs">{game.venue_address}</p>
             </div>
@@ -193,7 +193,7 @@ export default function MatchDetailPage() {
           <div className="flex items-center gap-3">
             <Users size={16} className="text-[var(--gold)] shrink-0" />
             <div>
-              <p className="rondo-label text-[var(--ink-low)]">Spots</p>
+              <p className="text-[var(--ink-low)] text-[10px] uppercase">Spots</p>
               <p className="text-[var(--ink-hi)] text-sm font-semibold">
                 {game.max_players - left} / {game.max_players} filled
                 {left > 0 && (
@@ -223,7 +223,7 @@ export default function MatchDetailPage() {
           href={`/games/${game.id}/timer`}
           className="rondo-surface flex items-center gap-4 p-4 active:scale-[0.98] transition-transform"
         >
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--gold)] text-[var(--gold-ink)]">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--r-md)] bg-[var(--gold)] text-rondo-black">
             <Timer size={22} />
           </div>
           <div className="min-w-0 flex-1">
@@ -269,7 +269,10 @@ export default function MatchDetailPage() {
         )}
       </div>
 
-      <div className="fixed bottom-16 left-0 right-0 max-w-lg mx-auto px-4 pb-2 z-30 flex gap-2">
+      {/* bottom-24 (not bottom-16): the floating BottomNav pill sits at
+          bottom-6 with a 60px height, occupying 24-84px from the viewport
+          edge — bottom-16 (64px) rendered this bar underneath it. */}
+      <div className="fixed bottom-24 left-0 right-0 max-w-lg mx-auto px-4 pb-2 z-30 flex gap-2">
         <Link
           href={`/games/${game.id}/room`}
           className="min-w-[72px] min-h-[52px] rondo-surface flex flex-col items-center justify-center gap-0.5 text-[var(--ink-hi)] hover:text-[var(--gold)] transition-colors"
