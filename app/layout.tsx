@@ -15,8 +15,8 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "RONDO — Find Your Game",
-  description: "Join local football games near you",
+  title: "Rondo — Find your next matchday",
+  description: "Open the map, join nearby football, and turn pickup games into real matchdays.",
   keywords: ["sports", "games", "football", "soccer", "local", "community"],
   icons: {
     icon: [{ url: "/rondo-logo.png", type: "image/png" }],
