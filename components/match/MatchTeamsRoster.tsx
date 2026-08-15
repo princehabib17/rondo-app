@@ -30,10 +30,10 @@ export function MatchTeamsRoster({ game }: { game: Game }) {
 
   return (
     <section className="space-y-3">
-      <h2 className="font-heading text-white font-black italic text-sm uppercase tracking-wide">
+      <h2 className="font-heading text-[var(--ink-hi)] font-black italic text-sm uppercase tracking-wide">
         Players joining
       </h2>
-      <p className="font-body text-white/45 text-xs">
+      <p className="font-body text-[var(--ink-low)] text-xs">
         Avatar and flag only · {cap} slots per team
       </p>
       <div className="grid grid-cols-2 gap-3">
@@ -53,16 +53,16 @@ export function MatchTeamsRoster({ game }: { game: Game }) {
             >
               <div className="flex items-center gap-2">
                 <div
-                  className="w-3 h-3 rounded-full shrink-0 border border-white/20"
+                  className="w-3 h-3 rounded-full shrink-0 border border-[var(--stroke)]"
                   style={{ backgroundColor: team.color }}
                 />
-                <span className="font-heading text-white text-xs font-black uppercase truncate flex-1">
+                <span className="font-heading text-[var(--ink-hi)] text-xs font-black uppercase truncate flex-1">
                   {team.name}
                 </span>
                 {full ? (
-                  <span className="text-[10px] font-semibold text-white/40 uppercase">Full</span>
+                  <span className="text-[10px] font-semibold text-[var(--ink-low)] uppercase">Full</span>
                 ) : (
-                  <span className="text-[10px] font-semibold text-rondo-accent">
+                  <span className="text-[10px] font-semibold text-[var(--gold)]">
                     {left} left
                   </span>
                 )}
@@ -82,12 +82,12 @@ export function MatchTeamsRoster({ game }: { game: Game }) {
                 {emptySlots.map((_, i) => (
                   <div
                     key={`empty-${i}`}
-                    className="w-7 h-7 rounded-full border border-dashed border-white/20 bg-white/5"
+                    className="w-7 h-7 rounded-full border border-dashed border-[var(--stroke)] bg-[var(--bg-inset)]"
                     aria-hidden
                   />
                 ))}
               </div>
-              <p className="text-[10px] text-white/40">
+              <p className="text-[10px] text-[var(--ink-low)]">
                 {count}/{cap} filled
               </p>
             </div>

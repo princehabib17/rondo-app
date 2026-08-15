@@ -86,9 +86,9 @@ async function searchAddress(query: string): Promise<NominatimResult[]> {
 // ─── styles ───────────────────────────────────────────────────────────────────
 
 const fieldClass =
-  "w-full bg-white/[0.045] border border-white/18 text-white rounded-xl p-3 text-sm focus:border-rondo-yellow focus:outline-none placeholder:text-white/30";
-const labelClass = "text-white/50 text-xs uppercase tracking-wider font-semibold";
-const errorClass = "text-red-400 text-xs mt-1 flex items-center gap-1";
+  "w-full bg-[var(--bg-inset)] border border-[var(--stroke)] text-[var(--ink-hi)] rounded-[var(--r-md)] p-3 text-sm focus:border-[var(--gold)] focus:outline-none placeholder:text-[var(--ink-low)]";
+const labelClass = "text-[var(--ink-low)] text-xs uppercase tracking-wider font-semibold";
+const errorClass = "text-[var(--live)] text-xs mt-1 flex items-center gap-1";
 
 // ─── component ────────────────────────────────────────────────────────────────
 
@@ -338,18 +338,18 @@ export default function CreateMatchPage() {
   // ─── render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-[100dvh] bg-[#050505] pb-12">
+    <div className="min-h-[100dvh] bg-[var(--bg-page)] pb-12">
       {/* header */}
-      <header className="sticky top-0 bg-background/90 backdrop-blur-md border-b border-white/10 z-40 px-4 py-3 flex items-center gap-3">
+      <header className="sticky top-0 bg-[var(--bg-page)]/90 backdrop-blur-md border-b border-[var(--stroke)] z-40 px-4 py-3 flex items-center gap-3">
         <button
           onClick={() => router.back()}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white hover:text-rondo-yellow transition-colors"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--ink-hi)] hover:text-[var(--gold)] transition-colors"
           aria-label="Back"
         >
           <ArrowLeft size={20} />
         </button>
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-rondo-yellow">
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gold)]">
             Match builder
           </p>
           <h1 className="rondo-hero-title text-2xl">Create Match</h1>
@@ -359,14 +359,14 @@ export default function CreateMatchPage() {
       <form onSubmit={handleSubmit(onSubmit)} className="max-w-lg mx-auto space-y-0">
 
         <div className="px-4 py-5">
-          <div className="rounded-2xl border border-rondo-yellow/15 bg-rondo-yellow/10 p-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-rondo-yellow">
+          <div className="rounded-[var(--r-md)] border border-[var(--gold)]/15 bg-[var(--gold)]/10 p-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gold)]">
               Step 1 of 5
             </p>
-            <h2 className="mt-1 font-heading text-2xl font-black uppercase italic leading-none text-white">
+            <h2 className="mt-1 font-heading text-2xl font-black uppercase italic leading-none text-[var(--ink-hi)]">
               Start with the match page players will see.
             </h2>
-            <p className="mt-2 text-sm leading-5 text-white/55">
+            <p className="mt-2 text-sm leading-5 text-[var(--ink-mid)]">
               Add the cover, venue, format, payment rule, and team shape before publishing.
             </p>
           </div>
@@ -381,20 +381,20 @@ export default function CreateMatchPage() {
               <button
                 type="button"
                 onClick={clearCover}
-                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 flex items-center justify-center text-white"
+                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-[var(--bg-page)]/60 flex items-center justify-center text-[var(--ink-hi)]"
               >
                 <X size={14} />
               </button>
               <button
                 type="button"
                 onClick={() => coverInputRef.current?.click()}
-                className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-black/60 text-white/80 text-xs font-semibold px-3 py-1.5 rounded-full"
+                className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-[var(--bg-page)]/60 text-[var(--ink-hi)] text-xs font-semibold px-3 py-1.5 rounded-full"
               >
                 <ImagePlus size={13} /> Change
               </button>
             </div>
           ) : (
-            <div className="w-full aspect-video flex flex-col items-center justify-center gap-4 bg-white/[0.025] border-b border-dashed border-white/15">
+            <div className="w-full aspect-video flex flex-col items-center justify-center gap-4 bg-white/[0.025] border-b border-dashed border-[var(--stroke)]">
               {/* sample covers */}
               <div className="flex gap-3">
                 {SAMPLE_COVERS.map((s) => (
@@ -404,24 +404,24 @@ export default function CreateMatchPage() {
                     onClick={() => applySampleCover(s.src)}
                     className="flex flex-col items-center gap-1.5 group"
                   >
-                    <div className="w-24 h-14 rounded-lg overflow-hidden border border-white/15 group-hover:border-rondo-yellow/60 transition-colors">
+                    <div className="w-24 h-14 rounded-[var(--r-sm)] overflow-hidden border border-[var(--stroke)] group-hover:border-[var(--gold)]/60 transition-colors">
                       <img src={s.src} alt={s.label} className="w-full h-full object-cover" />
                     </div>
-                    <span className="text-white/50 text-[10px] font-semibold uppercase tracking-wider group-hover:text-rondo-yellow transition-colors">
+                    <span className="text-[var(--ink-low)] text-[10px] font-semibold uppercase tracking-wider group-hover:text-[var(--gold)] transition-colors">
                       {s.label}
                     </span>
                   </button>
                 ))}
               </div>
               <div className="flex items-center gap-3 w-40">
-                <div className="flex-1 h-px bg-white/10" />
-                <span className="text-white/25 text-[10px] uppercase tracking-wider font-semibold">or</span>
-                <div className="flex-1 h-px bg-white/10" />
+                <div className="flex-1 h-px bg-[var(--bg-inset)]" />
+                <span className="text-[var(--ink-low)] text-[10px] uppercase tracking-wider font-semibold">or</span>
+                <div className="flex-1 h-px bg-[var(--bg-inset)]" />
               </div>
               <button
                 type="button"
                 onClick={() => coverInputRef.current?.click()}
-                className="flex items-center gap-2 bg-white/[0.06] border border-white/15 text-white/70 text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-white/[0.1] transition-colors"
+                className="flex items-center gap-2 bg-white/[0.06] border border-[var(--stroke)] text-[var(--ink-mid)] text-xs font-semibold px-4 py-2.5 rounded-[var(--r-md)] hover:bg-white/[0.1] transition-colors"
               >
                 <ImagePlus size={15} />
                 Upload cover photo
@@ -479,10 +479,10 @@ export default function CreateMatchPage() {
           </div>
 
           {/* ── Location ── */}
-          <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.025] p-4">
+          <div className="space-y-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.025] p-4">
             <div className="flex items-center gap-2">
-              <MapPin size={16} className="text-rondo-accent" />
-              <p className="font-heading text-sm font-black uppercase text-white">Location</p>
+              <MapPin size={16} className="text-[var(--gold)]" />
+              <p className="font-heading text-sm font-black uppercase text-[var(--ink-hi)]">Location</p>
             </div>
 
             <div className="space-y-1.5">
@@ -513,7 +513,7 @@ export default function CreateMatchPage() {
                 {/* status indicator */}
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                   {addressLoading ? (
-                    <Loader2 size={14} className="text-white/30 animate-spin" />
+                    <Loader2 size={14} className="text-[var(--ink-low)] animate-spin" />
                   ) : coords ? (
                     <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
                   ) : null}
@@ -521,7 +521,7 @@ export default function CreateMatchPage() {
 
                 {/* suggestions dropdown */}
                 {showSuggestions && suggestions.length > 0 && (
-                  <div className="absolute left-0 right-0 top-full mt-1 z-[100] bg-[#1a1a1a] border border-white/15 rounded-xl overflow-hidden shadow-2xl">
+                  <div className="absolute left-0 right-0 top-full mt-1 z-[100] bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] overflow-hidden shadow-2xl">
                     {suggestions.map((s, i) => {
                       const parts = s.display_name.split(",");
                       const primary = parts.slice(0, 2).join(",").trim();
@@ -533,11 +533,11 @@ export default function CreateMatchPage() {
                           className="w-full text-left px-4 py-3 hover:bg-white/[0.06] flex items-start gap-3 border-b border-white/[0.06] last:border-0"
                           onMouseDown={() => selectSuggestion(s)}
                         >
-                          <MapPin size={14} className="text-rondo-accent shrink-0 mt-0.5" />
+                          <MapPin size={14} className="text-[var(--gold)] shrink-0 mt-0.5" />
                           <div>
-                            <p className="text-white text-sm font-medium">{primary}</p>
+                            <p className="text-[var(--ink-hi)] text-sm font-medium">{primary}</p>
                             {secondary && (
-                              <p className="text-white/40 text-xs mt-0.5">{secondary}</p>
+                              <p className="text-[var(--ink-low)] text-xs mt-0.5">{secondary}</p>
                             )}
                           </div>
                         </button>
@@ -548,7 +548,7 @@ export default function CreateMatchPage() {
 
                 {/* no results hint */}
                 {!addressLoading && addressInput.length >= 3 && suggestions.length === 0 && !showSuggestions && (
-                  <p className="text-white/30 text-xs mt-1">No suggestions — try a more specific address.</p>
+                  <p className="text-[var(--ink-low)] text-xs mt-1">No suggestions — try a more specific address.</p>
                 )}
               </div>
               {errors.venue_address && (
@@ -558,7 +558,7 @@ export default function CreateMatchPage() {
                 </p>
               )}
               {coords && (
-                <p className="text-green-400 text-xs flex items-center gap-1">
+                <p className="text-[var(--ok)] text-xs flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
                   Location pinned
                 </p>
@@ -567,8 +567,8 @@ export default function CreateMatchPage() {
           </div>
 
           {/* ── Date & Time ── */}
-          <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.025] p-4">
-            <p className="font-heading text-sm font-black uppercase text-white">Date &amp; Time</p>
+          <div className="space-y-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.025] p-4">
+            <p className="font-heading text-sm font-black uppercase text-[var(--ink-hi)]">Date &amp; Time</p>
 
             {/* Date drum roll */}
             <div className="space-y-2">
@@ -577,7 +577,7 @@ export default function CreateMatchPage() {
                 <button
                   type="button"
                   onClick={() => setShowDatePicker((v) => !v)}
-                  className="text-rondo-accent text-xs font-semibold"
+                  className="text-[var(--gold)] text-xs font-semibold"
                 >
                   {showDatePicker ? "Done" : (pickedDate ? fnsFormat(pickedDate, "MMM d, yyyy") : "Pick date")}
                 </button>
@@ -587,7 +587,7 @@ export default function CreateMatchPage() {
                 <button
                   type="button"
                   onClick={() => setShowDatePicker(true)}
-                  className="w-full rounded-xl bg-white/[0.04] border border-white/10 py-3 text-center text-white font-semibold text-base"
+                  className="w-full rounded-[var(--r-md)] bg-white/[0.04] border border-[var(--stroke)] py-3 text-center text-[var(--ink-hi)] font-semibold text-base"
                 >
                   {pickedDate
                     ? fnsFormat(pickedDate, "EEEE, MMMM d, yyyy")
@@ -620,7 +620,7 @@ export default function CreateMatchPage() {
                 <button
                   type="button"
                   onClick={() => setShowTimePicker((v) => !v)}
-                  className="text-rondo-accent text-xs font-semibold"
+                  className="text-[var(--gold)] text-xs font-semibold"
                 >
                   {showTimePicker ? "Done" : formatTime12h(gameTime)}
                 </button>
@@ -630,7 +630,7 @@ export default function CreateMatchPage() {
                 <button
                   type="button"
                   onClick={() => setShowTimePicker(true)}
-                  className="w-full rounded-xl bg-white/[0.04] border border-white/10 py-3 text-center text-white font-semibold text-lg"
+                  className="w-full rounded-[var(--r-md)] bg-white/[0.04] border border-[var(--stroke)] py-3 text-center text-[var(--ink-hi)] font-semibold text-lg"
                 >
                   {formatTime12h(gameTime)}
                 </button>
@@ -644,8 +644,8 @@ export default function CreateMatchPage() {
           </div>
 
           {/* ── Format & Teams ── */}
-          <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.025] p-4">
-            <p className="font-heading text-sm font-black uppercase text-white">Match Setup</p>
+          <div className="space-y-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.025] p-4">
+            <p className="font-heading text-sm font-black uppercase text-[var(--ink-hi)]">Match Setup</p>
 
             {/* Format pills */}
             <div className="space-y-2">
@@ -656,10 +656,10 @@ export default function CreateMatchPage() {
                     key={f}
                     type="button"
                     onClick={() => setValue("format", f)}
-                    className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                    className={`px-4 py-2 rounded-[var(--r-md)] text-sm font-bold transition-all ${
                       format === f
-                        ? "bg-rondo-yellow text-rondo-black"
-                        : "bg-white/[0.06] text-white/60 border border-white/10"
+                        ? "bg-[var(--gold)] text-rondo-black"
+                        : "bg-white/[0.06] text-[var(--ink-mid)] border border-[var(--stroke)]"
                     }`}
                   >
                     {f}
@@ -677,10 +677,10 @@ export default function CreateMatchPage() {
                     key={n}
                     type="button"
                     onClick={() => setValue("num_teams", n)}
-                    className={`w-11 h-11 rounded-xl text-sm font-bold transition-all ${
+                    className={`w-11 h-11 rounded-[var(--r-md)] text-sm font-bold transition-all ${
                       numTeams === n
-                        ? "bg-rondo-yellow text-rondo-black"
-                        : "bg-white/[0.06] text-white/60 border border-white/10"
+                        ? "bg-[var(--gold)] text-rondo-black"
+                        : "bg-white/[0.06] text-[var(--ink-mid)] border border-[var(--stroke)]"
                     }`}
                   >
                     {n}
@@ -690,11 +690,11 @@ export default function CreateMatchPage() {
             </div>
 
             {/* Auto max players */}
-            <div className="rounded-xl bg-white/[0.03] border border-white/[0.08] px-4 py-3 flex items-center justify-between">
-              <span className="text-white/50 text-xs uppercase tracking-wider font-semibold">Max Players</span>
+            <div className="rounded-[var(--r-md)] bg-white/[0.03] border border-white/[0.08] px-4 py-3 flex items-center justify-between">
+              <span className="text-[var(--ink-low)] text-xs uppercase tracking-wider font-semibold">Max Players</span>
               <div className="text-right">
-                <span className="text-rondo-yellow font-black text-xl">{maxPlayers}</span>
-                <span className="text-white/40 text-xs ml-1.5">
+                <span className="text-[var(--gold)] font-black text-xl">{maxPlayers}</span>
+                <span className="text-[var(--ink-low)] text-xs ml-1.5">
                   ({playersPerTeam(format)} × {numTeams})
                 </span>
               </div>
@@ -707,19 +707,19 @@ export default function CreateMatchPage() {
                 {teamConfigs.slice(0, numTeams).map((team, i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-3 bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-2"
+                    className="flex items-center gap-3 bg-white/[0.03] border border-white/[0.08] rounded-[var(--r-md)] px-3 py-2"
                   >
                     <div
-                      className="w-5 h-5 rounded-full shrink-0 border-2 border-white/20"
+                      className="w-5 h-5 rounded-full shrink-0 border-2 border-[var(--stroke)]"
                       style={{ backgroundColor: team.color }}
                     />
-                    <span className="text-white text-sm font-semibold flex-1">
+                    <span className="text-[var(--ink-hi)] text-sm font-semibold flex-1">
                       Team {i + 1}
                     </span>
                     <select
                       value={team.color}
                       onChange={(e) => updateTeamColor(i, e.target.value)}
-                      className="bg-white/[0.06] border border-white/10 text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-rondo-yellow"
+                      className="bg-white/[0.06] border border-[var(--stroke)] text-[var(--ink-hi)] text-xs rounded-[var(--r-sm)] px-2 py-1.5 focus:outline-none focus:border-[var(--gold)]"
                     >
                       {ALL_COLORS.map((c) => (
                         <option key={c.color} value={c.color}>
@@ -734,8 +734,8 @@ export default function CreateMatchPage() {
           </div>
 
           {/* ── Details ── */}
-          <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.025] p-4">
-            <p className="font-heading text-sm font-black uppercase text-white">Details</p>
+          <div className="space-y-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.025] p-4">
+            <p className="font-heading text-sm font-black uppercase text-[var(--ink-hi)]">Details</p>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
@@ -782,28 +782,28 @@ export default function CreateMatchPage() {
 
           {/* ── Options ── */}
           <div className="space-y-2">
-            <label className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.025] p-3.5 cursor-pointer">
+            <label className="flex items-start gap-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.025] p-3.5 cursor-pointer">
               <input
                 type="checkbox"
                 {...register("allow_pay_later")}
-                className="mt-0.5 h-4 w-4 accent-[#E9FF3A]"
+                className="mt-0.5 h-4 w-4 accent-[var(--gold)]"
               />
-              <span className="text-sm text-white/80 leading-snug">
+              <span className="text-sm text-[var(--ink-hi)] leading-snug">
                 Allow reserve now, pay later
-                <span className="block text-xs text-white/35 mt-0.5">
+                <span className="block text-xs text-[var(--ink-low)] mt-0.5">
                   If off, players must pay to reserve their spot.
                 </span>
               </span>
             </label>
-            <label className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.025] p-3.5 cursor-pointer">
+            <label className="flex items-start gap-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.025] p-3.5 cursor-pointer">
               <input
                 type="checkbox"
                 {...register("is_private")}
-                className="mt-0.5 h-4 w-4 accent-[#E9FF3A]"
+                className="mt-0.5 h-4 w-4 accent-[var(--gold)]"
               />
-              <span className="text-sm text-white/80 leading-snug">
+              <span className="text-sm text-[var(--ink-hi)] leading-snug">
                 Private match — approval required
-                <span className="block text-xs text-white/35 mt-0.5">
+                <span className="block text-xs text-[var(--ink-low)] mt-0.5">
                   Players request to join; you choose who gets in.
                 </span>
               </span>
@@ -824,19 +824,19 @@ export default function CreateMatchPage() {
 
           {/* Submit error */}
           {submitError && (
-            <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 flex items-start gap-2">
+            <div className="rounded-[var(--r-md)] border border-[color-mix(in_oklch,var(--live)_35%,var(--stroke))] bg-red-500/10 px-4 py-3 flex items-start gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0 mt-1.5" />
-              <p className="text-red-300 text-sm">{submitError}</p>
+              <p className="text-[var(--live)] text-sm">{submitError}</p>
             </div>
           )}
 
           {/* Show field errors summary on submit if any */}
           {Object.keys(errors).length > 0 && (
-            <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3">
-              <p className="text-red-300 text-sm font-semibold mb-1">Please fix the following:</p>
+            <div className="rounded-[var(--r-md)] border border-[color-mix(in_oklch,var(--live)_35%,var(--stroke))] bg-red-500/10 px-4 py-3">
+              <p className="text-[var(--live)] text-sm font-semibold mb-1">Please fix the following:</p>
               <ul className="space-y-0.5">
                 {Object.entries(errors).map(([key, err]) => (
-                  <li key={key} className="text-red-300/80 text-xs flex items-center gap-1.5">
+                  <li key={key} className="text-[var(--live)]/80 text-xs flex items-center gap-1.5">
                     <span className="w-1 h-1 rounded-full bg-red-400 shrink-0" />
                     {(err as { message?: string }).message}
                   </li>
@@ -848,7 +848,7 @@ export default function CreateMatchPage() {
           <button
             type="submit"
             disabled={isSubmitting || !organizationsReady}
-            className="w-full bg-rondo-yellow text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-xl active:scale-[0.98] transition-all min-h-[52px] disabled:opacity-50"
+            className="w-full bg-[var(--gold)] text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-[var(--r-md)] active:scale-[0.98] transition-all min-h-[52px] disabled:opacity-50"
           >
             {isSubmitting ? "Creating…" : "Create Match"}
           </button>

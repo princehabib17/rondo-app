@@ -3,15 +3,29 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, UserPlus, UserMinus, MapPin, Trophy, Wallet, CalendarDays, ChevronRight, ArrowUpRight, ArrowDownLeft, MessageCircle } from "lucide-react";
-import { Medal, SoccerBall } from "@phosphor-icons/react";
+import {
+  ArrowLeft,
+  ArrowDownLeft,
+  ArrowUpRight,
+  CalendarBlank,
+  CaretRight,
+  ChatCircle,
+  MapPin,
+  Medal,
+  SoccerBall,
+  Trophy,
+  UserMinus,
+  UserPlus,
+  Wallet,
+} from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { PUBLIC_PROFILE_SELECT } from "@/lib/supabase/profile-select";
 import { formatGameDate, formatPrice, getFlagEmoji } from "@/lib/utils/format";
 import type { Profile, PlayerReel, TournamentAward } from "@/lib/supabase/types";
-import { StatTile } from "@/components/rondo/primitives";
+import { Chip, StatTile } from "@/components/rondo/primitives";
 import { PasskeyManager } from "@/components/auth/PasskeyManager";
+import { cn } from "@/lib/utils";
 
 interface ProfileMatchEntry {
   id: string;
@@ -54,6 +68,7 @@ export default function PublicProfilePage() {
   const [playerReels, setPlayerReels] = useState<PlayerReel[]>([]);
   const [trophyRows, setTrophyRows] = useState<ProfileTournamentEntry[]>([]);
   const [awards, setAwards] = useState<TournamentAward[]>([]);
+  const [goalsScored, setGoalsScored] = useState(0);
   const [savingLocation, setSavingLocation] = useState(false);
   const [switchingRole, setSwitchingRole] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -121,6 +136,7 @@ export default function PublicProfilePage() {
         { data: tournamentRows },
         { data: membershipRows },
         { data: awardRows },
+        { data: goalRows },
       ] = await Promise.all([
         supabase.from("profiles").select(profileSelect).eq("id", id).single(),
         supabase.from("game_players").select("id", { count: "exact", head: true }).eq("user_id", id),
@@ -164,6 +180,7 @@ export default function PublicProfilePage() {
           .eq("user_id", id)
           .order("created_at", { ascending: false })
           .limit(24),
+        supabase.from("tournament_goals").select("goals").eq("scorer_id", id),
       ]);
 
       const loadedProfile = profileData as unknown as Profile;
@@ -195,6 +212,11 @@ export default function PublicProfilePage() {
       }
       setTrophyRows(mergedTrophyRows);
       setAwards((awardRows as TournamentAward[] | null) ?? []);
+      const goalTotal = ((goalRows as { goals: number }[] | null) ?? []).reduce(
+        (sum, row) => sum + (row.goals ?? 0),
+        0
+      );
+      setGoalsScored(goalTotal);
 
       // "Matches played" undercounted badly without this: it only ever
       // counted pickup games, so a tournament champion could show "0 matches
@@ -256,20 +278,26 @@ export default function PublicProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] p-4 space-y-4">
-        <div className="w-8 h-8 bg-muted rounded animate-pulse" />
-        <div className="flex gap-4 items-center">
-          <div className="w-20 h-20 rounded-full bg-muted animate-pulse" />
-          <div className="space-y-2 flex-1">
-            <div className="h-5 bg-muted rounded animate-pulse w-1/2" />
-            <div className="h-3 bg-muted rounded animate-pulse w-1/3" />
+      <div className="min-h-[100dvh] rondo-page space-y-4 p-4">
+        <div className="h-8 w-8 rounded-[var(--r-sm)] rondo-shimmer" />
+        <div className="flex items-center gap-4">
+          <div className="size-24 rounded-full rondo-shimmer" />
+          <div className="flex-1 space-y-2">
+            <div className="h-6 w-1/2 rounded rondo-shimmer" />
+            <div className="h-3 w-1/3 rounded rondo-shimmer" />
           </div>
         </div>
       </div>
     );
   }
 
-  if (!profile) return <div className="min-h-[100dvh] flex items-center justify-center text-muted-foreground">Player not found</div>;
+  if (!profile) {
+    return (
+      <div className="flex min-h-[100dvh] items-center justify-center rondo-page rondo-meta text-[var(--ink-low)]">
+        Player not found
+      </div>
+    );
+  }
 
   const flag = profile.nationality ? getFlagEmoji(profile.nationality) : "";
   const isOwnProfile = currentUserId === id;
@@ -277,44 +305,65 @@ export default function PublicProfilePage() {
   const upcomingMatches = recentMatches
     .filter((entry) => entry.game && new Date(entry.game.date_time) >= new Date())
     .slice(0, 3);
+  const cupWins = awards.filter((a) => a.kind === "champion").length;
+  const metaLine = [profile.position, profile.nationality || profile.preferred_areas]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
-    <div className="min-h-[100dvh] pb-24">
-      <header className="sticky top-0 bg-background/90 backdrop-blur-md border-b border-border z-40 px-4 py-3 flex items-center gap-3">
-        <button onClick={() => router.back()} className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white hover:text-rondo-yellow transition-colors cursor-pointer" aria-label="Back">
-          <ArrowLeft size={20} />
+    <div className="min-h-[100dvh] rondo-page pb-24">
+      <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-[var(--stroke)] rondo-glass-nav px-4 py-3">
+        <button
+          onClick={() => router.back()}
+          className="flex min-h-11 min-w-11 items-center justify-center text-[var(--ink-hi)] transition-colors hover:text-[var(--gold)]"
+          aria-label="Back"
+        >
+          <ArrowLeft size={20} weight="bold" />
         </button>
-        <h1 className="text-white font-bold text-base flex-1 truncate">{profile.full_name}</h1>
+        <h1 className="flex-1 truncate rondo-title text-[var(--ink-hi)]">{profile.full_name}</h1>
         {!isOwnProfile && currentUserId && !isGuest && (
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex shrink-0 items-center gap-2">
             <Link
               href={`/messages/${id}`}
-              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-border hover:border-rondo-yellow/40 text-rondo-yellow transition-all"
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-[var(--r-pill)] border border-[var(--stroke)] text-[var(--gold)] transition-colors hover:border-[var(--gold)]"
               aria-label="Message player"
             >
-              <MessageCircle size={18} />
+              <ChatCircle size={18} weight="duotone" />
             </Link>
             <button
               onClick={handleFollow}
               disabled={followLoading}
-              className="min-h-[44px] px-4 flex items-center gap-2 rounded-lg border border-border hover:border-rondo-yellow/40 text-sm font-semibold transition-all cursor-pointer active:scale-[0.97] disabled:opacity-50"
-              style={{ color: isFollowing ? "var(--muted-foreground)" : "var(--color-rondo-yellow)" }}
+              className={cn(
+                "inline-flex min-h-11 items-center gap-2 rounded-[var(--r-pill)] border px-4 rondo-meta font-bold transition-all active:scale-[0.97] disabled:opacity-50",
+                isFollowing
+                  ? "border-[var(--stroke)] text-[var(--ink-low)]"
+                  : "border-[var(--gold)] bg-[var(--gold-dim)] text-[var(--gold)]"
+              )}
             >
-              {isFollowing ? <><UserMinus size={15} />Unfollow</> : <><UserPlus size={15} />Follow</>}
+              {isFollowing ? (
+                <>
+                  <UserMinus size={15} weight="bold" />
+                  Unfollow
+                </>
+              ) : (
+                <>
+                  <UserPlus size={15} weight="bold" />
+                  Follow
+                </>
+              )}
             </button>
           </div>
         )}
       </header>
 
-      <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
-        {/* Avatar + name */}
+      <div className="mx-auto max-w-lg space-y-8 px-4 py-6">
         <div className="flex items-center gap-4">
           <div className="relative shrink-0">
-            <div className="w-20 h-20 rounded-full bg-secondary border-2 border-border overflow-hidden flex items-center justify-center">
+            <div className="flex size-24 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--gold)] bg-[var(--bg-inset)]">
               {profile.avatar_url ? (
-                <img src={profile.avatar_url} alt={profile.full_name ?? ""} className="w-full h-full object-cover" />
+                <img src={profile.avatar_url} alt={profile.full_name ?? ""} className="h-full w-full object-cover" />
               ) : (
-                <span className="text-white font-black text-2xl">
+                <span className="font-heading text-3xl font-bold text-[var(--ink-hi)]">
                   {(profile.full_name ?? "?").slice(0, 1)}
                 </span>
               )}
@@ -323,44 +372,37 @@ export default function PublicProfilePage() {
               <span className="absolute -bottom-1 -right-1 text-xl leading-none">{flag}</span>
             )}
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h2 className="text-white font-black text-xl leading-tight">{profile.full_name}</h2>
-              {isOrganizer && (
-                <span className="rounded-full bg-rondo-accent/15 text-rondo-accent text-[10px] font-black uppercase tracking-wider px-2 py-0.5 border border-rondo-accent/30">
-                  Organizer
-                </span>
-              )}
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="font-heading text-[1.75rem] font-bold uppercase leading-none tracking-[0.01em] text-[var(--ink-hi)]">
+                {profile.full_name}
+              </h2>
+              {isOrganizer && <Chip label="Organizer" variant="outline" size="sm" />}
             </div>
-            {profile.nationality && !isOrganizer && (
-              <p className="text-muted-foreground text-sm flex items-center gap-1.5 mt-1">
-                <MapPin size={12} />
-                {profile.nationality}
+            {metaLine && (
+              <p className="mt-2 flex items-center gap-1.5 rondo-meta text-[var(--ink-low)]">
+                <MapPin size={12} weight="bold" aria-hidden />
+                {metaLine}
               </p>
             )}
-            {isOrganizer && profile.preferred_areas && (
-              <p className="text-muted-foreground text-sm flex items-center gap-1.5 mt-1 truncate">
-                <MapPin size={12} className="shrink-0" />
-                <span className="truncate">{profile.preferred_areas}</span>
-              </p>
+            {profile.skill_level && !isOrganizer && (
+              <p className="mt-1 rondo-meta text-[var(--ink-mid)]">{profile.skill_level}</p>
             )}
-            <div className="flex items-center gap-1.5 mt-1">
-              <Trophy size={12} className="text-rondo-yellow" />
-              <span className="text-muted-foreground text-sm">
-                {isOrganizer ? `${gamesPlayed} games hosted` : `${gamesPlayed} matches played`}
-              </span>
-            </div>
           </div>
         </div>
 
-        {/* Stats row */}
-        {!isOrganizer && profile.position && (
-          <div className="grid grid-cols-2 gap-3">
-            <StatTile label="Position" value={profile.position} size="sm" />
-            {profile.skill_level && (
-              <StatTile label="Level" value={profile.skill_level} size="sm" />
-            )}
-          </div>
+        {!isOrganizer && (
+          <section className="grid grid-cols-2 gap-3">
+            <StatTile label="Goals" value={goalsScored} size="lg" className="col-span-2" />
+            <StatTile label="Cups" value={cupWins} size="sm" />
+            <StatTile label="Apps" value={gamesPlayed} size="sm" />
+          </section>
+        )}
+
+        {isOrganizer && (
+          <section className="grid grid-cols-2 gap-3">
+            <StatTile label="Games hosted" value={gamesPlayed} size="lg" className="col-span-2" />
+          </section>
         )}
 
         {/* Trophy cabinet: real honors granted when tournaments complete. */}
@@ -429,40 +471,34 @@ export default function PublicProfilePage() {
           </section>
         )}
 
-        {/* Organizer info card */}
         {isOrganizer && (
           <Link
             href={`/organizers/${id}`}
-            className="flex items-center justify-between bg-card border border-border hover:border-rondo-accent/40 rounded-xl p-4 transition-colors"
+            className="flex items-center justify-between rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-4 transition-colors hover:border-[color-mix(in_oklch,var(--gold)_40%,var(--stroke))]"
           >
             <div>
-              <p className="text-white text-sm font-bold">View organizer page</p>
-              <p className="text-muted-foreground text-xs mt-0.5">Games, room broadcasts, followers</p>
+              <p className="rondo-body font-bold text-[var(--ink-hi)]">View organizer page</p>
+              <p className="mt-0.5 rondo-meta text-[var(--ink-low)]">Games, room broadcasts, followers</p>
             </div>
-            <ChevronRight size={16} className="text-muted-foreground" />
+            <CaretRight size={16} className="text-[var(--ink-low)]" aria-hidden />
           </Link>
         )}
 
-        {/* Bio */}
         {profile.bio && (
           <div className="space-y-2">
-            <h3 className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">
+            <h3 className="rondo-label text-[var(--ink-low)]">
               {isOrganizer ? "About this organizer" : "About"}
             </h3>
-            <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{profile.bio}</p>
+            <p className="whitespace-pre-wrap rondo-body text-[var(--ink-mid)]">{profile.bio}</p>
           </div>
         )}
 
-        {/* Clips. Player only. */}
         {!isOrganizer && playerReels.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">Clips</h3>
-              <Link
-                href={`/reels?player=${id}`}
-                className="text-rondo-accent text-xs font-semibold uppercase tracking-wide"
-              >
-                View All
+              <h3 className="rondo-label text-[var(--ink-low)]">Clips</h3>
+              <Link href={`/reels?player=${id}`} className="rondo-meta font-bold text-[var(--gold)]">
+                View all
               </Link>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -470,18 +506,18 @@ export default function PublicProfilePage() {
                 <Link
                   key={reel.id}
                   href={`/reels?player=${id}`}
-                  className="relative aspect-[9/16] max-h-48 rounded-xl overflow-hidden bg-black border border-border"
+                  className="relative aspect-[9/16] max-h-48 overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-page)]"
                 >
                   <video
                     src={reel.video_url}
                     muted
                     playsInline
                     preload="metadata"
-                    className="w-full h-full object-cover"
+                    className="h-full w-full object-cover"
                   />
                   {reel.caption && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 p-2">
-                      <p className="text-white text-[10px] line-clamp-1">{reel.caption}</p>
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[var(--bg-page)] p-2">
+                      <p className="line-clamp-1 rondo-meta text-[var(--ink-hi)]">{reel.caption}</p>
                     </div>
                   )}
                 </Link>
@@ -496,40 +532,53 @@ export default function PublicProfilePage() {
             <section className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Wallet size={16} className="text-rondo-accent" />
-                  <h3 className="text-white font-bold text-base">Rondo Wallet</h3>
+                  <Wallet size={16} weight="duotone" className="text-[var(--gold)]" aria-hidden />
+                  <h3 className="rondo-label text-[var(--ink-low)]">Wallet</h3>
                 </div>
-                <Link
-                  href="/wallet"
-                  className="text-rondo-accent text-xs font-semibold uppercase tracking-wide"
-                >
+                <Link href="/wallet" className="rondo-meta font-bold text-[var(--gold)]">
                   Manage
                 </Link>
               </div>
               {walletRows.length > 0 && (
-                <div className="bg-card border border-border rounded-xl overflow-hidden">
+                <div className="overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)]">
                   {walletRows.slice(0, 10).map((row, i) => (
                     <div
                       key={i}
-                      className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-b-0"
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-3",
+                        i > 0 && "border-t border-[var(--stroke)]"
+                      )}
                     >
-                      <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${row.direction === "credit" ? "bg-green-500/15" : "bg-red-500/15"}`}>
+                      <div
+                        className={cn(
+                          "flex size-8 shrink-0 items-center justify-center rounded-full",
+                          row.direction === "credit"
+                            ? "bg-[color-mix(in_oklch,var(--ok)_16%,transparent)] text-[var(--ok)]"
+                            : "bg-[color-mix(in_oklch,var(--live)_16%,transparent)] text-[var(--live)]"
+                        )}
+                      >
                         {row.direction === "credit" ? (
-                          <ArrowUpRight size={15} className="text-green-400" />
+                          <ArrowUpRight size={15} weight="bold" />
                         ) : (
-                          <ArrowDownLeft size={15} className="text-red-400" />
+                          <ArrowDownLeft size={15} weight="bold" />
                         )}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white text-sm font-medium">
+                      <div className="min-w-0 flex-1">
+                        <p className="rondo-body text-[var(--ink-hi)]">
                           {row.source
                             .split("_")
                             .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
                             .join(" ")}
                         </p>
                       </div>
-                      <p className={`text-sm font-black shrink-0 ${row.direction === "credit" ? "text-green-400" : "text-red-400"}`}>
-                        {row.direction === "credit" ? "+" : "-"}{formatPrice(row.amount)}
+                      <p
+                        className={cn(
+                          "shrink-0 font-heading text-sm font-bold tabular-nums",
+                          row.direction === "credit" ? "text-[var(--ok)]" : "text-[var(--live)]"
+                        )}
+                      >
+                        {row.direction === "credit" ? "+" : "-"}
+                        {formatPrice(row.amount)}
                       </p>
                     </div>
                   ))}
@@ -541,36 +590,42 @@ export default function PublicProfilePage() {
               <section className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <CalendarDays size={16} className="text-rondo-accent" />
-                    <h3 className="text-white font-bold text-base">Matches</h3>
+                    <CalendarBlank size={16} weight="duotone" className="text-[var(--gold)]" aria-hidden />
+                    <h3 className="rondo-label text-[var(--ink-low)]">Recent matches</h3>
                   </div>
-                  <Link href="/my-games" className="text-rondo-accent text-xs font-semibold uppercase tracking-wide">
-                    View All
+                  <Link href="/my-games" className="rondo-meta font-bold text-[var(--gold)]">
+                    View all
                   </Link>
                 </div>
 
                 {upcomingMatches.length === 0 ? (
-                  <div className="bg-card border border-border rounded-xl p-4">
-                    <p className="text-muted-foreground text-sm">No upcoming matches yet.</p>
+                  <div className="rondo-surface p-4">
+                    <p className="rondo-meta text-[var(--ink-low)]">No upcoming matches yet.</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {upcomingMatches.map((entry) =>
+                  <div className="overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)]">
+                    {upcomingMatches.map((entry, i) =>
                       entry.game ? (
                         <Link
                           key={entry.id}
                           href={`/games/${entry.game.id}`}
-                          className="flex items-center gap-3 bg-card border border-border hover:border-rondo-accent/40 rounded-xl p-3 transition-colors"
+                          className={cn(
+                            "flex min-h-14 items-center gap-3 px-4 py-3 transition-colors active:bg-[var(--bg-inset)]",
+                            i > 0 && "border-t border-[var(--stroke)]"
+                          )}
                         >
                           <div className="min-w-0 flex-1">
-                            <p className="text-white text-sm font-semibold truncate">{entry.game.title}</p>
-                            <p className="text-muted-foreground text-xs truncate">{formatGameDate(entry.game.date_time)}</p>
-                            <p className="text-muted-foreground text-xs truncate">{entry.game.venue_name}</p>
+                            <p className="truncate rondo-body font-bold text-[var(--ink-hi)]">
+                              {entry.game.title}
+                            </p>
+                            <p className="truncate rondo-meta text-[var(--ink-low)]">
+                              {formatGameDate(entry.game.date_time)} · {entry.game.venue_name}
+                            </p>
                           </div>
-                          <span className="text-rondo-accent text-xs font-black shrink-0">
+                          <span className="shrink-0 font-heading text-sm font-bold tabular-nums text-[var(--gold)]">
                             {formatPrice(entry.game.price_per_player)}
                           </span>
-                          <ChevronRight size={16} className="text-white/40 shrink-0" />
+                          <CaretRight size={16} className="shrink-0 text-[var(--ink-low)]" aria-hidden />
                         </Link>
                       ) : null
                     )}
@@ -582,16 +637,16 @@ export default function PublicProfilePage() {
             {isOrganizer && (
               <Link
                 href="/organizer/dashboard"
-                className="flex items-center justify-between bg-rondo-accent/10 border border-rondo-accent/40 rounded-xl p-4"
+                className="flex items-center justify-between rounded-[var(--r-md)] border border-[color-mix(in_oklch,var(--gold)_40%,var(--stroke))] bg-[var(--gold-dim)] p-4"
               >
                 <div className="flex items-center gap-2.5">
-                  <CalendarDays size={18} className="text-rondo-accent" />
+                  <CalendarBlank size={18} weight="duotone" className="text-[var(--gold)]" aria-hidden />
                   <div>
-                    <p className="text-white font-bold text-sm">Organizer dashboard</p>
-                    <p className="text-muted-foreground text-xs">Create games, manage payouts</p>
+                    <p className="rondo-body font-bold text-[var(--ink-hi)]">Organizer dashboard</p>
+                    <p className="rondo-meta text-[var(--ink-low)]">Create games, manage payouts</p>
                   </div>
                 </div>
-                <ChevronRight size={16} className="text-rondo-accent" />
+                <CaretRight size={16} className="text-[var(--gold)]" aria-hidden />
               </Link>
             )}
 
@@ -603,16 +658,16 @@ export default function PublicProfilePage() {
                 }
                 router.push("/onboarding/profile");
               }}
-              className="w-full border border-border text-muted-foreground hover:text-white hover:border-border/80 text-sm py-3 rounded-xl active:scale-[0.98] transition-all cursor-pointer min-h-[44px]"
+              className="rondo-btn rondo-btn-secondary"
             >
-              Edit Profile
+              Edit profile
             </button>
 
             {!isGuest && profile.role !== "admin" && (
               <button
                 onClick={switchRole}
                 disabled={switchingRole}
-                className="w-full text-center text-muted-foreground hover:text-white text-xs py-1 transition-colors cursor-pointer disabled:opacity-50"
+                className="w-full py-1 text-center rondo-meta text-[var(--ink-low)] transition-colors hover:text-[var(--ink-hi)] disabled:opacity-50"
               >
                 {switchingRole
                   ? "Switching..."
@@ -622,17 +677,17 @@ export default function PublicProfilePage() {
               </button>
             )}
 
-            <label className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 cursor-pointer">
+            <label className="flex cursor-pointer items-start gap-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-4">
               <input
                 type="checkbox"
                 checked={locationHidden}
                 disabled={savingLocation}
                 onChange={toggleLocationHidden}
-                className="mt-0.5 h-4 w-4 accent-[#E9FF3A]"
+                className="mt-0.5 h-4 w-4 accent-[var(--gold)]"
               />
-              <span className="text-sm text-white/80 leading-snug">
+              <span className="rondo-body leading-snug text-[var(--ink-mid)]">
                 Hide my location from other players
-                <span className="block text-xs text-muted-foreground mt-0.5">
+                <span className="mt-0.5 block rondo-meta text-[var(--ink-low)]">
                   When on, nearest-player discovery won&apos;t show where you are.
                 </span>
               </span>
@@ -640,17 +695,11 @@ export default function PublicProfilePage() {
 
             {!isGuest && <PasskeyManager />}
 
-            <Link
-              href="/messages"
-              className="block w-full border border-border text-center text-muted-foreground hover:text-white hover:border-border/80 text-sm py-3 rounded-xl transition-all"
-            >
+            <Link href="/messages" className="rondo-btn rondo-btn-secondary">
               Messages
             </Link>
-            <Link
-              href="/help"
-              className="block w-full border border-border text-center text-muted-foreground hover:text-white hover:border-border/80 text-sm py-3 rounded-xl transition-all"
-            >
-              Help & Refunds
+            <Link href="/help" className="rondo-btn rondo-btn-secondary">
+              Help and refunds
             </Link>
             <button
               onClick={async () => {
@@ -659,42 +708,44 @@ export default function PublicProfilePage() {
                 router.push("/");
                 router.refresh();
               }}
-              className="w-full border border-red-500/30 text-red-400 hover:text-red-300 hover:border-red-400/50 text-sm py-3 rounded-xl transition-all cursor-pointer min-h-[44px]"
+              className="rondo-btn border border-[color-mix(in_oklch,var(--live)_35%,var(--stroke))] text-[var(--live)]"
             >
-              Sign Out
+              Sign out
             </button>
 
             {!confirmDelete ? (
               <button
                 onClick={() => setConfirmDelete(true)}
-                className="w-full text-center text-white/30 hover:text-red-400 text-xs py-1 transition-colors cursor-pointer"
+                className="w-full py-1 text-center rondo-meta text-[var(--ink-low)] transition-colors hover:text-[var(--live)]"
               >
                 Delete account
               </button>
             ) : (
-              <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 space-y-3">
-                <p className="text-white/80 text-sm">
+              <div className="space-y-3 rounded-[var(--r-md)] border border-[color-mix(in_oklch,var(--live)_35%,var(--stroke))] bg-[color-mix(in_oklch,var(--live)_8%,transparent)] p-4">
+                <p className="rondo-body text-[var(--ink-mid)]">
                   This permanently deletes your account, profile, and match history. It can&apos;t
                   be undone.
                 </p>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setConfirmDelete(false)}
-                    className="flex-1 border border-border text-muted-foreground text-sm py-2.5 rounded-xl"
+                    className="rondo-btn rondo-btn-secondary flex-1"
                   >
                     Keep my account
                   </button>
                   <button
                     onClick={deleteAccount}
                     disabled={deleting}
-                    className="flex-1 bg-red-500/90 text-white text-sm font-bold py-2.5 rounded-xl disabled:opacity-50"
+                    className="flex-1 rounded-[var(--r-pill)] bg-[var(--live)] py-2.5 rondo-meta font-bold text-[var(--ink-hi)] disabled:opacity-50"
                   >
                     {deleting ? "Deleting..." : "Delete forever"}
                   </button>
                 </div>
               </div>
             )}
-            {accountError && <p className="text-red-400 text-xs text-center">{accountError}</p>}
+            {accountError && (
+              <p className="text-center rondo-meta text-[var(--live)]">{accountError}</p>
+            )}
           </>
         )}
       </div>

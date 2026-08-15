@@ -47,7 +47,7 @@ export default function RoleSelectionPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-black flex flex-col px-5 py-7 max-w-sm mx-auto rondo-phone-frame">
+    <div className="min-h-[100dvh] bg-[var(--bg-page)] flex flex-col px-5 py-7 max-w-sm mx-auto rondo-phone-frame">
       <OnboardingHeader />
 
       <h1 className="rondo-hero-title text-3xl mt-9 mb-6 leading-none">
@@ -63,8 +63,8 @@ export default function RoleSelectionPage() {
               type="button"
               onClick={() => setSelected(role.id)}
               className={cn(
-                "relative h-36 w-full overflow-hidden rounded-xl border text-left transition-all",
-                isSelected ? "border-rondo-accent" : "border-transparent"
+                "relative h-36 w-full overflow-hidden rounded-[var(--r-md)] border text-left transition-all",
+                isSelected ? "border-[var(--gold)]" : "border-transparent"
               )}
             >
               <Image
@@ -79,7 +79,7 @@ export default function RoleSelectionPage() {
                 <h2 className="rondo-hero-title text-3xl leading-none">
                   {role.title}
                 </h2>
-                <p className="font-body text-white/75 text-[9px] tracking-wide mt-2 max-w-[260px]">
+                <p className="font-body text-[var(--ink-mid)] text-[9px] tracking-wide mt-2 max-w-[260px]">
                   {role.subtitle}
                 </p>
               </div>

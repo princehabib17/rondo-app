@@ -132,12 +132,12 @@ export function OrganizationPicker({ value, onChange, onReady }: OrganizationPic
 
   return (
     <>
-      <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.025] p-4">
+      <div className="space-y-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.025] p-4">
         <div className="flex items-center gap-2">
-          <Building2 size={17} className="text-rondo-accent" />
+          <Building2 size={17} className="text-[var(--gold)]" />
           <div>
-            <p className="font-heading text-sm font-black uppercase text-white">Organizer / Organization</p>
-            <p className="text-xs text-white/45">Games will show under this name.</p>
+            <p className="font-heading text-sm font-black uppercase text-[var(--ink-hi)]">Organizer / Organization</p>
+            <p className="text-xs text-[var(--ink-low)]">Games will show under this name.</p>
           </div>
         </div>
 
@@ -166,23 +166,23 @@ export function OrganizationPicker({ value, onChange, onReady }: OrganizationPic
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="relative w-14 h-14 rounded-full border-2 border-dashed border-white/20 bg-white/[0.03] flex items-center justify-center overflow-hidden shrink-0 hover:border-rondo-accent/50 transition-colors"
+              className="relative w-14 h-14 rounded-full border-2 border-dashed border-[var(--stroke)] bg-white/[0.03] flex items-center justify-center overflow-hidden shrink-0 hover:border-[var(--gold)]/50 transition-colors"
             >
               {logoPreview ? (
                 <img src={logoPreview} alt="Logo preview" className="w-full h-full object-cover" />
               ) : (
-                <ImagePlus size={18} className="text-white/30" />
+                <ImagePlus size={18} className="text-[var(--ink-low)]" />
               )}
             </button>
             <div>
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="text-xs text-rondo-accent font-semibold"
+                className="text-xs text-[var(--gold)] font-semibold"
               >
                 {logoPreview ? "Change logo" : "Add logo (optional)"}
               </button>
-              <p className="text-xs text-white/30 mt-0.5">Square crop applied automatically</p>
+              <p className="text-xs text-[var(--ink-low)] mt-0.5">Square crop applied automatically</p>
             </div>
             <input
               ref={fileInputRef}
@@ -201,14 +201,14 @@ export function OrganizationPicker({ value, onChange, onReady }: OrganizationPic
             type="button"
             onClick={createOrganization}
             disabled={creating || newName.trim().length < 2}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-rondo-accent/35 bg-rondo-accent/10 px-4 font-heading text-xs font-black uppercase tracking-wide text-rondo-accent disabled:opacity-40"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--r-sm)] border border-[var(--gold)]/35 bg-[var(--gold)]/10 px-4 font-heading text-xs font-black uppercase tracking-wide text-[var(--gold)] disabled:opacity-40"
           >
             <Plus size={15} />
             {creating ? "Creating..." : "Save organization"}
           </button>
         </div>
 
-        {error && <p className="text-xs text-red-400">{error}</p>}
+        {error && <p className="text-xs text-[var(--live)]">{error}</p>}
       </div>
 
       {/* Logo crop modal */}

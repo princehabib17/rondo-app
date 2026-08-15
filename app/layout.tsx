@@ -28,7 +28,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#000000",
+  themeColor: "#FAFAF7",
 };
 
 export default function RootLayout({
@@ -37,8 +37,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`dark ${barlowCondensed.variable} ${manrope.variable}`}>
-      <body className="overflow-x-hidden font-body bg-background text-foreground antialiased">
+    <html lang="en" className={`${barlowCondensed.variable} ${manrope.variable}`}>
+      <body className="overflow-x-hidden font-body bg-[var(--bg-page)] text-[var(--ink-hi)] antialiased">
         {children}
         <Toaster position="top-center" />
       </body>

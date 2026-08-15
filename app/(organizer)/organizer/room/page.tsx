@@ -104,28 +104,28 @@ export default function OrganizerRoomPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] bg-black flex items-center justify-center">
-        <div className="w-2 h-2 rounded-full bg-rondo-accent animate-ping" />
+      <div className="min-h-[100dvh] bg-[var(--bg-page)] flex items-center justify-center">
+        <div className="w-2 h-2 rounded-full bg-[var(--gold)] animate-ping" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-[100dvh] bg-black pb-24">
+    <div className="min-h-[100dvh] bg-[var(--bg-page)] pb-24">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-black/95 backdrop-blur-md border-b border-white/5 px-4 py-3">
+      <header className="sticky top-0 z-10 bg-[var(--bg-page)]/95 backdrop-blur-md border-b border-[var(--stroke)] px-4 py-3">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => router.back()}
-            className="w-10 h-10 flex items-center justify-center text-white/80 hover:text-white"
+            className="w-10 h-10 flex items-center justify-center text-[var(--ink-hi)] hover:text-[var(--ink-hi)]"
             aria-label="Back"
           >
             <ArrowLeft size={20} />
           </button>
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <Radio size={18} className="text-rondo-accent shrink-0" />
-            <h1 className="font-heading text-white font-black italic text-lg uppercase truncate">
+            <Radio size={18} className="text-[var(--gold)] shrink-0" />
+            <h1 className="font-heading text-[var(--ink-hi)] font-black italic text-lg uppercase truncate">
               My Room
             </h1>
           </div>
@@ -136,9 +136,9 @@ export default function OrganizerRoomPage() {
       <section className="px-4 pt-5">
         <form
           onSubmit={handlePost}
-          className="bg-card border border-border rounded-xl p-4 space-y-3 mb-6"
+          className="bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] p-4 space-y-3 mb-6"
         >
-          <h2 className="font-heading text-white font-black uppercase text-sm">
+          <h2 className="font-heading text-[var(--ink-hi)] font-black uppercase text-sm">
             Broadcast Update
           </h2>
           <textarea
@@ -146,17 +146,17 @@ export default function OrganizerRoomPage() {
             onChange={(e) => setBody(e.target.value)}
             maxLength={500}
             placeholder="Share an update with your followers..."
-            className="w-full h-24 bg-black border border-white/10 text-white rounded-lg p-3 text-sm resize-none placeholder:text-white/30 focus:outline-none focus:border-rondo-accent/50"
+            className="w-full h-24 bg-[var(--bg-page)] border border-[var(--stroke)] text-[var(--ink-hi)] rounded-[var(--r-sm)] p-3 text-sm resize-none placeholder:text-[var(--ink-low)] focus:outline-none focus:border-[var(--gold)]/50"
           />
           {postError && (
-            <p className="font-body text-red-400 text-xs">{postError}</p>
+            <p className="font-body text-[var(--live)] text-xs">{postError}</p>
           )}
           <div className="flex items-center justify-between">
-            <span className="font-body text-white/30 text-xs">{body.length}/500</span>
+            <span className="font-body text-[var(--ink-low)] text-xs">{body.length}/500</span>
             <button
               type="submit"
               disabled={posting || !body.trim()}
-              className="bg-rondo-accent text-black font-heading font-black uppercase tracking-widest text-xs px-6 py-2.5 rounded-lg disabled:opacity-40 transition-opacity"
+              className="bg-[var(--gold)] text-[var(--gold-ink)] font-heading font-black uppercase tracking-widest text-xs px-6 py-2.5 rounded-[var(--r-sm)] disabled:opacity-40 transition-opacity"
             >
               {posting ? "Posting..." : "Post"}
             </button>
@@ -165,14 +165,14 @@ export default function OrganizerRoomPage() {
 
         {/* Feed */}
         <div className="flex items-center gap-2 mb-3">
-          <Radio size={14} className="text-rondo-accent" />
-          <h2 className="font-heading text-white font-black italic text-sm uppercase">
+          <Radio size={14} className="text-[var(--gold)]" />
+          <h2 className="font-heading text-[var(--ink-hi)] font-black italic text-sm uppercase">
             Past Broadcasts
           </h2>
         </div>
 
         {broadcasts.length === 0 ? (
-          <p className="font-body text-white/40 text-sm bg-card border border-border rounded-xl p-4">
+          <p className="font-body text-[var(--ink-low)] text-sm bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] p-4">
             No broadcasts yet. Post your first update above.
           </p>
         ) : (
@@ -180,20 +180,20 @@ export default function OrganizerRoomPage() {
             {broadcasts.map((item) => (
               <article
                 key={item.id}
-                className="bg-card border border-border rounded-xl p-4"
+                className="bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] p-4"
               >
-                <p className="font-body text-white/90 text-sm leading-relaxed">
+                <p className="font-body text-[var(--ink-hi)] text-sm leading-relaxed">
                   {item.body}
                 </p>
                 <div className="flex items-center justify-between mt-3">
-                  <p className="font-body text-white/40 text-xs">
+                  <p className="font-body text-[var(--ink-low)] text-xs">
                     {formatRelativeTime(item.created_at)}
                   </p>
                   <button
                     type="button"
                     onClick={() => handleDelete(item.id)}
                     disabled={deletingId === item.id}
-                    className="w-7 h-7 flex items-center justify-center text-white/30 hover:text-red-400 transition-colors disabled:opacity-40"
+                    className="w-7 h-7 flex items-center justify-center text-[var(--ink-low)] hover:text-[var(--live)] transition-colors disabled:opacity-40"
                     aria-label="Delete broadcast"
                   >
                     <Trash2 size={14} />

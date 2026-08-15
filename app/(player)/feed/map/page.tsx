@@ -31,12 +31,12 @@ import { FeedFiltersBar } from "@/components/feed/FeedFilters";
 const GameMap = dynamic(() => import("@/components/map/GameMap"), {
   ssr: false,
   loading: () => (
-    <div className="rondo-map-shell relative h-full w-full overflow-hidden bg-black">
-      <div className="absolute left-8 top-16 h-20 w-20 rounded-full border border-rondo-accent/25 bg-rondo-accent/10 blur-sm" />
-      <div className="absolute right-10 top-36 h-16 w-16 rounded-full border border-rondo-accent/20 bg-rondo-accent/10 blur-sm" />
-      <div className="absolute bottom-24 left-1/3 h-24 w-24 rounded-full border border-rondo-accent/20 bg-rondo-accent/10 blur-sm" />
+    <div className="rondo-map-shell relative h-full w-full overflow-hidden bg-[var(--bg-page)]">
+      <div className="absolute left-8 top-16 h-20 w-20 rounded-full border border-[var(--gold)]/25 bg-[var(--gold)]/10 blur-sm" />
+      <div className="absolute right-10 top-36 h-16 w-16 rounded-full border border-[var(--gold)]/20 bg-[var(--gold)]/10 blur-sm" />
+      <div className="absolute bottom-24 left-1/3 h-24 w-24 rounded-full border border-[var(--gold)]/20 bg-[var(--gold)]/10 blur-sm" />
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="h-2 w-2 rounded-full bg-rondo-accent shadow-[0_0_32px_rgba(246,224,55,0.8)] animate-ping" />
+        <div className="h-2 w-2 rounded-full bg-[var(--gold)] shadow-[0_0_32px_rgba(246,224,55,0.8)] animate-ping" />
       </div>
     </div>
   ),
@@ -175,7 +175,7 @@ export default function FeedMapPage() {
         )}
         {loading ? (
           <div className="w-full h-full flex items-center justify-center">
-            <div className="w-2 h-2 rounded-full bg-rondo-accent animate-ping" />
+            <div className="w-2 h-2 rounded-full bg-[var(--gold)] animate-ping" />
           </div>
         ) : (
           <GameMap games={mapGames} />

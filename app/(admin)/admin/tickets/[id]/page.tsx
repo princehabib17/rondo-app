@@ -128,7 +128,7 @@ export default function AdminTicketDetailPage() {
     return (
       <div className="min-h-[100dvh] rondo-page px-4 py-5 space-y-3 max-w-lg mx-auto">
         {[0, 1].map((i) => (
-          <div key={i} className="h-24 bg-card border border-border rounded-xl animate-pulse" />
+          <div key={i} className="h-24 bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] animate-pulse" />
         ))}
       </div>
     );
@@ -136,12 +136,12 @@ export default function AdminTicketDetailPage() {
 
   return (
     <div className="min-h-[100dvh] rondo-page pb-10">
-      <header className="sticky top-0 rondo-glass-nav border-b border-white/5 z-40 px-4 py-3">
+      <header className="sticky top-0 rondo-glass-nav border-b border-[var(--stroke)] z-40 px-4 py-3">
         <div className="flex items-center gap-2.5 max-w-lg mx-auto">
           <button type="button" onClick={() => router.push("/admin/tickets")} aria-label="Back">
-            <ArrowLeft size={18} className="text-white/70" />
+            <ArrowLeft size={18} className="text-[var(--ink-mid)]" />
           </button>
-          <h1 className="text-white font-black text-lg capitalize truncate">
+          <h1 className="text-[var(--ink-hi)] font-black text-lg capitalize truncate">
             {ticket.type.replaceAll("_", " ")}
           </h1>
         </div>
@@ -153,25 +153,25 @@ export default function AdminTicketDetailPage() {
             <div className="flex items-center gap-3">
               <PlayerAvatar profile={ticket.user} size="sm" showFlag={false} linkable={false} />
               <div className="min-w-0">
-                <p className="text-white text-sm font-semibold truncate">
+                <p className="text-[var(--ink-hi)] text-sm font-semibold truncate">
                   {ticket.user.full_name ?? "Unknown user"}
                 </p>
-                <p className="text-muted-foreground text-xs">
+                <p className="text-[var(--ink-low)] text-xs">
                   opened {formatRelativeTime(ticket.created_at)}
                 </p>
               </div>
             </div>
           )}
-          <p className="text-white/85 text-sm whitespace-pre-wrap">{ticket.description}</p>
+          <p className="text-[var(--ink-hi)] text-sm whitespace-pre-wrap">{ticket.description}</p>
           {ticket.admin_note && (
-            <p className="text-white/50 text-xs border-t border-white/5 pt-2">
+            <p className="text-[var(--ink-low)] text-xs border-t border-[var(--stroke)] pt-2">
               Legacy note: {ticket.admin_note}
             </p>
           )}
         </section>
 
         <section className="space-y-2">
-          <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+          <h2 className="text-[var(--ink-low)] text-xs font-semibold uppercase tracking-wider">
             Status
           </h2>
           <div className="flex gap-1.5 flex-wrap">
@@ -183,8 +183,8 @@ export default function AdminTicketDetailPage() {
                 className={cn(
                   "rounded-full border px-3 py-1 text-xs font-semibold capitalize transition-colors",
                   ticket.status === status
-                    ? "border-rondo-accent/60 bg-rondo-accent/15 text-rondo-accent"
-                    : "border-white/10 text-white/40"
+                    ? "border-[var(--gold)]/60 bg-[var(--gold)]/15 text-[var(--gold)]"
+                    : "border-[var(--stroke)] text-[var(--ink-low)]"
                 )}
               >
                 {status.replaceAll("_", " ")}
@@ -194,24 +194,24 @@ export default function AdminTicketDetailPage() {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+          <h2 className="text-[var(--ink-low)] text-xs font-semibold uppercase tracking-wider">
             Conversation
           </h2>
           {replies.length === 0 ? (
-            <p className="text-muted-foreground text-xs">No replies yet.</p>
+            <p className="text-[var(--ink-low)] text-xs">No replies yet.</p>
           ) : (
             replies.map((entry) => (
               <div
                 key={entry.id}
                 className={cn(
-                  "rounded-xl border p-3 space-y-1",
+                  "rounded-[var(--r-md)] border p-3 space-y-1",
                   entry.is_internal
                     ? "border-amber-400/30 bg-amber-400/5"
-                    : "border-border bg-card"
+                    : "border-[var(--stroke)] bg-[var(--bg-surface)]"
                 )}
               >
                 <div className="flex items-center gap-2">
-                  <p className="text-white text-xs font-semibold">
+                  <p className="text-[var(--ink-hi)] text-xs font-semibold">
                     {entry.author?.full_name ?? "Staff"}
                   </p>
                   {entry.is_internal && (
@@ -220,11 +220,11 @@ export default function AdminTicketDetailPage() {
                       Internal
                     </span>
                   )}
-                  <span className="text-muted-foreground text-[11px] ml-auto">
+                  <span className="text-[var(--ink-low)] text-[11px] ml-auto">
                     {formatRelativeTime(entry.created_at)}
                   </span>
                 </div>
-                <p className="text-white/80 text-sm whitespace-pre-wrap">{entry.body}</p>
+                <p className="text-[var(--ink-hi)] text-sm whitespace-pre-wrap">{entry.body}</p>
               </div>
             ))
           )}
@@ -235,7 +235,7 @@ export default function AdminTicketDetailPage() {
               onChange={(e) => setReply(e.target.value.slice(0, 4000))}
               placeholder={isInternal ? "Internal note (user won't see this)…" : "Reply to the user…"}
               rows={3}
-              className="w-full bg-transparent text-white text-sm placeholder:text-white/30 resize-none outline-none"
+              className="w-full bg-transparent text-[var(--ink-hi)] text-sm placeholder:text-[var(--ink-low)] resize-none outline-none"
             />
             <div className="flex items-center justify-between">
               <button
@@ -245,7 +245,7 @@ export default function AdminTicketDetailPage() {
                   "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors",
                   isInternal
                     ? "border-amber-400/60 bg-amber-400/15 text-amber-300"
-                    : "border-white/10 text-white/40"
+                    : "border-[var(--stroke)] text-[var(--ink-low)]"
                 )}
               >
                 <Lock size={11} />
@@ -255,7 +255,7 @@ export default function AdminTicketDetailPage() {
                 type="button"
                 onClick={sendReply}
                 disabled={!reply.trim() || sending}
-                className="inline-flex items-center gap-1.5 rounded-full bg-rondo-accent text-black px-4 py-1.5 text-xs font-bold disabled:opacity-40"
+                className="inline-flex items-center gap-1.5 rounded-full bg-[var(--gold)] text-[var(--gold-ink)] px-4 py-1.5 text-xs font-bold disabled:opacity-40"
               >
                 <Send size={12} />
                 {sending ? "Sending…" : isInternal ? "Add note" : "Reply"}

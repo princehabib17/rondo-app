@@ -39,13 +39,13 @@ export default function NotificationsPage() {
 
   return (
     <div className="min-h-[100dvh] rondo-page pb-20">
-      <header className="sticky top-0 rondo-glass-nav border-b border-white/5 z-40 px-4 py-3 max-w-lg mx-auto">
-        <h1 className="font-heading text-white font-black italic text-lg uppercase">Notifications</h1>
+      <header className="sticky top-0 rondo-glass-nav border-b border-[var(--stroke)] z-40 px-4 py-3 max-w-lg mx-auto">
+        <h1 className="font-heading text-[var(--ink-hi)] font-black italic text-lg uppercase">Notifications</h1>
       </header>
       <div className="p-4 max-w-lg mx-auto space-y-3">
       {notifications.length === 0 ? (
         <div className="rondo-surface p-6 text-center">
-          <p className="text-white/55 text-sm">No notifications yet.</p>
+          <p className="text-[var(--ink-mid)] text-sm">No notifications yet.</p>
         </div>
       ) : (
         notifications.map((item) => {
@@ -57,19 +57,19 @@ export default function NotificationsPage() {
             <Link
               key={item.id}
               href={item.link ?? "/feed"}
-              className={`flex items-start gap-3 rounded-[var(--r-md)] border p-3 transition-[border-color] duration-200 hover:border-rondo-accent/25 ${
-                unread ? "border-rondo-accent/30 bg-rondo-accent/[0.06]" : "border-border bg-card"
+              className={`flex items-start gap-3 rounded-[var(--r-md)] border p-3 transition-[border-color] duration-200 hover:border-[var(--gold)]/25 ${
+                unread ? "border-[var(--gold)]/30 bg-[var(--gold)]/[0.06]" : "border-[var(--stroke)] bg-[var(--bg-surface)]"
               }`}
             >
               <span
-                className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${unread ? "bg-rondo-accent" : "bg-transparent"}`}
+                className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${unread ? "bg-[var(--gold)]" : "bg-transparent"}`}
                 aria-hidden
               />
               <span className="min-w-0 flex-1">
-                <p className={`text-sm ${unread ? "font-bold text-white" : "font-semibold text-white/80"}`}>
+                <p className={`text-sm ${unread ? "font-bold text-[var(--ink-hi)]" : "font-semibold text-[var(--ink-hi)]"}`}>
                   {item.title}
                 </p>
-                <p className="mt-1 text-xs text-white/70">{item.body}</p>
+                <p className="mt-1 text-xs text-[var(--ink-mid)]">{item.body}</p>
               </span>
             </Link>
           );

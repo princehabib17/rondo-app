@@ -146,7 +146,7 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
             aria-label={`Go to slide ${i + 1}`}
             animate={{ width: i === current ? 20 : 6 }}
             transition={snappy}
-            className="h-1.5 rounded-full bg-rondo-accent"
+            className="h-1.5 rounded-full bg-[var(--gold)]"
             style={{ opacity: i === current ? 1 : 0.3 }}
           />
         ))}

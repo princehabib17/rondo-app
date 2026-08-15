@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -10,6 +10,11 @@ const protectedFiles = [
   "components/tournament/TournamentHero.tsx",
   "components/tournament/BracketView.tsx",
   "components/tournament/StandingsTable.tsx",
+  "components/layout/BottomNav.tsx",
+  "components/game/GameCard.tsx",
+  "components/feed/FeedPageClient.tsx",
+  "components/feed/HomeSections.tsx",
+  "components/social/PostCard.tsx",
 ];
 
 const bannedPatterns = [
@@ -21,7 +26,22 @@ const bannedPatterns = [
   /rondo-yellow/,
   /bg-card/,
   /border-border/,
+  /from ["']lucide-react["']/,
 ];
+
+function walkTsx(dir: string, out: string[] = []): string[] {
+  for (const name of readdirSync(dir)) {
+    const path = join(dir, name);
+    const st = statSync(path);
+    if (st.isDirectory()) {
+      if (name === "ui" || name === "node_modules") continue;
+      walkTsx(path, out);
+    } else if (name.endsWith(".tsx")) {
+      out.push(path);
+    }
+  }
+  return out;
+}
 
 describe("Matchday token guard", () => {
   it("keeps critical Rondo components on Matchday tokens", () => {
@@ -35,7 +55,7 @@ describe("Matchday token guard", () => {
     expect(violations).toEqual([]);
   });
 
-  it("defines the required Matchday tokens", () => {
+  it("defines the required athletic tokens", () => {
     const globals = readFileSync(join(repoRoot, "app/globals.css"), "utf8");
     for (const token of [
       "--bg-page",
@@ -50,9 +70,22 @@ describe("Matchday token guard", () => {
       "--gold-dim",
       "--live",
       "--ok",
+      "--bg-night",
+      "--night-ink",
     ]) {
       expect(globals).toContain(token);
     }
   });
-});
 
+  it("keeps product screens free of legacy white-opacity ink", () => {
+    const files = [...walkTsx(join(repoRoot, "app")), ...walkTsx(join(repoRoot, "components"))];
+    const hits = files.flatMap((file) => {
+      const body = readFileSync(file, "utf8");
+      if (!/text-white\//.test(body) && !/bg-card\b/.test(body) && !/border-border\b/.test(body)) {
+        return [];
+      }
+      return [file.replace(repoRoot + "/", "")];
+    });
+    expect(hits).toEqual([]);
+  });
+});

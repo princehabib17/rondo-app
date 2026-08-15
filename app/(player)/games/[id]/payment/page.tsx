@@ -108,10 +108,10 @@ function PaymentForm() {
   if (redirecting) {
     return (
       <div className="min-h-[100dvh] flex flex-col items-center justify-center gap-5 px-6 text-center">
-        <Loader2 size={44} className="text-rondo-yellow animate-spin" />
+        <Loader2 size={44} className="text-[var(--gold)] animate-spin" />
         <div>
-          <p className="text-white font-black text-xl">Redirecting to payment</p>
-          <p className="text-muted-foreground text-sm mt-1">Do not close this page</p>
+          <p className="text-[var(--ink-hi)] font-black text-xl">Redirecting to payment</p>
+          <p className="text-[var(--ink-low)] text-sm mt-1">Do not close this page</p>
         </div>
       </div>
     );
@@ -120,8 +120,8 @@ function PaymentForm() {
   if (loading) {
     return (
       <div className="min-h-[100dvh] flex flex-col items-center justify-center gap-3 rondo-page">
-        <div className="w-8 h-8 border-2 border-rondo-accent border-t-transparent rounded-full animate-spin" />
-        <p className="text-white/50 text-sm">Loading payment…</p>
+        <div className="w-8 h-8 border-2 border-[var(--gold)] border-t-transparent rounded-full animate-spin" />
+        <p className="text-[var(--ink-low)] text-sm">Loading payment…</p>
       </div>
     );
   }
@@ -133,38 +133,38 @@ function PaymentForm() {
 
   return (
     <div className="min-h-[100dvh] pb-8 rondo-page">
-      <header className="sticky top-0 bg-black/95 backdrop-blur-md border-b border-white/5 z-40 px-4 py-3 flex items-center gap-3">
+      <header className="sticky top-0 bg-[var(--bg-page)]/95 backdrop-blur-md border-b border-[var(--stroke)] z-40 px-4 py-3 flex items-center gap-3">
         <button
           type="button"
           onClick={() => router.back()}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--ink-hi)]"
           aria-label="Back"
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="font-heading text-white font-black italic text-base uppercase">Pay from wallet</h1>
+        <h1 className="font-heading text-[var(--ink-hi)] font-black italic text-base uppercase">Pay from wallet</h1>
       </header>
 
       <div className="px-4 py-6 space-y-5 max-w-lg mx-auto">
         <div className="rondo-surface p-4">
-          <p className="font-body text-white/50 text-xs uppercase mb-1">Match</p>
-          <p className="font-heading text-white font-black text-lg">{game.title}</p>
-          <p className="font-body text-white/50 text-sm flex items-center gap-1.5 mt-2">
+          <p className="font-body text-[var(--ink-low)] text-xs uppercase mb-1">Match</p>
+          <p className="font-heading text-[var(--ink-hi)] font-black text-lg">{game.title}</p>
+          <p className="font-body text-[var(--ink-low)] text-sm flex items-center gap-1.5 mt-2">
             <MapPin size={12} />
             {game.venue_name}
           </p>
-          <div className="flex justify-between items-end mt-4 pt-4 border-t border-white/10">
-            <span className="font-body text-white/50 text-sm">Price</span>
-            <span className="font-heading text-rondo-accent font-black text-2xl">{formatPrice(price)}</span>
+          <div className="flex justify-between items-end mt-4 pt-4 border-t border-[var(--stroke)]">
+            <span className="font-body text-[var(--ink-low)] text-sm">Price</span>
+            <span className="font-heading text-[var(--gold)] font-black text-2xl">{formatPrice(price)}</span>
           </div>
         </div>
 
         <div className="space-y-3">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-rondo-yellow">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gold)]">
               Payment decision
             </p>
-            <h2 className="font-heading text-2xl font-black uppercase italic text-white">
+            <h2 className="font-heading text-2xl font-black uppercase italic text-[var(--ink-hi)]">
               Confirm your spot
             </h2>
           </div>
@@ -172,41 +172,41 @@ function PaymentForm() {
           <button
             onClick={handlePayOnline}
             disabled={paying}
-            className="w-full rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-left transition-all hover:border-rondo-yellow/40 active:scale-[0.98] disabled:opacity-50"
+            className="w-full rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.04] p-4 text-left transition-all hover:border-[var(--gold)]/40 active:scale-[0.98] disabled:opacity-50"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-rondo-yellow/10 flex items-center justify-center">
-                <CreditCard size={18} className="text-rondo-yellow" />
+              <div className="w-10 h-10 rounded-full bg-[var(--gold)]/10 flex items-center justify-center">
+                <CreditCard size={18} className="text-[var(--gold)]" />
               </div>
               <div className="flex-1">
-                <p className="text-white font-semibold text-sm">Top up then pay</p>
-                <p className="text-muted-foreground text-xs">
+                <p className="text-[var(--ink-hi)] font-semibold text-sm">Top up then pay</p>
+                <p className="text-[var(--ink-low)] text-xs">
                   GCash, Maya, and card checkout through PayMongo.
                 </p>
               </div>
               {paying && (
-                <div className="w-4 h-4 border-2 border-rondo-yellow border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-[var(--gold)] border-t-transparent rounded-full animate-spin" />
               )}
             </div>
           </button>
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+          <div className="rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.04] p-4">
             <div className="flex items-center gap-3">
               <div className="flex-1 min-w-0">
-                <p className="font-body text-white/50 text-xs uppercase">Wallet balance</p>
-                <p className="font-heading text-white font-black text-2xl">{formatPrice(balanceCentavos)}</p>
+                <p className="font-body text-[var(--ink-low)] text-xs uppercase">Wallet balance</p>
+                <p className="font-heading text-[var(--ink-hi)] font-black text-2xl">{formatPrice(balanceCentavos)}</p>
               </div>
-              <Link href={`/wallet?next=/games/${id}/payment?teamId=${teamId ?? ""}`} className="text-rondo-accent text-xs font-semibold uppercase shrink-0">
+              <Link href={`/wallet?next=/games/${id}/payment?teamId=${teamId ?? ""}`} className="text-[var(--gold)] text-xs font-semibold uppercase shrink-0">
                 Top up
               </Link>
             </div>
-            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--bg-inset)]">
               <div
-                className="h-full rounded-full bg-rondo-yellow"
+                className="h-full rounded-full bg-[var(--gold)]"
                 style={{ width: `${Math.min(100, Math.round((balanceCentavos / Math.max(price, 1)) * 100))}%` }}
               />
             </div>
-            <p className={`mt-2 text-xs ${hasEnoughBalance ? "text-emerald-300" : "text-white/45"}`}>
+            <p className={`mt-2 text-xs ${hasEnoughBalance ? "text-emerald-300" : "text-[var(--ink-low)]"}`}>
               {hasEnoughBalance
                 ? "Your wallet covers this match."
                 : `${formatPrice(Math.max(price - balanceCentavos, 0))} more needed before wallet payment.`}
@@ -215,9 +215,9 @@ function PaymentForm() {
         </div>
 
         {paying && (
-          <div className="rondo-surface border-rondo-accent/20 p-4 flex items-center gap-3">
-            <div className="w-5 h-5 border-2 border-rondo-accent border-t-transparent rounded-full animate-spin shrink-0" />
-            <p className="text-white/80 text-sm">Processing payment…</p>
+          <div className="rondo-surface border-[var(--gold)]/20 p-4 flex items-center gap-3">
+            <div className="w-5 h-5 border-2 border-[var(--gold)] border-t-transparent rounded-full animate-spin shrink-0" />
+            <p className="text-[var(--ink-hi)] text-sm">Processing payment…</p>
           </div>
         )}
 
@@ -225,7 +225,7 @@ function PaymentForm() {
           type="button"
           onClick={handlePayWithWallet}
           disabled={paying || !hasEnoughBalance}
-          className="w-full bg-rondo-accent text-black font-heading font-black uppercase tracking-widest text-sm py-4 rounded-xl disabled:opacity-40 flex items-center justify-center gap-2 min-h-[52px]"
+          className="w-full bg-[var(--gold)] text-[var(--gold-ink)] font-heading font-black uppercase tracking-widest text-sm py-4 rounded-[var(--r-md)] disabled:opacity-40 flex items-center justify-center gap-2 min-h-[52px]"
         >
           {!paying && (
             <>
@@ -236,12 +236,12 @@ function PaymentForm() {
         </button>
 
         {error && (
-          <div className="bg-red-950/40 border border-red-800/50 rounded-xl p-4">
+          <div className="bg-red-950/40 border border-red-800/50 rounded-[var(--r-md)] p-4">
             <p className="text-red-200 text-sm text-center">{error}</p>
           </div>
         )}
 
-        <p className="font-body text-white/35 text-xs text-center leading-relaxed">
+        <p className="font-body text-[var(--ink-low)] text-xs text-center leading-relaxed">
           Match fees come from your Rondo Wallet. Top-ups use PayMongo for GCash, Maya, and cards; that money lands in your wallet before it is applied to the match.
         </p>
       </div>
@@ -254,7 +254,7 @@ export default function PaymentPage() {
     <Suspense
       fallback={
         <div className="min-h-[100dvh] flex items-center justify-center rondo-page">
-          <div className="w-2 h-2 rounded-full bg-rondo-accent animate-ping" />
+          <div className="w-2 h-2 rounded-full bg-[var(--gold)] animate-ping" />
         </div>
       }
     >

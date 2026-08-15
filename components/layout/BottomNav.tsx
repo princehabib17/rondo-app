@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  CalendarDays,
-  Home,
-  MapPinned,
-  Radio,
+  Broadcast,
+  CalendarBlank,
+  House,
+  MapPin,
   Trophy,
   User,
-  Users,
-} from "lucide-react";
+  UsersThree,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -29,25 +29,25 @@ type TabDef = {
 const playerTabs: TabDef[] = [
   {
     href: "/feed",
-    icon: Home,
+    icon: House,
     label: "Home",
     isActive: (p) => p === "/feed",
   },
   {
     href: "/community",
-    icon: Users,
+    icon: UsersThree,
     label: "Community",
     isActive: (p) => p === "/community" || p.startsWith("/community/"),
   },
   {
     href: "/feed/map",
-    icon: MapPinned,
+    icon: MapPin,
     label: "Map",
     isActive: (p) => p === "/feed/map" || p.startsWith("/feed/map/"),
   },
   {
     href: "/my-games",
-    icon: CalendarDays,
+    icon: CalendarBlank,
     label: "Matches",
     isActive: (p) => p === "/my-games" || p.startsWith("/my-games/"),
   },
@@ -62,7 +62,7 @@ const playerTabs: TabDef[] = [
 const organizerTabs: TabDef[] = [
   {
     href: "/organizer/dashboard",
-    icon: Home,
+    icon: House,
     label: "Home",
     isActive: (p) =>
       p === "/organizer/dashboard" ||
@@ -78,7 +78,7 @@ const organizerTabs: TabDef[] = [
   },
   {
     href: "/organizer/room",
-    icon: Radio,
+    icon: Broadcast,
     label: "Room",
     isActive: (p) => p === "/organizer/room" || p.startsWith("/organizer/room"),
   },
@@ -134,20 +134,11 @@ export function BottomNav() {
     <motion.nav
       animate={{ y: visible ? 0 : 100, opacity: visible ? 1 : 0 }}
       transition={snappy}
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200]"
+      className="fixed bottom-6 left-1/2 z-[200] -translate-x-1/2"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      aria-label="Primary"
     >
-      <div
-        className="flex items-center gap-1 px-2 h-[60px] rounded-[26px]"
-        style={{
-          background: "rgba(28, 28, 30, 0.55)",
-          backdropFilter: "blur(40px) saturate(180%) brightness(1.1)",
-          WebkitBackdropFilter: "blur(40px) saturate(180%) brightness(1.1)",
-          border: "1px solid rgba(255,255,255,0.18)",
-          boxShadow:
-            "0 4px 6px rgba(0,0,0,0.25), 0 20px 60px rgba(0,0,0,0.50), 0 0 0 0.5px rgba(255,255,255,0.10), inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 0 rgba(255,255,255,0.04)",
-        }}
-      >
+      <div className="flex h-[60px] items-center gap-1 rounded-[26px] border border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-surface)_92%,transparent)] px-2 shadow-[0_8px_28px_color-mix(in_oklch,var(--ink-hi)_12%,transparent)] backdrop-blur-xl">
         {tabs.map(({ href, icon: Icon, label, isActive }) => {
           const active = isActive(pathname);
           const pending = pendingHref === href && !active;
@@ -161,21 +152,13 @@ export function BottomNav() {
               onClick={() => {
                 if (!active) setPendingHref(href);
               }}
-              className="relative flex items-center justify-center w-[52px] h-[44px] rounded-[14px]"
+              className="relative flex h-11 w-[52px] items-center justify-center rounded-[14px]"
             >
-              {/* Sliding pill background */}
               <AnimatePresence>
                 {highlighted && (
                   <motion.span
                     layoutId="nav-pill"
-                    className="absolute inset-0 rounded-[14px]"
-                    style={{
-                      background:
-                        "color-mix(in oklch, oklch(88% 0.18 102) 18%, rgba(255,255,255,0.08))",
-                      backdropFilter: "blur(8px)",
-                      WebkitBackdropFilter: "blur(8px)",
-                      border: "1px solid rgba(255,255,255,0.14)",
-                    }}
+                    className="absolute inset-0 rounded-[14px] border border-[color-mix(in_oklch,var(--gold)_28%,var(--stroke))] bg-[var(--gold-dim)]"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -185,12 +168,7 @@ export function BottomNav() {
               </AnimatePresence>
 
               <motion.div
-                animate={
-                  highlighted ? { scale: [1, 0.84, 1.1, 1] } : { scale: 1 }
-                }
-                // Springs only support two keyframes; the multi-keyframe pop
-                // needs a tween or motion throws and kills every other
-                // AnimatePresence exit on the page.
+                animate={highlighted ? { scale: [1, 0.84, 1.1, 1] } : { scale: 1 }}
                 transition={
                   highlighted
                     ? { duration: 0.35, times: [0, 0.3, 0.65, 1], ease: "easeOut" }
@@ -201,11 +179,12 @@ export function BottomNav() {
               >
                 <Icon
                   size={22}
-                  strokeWidth={highlighted ? 2.1 : 1.65}
+                  weight={highlighted ? "fill" : "regular"}
                   className={cn(
                     "transition-colors duration-150",
-                    highlighted ? "text-rondo-accent" : "text-white/40"
+                    highlighted ? "text-[var(--gold)]" : "text-[var(--ink-low)]"
                   )}
+                  aria-hidden
                 />
               </motion.div>
             </Link>
