@@ -47,7 +47,7 @@ export default function RoleSelectionPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[var(--bg-page)] flex flex-col px-5 py-7 max-w-sm mx-auto rondo-phone-frame">
+    <div className="mx-auto flex min-h-[100dvh] max-w-sm flex-col bg-[var(--bg-page)] px-5 py-7">
       <OnboardingHeader />
 
       <h1 className="rondo-hero-title text-3xl mt-9 mb-6 leading-none">
@@ -74,12 +74,12 @@ export default function RoleSelectionPage() {
                 className="object-cover"
                 sizes="400px"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/35 to-transparent" />
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,color-mix(in_oklch,var(--bg-night)_88%,transparent)_0%,color-mix(in_oklch,var(--bg-night)_35%,transparent)_55%,transparent_100%)]" />
               <div className="relative z-10 flex h-full flex-col justify-end px-4 pb-4">
-                <h2 className="rondo-hero-title text-3xl leading-none">
+                <h2 className="rondo-hero-title text-3xl leading-none text-[var(--night-ink)]">
                   {role.title}
                 </h2>
-                <p className="font-body text-[var(--ink-mid)] text-[9px] tracking-wide mt-2 max-w-[260px]">
+                <p className="mt-2 max-w-[260px] font-body text-[9px] tracking-wide text-[color-mix(in_oklch,var(--night-ink)_78%,transparent)]">
                   {role.subtitle}
                 </p>
               </div>

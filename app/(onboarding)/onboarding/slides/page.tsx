@@ -35,7 +35,7 @@ export default function OnboardingSlidesPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[var(--bg-page)] flex flex-col px-5 py-7 max-w-sm mx-auto rondo-phone-frame">
+    <div className="mx-auto flex min-h-[100dvh] max-w-sm flex-col bg-[var(--bg-page)] px-5 py-7">
       <OnboardingHeader />
 
       <div className="flex-1 flex items-center justify-center py-8">

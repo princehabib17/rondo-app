@@ -28,12 +28,7 @@ export function GuestScoutLinks() {
   async function handleGuest() {
     setError(null);
     setGuestLoading(true);
-    const result = await signInAsGuest();
-    if (!result.ok) {
-      setError(result.error ?? "Guest sign-in failed");
-      setGuestLoading(false);
-      return;
-    }
+    await signInAsGuest();
     const next = new URLSearchParams(window.location.search).get("next");
     router.replace(getGuestDestination(next));
     router.refresh();
@@ -54,7 +49,7 @@ export function GuestScoutLinks() {
 
   return (
     <div className="mt-6 space-y-3">
-      <p className="text-center font-body text-[var(--ink-low)] text-xs uppercase tracking-widest">
+      <p className="text-center font-body text-xs uppercase tracking-widest text-[var(--ink-low)]">
         or explore without signing up
       </p>
       <div className="grid grid-cols-2 gap-3">
@@ -62,7 +57,7 @@ export function GuestScoutLinks() {
           type="button"
           onClick={handleGuest}
           disabled={guestLoading || scoutLoading}
-          className="flex flex-col items-center gap-1.5 rounded-[var(--r-md)] border border-[var(--stroke)] py-3 px-2 text-[var(--ink-low)] hover:text-[var(--ink-hi)] hover:border-[var(--stroke)] transition-colors disabled:opacity-40"
+          className="flex flex-col items-center gap-1.5 rounded-[var(--r-md)] border border-[var(--stroke)] px-2 py-3 text-[var(--ink-low)] transition-colors hover:border-[var(--stroke)] hover:text-[var(--ink-hi)] disabled:opacity-40"
         >
           <Eye size={18} />
           <span className="font-body text-xs font-semibold">
@@ -73,7 +68,7 @@ export function GuestScoutLinks() {
           type="button"
           onClick={handleScout}
           disabled={guestLoading || scoutLoading}
-          className="flex flex-col items-center gap-1.5 rounded-[var(--r-md)] border border-[var(--gold)]/40 bg-[var(--gold)]/5 py-3 px-2 text-[var(--gold)] hover:bg-[var(--gold)]/10 transition-colors disabled:opacity-40"
+          className="flex flex-col items-center gap-1.5 rounded-[var(--r-md)] border border-[var(--gold)]/40 bg-[var(--gold)]/5 px-2 py-3 text-[var(--gold)] transition-colors hover:bg-[var(--gold)]/10 disabled:opacity-40"
         >
           <UserSearch size={18} />
           <span className="font-body text-xs font-semibold">
@@ -81,7 +76,7 @@ export function GuestScoutLinks() {
           </span>
         </button>
       </div>
-      <p className="text-center font-body text-[var(--ink-low)] text-[10px] leading-relaxed">
+      <p className="text-center font-body text-[10px] leading-relaxed text-[var(--ink-low)]">
         Browse matches to find games near you. Watch highlights to scout players and save a shortlist.
       </p>
       {error && (

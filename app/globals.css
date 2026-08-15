@@ -78,27 +78,26 @@
 }
 
 :root {
-  /* Strava-newest athletic canvas. Light feed first.
-     Gold is the Rondo action pulse (not Strava orange). Night tokens
-     stay for maps, reels, and tournament floodlights. */
-  --bg-page: oklch(99.2% 0.004 102);
+  /* Athletic light canvas: cool paper + cool ink.
+     Gold is a pulse (buttons, focus, live), not a brown wash. */
+  --bg-page: oklch(98.6% 0.003 250);
   --bg-surface: oklch(100% 0 0);
-  --bg-inset: oklch(96.2% 0.006 102);
-  --stroke: oklch(90% 0.008 102);
+  --bg-inset: oklch(96.2% 0.004 250);
+  --stroke: oklch(90% 0.006 250);
 
-  --ink-hi: oklch(18% 0.014 102);
-  --ink-mid: oklch(42% 0.016 102);
-  --ink-low: oklch(56% 0.014 102);
+  --ink-hi: oklch(16% 0.02 255);
+  --ink-mid: oklch(38% 0.016 255);
+  --ink-low: oklch(50% 0.012 255);
 
-  --gold: oklch(68% 0.16 72);
+  --gold: oklch(56% 0.15 88);
   --gold-ink: oklch(99% 0 0);
   --gold-dim: color-mix(in oklch, var(--gold) 12%, transparent);
 
   --live: oklch(54% 0.2 25);
   --ok: oklch(48% 0.13 155);
 
-  --bg-night: oklch(18% 0.012 102);
-  --night-ink: oklch(97% 0 0);
+  --bg-night: oklch(14% 0.012 255);
+  --night-ink: oklch(97.5% 0.002 250);
 
   /* Scale */
   --r-sm: 10px;
@@ -289,9 +288,6 @@
 
 .rondo-page {
   background-color: var(--bg-page);
-  background-image:
-    radial-gradient(ellipse 90% 50% at 12% -18%, color-mix(in oklch, var(--gold) 8%, transparent), transparent 42%),
-    linear-gradient(180deg, var(--bg-page) 0%, var(--bg-inset) 100%);
 }
 
 .rondo-surface {
@@ -318,17 +314,13 @@
   width: min(100vw, 24rem);
   max-width: 100%;
   overflow-x: clip;
-  border: 1px solid var(--stroke);
-  border-radius: var(--r-lg);
-  background:
-    radial-gradient(circle at 25% 0%, color-mix(in oklch, var(--gold) 8%, transparent), transparent 26%),
-    var(--bg-page);
+  background: var(--bg-page);
 }
 
 .rondo-hero-title {
   font-family: var(--font-heading);
   font-weight: 900;
-  font-style: italic;
+  font-style: normal;
   text-transform: uppercase;
   line-height: 0.9;
   letter-spacing: 0;
@@ -403,8 +395,19 @@
 }
 
 .rondo-btn-secondary {
-  background: var(--bg-inset);
+  background: var(--bg-surface);
   color: var(--ink-hi);
+  border: 1px solid var(--stroke);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .rondo-btn-primary:hover:not(:disabled) {
+    filter: brightness(0.96);
+  }
+
+  .rondo-btn-secondary:hover:not(:disabled) {
+    background: var(--bg-inset);
+  }
 }
 
 .rondo-btn-ghost {
@@ -554,23 +557,23 @@
    plus a --gold variant reserved for winner/champion contexts. */
 .rondo-night {
   --bg-page: var(--bg-night);
-  --bg-surface: oklch(22% 0.012 102);
-  --bg-inset: oklch(26% 0.012 102);
-  --stroke: oklch(34% 0.012 102);
+  --bg-surface: oklch(22% 0.012 255);
+  --bg-inset: oklch(26% 0.012 255);
+  --stroke: oklch(34% 0.01 255);
   --ink-hi: var(--night-ink);
-  --ink-mid: oklch(84% 0.008 102);
-  --ink-low: oklch(68% 0.01 102);
+  --ink-mid: oklch(84% 0.008 255);
+  --ink-low: oklch(68% 0.01 255);
   background-color: var(--bg-night);
   color: var(--night-ink);
 }
 
 .rondo-floodlight-scene {
   --bg-page: var(--bg-night);
-  --bg-surface: oklch(22% 0.012 102);
-  --stroke: oklch(34% 0.012 102);
+  --bg-surface: oklch(22% 0.012 255);
+  --stroke: oklch(34% 0.01 255);
   --ink-hi: var(--night-ink);
-  --ink-mid: oklch(84% 0.008 102);
-  --ink-low: oklch(68% 0.01 102);
+  --ink-mid: oklch(84% 0.008 255);
+  --ink-low: oklch(68% 0.01 255);
   position: relative;
   color: var(--night-ink);
   background:

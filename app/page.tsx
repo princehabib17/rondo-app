@@ -3,115 +3,75 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowRight, MapPin, SoccerBall, Trophy, Users } from "@phosphor-icons/react";
+import { ArrowRight, SoccerBall } from "@phosphor-icons/react";
 import { signInAsGuest } from "@/lib/auth/guest";
 import Link from "next/link";
-import { motion } from "motion/react";
-import { gentle } from "@/components/motion/springs";
 
 export default function HomePage() {
   const router = useRouter();
-  const [guestError, setGuestError] = useState<string | null>(null);
   const [guestLoading, setGuestLoading] = useState(false);
 
   async function handleGuest() {
-    setGuestError(null);
     setGuestLoading(true);
-    const result = await signInAsGuest();
-    if (!result.ok) {
-      setGuestError(result.error ?? "Guest sign-in failed");
-      setGuestLoading(false);
-      return;
-    }
+    await signInAsGuest();
     router.push("/feed");
     router.refresh();
   }
 
   return (
-    <main className="relative min-h-[100dvh] overflow-hidden rondo-page text-[var(--ink-hi)]">
-      <div className="absolute inset-0 opacity-75">
+    <main className="relative mx-auto flex min-h-[100dvh] w-full max-w-lg flex-col bg-[var(--bg-page)] text-[var(--ink-hi)]">
+      <section className="rondo-night relative isolate flex min-h-[52dvh] flex-col overflow-hidden">
         <Image
           src="/feed/hero-night-court.png"
           alt=""
           fill
           priority
-          className="object-cover object-center"
+          className="pointer-events-none object-cover object-center"
           sizes="100vw"
         />
-      </div>
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_oklch,var(--bg-page)_55%,transparent)_0%,color-mix(in_oklch,var(--bg-page)_42%,transparent)_38%,var(--bg-page)_100%)]" />
-      <div className="absolute inset-0 rondo-map-shell opacity-40 mix-blend-screen" />
+        <div
+          className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_oklch,var(--bg-night)_28%,transparent)_0%,color-mix(in_oklch,var(--bg-night)_58%,transparent)_52%,var(--bg-night)_100%)]"
+          aria-hidden
+        />
 
-      <div className="pointer-events-none absolute inset-x-0 top-20 flex justify-center overflow-hidden" aria-hidden>
-        <span className="select-none font-heading text-[29vw] font-black uppercase leading-none text-[var(--gold)] opacity-[0.055]">
-          Street
-        </span>
-      </div>
-
-      <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-lg flex-col px-4 pb-6 pt-5">
-        <motion.div
-          className="flex items-center justify-between"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={gentle}
-        >
+        <div className="relative z-10 flex items-center justify-between px-4 pt-5">
           <div className="flex items-center gap-2.5">
-            <Image src="/rondo-logo.png" alt="Rondo" width={48} height={48} priority className="object-contain" />
-            <p className="font-heading text-sm font-black uppercase tracking-wide text-[var(--ink-hi)]">Rondo</p>
+            <Image src="/rondo-logo.png" alt="Rondo" width={40} height={40} priority className="object-contain" />
+            <p className="font-heading text-sm font-black uppercase tracking-wide text-[var(--night-ink)]">Rondo</p>
           </div>
-          <Link href="/login" className="rondo-chip bg-[color-mix(in_oklch,var(--bg-page)_70%,transparent)]">
+          <Link
+            href="/login"
+            className="inline-flex min-h-11 items-center rounded-[var(--r-pill)] border border-[color-mix(in_oklch,var(--night-ink)_28%,transparent)] bg-[color-mix(in_oklch,var(--bg-night)_40%,transparent)] px-4 font-body text-sm font-semibold text-[var(--night-ink)]"
+          >
             Log in
           </Link>
-        </motion.div>
+        </div>
 
-        <div className="flex-1" />
+        <div className="relative z-10 mt-auto px-4 pb-8 pt-20">
+          <h1 className="font-heading text-[3.5rem] font-black uppercase leading-[0.86] tracking-[-0.04em] text-[var(--night-ink)] sm:text-[4.25rem]">
+            Own the street
+          </h1>
+          <p className="mt-3 max-w-[20rem] text-[0.95rem] leading-relaxed text-[color-mix(in_oklch,var(--night-ink)_78%,transparent)]">
+            Find nearby football, join a squad, and play tonight.
+          </p>
+        </div>
+      </section>
 
-        <motion.section
-          className="space-y-5"
-          initial={{ opacity: 0, y: 22 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ ...gentle, delay: 0.1 }}
+      <section className="flex flex-1 flex-col justify-end gap-3 px-4 pb-8 pt-6">
+        <Link href="/signup" className="rondo-btn rondo-btn-primary">
+          Create account
+          <ArrowRight size={18} weight="bold" aria-hidden />
+        </Link>
+        <button
+          type="button"
+          onClick={handleGuest}
+          disabled={guestLoading}
+          className="rondo-btn rondo-btn-secondary"
         >
-          <div className="space-y-3">
-            <h1 className="font-heading text-[4.5rem] font-black uppercase leading-[0.78] tracking-[-0.04em] text-[var(--ink-hi)] sm:text-[5.4rem]">
-              Own the street
-            </h1>
-            <p className="max-w-[21rem] rondo-body text-[var(--ink-mid)]">
-              Open the map, join nearby football, and turn pickup games into real matchdays.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              { icon: MapPin, label: "Live map" },
-              { icon: Users, label: "Open squads" },
-              { icon: Trophy, label: "Brackets" },
-            ].map(({ icon: Icon, label }) => (
-              <div key={label} className="rounded-[var(--r-md)] border border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_74%,transparent)] p-3 backdrop-blur-md">
-                <Icon size={20} weight="duotone" className="mb-4 text-[var(--gold)]" aria-hidden />
-                <p className="font-body text-sm font-semibold text-[var(--ink-hi)]">{label}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="space-y-3">
-            <Link href="/signup" className="rondo-btn rondo-btn-primary">
-              Create account
-              <ArrowRight size={18} weight="bold" aria-hidden />
-            </Link>
-            <button
-              type="button"
-              onClick={handleGuest}
-              disabled={guestLoading}
-              className="rondo-btn border border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_76%,transparent)] text-[var(--ink-hi)] backdrop-blur-md"
-            >
-              <SoccerBall size={18} weight="duotone" aria-hidden />
-              {guestLoading ? "Opening feed" : "Continue as guest"}
-            </button>
-            {guestError && <p className="rondo-meta px-2 text-center text-[var(--live)]">{guestError}</p>}
-          </div>
-        </motion.section>
-      </div>
+          <SoccerBall size={18} weight="fill" aria-hidden />
+          {guestLoading ? "Opening feed" : "Continue as guest"}
+        </button>
+      </section>
     </main>
   );
 }

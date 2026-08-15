@@ -19,40 +19,24 @@ function getGuestDestination(rawNext: string | null): string {
 
 export function ContinueAsGuestLink() {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleGuest() {
-    setError(null);
     setLoading(true);
-    const result = await signInAsGuest();
-
-    if (!result.ok) {
-      setError(result.error ?? "Guest sign-in failed");
-      setLoading(false);
-      return;
-    }
-
+    await signInAsGuest();
     const next = new URLSearchParams(window.location.search).get("next");
     router.replace(getGuestDestination(next));
     router.refresh();
   }
 
   return (
-    <div className="mt-4 text-center">
-      <button
-        type="button"
-        onClick={handleGuest}
-        disabled={loading}
-        className="min-h-11 px-2 font-body text-sm font-semibold text-[var(--ink-mid)] transition-colors hover:text-[var(--gold)] disabled:opacity-50"
-      >
-        {loading ? "Opening guest access..." : "Continue as guest"}
-      </button>
-      {error && (
-        <p className="mt-2 text-center text-xs leading-relaxed text-[var(--live)]" role="alert">
-          {error}
-        </p>
-      )}
-    </div>
+    <button
+      type="button"
+      onClick={handleGuest}
+      disabled={loading}
+      className="rondo-btn rondo-btn-secondary mt-3"
+    >
+      {loading ? "Opening feed" : "Continue as guest"}
+    </button>
   );
 }

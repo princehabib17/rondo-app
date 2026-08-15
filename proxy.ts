@@ -30,6 +30,8 @@ const PUBLIC_BROWSE_PREFIXES = [
   "/feed",
   "/scout",
   "/organizers",
+  "/reels",
+  "/community",
 ];
 
 /** Public routes that do not need a Supabase session lookup (faster dev loads). */

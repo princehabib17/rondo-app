@@ -27,18 +27,22 @@ export default function SignupPage() {
   const [nextParam, setNextParam] = useState<string | null>(null);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user || data.user.is_anonymous) return;
-      supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", data.user.id)
-        .single()
-        .then(({ data: profile }) => {
-          router.replace(profile?.role ? "/feed" : "/onboarding/slides");
-        });
-    });
+    try {
+      const supabase = createClient();
+      supabase.auth.getUser().then(({ data }) => {
+        if (!data.user || data.user.is_anonymous) return;
+        supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", data.user.id)
+          .single()
+          .then(({ data: profile }) => {
+            router.replace(profile?.role ? "/feed" : "/onboarding/slides");
+          });
+      });
+    } catch {
+      // Missing Supabase config should not brick the signup form.
+    }
     setNextParam(new URLSearchParams(window.location.search).get("next"));
   }, [router]);
 
@@ -159,7 +163,7 @@ export default function SignupPage() {
           </p>
         )}
 
-        <RondoButton type="submit" variant="secondary" disabled={sending} className="mt-2">
+        <RondoButton type="submit" variant="primary" disabled={sending} className="mt-2">
           {sending ? "Sending code..." : "Get OTP"}
         </RondoButton>
       </form>

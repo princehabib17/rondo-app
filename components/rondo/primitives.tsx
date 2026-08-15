@@ -61,7 +61,7 @@ export function RondoSurface({
 }
 
 export const rondoFieldClass =
-  "h-12 w-full max-w-full min-w-0 rounded-[var(--r-sm)] border border-transparent bg-[var(--bg-inset)] px-4 text-[var(--ink-hi)] rondo-body placeholder:text-[var(--ink-low)] focus:outline-none focus:border-[var(--gold)] focus:ring-2 focus:ring-[color-mix(in_oklch,var(--gold)_16%,transparent)] transition-[border-color,box-shadow] duration-200";
+  "h-12 w-full max-w-full min-w-0 rounded-[var(--r-sm)] border border-[var(--stroke)] bg-[var(--bg-surface)] px-4 text-[var(--ink-hi)] rondo-body placeholder:text-[var(--ink-low)] focus:outline-none focus:border-[var(--gold)] focus:ring-2 focus:ring-[color-mix(in_oklch,var(--gold)_16%,transparent)] transition-[border-color,box-shadow] duration-200";
 
 type StatTileProps = {
   label: string;

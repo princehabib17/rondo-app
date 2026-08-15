@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Phone } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { GuestScoutLinks } from "@/components/auth/GuestScoutLinks";
+import { ContinueAsGuestLink } from "@/components/auth/ContinueAsGuestLink";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 import { PasskeySignInButton } from "@/components/auth/PasskeySignInButton";
 import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
@@ -33,23 +34,27 @@ export default function LoginPage() {
   const [nextParam, setNextParam] = useState<string | null>(null);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user || data.user.is_anonymous) return;
-      const next = safeNext(new URLSearchParams(window.location.search).get("next"));
-      if (next) {
-        router.replace(next);
-        return;
-      }
-      supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", data.user.id)
-        .single()
-        .then(({ data: profile }) => {
-          router.replace(profile?.role ? "/feed" : "/onboarding/slides");
-        });
-    });
+    try {
+      const supabase = createClient();
+      supabase.auth.getUser().then(({ data }) => {
+        if (!data.user || data.user.is_anonymous) return;
+        const next = safeNext(new URLSearchParams(window.location.search).get("next"));
+        if (next) {
+          router.replace(next);
+          return;
+        }
+        supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", data.user.id)
+          .single()
+          .then(({ data: profile }) => {
+            router.replace(profile?.role ? "/feed" : "/onboarding/slides");
+          });
+      });
+    } catch {
+      // Missing Supabase config should not brick the login form.
+    }
     setNextParam(new URLSearchParams(window.location.search).get("next"));
   }, [router]);
 
@@ -184,7 +189,7 @@ export default function LoginPage() {
           <div className="w-full border-t border-[var(--stroke)]" />
         </div>
         <div className="relative flex justify-center">
-          <span className="bg-[var(--bg-page,#0a0a0a)] px-3 text-[10px] uppercase tracking-wider text-[var(--ink-low)]">
+          <span className="bg-[var(--bg-page)] px-3 text-[10px] uppercase tracking-wider text-[var(--ink-low)]">
             Or continue with
           </span>
         </div>
@@ -273,6 +278,7 @@ export default function LoginPage() {
         <RondoButton type="submit" variant="primary" disabled={sending} className="mt-2">
           {sending ? "Signing in..." : mode === "phone" ? "Send OTP" : "Log in"}
         </RondoButton>
+        <ContinueAsGuestLink />
       </form>
 
       <p className="text-center text-[var(--ink-mid)] text-sm mt-8">
