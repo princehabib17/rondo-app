@@ -39,46 +39,37 @@ export default function HomePage() {
 
   return (
     <main className="relative min-h-[100dvh] overflow-hidden rondo-page text-[var(--ink-hi)]">
-      {/* Daylight athletic plane — replaces night-court so the published light system is obvious */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 opacity-70">
         <Image
-          src="/feed/hero-soccer.jpg"
-          alt="Football cleats and ball on the pitch"
+          src="/feed/hero-night-court.png"
+          alt="Night football court under floodlights"
           fill
           priority
-          className="object-cover object-[center_35%]"
+          className="object-cover object-center"
           sizes="100vw"
         />
       </div>
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_oklch,var(--bg-page)_28%,transparent)_0%,color-mix(in_oklch,var(--bg-page)_55%,transparent)_42%,var(--bg-page)_78%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_80%_18%,color-mix(in_oklch,var(--gold)_18%,transparent),transparent_55%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_oklch,var(--bg-page)_55%,transparent)_0%,color-mix(in_oklch,var(--bg-page)_42%,transparent)_38%,var(--bg-page)_100%)]" />
 
-      <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-lg flex-col px-4 pb-8 pt-5">
-        <motion.div className="flex items-center justify-end" {...enter(0)}>
+      <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-lg flex-col justify-end px-4 pb-8 pt-5 sm:justify-center">
+        <motion.div className="mb-auto flex items-center justify-between sm:mb-10" {...enter(0)}>
+          <div className="flex items-center gap-3">
+            <Image src="/rondo-logo.png" alt="" width={48} height={48} priority className="object-contain" />
+            <p className="font-heading text-2xl font-black uppercase tracking-[-0.03em] text-[var(--ink-hi)]">
+              Rondo
+            </p>
+          </div>
           <RondoButton href="/login" variant="ghost" className="!h-10 !w-auto !px-3 text-sm">
             Log in
           </RondoButton>
         </motion.div>
 
-        <section className="mt-auto space-y-6 pb-2">
-          <motion.div className="space-y-4" {...enter(0.05)}>
-            <div className="flex items-center gap-3">
-              <Image
-                src="/rondo-logo.png"
-                alt=""
-                width={56}
-                height={56}
-                priority
-                className="object-contain"
-              />
-              <p className="font-heading text-[clamp(3.25rem,16vw,5.5rem)] font-black uppercase leading-[0.82] tracking-[-0.04em] text-[var(--ink-hi)]">
-                Rondo
-              </p>
-            </div>
-            <h1 className="max-w-[18rem] font-heading text-[clamp(1.75rem,7vw,2.35rem)] font-extrabold uppercase leading-[0.95] tracking-[-0.03em] text-[var(--ink-hi)]">
-              Find your next matchday
+        <section className="space-y-6">
+          <motion.div className="space-y-3" {...enter(0.06)}>
+            <h1 className="rondo-hero-title text-[clamp(3.5rem,14vw,5.25rem)] text-[var(--ink-hi)]">
+              Own the street
             </h1>
-            <p className="max-w-[22rem] rondo-body text-[var(--ink-mid)]">
+            <p className="max-w-[21rem] rondo-body text-[var(--ink-mid)]">
               Open the map, join nearby football, and turn pickup games into real matchdays.
             </p>
           </motion.div>
@@ -92,9 +83,7 @@ export default function HomePage() {
               <SoccerBall size={18} weight="duotone" aria-hidden />
               {guestLoading ? "Opening feed" : "Continue as guest"}
             </RondoButton>
-            {guestError && (
-              <p className="rondo-meta px-2 text-center text-[var(--live)]">{guestError}</p>
-            )}
+            {guestError && <p className="rondo-meta px-2 text-center text-[var(--live)]">{guestError}</p>}
           </motion.div>
         </section>
       </div>

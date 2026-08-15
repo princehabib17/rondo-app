@@ -78,8 +78,8 @@
 }
 
 :root {
-  /* Strava-newest athletic canvas. Light feed first.
-     Gold is the Rondo action pulse (not Strava orange). Night tokens
+  /* Athletic light canvas. Matchday yellow is the action pulse —
+     not the muddy amber that read as brown on buttons. Night tokens
      stay for maps, reels, and tournament floodlights. */
   --bg-page: oklch(99.2% 0.004 102);
   --bg-surface: oklch(100% 0 0);
@@ -90,9 +90,10 @@
   --ink-mid: oklch(42% 0.016 102);
   --ink-low: oklch(56% 0.014 102);
 
-  --gold: oklch(68% 0.16 72);
-  --gold-ink: oklch(99% 0 0);
-  --gold-dim: color-mix(in oklch, var(--gold) 12%, transparent);
+  /* ~#E8D24A Matchday yellow + dark ink for contrast on CTAs */
+  --gold: oklch(86% 0.115 96);
+  --gold-ink: oklch(20% 0.02 96);
+  --gold-dim: color-mix(in oklch, var(--gold) 14%, transparent);
 
   --live: oklch(54% 0.2 25);
   --ok: oklch(48% 0.13 155);

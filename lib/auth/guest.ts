@@ -19,14 +19,18 @@ export async function signInAsGuest(): Promise<{ ok: boolean; error?: string }> 
   const json = await res.json().catch(() => ({}));
 
   if (!res.ok || !json.email) {
+    const raw =
+      (json.error as string | undefined) ??
+      anonError?.message ??
+      "Guest sign-in failed. Please try again.";
     return {
       ok: false,
       error:
-        (json.error as string) === "Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY"
+        raw === "Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY"
           ? "Guest sign-in is not available right now. Please create an account."
-          : (json.error as string) ??
-            anonError?.message ??
-            "Guest sign-in failed. Please try again.",
+          : /fetch failed|failed to fetch|networkerror|enotfound|nxdomain/i.test(raw)
+            ? "Auth service is unreachable right now. The Supabase project may be paused or misconfigured."
+            : raw,
     };
   }
 
