@@ -12,6 +12,10 @@
   --color-card-foreground: var(--ink-hi);
   --color-popover: var(--bg-inset);
   --color-popover-foreground: var(--ink-hi);
+  /* Literal hex so Tailwind/Lightning cannot keep compiling stale oklch gold to brown. */
+  --gold: #e8d24a;
+  --gold-ink: #1c1c14;
+  --gold-dim: color-mix(in srgb, #e8d24a 14%, transparent);
   --color-primary: var(--gold);
   --color-primary-foreground: var(--gold-ink);
   --color-secondary: var(--bg-inset);
@@ -90,10 +94,10 @@
   --ink-mid: oklch(42% 0.016 102);
   --ink-low: oklch(56% 0.014 102);
 
-  /* ~#E8D24A Matchday yellow + dark ink for contrast on CTAs */
-  --gold: oklch(86% 0.115 96);
-  --gold-ink: oklch(20% 0.02 96);
-  --gold-dim: color-mix(in oklch, var(--gold) 14%, transparent);
+  /* Matchday yellow CTAs. Hex, not oklch — production was still emitting #d08600. */
+  --gold: #e8d24a;
+  --gold-ink: #1c1c14;
+  --gold-dim: color-mix(in srgb, #e8d24a 14%, transparent);
 
   --live: oklch(54% 0.2 25);
   --ok: oklch(48% 0.13 155);
