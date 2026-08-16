@@ -12,6 +12,7 @@ import { PasskeySignInButton } from "@/components/auth/PasskeySignInButton";
 import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
 import { isLikelyPhoneNumber, normalizePhoneNumber } from "@/lib/auth/phone";
 import { formatAuthError } from "@/lib/auth/format-auth-error";
+import { getUserWithTimeout } from "@/lib/auth/get-user-with-timeout";
 
 type LoginMode = "phone" | "email";
 
@@ -33,14 +34,14 @@ export default function LoginPage() {
   const [nextParam, setNextParam] = useState<string | null>(null);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
+    getUserWithTimeout().then(({ data }) => {
       if (!data.user || data.user.is_anonymous) return;
       const next = safeNext(new URLSearchParams(window.location.search).get("next"));
       if (next) {
         router.replace(next);
         return;
       }
+      const supabase = createClient();
       supabase
         .from("profiles")
         .select("role")

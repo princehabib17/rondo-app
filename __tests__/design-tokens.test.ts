@@ -77,6 +77,14 @@ describe("Matchday token guard", () => {
     }
   });
 
+  it("keeps CTA gold as Matchday yellow, not muddy amber/brown", () => {
+    const globals = readFileSync(join(repoRoot, "app/globals.css"), "utf8");
+    // Bright yellow (L~86, hue~96). Reject the brown Strava amber (L68 hue72).
+    expect(globals).toMatch(/--gold:\s*oklch\(86%\s+0\.115\s+96\)/);
+    expect(globals).toMatch(/--gold-ink:\s*oklch\(20%\s+0\.02\s+96\)/);
+    expect(globals).not.toMatch(/--gold:\s*oklch\(68%\s+0\.16\s+72\)/);
+  });
+
   it("keeps product screens free of legacy white-opacity ink", () => {
     const files = [...walkTsx(join(repoRoot, "app")), ...walkTsx(join(repoRoot, "components"))];
     const hits = files.flatMap((file) => {

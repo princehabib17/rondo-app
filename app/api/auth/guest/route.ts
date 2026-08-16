@@ -76,6 +76,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ email, password });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Guest sign-in failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const unreachable = /fetch failed|failed to fetch|enotfound|getaddrinfo|nxdomain/i.test(
+      message
+    );
+    return NextResponse.json(
+      {
+        error: unreachable
+          ? "Auth service is unreachable (Supabase host failed to resolve or respond)."
+          : message,
+      },
+      { status: 500 }
+    );
   }
 }

@@ -5,7 +5,13 @@ const PASSKEY_UNSUPPORTED = /does not support webauthn|webauthn is not supported
 const PASSKEY_CANCELLED = /notallowederror|the operation (was|is) aborted|user cancelled|request aborted/i;
 const PASSKEY_ANON = /anonymous|aal2|mfa/i;
 
+const SUPABASE_UNREACHABLE =
+  /fetch failed|failed to fetch|networkerror|enotfound|nxdomain|getaddrinfo|could not resolve/i;
+
 export function formatAuthError(message: string): string {
+  if (SUPABASE_UNREACHABLE.test(message)) {
+    return "Auth service is unreachable right now. Check that the Supabase project is live and the app URL keys are up to date.";
+  }
   if (PHONE_PROVIDER_ERROR.test(message)) {
     return "Phone login isn't enabled yet. Use Google, Facebook, email, or browse as guest.";
   }

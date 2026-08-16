@@ -11,6 +11,7 @@ import { ContinueAsGuestLink } from "@/components/auth/ContinueAsGuestLink";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
 import { formatAuthError } from "@/lib/auth/format-auth-error";
+import { getUserWithTimeout } from "@/lib/auth/get-user-with-timeout";
 import { isLikelyPhoneNumber, normalizePhoneNumber } from "@/lib/auth/phone";
 
 function safeSignupNext(raw: string | null): string {
@@ -27,9 +28,9 @@ export default function SignupPage() {
   const [nextParam, setNextParam] = useState<string | null>(null);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
+    getUserWithTimeout().then(({ data }) => {
       if (!data.user || data.user.is_anonymous) return;
+      const supabase = createClient();
       supabase
         .from("profiles")
         .select("role")
