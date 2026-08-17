@@ -12,6 +12,7 @@ import { PasskeySignInButton } from "@/components/auth/PasskeySignInButton";
 import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
 import { isLikelyPhoneNumber, normalizePhoneNumber } from "@/lib/auth/phone";
 import { formatAuthError } from "@/lib/auth/format-auth-error";
+import { isGuestUser } from "@/lib/auth/is-guest";
 
 type LoginMode = "phone" | "email";
 
@@ -35,7 +36,7 @@ export default function LoginPage() {
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
-      if (!data.user || data.user.is_anonymous) return;
+      if (!data.user || isGuestUser(data.user)) return;
       const next = safeNext(new URLSearchParams(window.location.search).get("next"));
       if (next) {
         router.replace(next);

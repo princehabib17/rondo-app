@@ -58,6 +58,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: created.error.message }, { status: 500 });
     }
     user = created.data.user;
+  } else {
+    // Keep the derived fallback password in sync so OTP-fallback login works
+    // for accounts created on earlier deployments / password rotations.
+    const updated = await service.auth.admin.updateUserById(user.id, {
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        ...user.user_metadata,
+        full_name: (user.user_metadata?.full_name as string | undefined) ?? fullName,
+        phone,
+        auth_fallback: "phone",
+      },
+    });
+    if (updated.error) {
+      return NextResponse.json({ error: updated.error.message }, { status: 500 });
+    }
+    user = updated.data.user;
   }
 
   if (!user) {

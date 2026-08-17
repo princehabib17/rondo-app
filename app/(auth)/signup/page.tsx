@@ -12,6 +12,7 @@ import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
 import { formatAuthError } from "@/lib/auth/format-auth-error";
 import { isLikelyPhoneNumber, normalizePhoneNumber } from "@/lib/auth/phone";
+import { isGuestUser } from "@/lib/auth/is-guest";
 
 function safeSignupNext(raw: string | null): string {
   const next = getSafeRedirectPath(raw, "/onboarding/slides");
@@ -29,7 +30,7 @@ export default function SignupPage() {
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
-      if (!data.user || data.user.is_anonymous) return;
+      if (!data.user || isGuestUser(data.user)) return;
       supabase
         .from("profiles")
         .select("role")
