@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, Manrope } from "next/font/google";
+import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -16,7 +17,7 @@ const manrope = Manrope({
 
 export const metadata: Metadata = {
   title: "RONDO — Find Your Game",
-  description: "Join local football games near you",
+  description: "Find games near you",
   keywords: ["sports", "games", "football", "soccer", "local", "community"],
   icons: {
     icon: [{ url: "/rondo-logo.png", type: "image/png" }],
@@ -29,7 +30,10 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#FAFAF7",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#FAFAF7" },
+    { media: "(prefers-color-scheme: dark)", color: "#171512" },
+  ],
 };
 
 export default function RootLayout({
@@ -38,10 +42,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${barlowCondensed.variable} ${manrope.variable}`}>
+    <html lang="en" className={`${barlowCondensed.variable} ${manrope.variable}`} suppressHydrationWarning>
       <body className="overflow-x-hidden font-body bg-[var(--bg-page)] text-[var(--ink-hi)] antialiased">
-        {children}
-        <Toaster position="top-center" />
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          {children}
+          <Toaster position="top-center" />
+        </ThemeProvider>
       </body>
     </html>
   );
