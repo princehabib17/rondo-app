@@ -6,6 +6,7 @@ import { Bookmark, Calendar, MapPin, Clock, Trophy } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatGameDate, formatPrice } from "@/lib/utils/format";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState, RondoButton } from "@/components/rondo/primitives";
 import Link from "next/link";
 
 interface MyGame {
@@ -69,57 +70,74 @@ export default function MyMatchesPage() {
 
   useEffect(() => {
     async function load() {
-      const supabase = createClient();
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) { router.push("/login"); return; }
-      const uid = userData.user.id;
+      try {
+        const supabase = createClient();
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData.user) {
+          router.push("/login");
+          return;
+        }
+        const uid = userData.user.id;
 
-      const [{ data }, { data: captainRows }, { data: memberRows }] = await Promise.all([
-        supabase
-          .from("game_players")
-          .select("id, game_id, payment_status, joined_at, game:games(id, title, venue_name, date_time, price_per_player, status, format)")
-          .eq("user_id", uid)
-          .order("joined_at", { ascending: false }),
-        // Registered captains + rostered players both count as "on" a team —
-        // this page previously only ever knew about pickup games.
-        supabase
-          .from("tournament_teams")
-          .select("id, name, tournament:tournaments(id, name, status, starts_at)")
-          .eq("captain_id", uid)
-          .eq("status", "registered")
-          .eq("is_managed", false),
-        supabase
-          .from("tournament_team_members")
-          .select("team_id, team:tournament_teams(id, name), tournament:tournaments(id, name, status, starts_at)")
-          .eq("user_id", uid),
-      ]);
+        const [{ data }, { data: captainRows }, { data: memberRows }] = await Promise.all([
+          supabase
+            .from("game_players")
+            .select(
+              "id, game_id, payment_status, joined_at, game:games(id, title, venue_name, date_time, price_per_player, status, format)"
+            )
+            .eq("user_id", uid)
+            .order("joined_at", { ascending: false }),
+          // Registered captains + rostered players both count as "on" a team —
+          // this page previously only ever knew about pickup games.
+          supabase
+            .from("tournament_teams")
+            .select("id, name, tournament:tournaments(id, name, status, starts_at)")
+            .eq("captain_id", uid)
+            .eq("status", "registered")
+            .eq("is_managed", false),
+          supabase
+            .from("tournament_team_members")
+            .select("team_id, team:tournament_teams(id, name), tournament:tournaments(id, name, status, starts_at)")
+            .eq("user_id", uid),
+        ]);
 
-      setEntries((data as unknown as MyGame[]) ?? []);
+        setEntries((data as unknown as MyGame[]) ?? []);
 
-      const captainEntries: MyTournament[] = (
-        (captainRows as { id: string; name: string; tournament: MyTournament["tournament"] | null }[] | null) ?? []
-      )
-        .filter((row) => row.tournament)
-        .map((row) => ({ teamId: row.id, teamName: row.name, tournament: row.tournament! }));
+        const captainEntries: MyTournament[] = (
+          (captainRows as { id: string; name: string; tournament: MyTournament["tournament"] | null }[] | null) ?? []
+        )
+          .filter((row) => row.tournament)
+          .map((row) => ({ teamId: row.id, teamName: row.name, tournament: row.tournament! }));
 
-      const memberEntries: MyTournament[] = (
-        (memberRows as
-          | { team_id: string; team: { id: string; name: string } | null; tournament: MyTournament["tournament"] | null }[]
-          | null) ?? []
-      )
-        .filter((row) => row.tournament && row.team)
-        .map((row) => ({ teamId: row.team_id, teamName: row.team!.name, tournament: row.tournament! }));
+        const memberEntries: MyTournament[] = (
+          (memberRows as
+            | {
+                team_id: string;
+                team: { id: string; name: string } | null;
+                tournament: MyTournament["tournament"] | null;
+              }[]
+            | null) ?? []
+        )
+          .filter((row) => row.tournament && row.team)
+          .map((row) => ({ teamId: row.team_id, teamName: row.team!.name, tournament: row.tournament! }));
 
-      const seen = new Set<string>();
-      const mergedTournaments: MyTournament[] = [];
-      for (const entry of [...captainEntries, ...memberEntries]) {
-        if (seen.has(entry.tournament.id)) continue;
-        seen.add(entry.tournament.id);
-        mergedTournaments.push(entry);
+        const seen = new Set<string>();
+        const mergedTournaments: MyTournament[] = [];
+        for (const entry of [...captainEntries, ...memberEntries]) {
+          if (seen.has(entry.tournament.id)) continue;
+          seen.add(entry.tournament.id);
+          mergedTournaments.push(entry);
+        }
+        mergedTournaments.sort(
+          (a, b) => new Date(b.tournament.starts_at).getTime() - new Date(a.tournament.starts_at).getTime()
+        );
+        setTournamentEntries(mergedTournaments);
+      } catch {
+        setEntries([]);
+        setTournamentEntries([]);
+      } finally {
+        setLoading(false);
       }
-      mergedTournaments.sort((a, b) => new Date(b.tournament.starts_at).getTime() - new Date(a.tournament.starts_at).getTime());
-      setTournamentEntries(mergedTournaments);
-      setLoading(false);
     }
     load();
   }, [router]);
@@ -239,13 +257,14 @@ export default function MyMatchesPage() {
             {[0,1,2].map((i) => <div key={i} className="h-24 bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] animate-pulse" />)}
           </div>
         ) : entries.length === 0 && tournamentEntries.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center space-y-3">
-            <div className="w-14 h-14 rounded-full bg-[var(--bg-inset)] flex items-center justify-center">
-              <Bookmark size={24} className="text-[var(--ink-low)]" />
-            </div>
-            <p className="text-[var(--ink-hi)] font-semibold">No matches yet</p>
-            <p className="text-[var(--ink-low)] text-sm">Join a match from the feed to see it here</p>
-            <Link href="/feed" className="text-[var(--gold)] text-sm font-semibold hover:underline mt-2">Browse Matches</Link>
+          <div className="rondo-surface px-4">
+            <EmptyState
+              title="No matches yet"
+              body="Join a match from the feed or map and it shows up here."
+              imageSrc="/feed/hero-coach.jpg"
+              imageAlt=""
+              action={<RondoButton href="/feed">Browse matches</RondoButton>}
+            />
           </div>
         ) : (
           <>

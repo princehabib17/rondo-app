@@ -18,6 +18,7 @@ import {
   type FilterContext,
 } from "@/lib/feed/filters";
 import { FeedFiltersBar } from "@/components/feed/FeedFilters";
+import { EmptyState, RondoButton } from "@/components/rondo/primitives";
 
 const GameMap = dynamic(() => import("@/components/map/GameMap"), {
   ssr: false,
@@ -39,10 +40,15 @@ export default function FeedMapPage() {
   const [search, setSearch] = useState("");
 
   const fetchGames = useCallback(async () => {
-    const supabase = createClient();
-    const data = await fetchOpenGames(supabase, { from: 0, to: 79 });
-    setGames(data);
-    setLoading(false);
+    try {
+      const supabase = createClient();
+      const data = await fetchOpenGames(supabase, { from: 0, to: 79 });
+      setGames(data);
+    } catch {
+      setGames([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -139,16 +145,18 @@ export default function FeedMapPage() {
       </div>
 
       <div className="relative min-h-0 flex-1">
-        <button
-          type="button"
-          onClick={fetchGames}
-          className="absolute bottom-4 left-1/2 z-20 inline-flex -translate-x-1/2 items-center gap-2 rounded-[var(--r-pill)] bg-[var(--gold)] px-6 py-3 font-heading text-sm font-bold uppercase text-[var(--gold-ink)]"
-        >
-          <MapPin size={18} weight="duotone" />
-          Show games here
-        </button>
+        {!loading && mapGames.length > 0 && (
+          <button
+            type="button"
+            onClick={fetchGames}
+            className="absolute bottom-4 left-1/2 z-20 inline-flex -translate-x-1/2 items-center gap-2 rounded-[var(--r-pill)] bg-[var(--gold)] px-6 py-3 font-heading text-sm font-bold uppercase text-[var(--gold-ink)]"
+          >
+            <MapPin size={18} weight="duotone" />
+            Show games here
+          </button>
+        )}
 
-        {!loading && missingLocationCount > 0 && (
+        {!loading && missingLocationCount > 0 && mapGames.length > 0 && (
           <div className="absolute left-4 right-4 top-4 z-20 mx-auto max-w-lg rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] px-3 py-2">
             <p className="rondo-meta text-[var(--ink-mid)]">
               {missingLocationCount} match{missingLocationCount > 1 ? "es" : ""} in your list have no
@@ -159,6 +167,18 @@ export default function FeedMapPage() {
         {loading ? (
           <div className="flex h-full w-full items-center justify-center">
             <div className="h-8 w-32 rounded-[var(--r-pill)] rondo-shimmer" />
+          </div>
+        ) : mapGames.length === 0 ? (
+          <div className="flex h-full w-full items-center justify-center px-4">
+            <div className="w-full max-w-sm rondo-surface px-4">
+              <EmptyState
+                title="No games on the map"
+                body="Nothing open nearby with a pin yet. Browse the feed or clear filters to widen the search."
+                imageSrc="/onboarding/map.png"
+                imageAlt=""
+                action={<RondoButton href="/feed">Browse feed</RondoButton>}
+              />
+            </div>
           </div>
         ) : (
           <GameMap games={mapGames} />
