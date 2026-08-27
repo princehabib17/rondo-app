@@ -284,7 +284,15 @@ export default function CommunityPage() {
                   <EmptyState
                     title="No posts yet"
                     body="Score first, brag later. Share a result or highlight from your last match."
-                    action={!isGuest ? undefined : <RondoButton href="/signup">Sign up</RondoButton>}
+                    imageSrc="/feed/hero-soccer.jpg"
+                    imageAlt=""
+                    action={
+                      isGuest ? (
+                        <RondoButton href="/signup">Sign up</RondoButton>
+                      ) : (
+                        <RondoButton href="/feed">Find a match</RondoButton>
+                      )
+                    }
                   />
                 </div>
               </div>

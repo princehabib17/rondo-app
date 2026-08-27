@@ -1,8 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies, headers } from "next/headers";
 import { PASSKEY_AUTH_OPTIONS } from "@/lib/auth/passkey-options";
+import { requireSupabasePublicConfig } from "@/lib/supabase/config";
 
 export async function createClient() {
+  const { url, anonKey } = requireSupabasePublicConfig();
   const cookieStore = await cookies();
 
   // Mobile clients (React Native) authenticate with a Bearer token instead of
@@ -15,26 +17,18 @@ export async function createClient() {
     // headers() unavailable in some contexts — fall back to cookies only.
   }
 
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      ...(authHeader
-        ? { global: { headers: { Authorization: authHeader } } }
-        : {}),
-      auth: PASSKEY_AUTH_OPTIONS,
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {}
-        },
+  return createServerClient(url, anonKey, {
+    ...(authHeader ? { global: { headers: { Authorization: authHeader } } } : {}),
+    auth: PASSKEY_AUTH_OPTIONS,
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
       },
-    }
-  );
+      setAll(cookiesToSet) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+        } catch {}
+      },
+    },
+  });
 }

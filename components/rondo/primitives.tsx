@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import Image from "next/image";
 import { Fire, Minus, SoccerBall, TrendDown, TrendUp } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
@@ -222,18 +225,32 @@ export function EmptyState({
   title,
   body,
   action,
+  imageSrc,
+  imageAlt = "",
   className,
 }: {
   title: string;
   body: string;
   action?: React.ReactNode;
+  imageSrc?: string;
+  imageAlt?: string;
   className?: string;
 }) {
   return (
     <div className={cn("flex flex-col items-center justify-center py-12 text-center", className)}>
-      <div className="mb-4 grid size-12 place-items-center rounded-[var(--r-pill)] border border-[var(--stroke)] bg-[var(--bg-surface)] text-[var(--ink-low)]">
-        <SoccerBall size={24} weight="duotone" aria-hidden />
-      </div>
+      {imageSrc ? (
+        <div className="relative mb-5 h-36 w-full max-w-xs overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)]">
+          <Image src={imageSrc} alt={imageAlt} fill className="object-cover object-center" sizes="320px" />
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-[linear-gradient(180deg,transparent_40%,color-mix(in_oklch,var(--bg-page)_75%,transparent)_100%)]"
+          />
+        </div>
+      ) : (
+        <div className="mb-4 grid size-12 place-items-center rounded-[var(--r-pill)] border border-[var(--stroke)] bg-[var(--bg-surface)] text-[var(--ink-low)]">
+          <SoccerBall size={24} weight="duotone" aria-hidden />
+        </div>
+      )}
       <h3 className="rondo-title text-[var(--ink-hi)]">{title}</h3>
       <p className="mt-2 max-w-xs rondo-meta text-[var(--ink-low)]">{body}</p>
       {action && <div className="mt-4 w-full max-w-xs">{action}</div>}
