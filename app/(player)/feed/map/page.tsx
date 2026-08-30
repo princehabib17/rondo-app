@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import { Bell, Bookmark, MapPin } from "@phosphor-icons/react";
+import { Bell, MapPin } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import type { Game } from "@/lib/supabase/types";
 import { fetchOpenGames } from "@/lib/supabase/game-queries";
@@ -106,13 +106,6 @@ export default function FeedMapPage() {
               priority
             />
             <div className="flex items-center gap-2">
-              <Link
-                href="/saved"
-                className="grid min-h-11 min-w-11 place-items-center rounded-[var(--r-pill)] border border-[var(--stroke)] text-[var(--ink-hi)] hover:text-[var(--gold)]"
-                aria-label="Saved games"
-              >
-                <Bookmark size={20} weight="duotone" />
-              </Link>
               <Link
                 href="/notifications"
                 className="relative grid min-h-11 min-w-11 place-items-center rounded-[var(--r-pill)] border border-[var(--stroke)] text-[var(--ink-hi)] hover:text-[var(--gold)]"

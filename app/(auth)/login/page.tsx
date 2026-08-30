@@ -13,6 +13,10 @@ import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
 import { isLikelyPhoneNumber, normalizePhoneNumber } from "@/lib/auth/phone";
 import { formatAuthError } from "@/lib/auth/format-auth-error";
 import { getUserWithTimeout } from "@/lib/auth/get-user-with-timeout";
+import {
+  getOnboardingPath,
+  getPostOnboardingDestination,
+} from "@/lib/auth/destination";
 
 type LoginMode = "phone" | "email";
 
@@ -37,10 +41,6 @@ export default function LoginPage() {
     getUserWithTimeout().then(({ data }) => {
       if (!data.user || data.user.is_anonymous) return;
       const next = safeNext(new URLSearchParams(window.location.search).get("next"));
-      if (next) {
-        router.replace(next);
-        return;
-      }
       const supabase = createClient();
       supabase
         .from("profiles")
@@ -48,7 +48,11 @@ export default function LoginPage() {
         .eq("id", data.user.id)
         .single()
         .then(({ data: profile }) => {
-          router.replace(profile?.role ? "/feed" : "/onboarding/slides");
+          router.replace(
+            profile?.role
+              ? getPostOnboardingDestination(next, profile.role)
+              : getOnboardingPath(next)
+          );
         });
     });
     setNextParam(new URLSearchParams(window.location.search).get("next"));
@@ -78,17 +82,16 @@ export default function LoginPage() {
       }
 
       const next = safeNext(new URLSearchParams(window.location.search).get("next"));
-      if (next) {
-        router.replace(next);
-        return;
-      }
-
       const { data: profile } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", (await supabase.auth.getUser()).data.user?.id ?? "")
         .single();
-      router.replace(profile?.role ? "/feed" : "/onboarding/slides");
+      router.replace(
+        profile?.role
+          ? getPostOnboardingDestination(next, profile.role)
+          : getOnboardingPath(next)
+      );
       return;
     }
 
@@ -128,7 +131,17 @@ export default function LoginPage() {
       }
 
       const next = safeNext(new URLSearchParams(window.location.search).get("next"));
-      router.replace(next ?? "/feed");
+      const { data: authData } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", authData.user?.id ?? "")
+        .single();
+      router.replace(
+        profile?.role
+          ? getPostOnboardingDestination(next, profile.role)
+          : getOnboardingPath(next)
+      );
       router.refresh();
       return;
     }
@@ -164,17 +177,17 @@ export default function LoginPage() {
           onError={setError}
           onSuccess={async (userId) => {
             const next = safeNext(new URLSearchParams(window.location.search).get("next"));
-            if (next) {
-              router.replace(next);
-              return;
-            }
             const supabase = createClient();
             const { data: profile } = await supabase
               .from("profiles")
               .select("role")
               .eq("id", userId)
               .single();
-            router.replace(profile?.role ? "/feed" : "/onboarding/slides");
+            router.replace(
+              profile?.role
+                ? getPostOnboardingDestination(next, profile.role)
+                : getOnboardingPath(next)
+            );
             router.refresh();
           }}
         />

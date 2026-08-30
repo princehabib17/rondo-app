@@ -9,6 +9,10 @@ describe("getSafeRedirectPath", () => {
   it("allows safe internal paths", () => {
     expect(getSafeRedirectPath("/feed")).toBe("/feed");
     expect(getSafeRedirectPath("/games/abc-123")).toBe("/games/abc-123");
+    expect(getSafeRedirectPath("/games/abc-123/join?team=blue")).toBe(
+      "/games/abc-123/join?team=blue"
+    );
+    expect(getSafeRedirectPath("/wallet")).toBe("/wallet");
   });
 
   it("blocks open redirects", () => {

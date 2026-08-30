@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Phone, UserRound } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { getSafeRedirectPath } from "@/lib/auth/safe-redirect";
+import { getOnboardingPath, getRoleHome } from "@/lib/auth/destination";
 import { ContinueAsGuestLink } from "@/components/auth/ContinueAsGuestLink";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
@@ -14,9 +14,8 @@ import { formatAuthError } from "@/lib/auth/format-auth-error";
 import { getUserWithTimeout } from "@/lib/auth/get-user-with-timeout";
 import { isLikelyPhoneNumber, normalizePhoneNumber } from "@/lib/auth/phone";
 
-function safeSignupNext(raw: string | null): string {
-  const next = getSafeRedirectPath(raw, "/onboarding/slides");
-  return next === "/login" || next === "/signup" ? "/onboarding/slides" : next;
+function signupDestination(raw: string | null): string {
+  return getOnboardingPath(raw);
 }
 
 export default function SignupPage() {
@@ -28,6 +27,8 @@ export default function SignupPage() {
   const [nextParam, setNextParam] = useState<string | null>(null);
 
   useEffect(() => {
+    const rawNext = new URLSearchParams(window.location.search).get("next");
+    setNextParam(rawNext);
     getUserWithTimeout().then(({ data }) => {
       if (!data.user || data.user.is_anonymous) return;
       const supabase = createClient();
@@ -37,10 +38,9 @@ export default function SignupPage() {
         .eq("id", data.user.id)
         .single()
         .then(({ data: profile }) => {
-          router.replace(profile?.role ? "/feed" : "/onboarding/slides");
+          router.replace(profile?.role ? getRoleHome(profile.role) : signupDestination(rawNext));
         });
     });
-    setNextParam(new URLSearchParams(window.location.search).get("next"));
   }, [router]);
 
   async function sendOtp(e: React.FormEvent) {
@@ -88,14 +88,14 @@ export default function SignupPage() {
         return;
       }
 
-      const next = safeSignupNext(new URLSearchParams(window.location.search).get("next"));
-      router.replace(next === "/onboarding/slides" ? "/feed" : next);
+      const next = signupDestination(new URLSearchParams(window.location.search).get("next"));
+      router.replace(next);
       router.refresh();
       return;
     }
 
     setSending(false);
-    const next = safeSignupNext(new URLSearchParams(window.location.search).get("next"));
+    const next = signupDestination(new URLSearchParams(window.location.search).get("next"));
     const params = new URLSearchParams({ phone: normalizedPhone, next });
     router.push(`/otp?${params.toString()}`);
   }
@@ -177,7 +177,7 @@ export default function SignupPage() {
       <ContinueAsGuestLink />
 
       <div className="mt-8">
-        <SocialLoginButtons />
+        <SocialLoginButtons onboarding />
       </div>
     </>
   );

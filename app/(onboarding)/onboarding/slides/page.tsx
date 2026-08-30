@@ -1,80 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { createClient } from "@/lib/supabase/client";
-import { OnboardingHeader } from "@/components/onboarding/OnboardingHeader";
 
-const slides = [
-  { image: "/onboarding/secure.png", title: "SECURE YOUR SPOT" },
-  { image: "/onboarding/map.png", title: "FIND GAMES NEAR YOU" },
-  { image: "/onboarding/players.png", title: "SEE WHO'S PLAYING" },
-];
-
-export default function OnboardingSlidesPage() {
-  const [current, setCurrent] = useState(0);
+export default function OnboardingEntryPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) router.replace("/login");
-    });
+    const next = new URLSearchParams(window.location.search).get("next");
+    const params = new URLSearchParams();
+    if (next) params.set("next", next);
+    router.replace(`/onboarding/role${params.size ? `?${params.toString()}` : ""}`);
   }, [router]);
 
-  const slide = slides[current];
-  const isLast = current === slides.length - 1;
-
-  function handleNext() {
-    if (isLast) {
-      router.push("/onboarding/role");
-    } else {
-      setCurrent(current + 1);
-    }
-  }
-
   return (
-    <div className="min-h-[100dvh] bg-[var(--bg-page)] flex flex-col px-5 py-7 max-w-sm mx-auto rondo-phone-frame">
-      <OnboardingHeader />
-
-      <div className="flex-1 flex items-center justify-center py-8">
-        <Image
-          src={slide.image}
-          alt=""
-          width={300}
-          height={300}
-          className="object-contain w-full max-w-[240px] h-auto drop-shadow-[0_20px_45px_rgba(246,224,55,0.12)]"
-          priority
-        />
-      </div>
-
-      <div className="pb-5 space-y-7">
-        <h1 className="rondo-hero-title text-[1.9rem] leading-none text-center">
-          {slide.title}
-        </h1>
-
-        <div className="flex justify-center gap-2.5">
-          {slides.map((_, i) => (
-            <div
-              key={i}
-              className={`rounded-full transition-all ${
-                i === current
-                  ? "w-2 h-2 bg-[var(--gold)]"
-                  : "w-1.5 h-1.5 bg-[var(--gold)]/35"
-              }`}
-            />
-          ))}
+    <main className="grid min-h-[100dvh] place-items-center bg-[var(--bg-page)] px-6 text-center">
+      <div className="space-y-3">
+        <div className="mx-auto h-1 w-20 overflow-hidden rounded-full bg-[var(--bg-inset)]">
+          <div className="h-full w-1/2 animate-pulse rounded-full bg-rondo-accent" />
         </div>
-
-        <button
-          type="button"
-          onClick={handleNext}
-          className="rondo-btn rondo-btn-primary"
-        >
-          NEXT
-        </button>
+        <p className="rondo-label text-[var(--ink-low)]">Setting up matchday</p>
       </div>
-    </div>
+    </main>
   );
 }

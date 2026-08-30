@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { signInWithOAuthProvider } from "@/lib/auth/oauth";
+import { getOnboardingPath } from "@/lib/auth/destination";
 import { getSafeRedirectPath } from "@/lib/auth/safe-redirect";
 
 const providers = [
@@ -10,7 +11,7 @@ const providers = [
   { id: "facebook" as const },
 ];
 
-export function SocialLoginButtons() {
+export function SocialLoginButtons({ onboarding = false }: { onboarding?: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
 
@@ -18,7 +19,8 @@ export function SocialLoginButtons() {
     setError(null);
     setLoading(provider);
     const currentNext = new URLSearchParams(window.location.search).get("next");
-    const next = getSafeRedirectPath(currentNext, "/feed");
+    const intended = getSafeRedirectPath(currentNext, "/feed");
+    const next = onboarding ? getOnboardingPath(currentNext ? intended : null) : intended;
     const result = await signInWithOAuthProvider(provider, next);
     if (!result.ok && result.error) {
       setError(result.error);

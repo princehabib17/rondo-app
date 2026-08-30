@@ -28,7 +28,7 @@ function SlideBackground({ slide, priority }: { slide: CarouselSlide; priority: 
           fill
           className="object-cover"
           sizes="400px"
-          quality={90}
+          quality={75}
           priority={priority}
         />
         {slide.theme === "court" && (

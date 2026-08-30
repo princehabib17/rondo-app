@@ -7,6 +7,13 @@ const ALLOWED_PREFIXES = [
   "/my-games",
   "/profile",
   "/organizer",
+  "/wallet",
+  "/tournaments",
+  "/scout",
+  "/community",
+  "/messages",
+  "/notifications",
+  "/help",
   "/login",
   "/signup",
 ];
@@ -26,8 +33,9 @@ export function getSafeRedirectPath(next: string | null, fallback = DEFAULT_REDI
     return fallback;
   }
 
+  const pathname = trimmed.split(/[?#]/, 1)[0];
   const allowed = ALLOWED_PREFIXES.some(
-    (prefix) => trimmed === prefix || trimmed.startsWith(`${prefix}/`)
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );
 
   return allowed ? trimmed : fallback;

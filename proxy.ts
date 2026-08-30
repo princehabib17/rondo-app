@@ -1,6 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { isGuestUser } from "@/lib/auth/is-guest";
+import {
+  getOnboardingPath,
+  getPostOnboardingDestination,
+} from "@/lib/auth/destination";
 
 const PUBLIC_ROUTES = [
   "/",
@@ -156,7 +160,16 @@ export async function proxy(request: NextRequest) {
     (pathname === "/" || pathname === "/login" || pathname === "/signup") &&
     !isGuestUser(user)
   ) {
-    return NextResponse.redirect(new URL("/feed", request.url));
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    const rawNext = request.nextUrl.searchParams.get("next");
+    const destination = profile?.role
+      ? getPostOnboardingDestination(rawNext, profile.role)
+      : getOnboardingPath(rawNext);
+    return NextResponse.redirect(new URL(destination, request.url));
   }
 
   if (isGuestUser(user)) {

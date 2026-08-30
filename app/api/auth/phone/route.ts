@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 
   const email = phoneEmail(phone);
   const password = passwordFor(phone);
-  const fullName = body.fullName?.trim() || "Rondo Player";
+  const fullName = body.fullName?.trim() || "";
   const service = createServiceClient();
 
   const existing = await service.auth.admin.listUsers({ page: 1, perPage: 1000 });
@@ -67,8 +67,7 @@ export async function POST(request: Request) {
   const { error: profileError } = await service.from("profiles").upsert({
     id: user.id,
     email,
-    full_name: (user.user_metadata?.full_name as string | undefined) ?? fullName,
-    role: "player",
+    full_name: (user.user_metadata?.full_name as string | undefined) || fullName || null,
   });
 
   if (profileError) {

@@ -7,6 +7,10 @@ import Image from "next/image";
 import { ShieldCheck } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { getSafeRedirectPath } from "@/lib/auth/safe-redirect";
+import {
+  getOnboardingPath,
+  getPostOnboardingDestination,
+} from "@/lib/auth/destination";
 
 function OtpContent() {
   const router = useRouter();
@@ -59,15 +63,25 @@ function OtpContent() {
     }
 
     const metadata = data.user.user_metadata ?? {};
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .single();
+
     await supabase.from("profiles").upsert({
       id: data.user.id,
       email: data.user.email ?? null,
       phone,
-      full_name: metadata.full_name ?? null,
-      avatar_url: metadata.avatar_url ?? null,
+      ...(metadata.full_name ? { full_name: metadata.full_name } : {}),
+      ...(metadata.avatar_url ? { avatar_url: metadata.avatar_url } : {}),
     });
 
-    router.push(next);
+    router.push(
+      profile?.role
+        ? getPostOnboardingDestination(next, profile.role)
+        : getOnboardingPath(next)
+    );
     router.refresh();
   }
 

@@ -1,356 +1,274 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Upload, User } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import { OnboardingHeader } from "@/components/onboarding/OnboardingHeader";
-import { NATIONALITIES } from "@/lib/utils/format";
+import { rondoFieldClass } from "@/components/rondo/primitives";
+import { getPostOnboardingDestination } from "@/lib/auth/destination";
+import { createClient } from "@/lib/supabase/client";
 
-const baseProfileSchema = z.object({
-  full_name: z.string().min(2, "Name required"),
-  age: z.string().optional(),
-  gender: z.string().optional(),
-  phone: z.string().optional(),
-  address: z.string().optional(),
-  nationality: z.string().optional(),
-  position: z.string(),
-  skill_level: z.string(),
-  preferred_areas: z.string().optional(),
-  game_preference: z.string(),
-  bio: z.string(),
+const essentialsSchema = z.object({
+  full_name: z.string().trim().min(2, "Tell us what to call you."),
+  preferred_areas: z.string().trim().min(2, "Add at least one area."),
+  position: z.string().optional(),
+  skill_level: z.string().optional(),
+  game_preference: z.string().optional(),
 });
 
-const playerSchema = baseProfileSchema.extend({
-  full_name: z.string().min(2, "What should we call you?"),
-});
+type EssentialsForm = z.infer<typeof essentialsSchema>;
+type Role = "player" | "organizer";
 
-type ProfileForm = z.infer<typeof baseProfileSchema>;
+const labelClass = "rondo-label text-[color-mix(in_oklch,var(--night-ink)_62%,transparent)]";
 
-const labelClass = "rondo-label text-[var(--ink-low)]";
-const inputClass =
-  "h-12 w-full rounded-[var(--r-sm)] border border-transparent bg-[var(--bg-inset)] px-4 rondo-body text-[var(--ink-hi)] placeholder:text-[var(--ink-low)] focus:outline-none focus:border-[var(--gold)]";
-
-export default function PlayerSetupPage() {
+export default function EssentialsSetupPage() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<"player" | "organizer">("player");
-  const isOrganizer = userRole === "organizer";
+  const [role, setRole] = useState<Role | null>(null);
+  const [returnTo, setReturnTo] = useState<string | null>(null);
+  const [pageError, setPageError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
     reset,
-    setError: setFieldError,
+    setError,
     formState: { errors, isSubmitting },
-  } = useForm<ProfileForm>({
-    resolver: zodResolver(baseProfileSchema),
+  } = useForm<EssentialsForm>({
+    resolver: zodResolver(essentialsSchema),
     defaultValues: {
-      nationality: "Philippines",
+      full_name: "",
+      preferred_areas: "",
+      position: "",
+      skill_level: "",
+      game_preference: "",
     },
   });
 
   useEffect(() => {
+    const next = new URLSearchParams(window.location.search).get("next");
+    setReturnTo(next);
+
     const supabase = createClient();
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) {
-        router.push("/");
+        const current = `/onboarding/profile${next ? `?next=${encodeURIComponent(next)}` : ""}`;
+        router.replace(`/login?next=${encodeURIComponent(current)}`);
         return;
       }
-      setUserId(data.user.id);
 
-      const meta = data.user.user_metadata ?? {};
-      const { data: profileData } = await supabase
+      setUserId(data.user.id);
+      const { data: profile } = await supabase
         .from("profiles")
-        .select("*")
+        .select("full_name, role, preferred_areas, position, skill_level, game_preference")
         .eq("id", data.user.id)
         .single();
 
-      if (profileData?.avatar_url) {
-        setAvatarPreview(profileData.avatar_url);
-      }
+      const storedRole = sessionStorage.getItem("selectedRole");
+      const resolvedRole =
+        profile?.role === "player" || profile?.role === "organizer"
+          ? profile.role
+          : storedRole === "player" || storedRole === "organizer"
+            ? storedRole
+            : null;
 
-      const savedRole = sessionStorage.getItem("selectedRole") as "player" | "organizer" | null;
-      setUserRole(savedRole ?? (profileData?.role as "player" | "organizer") ?? "player");
-
-      reset({
-        full_name: profileData?.full_name ?? "",
-        age: meta.age ?? "",
-        gender: meta.gender ?? "",
-        phone: meta.phone ?? "",
-        address: meta.address ?? "",
-        nationality: profileData?.nationality ?? meta.nationality ?? "Philippines",
-        position: profileData?.position ?? "",
-        skill_level: profileData?.skill_level ?? "",
-        preferred_areas: profileData?.preferred_areas ?? meta.preferred_areas ?? "",
-        game_preference: profileData?.game_preference ?? meta.game_preference ?? "",
-        bio: profileData?.bio ?? "",
-      });
-    });
-  }, [router, reset]);
-
-  function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setAvatarFile(file);
-    setAvatarPreview(URL.createObjectURL(file));
-  }
-
-  async function onSubmit(data: ProfileForm) {
-    if (!userId) return;
-    setError(null);
-
-    // Player-only requirements, checked here because the role is dynamic.
-    if (!isOrganizer) {
-      const playerCheck = playerSchema.safeParse(data);
-      if (!playerCheck.success) {
-        for (const issue of playerCheck.error.issues) {
-          setFieldError(issue.path[0] as keyof ProfileForm, { message: issue.message });
-        }
+      if (!resolvedRole) {
+        router.replace(`/onboarding/role${next ? `?next=${encodeURIComponent(next)}` : ""}`);
         return;
       }
+
+      setRole(resolvedRole);
+      reset({
+        full_name: profile?.full_name ?? data.user.user_metadata?.full_name ?? "",
+        preferred_areas: profile?.preferred_areas ?? "",
+        position: profile?.position ?? "",
+        skill_level: profile?.skill_level ?? "",
+        game_preference: profile?.game_preference ?? "",
+      });
+    });
+  }, [reset, router]);
+
+  async function onSubmit(values: EssentialsForm) {
+    if (!userId || !role) return;
+    setPageError(null);
+
+    if (role === "player" && !values.position) {
+      setError("position", { message: "Choose where you usually play." });
+      return;
+    }
+    if (role === "player" && !values.skill_level) {
+      setError("skill_level", { message: "Choose your current level." });
+      return;
+    }
+    if (role === "organizer" && !values.game_preference) {
+      setError("game_preference", { message: "Choose the games you usually run." });
+      return;
     }
 
     const supabase = createClient();
-
-    let avatar_url: string | undefined;
-    if (avatarFile) {
-      const ext = avatarFile.name.split(".").pop();
-      const path = `${userId}/avatar.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(path, avatarFile, { upsert: true });
-      if (!uploadError) {
-        const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
-        avatar_url = urlData.publicUrl;
-      }
-    }
-
-    const role = userRole;
-
-    await supabase.auth.updateUser({
-      data: {
-        age: data.age,
-        gender: data.gender,
-        phone: data.phone,
-        address: data.address,
-      },
-    });
-
     const { error: updateError } = await supabase
       .from("profiles")
       .update({
-        full_name: data.full_name,
-        nationality: data.nationality,
-        preferred_areas: data.preferred_areas,
-        game_preference: data.game_preference,
-        bio: data.bio || null,
+        full_name: values.full_name.trim(),
+        preferred_areas: values.preferred_areas.trim(),
         role,
-        ...(role === "player" ? {
-          position: data.position,
-          skill_level: data.skill_level,
-        } : {}),
-        ...(avatar_url ? { avatar_url } : {}),
+        ...(role === "player"
+          ? {
+              position: values.position,
+              skill_level: values.skill_level,
+            }
+          : {
+              game_preference: values.game_preference,
+            }),
       })
       .eq("id", userId);
 
     if (updateError) {
-      setError(updateError.message);
+      setPageError("We could not save your setup. Try again.");
       return;
     }
 
     sessionStorage.removeItem("selectedRole");
-    router.push("/feed");
+    router.replace(getPostOnboardingDestination(returnTo, role));
     router.refresh();
   }
 
-  async function skipForNow() {
-    if (!userId) return;
-    const supabase = createClient();
-    await supabase.from("profiles").update({ role: userRole }).eq("id", userId);
-    sessionStorage.removeItem("selectedRole");
-    router.push("/feed");
-    router.refresh();
-  }
+  const isOrganizer = role === "organizer";
+  const background = isOrganizer ? "/feed/hero-night-court.png" : "/onboarding/player-action.jpg";
 
   return (
-    <div className="min-h-screen rondo-page flex flex-col px-6 py-8 max-w-lg mx-auto">
-      <OnboardingHeader />
+    <main className="relative mx-auto min-h-[100dvh] w-full max-w-md overflow-hidden bg-[var(--bg-page)] rondo-phone-frame">
+      <Image
+        src={background}
+        alt=""
+        fill
+        priority
+        sizes="(max-width: 480px) 100vw, 430px"
+        quality={75}
+        className="object-cover"
+      />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.42)_0%,rgba(0,0,0,0.76)_32%,rgba(8,9,7,0.98)_69%)]" />
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col mt-6">
-        <div className="mb-6 space-y-3">
-          <div className="flex gap-2">
-            {[0, 1, 2].map((step) => (
-              <span key={step} className="h-1 flex-1 rounded-[var(--r-pill)] bg-[var(--gold)] opacity-80" />
-            ))}
-          </div>
-          <p className="rondo-label text-[var(--gold)]">Profile setup</p>
-          <h1 className="rondo-display text-[var(--ink-hi)]">What should we call you?</h1>
-          <p className="rondo-body text-[var(--ink-mid)]">Add the essentials now. The rest can wait.</p>
-        </div>
+      <div className="relative flex min-h-[100dvh] flex-col px-5 py-6">
+        <OnboardingHeader />
 
-        <div className="flex justify-center mb-8">
-          <label className="relative cursor-pointer">
-            <div className="w-24 h-24 rounded-[var(--r-pill)] bg-[var(--bg-inset)] flex items-center justify-center overflow-hidden border-2 border-[var(--gold)]">
-              {avatarPreview ? (
-                <img src={avatarPreview} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <Upload className="text-[var(--ink-low)] w-8 h-8" strokeWidth={1.5} />
+        <header className="pb-6 pt-10">
+          <p className="mb-2 font-body text-[10px] font-black uppercase tracking-[0.2em] text-rondo-accent">
+            2 of 2
+          </p>
+          <h1 className="rondo-hero-title max-w-[350px] text-[2.8rem] leading-[0.92] text-[var(--night-ink)]">
+            {isOrganizer ? "Set up your matchday" : "Make games fit you"}
+          </h1>
+          <p className="mt-3 max-w-[320px] font-body text-sm leading-relaxed text-[color-mix(in_oklch,var(--night-ink)_66%,transparent)]">
+            {isOrganizer
+              ? "Players will see these details when they find your games."
+              : "Three quick details make the feed more useful from your first visit."}
+          </p>
+        </header>
+
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="mt-auto rounded-3xl border border-[color-mix(in_oklch,var(--night-ink)_14%,transparent)] bg-[color-mix(in_oklch,var(--bg-night)_76%,transparent)] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl"
+        >
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="full_name" className={labelClass}>
+                {isOrganizer ? "Organizer name" : "Your name"}
+              </label>
+              <input
+                id="full_name"
+                {...register("full_name")}
+                autoComplete="name"
+                className={rondoFieldClass}
+              />
+              {errors.full_name && (
+                <p className="rondo-meta text-red-400">{errors.full_name.message}</p>
               )}
             </div>
-            <span className="absolute bottom-0 right-0 w-9 h-9 rounded-[var(--r-pill)] bg-[var(--gold)] flex items-center justify-center border-2 border-[var(--bg-page)]">
-              <User className="w-4 h-4 text-[var(--gold-ink)]" strokeWidth={2.5} />
-            </span>
-            <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
-          </label>
-        </div>
 
-        <div className="space-y-4 flex-1">
-          {isOrganizer && (
-            <div className="space-y-1 pb-1">
-              <h2 className="rondo-title text-[var(--ink-hi)]">
-                Set up your organizer profile
-              </h2>
-              <p className="rondo-meta text-[var(--ink-low)]">
-                This is what players see when they browse your games.
-              </p>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <label className={labelClass}>{isOrganizer ? "Organizer / brand name" : "Full name"}</label>
-            <input
-              {...register("full_name")}
-              placeholder={isOrganizer ? "Urban Futsal MNL" : "Miguel Santos"}
-              className={inputClass}
-            />
-            {errors.full_name && <p className="rondo-meta text-[var(--live)]">{errors.full_name.message}</p>}
-          </div>
-
-          {!isOrganizer && (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <label className={labelClass}>Age</label>
-                <input {...register("age")} placeholder="24" className={inputClass} />
-                {errors.age && <p className="text-[var(--live)] text-xs font-body">{errors.age.message}</p>}
-              </div>
-              <div className="space-y-2">
-                <label className={labelClass}>Gender</label>
-                <input {...register("gender")} placeholder="Male" className={inputClass} />
-                {errors.gender && <p className="text-[var(--live)] text-xs font-body">{errors.gender.message}</p>}
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <label className={labelClass}>{isOrganizer ? "Contact number" : "Phone number"}</label>
-            <input {...register("phone")} type="tel" placeholder="0917 123 4567" className={inputClass} />
-            {errors.phone && <p className="text-[var(--live)] text-xs font-body">{errors.phone.message}</p>}
-          </div>
-
-          {!isOrganizer && (
             <div className="space-y-2">
-              <label className={labelClass}>Address</label>
-              <input {...register("address")} placeholder="Taguig City" className={inputClass} />
-              {errors.address && <p className="text-[var(--live)] text-xs font-body">{errors.address.message}</p>}
+              <label htmlFor="preferred_areas" className={labelClass}>
+                {isOrganizer ? "Where you host" : "Where you want to play"}
+              </label>
+              <input
+                id="preferred_areas"
+                {...register("preferred_areas")}
+                placeholder="BGC, Makati, Ortigas"
+                className={rondoFieldClass}
+              />
+              {errors.preferred_areas && (
+                <p className="rondo-meta text-red-400">{errors.preferred_areas.message}</p>
+              )}
             </div>
-          )}
 
-          <div className="space-y-2">
-            <label className={labelClass}>Nationality</label>
-            <select {...register("nationality")} className={inputClass}>
-              {NATIONALITIES.map((n) => (
-                <option key={n} value={n}>{n}</option>
-              ))}
-            </select>
-            {errors.nationality && (
-              <p className="text-[var(--live)] text-xs font-body">{errors.nationality.message}</p>
+            {isOrganizer ? (
+              <div className="space-y-2">
+                <label htmlFor="game_preference" className={labelClass}>
+                  Games you usually run
+                </label>
+                <select id="game_preference" {...register("game_preference")} className={rondoFieldClass}>
+                  <option value="">Choose one</option>
+                  <option value="football">Football</option>
+                  <option value="futsal">Futsal</option>
+                  <option value="both">Football and futsal</option>
+                </select>
+                {errors.game_preference && (
+                  <p className="rondo-meta text-red-400">{errors.game_preference.message}</p>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <label htmlFor="position" className={labelClass}>
+                    Position
+                  </label>
+                  <select id="position" {...register("position")} className={rondoFieldClass}>
+                    <option value="">Choose</option>
+                    <option value="goalkeeper">Goalkeeper</option>
+                    <option value="defender">Defender</option>
+                    <option value="midfielder">Midfielder</option>
+                    <option value="forward">Forward</option>
+                    <option value="any">Anywhere</option>
+                  </select>
+                  {errors.position && <p className="rondo-meta text-red-400">{errors.position.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="skill_level" className={labelClass}>
+                    Level
+                  </label>
+                  <select id="skill_level" {...register("skill_level")} className={rondoFieldClass}>
+                    <option value="">Choose</option>
+                    <option value="beginner">Beginner</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
+                    <option value="pro">Pro</option>
+                  </select>
+                  {errors.skill_level && (
+                    <p className="rondo-meta text-red-400">{errors.skill_level.message}</p>
+                  )}
+                </div>
+              </div>
             )}
           </div>
 
-          {userRole === "player" && (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <label className={labelClass}>Position</label>
-                <select {...register("position")} className={inputClass}>
-                  <option value="">Select</option>
-                  <option value="goalkeeper">Goalkeeper</option>
-                  <option value="defender">Defender</option>
-                  <option value="midfielder">Midfielder</option>
-                  <option value="forward">Forward</option>
-                  <option value="any">Any</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className={labelClass}>Skill level</label>
-                <select {...register("skill_level")} className={inputClass}>
-                  <option value="">Select</option>
-                  <option value="beginner">Beginner</option>
-                  <option value="intermediate">Intermediate</option>
-                  <option value="advanced">Advanced</option>
-                  <option value="pro">Pro</option>
-                </select>
-              </div>
-            </div>
+          {pageError && (
+            <p className="mt-4 text-center font-body text-sm text-red-400" role="alert">
+              {pageError}
+            </p>
           )}
 
-          {!isOrganizer && (
-            <div className="space-y-2">
-              <label className={labelClass}>Game preference</label>
-              <select {...register("game_preference")} className={inputClass}>
-                <option value="">Select</option>
-                <option value="football">Football</option>
-                <option value="futsal">Futsal</option>
-                <option value="both">Both</option>
-              </select>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <label className={labelClass}>{isOrganizer ? "Areas you host games in" : "Preferred areas"}</label>
-            <input {...register("preferred_areas")} placeholder="BGC, Makati, Ortigas" className={inputClass} />
-          </div>
-
-          <div className="space-y-2">
-            <label className={labelClass}>
-              {isOrganizer ? "About your games" : "Tell us more about you"}
-              <span className="text-[var(--ink-low)] normal-case text-[11px] ml-1">(optional)</span>
-            </label>
-            <textarea
-              {...register("bio")}
-              placeholder={
-                isOrganizer
-                  ? "Weekly 5v5 nights, all levels welcome, shirts provided..."
-                  : "Tell the squad about yourself. Playing style, favourite position, where you're from..."
-              }
-              maxLength={500}
-              rows={4}
-              className={`${inputClass} resize-none`}
-            />
-          </div>
-
-          {error && <p className="text-[var(--live)] text-sm text-center font-body">{error}</p>}
-        </div>
-
-        <div className="mt-8 grid gap-2">
           <button
             type="submit"
-            disabled={isSubmitting}
-            className="rondo-btn rondo-btn-primary disabled:opacity-50"
+            disabled={isSubmitting || !role}
+            className="rondo-btn rondo-btn-primary mt-5 disabled:opacity-45"
           >
-            {isSubmitting ? "Saving..." : "Continue"}
+            {isSubmitting ? "Saving setup..." : isOrganizer ? "Open organizer home" : "Find a game"}
           </button>
-          <button type="button" onClick={skipForNow} className="rondo-btn rondo-btn-ghost">
-            Skip for now
-          </button>
-        </div>
-      </form>
-    </div>
+        </form>
+      </div>
+    </main>
   );
 }

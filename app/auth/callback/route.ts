@@ -1,5 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { getSafeRedirectPath } from "@/lib/auth/safe-redirect";
+import {
+  getOnboardingPath,
+  getPostOnboardingDestination,
+} from "@/lib/auth/destination";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -30,7 +34,9 @@ export async function GET(request: Request) {
           .select("role")
           .eq("id", user.id)
           .single();
-        const destination = profile?.role ? next : "/onboarding/slides";
+        const destination = profile?.role
+          ? getPostOnboardingDestination(next, profile.role)
+          : getOnboardingPath(next);
         return NextResponse.redirect(`${origin}${destination}`);
       }
     }
