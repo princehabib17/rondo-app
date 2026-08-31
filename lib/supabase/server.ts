@@ -4,8 +4,8 @@ import { PASSKEY_AUTH_OPTIONS } from "@/lib/auth/passkey-options";
 import { requireSupabasePublicConfig } from "@/lib/supabase/config";
 
 export async function createClient() {
-  const { url, anonKey } = requireSupabasePublicConfig();
   const cookieStore = await cookies();
+  const { url, anonKey } = requireSupabasePublicConfig();
 
   // Mobile clients (React Native) authenticate with a Bearer token instead of
   // cookies. When present, forward it so supabase.auth.getUser() validates it.
