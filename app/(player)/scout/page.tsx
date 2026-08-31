@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import {
   Bookmark,
   Check,
@@ -22,6 +21,7 @@ import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import type { ScoutClip, ScoutReactionKind } from "@/lib/supabase/types";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
+import { RondoBrand } from "@/components/brand/RondoBrand";
 import { cn } from "@/lib/utils";
 import { SCOUT_CLIP_CAPTION_MAX } from "@/lib/scout/clip-schema";
 
@@ -335,7 +335,7 @@ export default function ScoutPage() {
     <div className="rondo-night min-h-[100dvh] text-[var(--ink-hi)]">
       <div className="fixed inset-x-0 top-0 z-50 mx-auto flex h-[5.25rem] max-w-[430px] items-center justify-between px-5 pt-3">
         <Link href="/feed" className="flex items-center gap-2" aria-label="Back to feed">
-          <Image src="/rondo-logo.png" alt="RONDO" width={34} height={34} className="object-contain" priority />
+          <RondoBrand kind="mark" surface="dark" className="size-[34px]" fetchPriority="high" />
           <span className="font-heading text-sm font-black uppercase tracking-[0.18em]">Scout</span>
         </Link>
         <div className="flex items-center gap-2 pr-1">

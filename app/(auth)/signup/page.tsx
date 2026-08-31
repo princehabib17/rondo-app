@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Phone, UserRound } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { getOnboardingPath, getRoleHome } from "@/lib/auth/destination";
 import { ContinueAsGuestLink } from "@/components/auth/ContinueAsGuestLink";
+import { RondoBrand } from "@/components/brand/RondoBrand";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
 import { formatAuthError } from "@/lib/auth/format-auth-error";
@@ -103,14 +103,7 @@ export default function SignupPage() {
   return (
     <>
       <div className="pt-2 mb-8">
-        <Image
-          src="/rondo-logo.png"
-          alt="RONDO"
-          width={40}
-          height={40}
-          className="object-contain"
-          style={{ width: "auto", height: "auto" }}
-        />
+        <RondoBrand kind="wordmark" surface="auto" className="h-9 w-36" fetchPriority="high" />
       </div>
 
       <h1 className="rondo-hero-title text-4xl mb-2">Join Rondo</h1>

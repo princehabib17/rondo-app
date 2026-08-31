@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { RondoBrand } from "@/components/brand/RondoBrand";
 import { cn } from "@/lib/utils";
 
 type RondoLogoProps = {
@@ -8,27 +8,22 @@ type RondoLogoProps = {
 };
 
 const sizes = {
-  sm: { img: 40, word: "text-lg tracking-[0.35em]" },
-  lg: { img: 72, word: "text-2xl tracking-[0.4em]" },
-  splash: { img: 160, word: "text-3xl tracking-[0.45em]" },
+  sm: { mark: "size-10", wordmark: "h-8 w-32" },
+  lg: { mark: "size-20", wordmark: "h-14 w-56" },
+  splash: { mark: "size-32", wordmark: "h-20 w-80 max-w-full" },
 };
 
 export function RondoLogo({ size = "lg", showWordmark = true, className }: RondoLogoProps) {
   const s = sizes[size];
 
   return (
-    <div className={cn("flex flex-col items-center gap-4", className)}>
-      <Image
-        src="/rondo-logo.png"
-        alt="RONDO"
-        width={s.img}
-        height={s.img}
-        priority
-        className="object-contain"
+    <div className={cn("flex items-center justify-center", className)}>
+      <RondoBrand
+        kind={showWordmark ? "wordmark" : "mark"}
+        surface="auto"
+        className={showWordmark ? s.wordmark : s.mark}
+        fetchPriority="high"
       />
-      {showWordmark && (
-        <span className={cn("font-heading font-black uppercase text-[var(--ink-hi)]", s.word)}>RONDO</span>
-      )}
     </div>
   );
 }

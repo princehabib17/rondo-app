@@ -3,9 +3,9 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { ShieldCheck } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
+import { RondoBrand } from "@/components/brand/RondoBrand";
 import { getSafeRedirectPath } from "@/lib/auth/safe-redirect";
 import {
   getOnboardingPath,
@@ -88,13 +88,11 @@ function OtpContent() {
   return (
     <div className="space-y-8 text-center">
       <div className="pt-2">
-        <Image
-          src="/rondo-logo.png"
-          alt="RONDO"
-          width={48}
-          height={48}
-          priority
-          className="mx-auto object-contain"
+        <RondoBrand
+          kind="wordmark"
+          surface="auto"
+          className="mx-auto h-10 w-40"
+          fetchPriority="high"
         />
       </div>
 

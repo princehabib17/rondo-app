@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Bell, VideoCamera } from "@phosphor-icons/react";
+import { RondoBrand } from "@/components/brand/RondoBrand";
 
 interface FeedHeaderProps {
   notificationCount?: number;
@@ -10,9 +10,7 @@ export function FeedHeader({ notificationCount = 0 }: FeedHeaderProps) {
   return (
     <header className="sticky top-0 z-40 border-b border-[var(--stroke)] rondo-glass-nav">
       <div className="mx-auto flex max-w-lg items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-2.5">
-          <Image src="/rondo-logo.png" alt="RONDO" width={48} height={48} className="object-contain" priority />
-        </div>
+        <RondoBrand kind="wordmark" surface="auto" className="h-8 w-32" fetchPriority="high" />
         <div className="flex items-center gap-1.5">
           <Link
             href="/scout"

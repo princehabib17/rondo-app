@@ -20,8 +20,8 @@ export const metadata: Metadata = {
   description: "Find games near you",
   keywords: ["sports", "games", "football", "soccer", "local", "community"],
   icons: {
-    icon: [{ url: "/rondo-logo.png", type: "image/png" }],
-    apple: "/rondo-logo.png",
+    icon: [{ url: "/brand/rondo-mark-on-dark.png", type: "image/png" }],
+    apple: "/brand/rondo-mark-on-dark.png",
   },
 };
 

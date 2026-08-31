@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Phone } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { GuestScoutLinks } from "@/components/auth/GuestScoutLinks";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
+import { RondoBrand } from "@/components/brand/RondoBrand";
 import { PasskeySignInButton } from "@/components/auth/PasskeySignInButton";
 import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
 import { isLikelyPhoneNumber, normalizePhoneNumber } from "@/lib/auth/phone";
@@ -156,14 +156,7 @@ export default function LoginPage() {
   return (
     <>
       <div className="pt-2 mb-10">
-        <Image
-          src="/rondo-logo.png"
-          alt="RONDO"
-          width={40}
-          height={40}
-          style={{ width: "auto", height: "auto" }}
-          priority
-        />
+        <RondoBrand kind="wordmark" surface="auto" className="h-9 w-36" fetchPriority="high" />
       </div>
 
       <h1 className="rondo-hero-title text-4xl mb-2">Log in</h1>

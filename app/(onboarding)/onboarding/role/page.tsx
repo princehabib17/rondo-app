@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
+import { AmbientVideo } from "@/components/media/AmbientVideo";
 import { OnboardingHeader } from "@/components/onboarding/OnboardingHeader";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -14,22 +14,25 @@ const roles: Array<{
   id: Role;
   title: string;
   description: string;
-  image: string;
-  imagePosition?: string;
+  video: string;
+  poster: string;
+  mediaPosition?: string;
 }> = [
   {
     id: "player",
     title: "Find my next game",
     description: "See open slots, join a squad, and get back on the court.",
-    image: "/onboarding/player-action.jpg",
-    imagePosition: "object-[48%_48%]",
+    video: "/onboarding/media/footwork.mp4",
+    poster: "/onboarding/media/footwork-poster.jpg",
+    mediaPosition: "object-center",
   },
   {
     id: "organizer",
     title: "Run better games",
     description: "Publish matches, fill the roster, and manage matchday.",
-    image: "/feed/hero-night-court.png",
-    imagePosition: "object-center",
+    video: "/onboarding/media/match-crop.mp4",
+    poster: "/onboarding/media/match-crop-poster.jpg",
+    mediaPosition: "object-center",
   },
 ];
 
@@ -127,16 +130,15 @@ export default function RoleSelectionPage() {
                 isSelected ? "border-[var(--gold)]" : "border-[var(--stroke)]"
               )}
             >
-              <Image
-                src={role.image}
-                alt=""
-                fill
-                priority={role.id === "player"}
+              <AmbientVideo
+                src={role.video}
+                poster={role.poster}
+                active={isSelected}
                 sizes="(max-width: 480px) 100vw, 430px"
-                quality={75}
-                className={cn(
+                fetchPriority={role.id === "player" ? "high" : "auto"}
+                mediaClassName={cn(
                   "object-cover transition-transform duration-500 group-hover:scale-[1.02]",
-                  role.imagePosition
+                  role.mediaPosition
                 )}
               />
               <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.04)_15%,rgba(0,0,0,0.92)_100%)]" />

@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import Image from "next/image";
 import Link from "next/link";
 import { Bell, MapPin } from "@phosphor-icons/react";
+import { RondoBrand } from "@/components/brand/RondoBrand";
 import { createClient } from "@/lib/supabase/client";
 import type { Game } from "@/lib/supabase/types";
 import { fetchOpenGames } from "@/lib/supabase/game-queries";
@@ -96,15 +96,7 @@ export default function FeedMapPage() {
       <div className="z-30 shrink-0 border-b border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_96%,transparent)]">
         <div className="mx-auto box-border w-full max-w-full space-y-3 px-4 pb-2 pt-4">
           <div className="flex items-center justify-between">
-            <Image
-              src="/rondo-logo.png"
-              alt="RONDO"
-              width={40}
-              height={40}
-              className="object-contain"
-              style={{ width: "auto", height: "auto" }}
-              priority
-            />
+            <RondoBrand kind="wordmark" surface="auto" className="h-8 w-32" fetchPriority="high" />
             <div className="flex items-center gap-2">
               <Link
                 href="/notifications"

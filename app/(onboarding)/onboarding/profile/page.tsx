@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { OnboardingHeader } from "@/components/onboarding/OnboardingHeader";
+import { AmbientVideo } from "@/components/media/AmbientVideo";
 import { rondoFieldClass } from "@/components/rondo/primitives";
 import { getPostOnboardingDestination } from "@/lib/auth/destination";
 import { createClient } from "@/lib/supabase/client";
@@ -137,23 +137,18 @@ export default function EssentialsSetupPage() {
   }
 
   const isOrganizer = role === "organizer";
-  const background = isOrganizer ? "/feed/hero-night-court.png" : "/onboarding/player-action.jpg";
-
   return (
     <main className="relative mx-auto min-h-[100dvh] w-full max-w-md overflow-hidden bg-[var(--bg-page)] rondo-phone-frame">
-      <Image
-        src={background}
-        alt=""
-        fill
-        priority
+      <AmbientVideo
+        src="/onboarding/media/footwork.mp4"
+        poster="/onboarding/media/footwork-poster.jpg"
         sizes="(max-width: 480px) 100vw, 430px"
-        quality={75}
-        className="object-cover"
+        fetchPriority="high"
       />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.42)_0%,rgba(0,0,0,0.76)_32%,rgba(8,9,7,0.98)_69%)]" />
 
       <div className="relative flex min-h-[100dvh] flex-col px-5 py-6">
-        <OnboardingHeader />
+        <OnboardingHeader surface="dark" />
 
         <header className="pb-6 pt-10">
           <p className="mb-2 font-body text-[10px] font-black uppercase tracking-[0.2em] text-rondo-accent">
