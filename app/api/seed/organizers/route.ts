@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
+  DEFAULT_WEEKS_AHEAD,
   PLACEHOLDER_ORGANIZER_SEEDS,
   buildGamesForOrganizer,
+  gamesToInsert,
   type OrganizerSeed,
 } from "@/lib/seed/placeholder-organizers";
 
@@ -233,7 +235,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const weeksAhead = typeof body.weeksAhead === "number" ? body.weeksAhead : 3;
+    const weeksAhead = typeof body.weeksAhead === "number" ? body.weeksAhead : DEFAULT_WEEKS_AHEAD;
 
     const service = createServiceClient();
     const results: string[] = [];
@@ -243,20 +245,27 @@ export async function POST(request: Request) {
       const organizerId = await ensureOrganizerProfile(service, seed);
       const organizationId = await ensureOrganization(service, seed, organizerId);
 
-      const { error: deleteErr } = await service.from("games").delete().eq("organizer_id", organizerId);
-      if (deleteErr) {
-        return NextResponse.json(
-          { error: `Failed to clear games for ${seed.slug}: ${deleteErr.message}` },
-          { status: 500 }
-        );
-      }
-
-      const gameRows = buildGamesForOrganizer(
+      const planned = buildGamesForOrganizer(
         organizerId,
         organizationId ?? "00000000-0000-0000-0000-000000000000",
         seed,
         weeksAhead
       );
+
+      const { data: existingGames, error: existingErr } = await service
+        .from("games")
+        .select("title, date_time")
+        .eq("organizer_id", organizerId);
+
+      if (existingErr) {
+        return NextResponse.json(
+          { error: `Failed to read games for ${seed.slug}: ${existingErr.message}` },
+          { status: 500 }
+        );
+      }
+
+      const gameRows = gamesToInsert(planned, existingGames ?? []);
+      let created = 0;
 
       for (const game of gameRows) {
         const gameId = await insertGame(service, game, organizationId);
@@ -275,10 +284,13 @@ export async function POST(request: Request) {
           );
         }
 
+        created += 1;
         totalGames += 1;
       }
 
-      results.push(`${seed.full_name}: ${gameRows.length} upcoming games`);
+      results.push(
+        `${seed.full_name}: ${created} new / ${planned.length} upcoming (${(existingGames ?? []).length} already listed)`
+      );
     }
 
     return NextResponse.json({
@@ -287,7 +299,7 @@ export async function POST(request: Request) {
       games: totalGames,
       weeksAhead,
       results,
-      note: "Organizer logins use *@organizers.rondo with password OrganizerSeed123! (dev seed only).",
+      note: "Recurring listings roll forward. Existing games are kept. Organizer logins use *@organizers.rondo with password OrganizerSeed123! (dev seed only).",
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown seed error";

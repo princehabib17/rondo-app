@@ -85,6 +85,13 @@ describe("Matchday token guard", () => {
     expect(globals).not.toMatch(/--gold:\s*oklch\(68%\s+0\.16\s+72\)/);
   });
 
+  it("defaults the product canvas to night pitch, with a light override", () => {
+    const globals = readFileSync(join(repoRoot, "app/globals.css"), "utf8");
+    const rootBlock = globals.slice(globals.indexOf(":root {"), globals.indexOf(".dark {"));
+    expect(rootBlock).toMatch(/--bg-page:\s*oklch\(11%/);
+    expect(globals).toMatch(/\.light\s*\{[\s\S]*--bg-page:\s*oklch\(99\.2%/);
+  });
+
   it("keeps product screens free of legacy white-opacity ink", () => {
     const files = [...walkTsx(join(repoRoot, "app")), ...walkTsx(join(repoRoot, "components"))];
     const hits = files.flatMap((file) => {

@@ -8,6 +8,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { RondoButton } from "@/components/rondo/primitives";
 import { RondoBrand } from "@/components/brand/RondoBrand";
 import { AmbientVideo } from "@/components/media/AmbientVideo";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function HomePage() {
   const router = useRouter();
@@ -49,8 +50,9 @@ export default function HomePage() {
       />
 
       <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-lg flex-col justify-end px-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))]">
-        <motion.div className="mb-auto" {...visible}>
+        <motion.div className="mb-auto flex items-start justify-between gap-3" {...visible}>
           <RondoBrand kind="wordmark" surface="dark" className="h-11 w-44" fetchPriority="high" />
+          <ThemeToggle className="text-[var(--night-ink)] hover:bg-[color-mix(in_oklch,var(--night-ink)_12%,transparent)] hover:text-[var(--night-ink)]" />
         </motion.div>
 
         <section className="space-y-6 pb-2">

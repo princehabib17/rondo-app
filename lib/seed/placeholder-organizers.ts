@@ -1,3 +1,5 @@
+export const DEFAULT_WEEKS_AHEAD = 8;
+
 export type MatchType = "football" | "futsal";
 
 export interface VenueSeed {
@@ -435,7 +437,7 @@ export function buildGamesForOrganizer(
   organizerId: string,
   organizationId: string,
   seed: OrganizerSeed,
-  weeksAhead = 3,
+  weeksAhead = DEFAULT_WEEKS_AHEAD,
   from = new Date()
 ): GameInsertRow[] {
   const games: GameInsertRow[] = [];
@@ -481,4 +483,17 @@ export function buildGamesForOrganizer(
   }
 
   return games.sort((a, b) => new Date(a.date_time).getTime() - new Date(b.date_time).getTime());
+}
+
+export function gameSlotKey(title: string, dateTime: string): string {
+  return `${title}::${dateTime}`;
+}
+
+/** Recurring listings should keep rolling — insert only slots that are not already stored. */
+export function gamesToInsert(
+  planned: GameInsertRow[],
+  existing: Array<{ title: string; date_time: string }>
+): GameInsertRow[] {
+  const have = new Set(existing.map((game) => gameSlotKey(game.title, game.date_time)));
+  return planned.filter((game) => !have.has(gameSlotKey(game.title, game.date_time)));
 }
