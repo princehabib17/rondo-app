@@ -25,6 +25,7 @@ import { formatGameDate, formatPrice, getFlagEmoji } from "@/lib/utils/format";
 import type { Profile, PlayerReel, TournamentAward } from "@/lib/supabase/types";
 import { Chip, StatTile } from "@/components/rondo/primitives";
 import { PasskeyManager } from "@/components/auth/PasskeyManager";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
 interface ProfileMatchEntry {
@@ -321,6 +322,7 @@ export default function PublicProfilePage() {
           <ArrowLeft size={20} weight="bold" />
         </button>
         <h1 className="flex-1 truncate rondo-title text-[var(--ink-hi)]">{profile.full_name}</h1>
+        {isOwnProfile && <ThemeToggle />}
         {!isOwnProfile && currentUserId && !isGuest && (
           <div className="flex shrink-0 items-center gap-2">
             <Link

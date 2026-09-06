@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   PLACEHOLDER_ORGANIZER_SEEDS,
   buildGamesForOrganizer,
+  gamesToInsert,
+  gameSlotKey,
   manilaIso,
   upcomingSlotDates,
 } from "@/lib/seed/placeholder-organizers";
@@ -56,5 +58,22 @@ describe("placeholder organizer seed", () => {
       true
     );
     expect(games.some((game) => game.venue_name === "Cherry Turf" && game.price_per_player === 40000)).toBe(true);
+  });
+
+  it("keeps rolling listings instead of dropping past slots", () => {
+    const urban = PLACEHOLDER_ORGANIZER_SEEDS.find((seed) => seed.slug === "urban")!;
+    const planned = buildGamesForOrganizer(
+      "org-user",
+      "org-id",
+      urban,
+      2,
+      new Date("2026-06-23T00:00:00+08:00")
+    );
+    const existing = planned.slice(0, 3).map((game) => ({ title: game.title, date_time: game.date_time }));
+    const missing = gamesToInsert(planned, existing);
+    expect(missing).toHaveLength(planned.length - 3);
+    expect(missing.some((game) => gameSlotKey(game.title, game.date_time) === gameSlotKey(existing[0].title, existing[0].date_time))).toBe(
+      false
+    );
   });
 });

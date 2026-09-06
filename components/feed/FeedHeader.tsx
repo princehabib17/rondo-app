@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Bell, VideoCamera } from "@phosphor-icons/react";
 import { RondoBrand } from "@/components/brand/RondoBrand";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 interface FeedHeaderProps {
   notificationCount?: number;
@@ -19,6 +20,7 @@ export function FeedHeader({ notificationCount = 0 }: FeedHeaderProps) {
             <VideoCamera size={16} weight="duotone" />
             Scout
           </Link>
+          <ThemeToggle />
           <Link
             href="/notifications"
             className="relative flex h-10 w-10 items-center justify-center rounded-[var(--r-pill)] text-[var(--ink-mid)] transition-colors duration-200 hover:bg-[var(--bg-inset)] hover:text-[var(--ink-hi)] active:scale-[0.98]"

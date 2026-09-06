@@ -31,8 +31,8 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#FAFAF7" },
     { media: "(prefers-color-scheme: dark)", color: "#171512" },
+    { media: "(prefers-color-scheme: light)", color: "#FAFAF7" },
   ],
 };
 
@@ -42,9 +42,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${barlowCondensed.variable} ${manrope.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`dark ${barlowCondensed.variable} ${manrope.variable}`} suppressHydrationWarning>
       <body className="overflow-x-hidden font-body bg-[var(--bg-page)] text-[var(--ink-hi)] antialiased">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
           {children}
           <Toaster position="top-center" />
         </ThemeProvider>
