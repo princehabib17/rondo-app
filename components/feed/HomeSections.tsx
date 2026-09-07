@@ -210,7 +210,7 @@ export function AroundYouSection({
   const showGames = !showTournaments && games.length > 0;
 
   return (
-    <section className="px-4 pt-8">
+    <section className="px-4 pb-10 pt-8">
       <SectionHeader
         label="Around you"
         href={showTournaments ? "/tournaments" : "/feed/map"}

@@ -11,8 +11,9 @@ import { RondoBrand } from "@/components/brand/RondoBrand";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
 import { formatAuthError } from "@/lib/auth/format-auth-error";
+import { AUTH_TIMEOUT_MS, AUTH_UNREACHABLE_MESSAGE, withAuthTimeout } from "@/lib/auth/auth-timeout";
 import { getUserWithTimeout } from "@/lib/auth/get-user-with-timeout";
-import { isLikelyPhoneNumber, normalizePhoneNumber } from "@/lib/auth/phone";
+import { isLikelyPhoneNumber, normalizePhoneNumber, PHONE_PLACEHOLDER } from "@/lib/auth/phone";
 
 function signupDestination(raw: string | null): string {
   return getOnboardingPath(raw);
@@ -58,33 +59,56 @@ export default function SignupPage() {
 
     setSending(true);
     const supabase = createClient();
-    const { error: otpError } = await supabase.auth.signInWithOtp({
-      phone: normalizedPhone,
-      options: {
-        data: { full_name: fullName.trim(), phone: normalizedPhone },
-      },
-    });
+    let otpError: { message: string } | null = null;
+    try {
+      const result = await withAuthTimeout(
+        supabase.auth.signInWithOtp({
+          phone: normalizedPhone,
+          options: {
+            data: { full_name: fullName.trim(), phone: normalizedPhone },
+          },
+        })
+      );
+      otpError = result.error;
+    } catch (authError) {
+      setSending(false);
+      setError(
+        formatAuthError(authError instanceof Error ? authError.message : AUTH_UNREACHABLE_MESSAGE)
+      );
+      return;
+    }
 
     if (otpError) {
       const fallback = await fetch("/api/auth/phone", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone: normalizedPhone, fullName: fullName.trim() }),
-      });
-      const fallbackJson = await fallback.json().catch(() => ({}));
-      if (!fallback.ok || !fallbackJson.email || !fallbackJson.password) {
+        signal: AbortSignal.timeout(AUTH_TIMEOUT_MS),
+      }).catch(() => null);
+      const fallbackJson = fallback ? await fallback.json().catch(() => ({})) : {};
+      if (!fallback?.ok || !fallbackJson.email || !fallbackJson.password) {
         setSending(false);
         setError(formatAuthError((fallbackJson.error as string | undefined) ?? otpError.message));
         return;
       }
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: fallbackJson.email as string,
-        password: fallbackJson.password as string,
-      });
-      setSending(false);
-      if (signInError) {
-        setError(formatAuthError(signInError.message));
+      try {
+        const { error: signInError } = await withAuthTimeout(
+          supabase.auth.signInWithPassword({
+            email: fallbackJson.email as string,
+            password: fallbackJson.password as string,
+          })
+        );
+        setSending(false);
+        if (signInError) {
+          setError(formatAuthError(signInError.message));
+          return;
+        }
+      } catch (authError) {
+        setSending(false);
+        setError(
+          formatAuthError(authError instanceof Error ? authError.message : AUTH_UNREACHABLE_MESSAGE)
+        );
         return;
       }
 
@@ -113,7 +137,7 @@ export default function SignupPage() {
 
       <form onSubmit={sendOtp} className="space-y-5">
         <div className="space-y-2">
-          <label htmlFor="fullName" className="font-body text-[var(--ink-mid)] text-xs uppercase tracking-wider">
+          <label htmlFor="fullName" className="font-body text-xs text-[var(--ink-mid)]">
             Full name
           </label>
           <div className="relative">
@@ -129,7 +153,7 @@ export default function SignupPage() {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="phone" className="font-body text-[var(--ink-mid)] text-xs uppercase tracking-wider">
+          <label htmlFor="phone" className="font-body text-xs text-[var(--ink-mid)]">
             Phone number
           </label>
           <div className="relative">
@@ -141,7 +165,7 @@ export default function SignupPage() {
               type="tel"
               inputMode="tel"
               autoComplete="tel"
-              placeholder="+63 917 123 4567"
+              placeholder={PHONE_PLACEHOLDER}
               className={`${rondoFieldClass} pl-11`}
             />
           </div>
@@ -153,8 +177,8 @@ export default function SignupPage() {
           </p>
         )}
 
-        <RondoButton type="submit" variant="secondary" disabled={sending} className="mt-2">
-          {sending ? "Sending code..." : "Get OTP"}
+        <RondoButton type="submit" variant="primary" disabled={sending} className="mt-2">
+          {sending ? "Sending code..." : "Get code"}
         </RondoButton>
       </form>
 
@@ -162,7 +186,7 @@ export default function SignupPage() {
         Already have an account?{" "}
         <Link
           href={`/login${nextParam ? `?next=${encodeURIComponent(nextParam)}` : ""}`}
-          className="text-[var(--gold)] font-semibold hover:underline"
+          className="font-semibold text-[var(--ink-hi)] underline decoration-[var(--stroke)] underline-offset-4 hover:decoration-[var(--ink-hi)]"
         >
           Log in
         </Link>

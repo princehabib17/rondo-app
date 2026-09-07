@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { MapPin, UsersThree } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
+import { getUserWithTimeout } from "@/lib/auth/get-user-with-timeout";
+import { withAuthTimeout } from "@/lib/auth/auth-timeout";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import type { Post, Profile } from "@/lib/supabase/types";
 import { PUBLIC_PROFILE_SELECT } from "@/lib/supabase/profile-select";
@@ -57,7 +58,6 @@ function PlayerList({ title, players }: { title: string; players: Profile[] }) {
 }
 
 export default function CommunityPage() {
-  const router = useRouter();
   const [tab, setTab] = useState<"feed" | "players">("feed");
   const [posts, setPosts] = useState<Post[]>([]);
   const [postsLoading, setPostsLoading] = useState(true);
@@ -74,27 +74,35 @@ export default function CommunityPage() {
 
   const loadPosts = useCallback(async (offset = 0) => {
     const supabase = createClient();
-    const { data } = await supabase
-      .from("posts")
-      .select(
-        `*,
+    try {
+      const { data } = await withAuthTimeout(
+        supabase
+          .from("posts")
+          .select(
+            `*,
         author:profiles!author_id(${PUBLIC_PROFILE_SELECT}),
         game:games!game_id(id, title, venue_name, date_time),
         tournament:tournaments!tournament_id(id, name, status, venue_name, starts_at),
         post_likes(user_id),
         post_comments(count)`
-      )
-      .order("created_at", { ascending: false })
-      .range(offset, offset + POSTS_PAGE_SIZE - 1);
+          )
+          .order("created_at", { ascending: false })
+          .range(offset, offset + POSTS_PAGE_SIZE - 1)
+      );
 
-    const rows = (data as Post[]) ?? [];
-    setHasMorePosts(rows.length === POSTS_PAGE_SIZE);
-    if (offset === 0) {
-      setPosts(rows);
-    } else {
-      setPosts((prev) => [...prev, ...rows]);
+      const rows = (data as Post[]) ?? [];
+      setHasMorePosts(rows.length === POSTS_PAGE_SIZE);
+      if (offset === 0) {
+        setPosts(rows);
+      } else {
+        setPosts((prev) => [...prev, ...rows]);
+      }
+    } catch {
+      if (offset === 0) setPosts([]);
+      setHasMorePosts(false);
+    } finally {
+      setPostsLoading(false);
     }
-    setPostsLoading(false);
   }, []);
 
   const loadSocial = useCallback(async (uid: string) => {
@@ -124,15 +132,20 @@ export default function CommunityPage() {
     let cancelled = false;
 
     async function init() {
-      const supabase = createClient();
-      const { data: userData } = await supabase.auth.getUser();
+      const { data: userData } = await getUserWithTimeout(2000);
       const uid = userData.user?.id;
 
+      if (cancelled) return;
+
       if (!uid) {
-        router.push("/login");
+        setCurrentUserId(null);
+        setIsGuest(true);
+        setLoading(false);
+        loadPosts().catch(() => {
+          if (!cancelled) setPostsLoading(false);
+        });
         return;
       }
-      if (cancelled) return;
 
       setCurrentUserId(uid);
       setIsGuest(isGuestUser(userData.user));
@@ -153,7 +166,7 @@ export default function CommunityPage() {
     return () => {
       cancelled = true;
     };
-  }, [router, loadSocial, loadPosts]);
+  }, [loadSocial, loadPosts]);
 
   const loadMorePosts = useCallback(async () => {
     if (loadingMore) return;
@@ -243,9 +256,9 @@ export default function CommunityPage() {
                 type="button"
                 onClick={() => setTab(value)}
                 className={cn(
-                  "rounded-[var(--r-pill)] px-3 py-1.5 rondo-label transition-colors",
+                  "rounded-[var(--r-pill)] px-3 py-1.5 text-sm font-semibold transition-colors",
                   tab === value
-                    ? "bg-[var(--gold)] text-[var(--gold-ink)]"
+                    ? "bg-[var(--bg-surface)] text-[var(--ink-hi)]"
                     : "text-[var(--ink-low)]"
                 )}
               >
@@ -260,12 +273,12 @@ export default function CommunityPage() {
         {tab === "feed" ? (
           <>
             <div className="px-4">
-              {isGuest ? (
+              {isGuest || !currentUserId ? (
                 <div className="rondo-surface space-y-3 p-4">
                   <p className="rondo-body text-[var(--ink-mid)]">
                     Create an account to post results, highlights, and shout-outs.
                   </p>
-                  <RondoButton href="/signup">Sign up</RondoButton>
+                  <RondoButton href="/signup?next=/community">Sign up</RondoButton>
                 </div>
               ) : (
                 <PostComposer onPosted={() => loadPosts()} />
@@ -287,8 +300,8 @@ export default function CommunityPage() {
                     imageSrc="/feed/hero-soccer.jpg"
                     imageAlt=""
                     action={
-                      isGuest ? (
-                        <RondoButton href="/signup">Sign up</RondoButton>
+                      isGuest || !currentUserId ? (
+                        <RondoButton href="/signup?next=/community">Sign up</RondoButton>
                       ) : (
                         <RondoButton href="/feed">Find a match</RondoButton>
                       )

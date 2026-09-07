@@ -54,8 +54,8 @@ export function GuestScoutLinks() {
 
   return (
     <div className="mt-6 space-y-3">
-      <p className="text-center font-body text-[var(--ink-low)] text-xs uppercase tracking-widest">
-        or explore without signing up
+      <p className="text-center font-body text-xs text-[var(--ink-low)]">
+        Or explore without signing up
       </p>
       <div className="grid grid-cols-2 gap-3">
         <button
@@ -73,7 +73,7 @@ export function GuestScoutLinks() {
           type="button"
           onClick={handleScout}
           disabled={guestLoading || scoutLoading}
-          className="flex flex-col items-center gap-1.5 rounded-[var(--r-md)] border border-[var(--gold)]/40 bg-[var(--gold)]/5 py-3 px-2 text-[var(--gold)] hover:bg-[var(--gold)]/10 transition-colors disabled:opacity-40"
+          className="flex flex-col items-center gap-1.5 rounded-[var(--r-md)] border border-[var(--stroke)] py-3 px-2 text-[var(--ink-low)] hover:text-[var(--ink-hi)] hover:border-[var(--stroke)] transition-colors disabled:opacity-40"
         >
           <UserSearch size={18} />
           <span className="font-body text-xs font-semibold">
