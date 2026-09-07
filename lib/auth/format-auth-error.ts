@@ -27,6 +27,9 @@ export function formatAuthError(message: string): string {
   if (SUPABASE_UNREACHABLE.test(message)) {
     return "Auth service is unreachable right now. Check that the Supabase project is live and the app URL keys are up to date.";
   }
+  if (/invalid api key|invalid jwt/i.test(message)) {
+    return "Auth keys don't match this Supabase project. Update NEXT_PUBLIC_SUPABASE_URL and the anon key in Vercel, then redeploy.";
+  }
   if (PHONE_PROVIDER_ERROR.test(message)) {
     return "Phone login isn't enabled yet. Use Google, Facebook, email, or browse as guest.";
   }

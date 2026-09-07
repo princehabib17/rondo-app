@@ -12,5 +12,6 @@ describe("formatAuthError", () => {
   it("keeps passkey and phone provider guidance", () => {
     expect(formatAuthError("Unsupported phone provider")).toMatch(/Phone login/i);
     expect(formatAuthError("passkey_disabled")).toMatch(/Passkeys aren't enabled/i);
+    expect(formatAuthError("Invalid API key")).toMatch(/don't match this Supabase project/i);
   });
 });
