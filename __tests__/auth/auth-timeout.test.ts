@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { AUTH_TIMEOUT_MS, withAuthTimeout } from "@/lib/auth/auth-timeout";
+import { AUTH_TIMEOUT_MS, withAuthTimeout, withAuthTimeoutOr } from "@/lib/auth/auth-timeout";
 
 describe("withAuthTimeout", () => {
   afterEach(() => {
@@ -14,6 +14,14 @@ describe("withAuthTimeout", () => {
     vi.useFakeTimers();
     const pending = withAuthTimeout(new Promise(() => {}), 2000);
     const assertion = expect(pending).rejects.toThrow(/unreachable/i);
+    await vi.advanceTimersByTimeAsync(2000);
+    await assertion;
+  });
+
+  it("returns the fallback when the promise hangs", async () => {
+    vi.useFakeTimers();
+    const pending = withAuthTimeoutOr(new Promise<string>(() => {}), "fallback", 2000);
+    const assertion = expect(pending).resolves.toBe("fallback");
     await vi.advanceTimersByTimeAsync(2000);
     await assertion;
   });

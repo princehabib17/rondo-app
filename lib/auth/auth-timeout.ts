@@ -29,3 +29,15 @@ export function withAuthTimeout<T>(promise: Promise<T>, ms = AUTH_TIMEOUT_MS): P
     );
   });
 }
+
+export async function withAuthTimeoutOr<T>(
+  promise: Promise<T>,
+  fallback: T,
+  ms = AUTH_TIMEOUT_MS
+): Promise<T> {
+  try {
+    return await withAuthTimeout(promise, ms);
+  } catch {
+    return fallback;
+  }
+}
