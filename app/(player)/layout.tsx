@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/layout/AppShell";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { SupabaseConfigMissing } from "@/components/system/SupabaseConfigMissing";
+import { withAuthTimeoutOr } from "@/lib/auth/auth-timeout";
 import { ensurePublishedCity } from "@/lib/seed/ensure-published-city";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
@@ -13,7 +14,7 @@ export default async function PlayerLayout({ children }: { children: React.React
     );
   }
 
-  await ensurePublishedCity();
+  await withAuthTimeoutOr(ensurePublishedCity(), { seeded: false }, 3500);
 
   return (
     <AppShell>
