@@ -1,18 +1,16 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { createServiceClient } from "@/lib/supabase/service";
+import { requireSupabasePublicConfig } from "@/lib/supabase/config";
+import { createClient as createCookieClient } from "@/lib/supabase/server";
 
 /**
- * Creates a one-time guest account when anonymous sign-in is disabled.
- * Returns credentials for the client to sign in with password.
+ * Creates a guest account and returns a session the browser can store.
+ * Cookies are also set so the next server render sees the user.
  */
 
-// Best-effort per-IP throttle for guest account creation. This is in-memory
-// and per-instance, so on serverless deployments with multiple instances (or
-// cold starts) it does NOT provide a strict global guarantee — a durable
-// store (e.g. Redis/DB-backed counter) would be needed for that. It's still
-// useful as a cheap deterrent against casual abuse from a single instance.
-const GUEST_RATE_LIMIT_MAX = 5;
-const GUEST_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+const GUEST_RATE_LIMIT_MAX = 20;
+const GUEST_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const guestCreationLog = new Map<string, number[]>();
 
 function isGuestRateLimited(ip: string, now = Date.now()): boolean {
@@ -73,7 +71,38 @@ export async function POST(request: Request) {
       role: "player",
     });
 
-    return NextResponse.json({ email, password });
+    const { url, anonKey } = requireSupabasePublicConfig();
+    const anon = createClient(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    let session = (await anon.auth.signInWithPassword({ email, password })).data.session;
+
+    if (!session) {
+      session = (await service.auth.signInWithPassword({ email, password })).data.session;
+    }
+
+    if (!session?.access_token || !session.refresh_token) {
+      return NextResponse.json(
+        { error: "Could not open a guest session." },
+        { status: 500 }
+      );
+    }
+
+    try {
+      const cookieClient = await createCookieClient();
+      await cookieClient.auth.setSession({
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+      });
+    } catch {
+      // Browser setSession is enough if cookie mirroring fails.
+    }
+
+    return NextResponse.json({
+      ok: true,
+      access_token: session.access_token,
+      refresh_token: session.refresh_token,
+    });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Guest sign-in failed";
     const unreachable = /fetch failed|failed to fetch|enotfound|getaddrinfo|nxdomain/i.test(
@@ -82,7 +111,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: unreachable
-          ? "Auth service is unreachable (Supabase host failed to resolve or respond)."
+          ? "Can't reach login right now. Try again, or create an account."
           : message,
       },
       { status: 500 }

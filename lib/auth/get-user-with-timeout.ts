@@ -1,3 +1,4 @@
+import { AUTH_UNREACHABLE_MESSAGE } from "@/lib/auth/auth-timeout";
 import { createClient } from "@/lib/supabase/client";
 
 /** Avoid hanging auth screens when Supabase DNS/network is down. */
@@ -10,7 +11,7 @@ export async function getUserWithTimeout(ms = 4000) {
         () =>
           resolve({
             data: { user: null },
-            error: { message: "Auth service is unreachable right now." },
+            error: { message: AUTH_UNREACHABLE_MESSAGE },
           }),
         ms
       )

@@ -237,7 +237,7 @@ export function EmptyState({
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-col items-center justify-center py-12 text-center", className)}>
+    <div className={cn("flex flex-col items-center justify-center py-5 text-center", className)}>
       {imageSrc ? (
         <div className="relative mb-5 h-36 w-full max-w-xs overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)]">
           <Image src={imageSrc} alt={imageAlt} fill className="object-cover object-center" sizes="320px" />

@@ -11,6 +11,7 @@ import {
   getOnboardingPath,
   getPostOnboardingDestination,
 } from "@/lib/auth/destination";
+import { formatAuthError } from "@/lib/auth/format-auth-error";
 
 function OtpContent() {
   const router = useRouter();
@@ -37,7 +38,7 @@ function OtpContent() {
     const supabase = createClient();
     const { error: resendError } = await supabase.auth.signInWithOtp({ phone });
     if (resendError) {
-      setError(resendError.message);
+      setError(formatAuthError(resendError.message));
       return;
     }
     setCooldown(60);
@@ -58,7 +59,7 @@ function OtpContent() {
 
     if (verifyError || !data.user) {
       setVerifying(false);
-      setError(verifyError?.message ?? "Could not verify code.");
+      setError(formatAuthError(verifyError?.message ?? "Could not verify code."));
       return;
     }
 
@@ -102,8 +103,19 @@ function OtpContent() {
 
       <div className="space-y-2">
         <h1 className="rondo-display text-[var(--ink-hi)]">Enter code</h1>
-        <p className="rondo-meta text-[var(--ink-low)]">We sent a code to</p>
-        <p className="rondo-body font-bold text-[var(--ink-hi)]">{phone || "your phone"}</p>
+        {phone ? (
+          <>
+            <p className="rondo-meta text-[var(--ink-low)]">We sent a code to</p>
+            <p className="rondo-body font-bold text-[var(--ink-hi)]">{phone}</p>
+          </>
+        ) : (
+          <>
+            <p className="rondo-meta text-[var(--ink-low)]">No phone number on this screen.</p>
+            <Link href="/signup" className="rondo-body font-bold text-[var(--gold)]">
+              Get a code first
+            </Link>
+          </>
+        )}
       </div>
 
       <form onSubmit={handleVerify} className="space-y-4">
@@ -113,7 +125,8 @@ function OtpContent() {
           inputMode="numeric"
           autoComplete="one-time-code"
           maxLength={8}
-          placeholder="1 2 3 4 5 6"
+          placeholder=""
+          aria-label="Login code"
           className="h-14 w-full rounded-[var(--r-sm)] border border-transparent bg-[var(--bg-inset)] px-4 text-center font-heading text-3xl font-bold tracking-[0.28em] text-[var(--ink-hi)] outline-none focus:border-[var(--gold)]"
         />
 

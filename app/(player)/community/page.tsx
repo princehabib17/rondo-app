@@ -299,13 +299,7 @@ export default function CommunityPage() {
                     body="Score first, brag later. Share a result or highlight from your last match."
                     imageSrc="/feed/hero-soccer.jpg"
                     imageAlt=""
-                    action={
-                      isGuest || !currentUserId ? (
-                        <RondoButton href="/signup?next=/community">Sign up</RondoButton>
-                      ) : (
-                        <RondoButton href="/feed">Find a match</RondoButton>
-                      )
-                    }
+                    action={<RondoButton href="/feed">Find a match</RondoButton>}
                   />
                 </div>
               </div>
