@@ -68,12 +68,12 @@ export default function HomePage() {
               Create account
               <ArrowRight size={18} weight="bold" aria-hidden />
             </RondoButton>
-            <RondoButton href="/login" variant="ghost" className="!min-h-11">
+            <RondoButton href="/login" variant="secondary" className="!min-h-11">
               Log in
             </RondoButton>
-            <RondoButton onClick={handleGuest} disabled={guestLoading} variant="secondary">
+            <RondoButton onClick={handleGuest} disabled={guestLoading} variant="ghost">
               <SoccerBall size={18} weight="duotone" aria-hidden />
-              {guestLoading ? "Opening feed" : "Continue as guest"}
+              {guestLoading ? "Opening feed…" : "Continue as guest"}
             </RondoButton>
             {guestError && <p className="rondo-meta px-2 text-center text-[var(--live)]">{guestError}</p>}
           </motion.div>

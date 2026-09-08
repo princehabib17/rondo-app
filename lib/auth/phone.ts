@@ -1,3 +1,6 @@
+/** Clearly empty — a filled-looking sample number reads as already typed. */
+export const PHONE_PLACEHOLDER = "09xx xxx xxxx";
+
 export function normalizePhoneNumber(input: string): string {
   const trimmed = input.trim();
   if (!trimmed) return "";

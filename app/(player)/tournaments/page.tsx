@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Fire, Shield, Trophy, Users } from "@phosphor-icons/react";
 import { motion, useReducedMotion } from "motion/react";
 import { createClient } from "@/lib/supabase/client";
+import { withAuthTimeout } from "@/lib/auth/auth-timeout";
 import type { Tournament, TournamentStatus } from "@/lib/supabase/types";
 import { TournamentCard, TournamentCardSkeleton } from "@/components/tournament/TournamentCard";
 import { fetchTournamentChampions, type ChampionSummary } from "@/lib/tournament/champions";
@@ -13,6 +14,7 @@ import type { LiveSummary } from "@/lib/tournament/bracket";
 import { gentle } from "@/components/motion/springs";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/rondo/primitives";
+import { RondoBrand } from "@/components/brand/RondoBrand";
 
 const FILTERS: { value: TournamentStatus | "all"; label: string }[] = [
   { value: "all", label: "All" },
@@ -51,25 +53,32 @@ export default function TournamentsPage() {
   useEffect(() => {
     async function load() {
       const supabase = createClient();
-      const { data } = await supabase
-        .from("tournaments")
-        .select("*, tournament_teams(id, status)")
-        .neq("status", "cancelled")
-        .order("starts_at", { ascending: true })
-        .limit(50);
-      const rows = sortForDisplay((data as Tournament[]) ?? []);
-      setTournaments(rows);
-      setLoading(false);
-      const completed = rows.filter((t) => t.status === "completed");
-      if (completed.length > 0) {
-        setChampions(await fetchTournamentChampions(supabase, completed));
-      }
-      const active = rows.filter((t) => t.status === "active");
-      if (active.length > 0) {
-        const teamCounts = new Map(
-          active.map((t) => [t.id, t.tournament_teams?.filter((tm) => tm.status === "registered").length ?? 0])
+      try {
+        const { data } = await withAuthTimeout(
+          supabase
+            .from("tournaments")
+            .select("*, tournament_teams(id, status)")
+            .neq("status", "cancelled")
+            .order("starts_at", { ascending: true })
+            .limit(50)
         );
-        setLiveSummaries(await fetchTournamentLiveSummaries(supabase, active, teamCounts));
+        const rows = sortForDisplay((data as Tournament[]) ?? []);
+        setTournaments(rows);
+        setLoading(false);
+        const completed = rows.filter((t) => t.status === "completed");
+        if (completed.length > 0) {
+          setChampions(await fetchTournamentChampions(supabase, completed));
+        }
+        const active = rows.filter((t) => t.status === "active");
+        if (active.length > 0) {
+          const teamCounts = new Map(
+            active.map((t) => [t.id, t.tournament_teams?.filter((tm) => tm.status === "registered").length ?? 0])
+          );
+          setLiveSummaries(await fetchTournamentLiveSummaries(supabase, active, teamCounts));
+        }
+      } catch {
+        setTournaments([]);
+        setLoading(false);
       }
     }
     load();
@@ -84,12 +93,11 @@ export default function TournamentsPage() {
   return (
     <div className="min-h-[100dvh] rondo-page pb-24">
       <header className="sticky top-0 z-40 border-b border-[var(--stroke)] rondo-glass-nav px-4 py-3">
-        <div className="mx-auto flex h-12 max-w-lg items-center gap-2">
-          <Trophy size={20} weight="duotone" className="text-[var(--gold)]" aria-hidden />
-          <div>
-            <p className="rondo-label text-[var(--ink-low)]">Matchday shelf</p>
-            <h1 className="rondo-title text-[var(--ink-hi)]">Tournaments</h1>
-          </div>
+        <div className="mx-auto flex h-12 max-w-lg items-center gap-3">
+          <RondoBrand kind="mark" surface="auto" className="size-8" />
+          <h1 className="font-heading text-xl font-bold tracking-tight text-[var(--ink-hi)]">
+            Tournaments
+          </h1>
         </div>
       </header>
 
@@ -99,8 +107,7 @@ export default function TournamentsPage() {
           <div className="relative space-y-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="rondo-label text-[var(--gold)]">City bracket board</p>
-                <h2 className="mt-2 max-w-[15rem] font-heading text-[3.25rem] font-black uppercase leading-[0.82] tracking-[-0.035em] text-[var(--ink-hi)]">
+                <h2 className="mt-0 max-w-[15rem] font-heading text-[3.25rem] font-black uppercase leading-[0.82] tracking-[-0.035em] text-[var(--ink-hi)]">
                   Run the table
                 </h2>
               </div>
@@ -111,6 +118,7 @@ export default function TournamentsPage() {
             <p className="max-w-[20rem] rondo-body text-[var(--ink-mid)]">
               Join open brackets, follow live scores, and carry the win into the room.
             </p>
+            {!loading && tournaments.length > 0 ? (
             <div className="grid grid-cols-3 gap-2">
               <div className="rounded-[var(--r-md)] border border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_64%,transparent)] p-3">
                 <Fire size={18} weight="duotone" className="mb-3 text-[var(--gold)]" aria-hidden />
@@ -128,6 +136,7 @@ export default function TournamentsPage() {
                 <p className="rondo-meta text-[var(--ink-low)]">Total</p>
               </div>
             </div>
+            ) : null}
           </div>
         </section>
 

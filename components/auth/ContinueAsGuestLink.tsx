@@ -46,7 +46,7 @@ export function ContinueAsGuestLink() {
         disabled={loading}
         className="min-h-11 px-2 font-body text-sm font-semibold text-[var(--ink-mid)] transition-colors hover:text-[var(--gold)] disabled:opacity-50"
       >
-        {loading ? "Opening guest access..." : "Continue as guest"}
+        {loading ? "Opening feed…" : "Continue as guest"}
       </button>
       {error && (
         <p className="mt-2 text-center text-xs leading-relaxed text-[var(--live)]" role="alert">

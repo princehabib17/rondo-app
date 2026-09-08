@@ -40,6 +40,24 @@ Set `NEXT_PUBLIC_APP_URL` to your production URL, e.g. `https://rondo-app.vercel
 
 PayMongo webhook URL: `https://rondo-app.vercel.app/api/payments/webhook`
 
+## Fixing production auth (Supabase)
+
+Login, signup, and guest all fail with `fetch failed` when the project host does not resolve. Production currently points at `https://kkmokdrjoephfdopizes.supabase.co`, which is NXDOMAIN.
+
+1. Open the [Supabase dashboard](https://supabase.com/dashboard) and look for project ref `kkmokdrjoephfdopizes`.
+2. If it is paused, restore it. If it was deleted, create a new project.
+3. Confirm `https://<project-ref>.supabase.co` resolves in a browser (not NXDOMAIN).
+4. Run migrations in the SQL editor: `supabase/RUN_ALL_IN_SUPABASE.sql` (safe to re-run).
+5. Authentication → Providers: enable **Anonymous** (guest), Phone, and any social providers you use. Enable Passkeys if you want Face ID / Touch ID.
+6. Copy Project URL, anon key, and service role key.
+7. Vercel → rondo-app → Settings → Environment Variables, for **Production** (and Preview):
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `NEXT_PUBLIC_APP_URL=https://rondo-app.vercel.app`
+8. Redeploy Production (env changes do not apply until a new deploy).
+9. Smoke: `POST https://rondo-app.vercel.app/api/auth/guest` should not return `{"error":"fetch failed"}`. Guest from `/` should reach `/feed`.
+
 ## Database / Migrations
 
 Run SQL migrations in Supabase SQL editor (or your normal migration flow), including:

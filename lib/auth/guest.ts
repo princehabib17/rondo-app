@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/client";
+import { AUTH_TIMEOUT_MS, AUTH_UNREACHABLE_MESSAGE, withAuthTimeout } from "@/lib/auth/auth-timeout";
+import { formatAuthError } from "@/lib/auth/format-auth-error";
 
-export async function signInAsGuest(): Promise<{ ok: boolean; error?: string }> {
+async function signInAsGuestInner(): Promise<{ ok: boolean; error?: string }> {
   const supabase = createClient();
 
   // Try Supabase anonymous sign-in first
@@ -15,6 +17,7 @@ export async function signInAsGuest(): Promise<{ ok: boolean; error?: string }> 
   const res = await fetch("/api/auth/guest", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(AUTH_TIMEOUT_MS),
   });
   const json = await res.json().catch(() => ({}));
 
@@ -28,9 +31,7 @@ export async function signInAsGuest(): Promise<{ ok: boolean; error?: string }> 
       error:
         raw === "Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY"
           ? "Guest sign-in is not available right now. Please create an account."
-          : /fetch failed|failed to fetch|networkerror|enotfound|nxdomain/i.test(raw)
-            ? "Auth service is unreachable right now. The Supabase project may be paused or misconfigured."
-            : raw,
+          : formatAuthError(raw),
     };
   }
 
@@ -40,8 +41,18 @@ export async function signInAsGuest(): Promise<{ ok: boolean; error?: string }> 
   });
 
   if (signInError) {
-    return { ok: false, error: signInError.message };
+    return { ok: false, error: formatAuthError(signInError.message) };
   }
 
   return { ok: true };
+}
+
+export async function signInAsGuest(): Promise<{ ok: boolean; error?: string }> {
+  try {
+    return await withAuthTimeout(signInAsGuestInner());
+  } catch (error) {
+    const raw =
+      error instanceof Error ? error.message : AUTH_UNREACHABLE_MESSAGE;
+    return { ok: false, error: formatAuthError(raw) };
+  }
 }

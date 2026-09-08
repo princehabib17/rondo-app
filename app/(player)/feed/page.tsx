@@ -9,19 +9,22 @@ import {
   fetchYourTournaments,
 } from "@/lib/feed/home-queries";
 import { FeedPageClient } from "@/components/feed/FeedPageClient";
+import { withAuthTimeoutOr } from "@/lib/auth/auth-timeout";
 
 export default async function FeedPage() {
   const supabase = await createClient();
-  const { data: userData } = await supabase.auth.getUser();
+  const { data: userData } = await withAuthTimeoutOr(supabase.auth.getUser(), {
+    data: { user: null },
+    error: null,
+  });
   const user = userData.user;
   const userId = user && !isGuestUser(user) ? user.id : null;
 
   if (user && !isGuestUser(user)) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+    const { data: profile } = await withAuthTimeoutOr(
+      supabase.from("profiles").select("role").eq("id", user.id).single(),
+      { data: null, error: null }
+    );
 
     if (!profile?.role) {
       redirect("/onboarding/slides");
@@ -33,23 +36,29 @@ export default async function FeedPage() {
   }
 
   const [nextUp, yourTournaments, openGames, recentMatches, unreadCount] = await Promise.all([
-    fetchHomeNextUp(supabase, userId),
-    fetchYourTournaments(supabase, userId),
-    fetchOpenGames(supabase, { from: 0, to: 11 }),
-    fetchRecentMatches(supabase, userId),
+    withAuthTimeoutOr(fetchHomeNextUp(supabase, userId), null),
+    withAuthTimeoutOr(fetchYourTournaments(supabase, userId), []),
+    withAuthTimeoutOr(fetchOpenGames(supabase, { from: 0, to: 11 }), []),
+    withAuthTimeoutOr(fetchRecentMatches(supabase, userId), []),
     user
-      ? supabase
-          .from("notifications")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user.id)
-          .is("read_at", null)
-          .then((result) => result.count ?? 0)
+      ? withAuthTimeoutOr(
+          supabase
+            .from("notifications")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .is("read_at", null)
+            .then((result) => result.count ?? 0),
+          0
+        )
       : Promise.resolve(0),
   ]);
 
-  const aroundYou = await fetchAroundYouTournaments(
-    supabase,
-    yourTournaments.map((t) => t.id)
+  const aroundYou = await withAuthTimeoutOr(
+    fetchAroundYouTournaments(
+      supabase,
+      yourTournaments.map((t) => t.id)
+    ),
+    []
   );
 
   return (

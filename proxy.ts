@@ -34,6 +34,7 @@ const PUBLIC_BROWSE_PREFIXES = [
   "/feed",
   "/scout",
   "/organizers",
+  "/community",
 ];
 
 /** Public routes that do not need a Supabase session lookup (faster dev loads). */
@@ -43,6 +44,7 @@ const PUBLIC_SKIP_AUTH = [
   "/auth/callback",
   "/onboarding",
   "/feed",
+  "/community",
 ];
 
 const GUEST_BLOCKED_PREFIXES = [

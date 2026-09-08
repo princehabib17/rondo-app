@@ -10,8 +10,9 @@ import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 import { RondoBrand } from "@/components/brand/RondoBrand";
 import { PasskeySignInButton } from "@/components/auth/PasskeySignInButton";
 import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
-import { isLikelyPhoneNumber, normalizePhoneNumber } from "@/lib/auth/phone";
+import { isLikelyPhoneNumber, normalizePhoneNumber, PHONE_PLACEHOLDER } from "@/lib/auth/phone";
 import { formatAuthError } from "@/lib/auth/format-auth-error";
+import { AUTH_TIMEOUT_MS, AUTH_UNREACHABLE_MESSAGE, withAuthTimeout } from "@/lib/auth/auth-timeout";
 import { getUserWithTimeout } from "@/lib/auth/get-user-with-timeout";
 import {
   getOnboardingPath,
@@ -70,14 +71,24 @@ export default function LoginPage() {
 
       setSending(true);
       const supabase = createClient();
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
-      setSending(false);
+      try {
+        const { error: signInError } = await withAuthTimeout(
+          supabase.auth.signInWithPassword({
+            email: email.trim(),
+            password,
+          })
+        );
+        setSending(false);
 
-      if (signInError) {
-        setError(formatAuthError(signInError.message));
+        if (signInError) {
+          setError(formatAuthError(signInError.message));
+          return;
+        }
+      } catch (authError) {
+        setSending(false);
+        setError(
+          formatAuthError(authError instanceof Error ? authError.message : AUTH_UNREACHABLE_MESSAGE)
+        );
         return;
       }
 
@@ -103,30 +114,53 @@ export default function LoginPage() {
 
     setSending(true);
     const supabase = createClient();
-    const { error: otpError } = await supabase.auth.signInWithOtp({
-      phone: normalizedPhone,
-    });
+    let otpError: { message: string } | null = null;
+    try {
+      const result = await withAuthTimeout(
+        supabase.auth.signInWithOtp({
+          phone: normalizedPhone,
+        })
+      );
+      otpError = result.error;
+    } catch (authError) {
+      setSending(false);
+      setError(
+        formatAuthError(authError instanceof Error ? authError.message : AUTH_UNREACHABLE_MESSAGE)
+      );
+      return;
+    }
 
     if (otpError) {
       const fallback = await fetch("/api/auth/phone", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone: normalizedPhone }),
-      });
-      const fallbackJson = await fallback.json().catch(() => ({}));
-      if (!fallback.ok || !fallbackJson.email || !fallbackJson.password) {
+        signal: AbortSignal.timeout(AUTH_TIMEOUT_MS),
+      }).catch(() => null);
+      const fallbackJson = fallback ? await fallback.json().catch(() => ({})) : {};
+      if (!fallback?.ok || !fallbackJson.email || !fallbackJson.password) {
         setSending(false);
         setError(formatAuthError((fallbackJson.error as string | undefined) ?? otpError.message));
         return;
       }
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: fallbackJson.email as string,
-        password: fallbackJson.password as string,
-      });
-      setSending(false);
-      if (signInError) {
-        setError(formatAuthError(signInError.message));
+      try {
+        const { error: signInError } = await withAuthTimeout(
+          supabase.auth.signInWithPassword({
+            email: fallbackJson.email as string,
+            password: fallbackJson.password as string,
+          })
+        );
+        setSending(false);
+        if (signInError) {
+          setError(formatAuthError(signInError.message));
+          return;
+        }
+      } catch (authError) {
+        setSending(false);
+        setError(
+          formatAuthError(authError instanceof Error ? authError.message : AUTH_UNREACHABLE_MESSAGE)
+        );
         return;
       }
 
@@ -191,18 +225,20 @@ export default function LoginPage() {
           <div className="w-full border-t border-[var(--stroke)]" />
         </div>
         <div className="relative flex justify-center">
-          <span className="bg-[var(--bg-page,#0a0a0a)] px-3 text-[10px] uppercase tracking-wider text-[var(--ink-low)]">
+          <span className="bg-[var(--bg-page,#0a0a0a)] px-3 text-xs text-[var(--ink-low)]">
             Or continue with
           </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 mb-6">
+      <div className="mb-6 grid grid-cols-2 gap-2 rounded-[var(--r-sm)] bg-[var(--bg-inset)] p-1">
         <button
           type="button"
           onClick={() => setMode("phone")}
-          className={`rounded-[var(--r-sm)] py-2 text-xs font-semibold uppercase tracking-wider ${
-            mode === "phone" ? "bg-[var(--gold)] text-[var(--gold-ink)]" : "bg-[var(--bg-inset)] text-[var(--ink-mid)]"
+          className={`rounded-[calc(var(--r-sm)-2px)] py-2 text-sm font-semibold ${
+            mode === "phone"
+              ? "bg-[var(--bg-surface)] text-[var(--ink-hi)] shadow-[0_1px_0_color-mix(in_oklch,var(--ink-hi)_8%,transparent)]"
+              : "text-[var(--ink-mid)]"
           }`}
         >
           Phone
@@ -210,8 +246,10 @@ export default function LoginPage() {
         <button
           type="button"
           onClick={() => setMode("email")}
-          className={`rounded-[var(--r-sm)] py-2 text-xs font-semibold uppercase tracking-wider ${
-            mode === "email" ? "bg-[var(--gold)] text-[var(--gold-ink)]" : "bg-[var(--bg-inset)] text-[var(--ink-mid)]"
+          className={`rounded-[calc(var(--r-sm)-2px)] py-2 text-sm font-semibold ${
+            mode === "email"
+              ? "bg-[var(--bg-surface)] text-[var(--ink-hi)] shadow-[0_1px_0_color-mix(in_oklch,var(--ink-hi)_8%,transparent)]"
+              : "text-[var(--ink-mid)]"
           }`}
         >
           Email
@@ -221,7 +259,7 @@ export default function LoginPage() {
       <form onSubmit={sendOtp} className="space-y-5">
         {mode === "phone" ? (
         <div className="space-y-2">
-          <label htmlFor="phone" className="font-body text-[var(--ink-mid)] text-xs uppercase tracking-wider">
+          <label htmlFor="phone" className="font-body text-xs text-[var(--ink-mid)]">
             Phone number
           </label>
           <div className="relative">
@@ -233,7 +271,7 @@ export default function LoginPage() {
               type="tel"
               inputMode="tel"
               autoComplete="tel"
-              placeholder="+63 917 123 4567"
+              placeholder={PHONE_PLACEHOLDER}
               className={`${rondoFieldClass} pl-11`}
             />
           </div>
@@ -241,7 +279,7 @@ export default function LoginPage() {
         ) : (
           <>
             <div className="space-y-2">
-              <label htmlFor="email" className="font-body text-[var(--ink-mid)] text-xs uppercase tracking-wider">
+              <label htmlFor="email" className="font-body text-xs text-[var(--ink-mid)]">
                 Email
               </label>
               <input
@@ -255,7 +293,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="password" className="font-body text-[var(--ink-mid)] text-xs uppercase tracking-wider">
+              <label htmlFor="password" className="font-body text-xs text-[var(--ink-mid)]">
                 Password
               </label>
               <input
@@ -278,7 +316,7 @@ export default function LoginPage() {
         )}
 
         <RondoButton type="submit" variant="primary" disabled={sending} className="mt-2">
-          {sending ? "Signing in..." : mode === "phone" ? "Send OTP" : "Log in"}
+          {sending ? "Signing in..." : mode === "phone" ? "Send code" : "Log in"}
         </RondoButton>
       </form>
 
@@ -286,7 +324,7 @@ export default function LoginPage() {
         First time here?{" "}
         <Link
           href={`/signup${nextParam ? `?next=${encodeURIComponent(nextParam)}` : ""}`}
-          className="text-[var(--gold)] font-semibold hover:underline"
+          className="font-semibold text-[var(--ink-hi)] underline decoration-[var(--stroke)] underline-offset-4 hover:decoration-[var(--ink-hi)]"
         >
           Create account
         </Link>
