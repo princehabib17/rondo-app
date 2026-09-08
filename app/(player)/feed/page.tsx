@@ -13,17 +13,21 @@ import { withAuthTimeoutOr } from "@/lib/auth/auth-timeout";
 
 export default async function FeedPage() {
   const supabase = await createClient();
-  const { data: userData } = await withAuthTimeoutOr(supabase.auth.getUser(), {
-    data: { user: null },
-    error: null,
-  });
-  const user = userData.user;
+  const user = await withAuthTimeoutOr(
+    supabase.auth.getUser().then((result) => result.data.user),
+    null
+  );
   const userId = user && !isGuestUser(user) ? user.id : null;
 
   if (user && !isGuestUser(user)) {
-    const { data: profile } = await withAuthTimeoutOr(
-      supabase.from("profiles").select("role").eq("id", user.id).single(),
-      { data: null, error: null }
+    const profile = await withAuthTimeoutOr(
+      supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single()
+        .then((result) => result.data),
+      null
     );
 
     if (!profile?.role) {

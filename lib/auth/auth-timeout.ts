@@ -11,13 +11,14 @@ export class AuthTimeoutError extends Error {
   }
 }
 
-export function withAuthTimeout<T>(promise: Promise<T>, ms = AUTH_TIMEOUT_MS): Promise<T> {
+/** Accept real Promises and thenables (Supabase query builders). */
+export function withAuthTimeout<T>(thenable: PromiseLike<T>, ms = AUTH_TIMEOUT_MS): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const timer = setTimeout(() => {
       reject(new AuthTimeoutError());
     }, ms);
 
-    promise.then(
+    Promise.resolve(thenable).then(
       (value) => {
         clearTimeout(timer);
         resolve(value);
@@ -31,12 +32,12 @@ export function withAuthTimeout<T>(promise: Promise<T>, ms = AUTH_TIMEOUT_MS): P
 }
 
 export async function withAuthTimeoutOr<T>(
-  promise: Promise<T>,
+  thenable: PromiseLike<T>,
   fallback: T,
   ms = AUTH_TIMEOUT_MS
 ): Promise<T> {
   try {
-    return await withAuthTimeout(promise, ms);
+    return await withAuthTimeout(thenable, ms);
   } catch {
     return fallback;
   }
