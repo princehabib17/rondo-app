@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Bell, MapPin } from "@phosphor-icons/react";
+import { Bell } from "@phosphor-icons/react";
 import { RondoBrand } from "@/components/brand/RondoBrand";
 import { createClient } from "@/lib/supabase/client";
 import type { Game } from "@/lib/supabase/types";
@@ -18,7 +18,6 @@ import {
   type FilterContext,
 } from "@/lib/feed/filters";
 import { FeedFiltersBar } from "@/components/feed/FeedFilters";
-import { EmptyState, RondoButton } from "@/components/rondo/primitives";
 
 const GameMap = dynamic(() => import("@/components/map/GameMap"), {
   ssr: false,
@@ -92,7 +91,7 @@ export default function FeedMapPage() {
   ).length;
 
   return (
-    <div className="flex h-[calc(100dvh-4rem)] w-full max-w-lg flex-col overflow-x-hidden bg-[var(--bg-page)]">
+    <div className="flex min-h-[100dvh] w-full max-w-lg flex-col overflow-x-hidden bg-[var(--bg-page)] pb-28">
       <div className="z-30 shrink-0 border-b border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_96%,transparent)]">
         <div className="mx-auto box-border w-full max-w-full space-y-3 px-4 pb-2 pt-4">
           <div className="flex items-center justify-between">
@@ -129,18 +128,7 @@ export default function FeedMapPage() {
         />
       </div>
 
-      <div className="relative min-h-0 flex-1">
-        {!loading && mapGames.length > 0 && (
-          <button
-            type="button"
-            onClick={fetchGames}
-            className="absolute bottom-4 left-1/2 z-20 inline-flex -translate-x-1/2 items-center gap-2 rounded-[var(--r-pill)] bg-[var(--gold)] px-6 py-3 font-heading text-sm font-bold uppercase text-[var(--gold-ink)]"
-          >
-            <MapPin size={18} weight="duotone" />
-            Show games here
-          </button>
-        )}
-
+      <div className="relative min-h-[60dvh] w-full flex-1">
         {!loading && missingLocationCount > 0 && mapGames.length > 0 && (
           <div className="absolute left-4 right-4 top-4 z-20 mx-auto max-w-lg rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] px-3 py-2">
             <p className="rondo-meta text-[var(--ink-mid)]">
@@ -149,25 +137,9 @@ export default function FeedMapPage() {
             </p>
           </div>
         )}
-        {loading ? (
-          <div className="flex h-full w-full items-center justify-center">
-            <div className="h-8 w-32 rounded-[var(--r-pill)] rondo-shimmer" />
-          </div>
-        ) : mapGames.length === 0 ? (
-          <div className="flex h-full w-full items-center justify-center px-4">
-            <div className="w-full max-w-sm rondo-surface px-4">
-              <EmptyState
-                title="No games on the map"
-                body="Nothing open nearby with a pin yet. Browse the feed or clear filters to widen the search."
-                imageSrc="/onboarding/map.png"
-                imageAlt=""
-                action={<RondoButton href="/feed">Browse feed</RondoButton>}
-              />
-            </div>
-          </div>
-        ) : (
+        <div className="absolute inset-0">
           <GameMap games={mapGames} />
-        )}
+        </div>
       </div>
 
       {countActiveFilters(filters) > 0 && (

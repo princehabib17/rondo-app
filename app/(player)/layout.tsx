@@ -14,7 +14,7 @@ export default async function PlayerLayout({ children }: { children: React.React
     );
   }
 
-  await withAuthTimeoutOr(ensurePublishedCity(), { seeded: false }, 3500);
+  await withAuthTimeoutOr(ensurePublishedCity(), { seeded: false }, 8000);
 
   return (
     <AppShell>

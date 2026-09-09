@@ -261,8 +261,6 @@ export default function MyMatchesPage() {
             <EmptyState
               title="No matches yet"
               body="Join a match from the feed or map and it shows up here."
-              imageSrc="/feed/hero-coach.jpg"
-              imageAlt=""
               action={<RondoButton href="/feed">Browse matches</RondoButton>}
             />
           </div>

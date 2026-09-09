@@ -297,8 +297,6 @@ export default function CommunityPage() {
                   <EmptyState
                     title="No posts yet"
                     body="Score first, brag later. Share a result or highlight from your last match."
-                    imageSrc="/feed/hero-soccer.jpg"
-                    imageAlt=""
                     action={<RondoButton href="/feed">Find a match</RondoButton>}
                   />
                 </div>
