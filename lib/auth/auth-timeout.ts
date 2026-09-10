@@ -1,8 +1,11 @@
 /** Fail auth screens instead of hanging when Supabase DNS/network is down. */
 export const AUTH_TIMEOUT_MS = 2000;
 
+/** Guest create + password grant needs more than a single Auth call. */
+export const GUEST_SIGNIN_TIMEOUT_MS = 12_000;
+
 export const AUTH_UNREACHABLE_MESSAGE =
-  "Auth service is unreachable right now. The Supabase project may be paused or misconfigured.";
+  "Can't reach login right now. Try again, or create an account.";
 
 export class AuthTimeoutError extends Error {
   constructor(message = AUTH_UNREACHABLE_MESSAGE) {

@@ -50,8 +50,6 @@ export default function HelpPage() {
             <EmptyState
               title="No tickets yet"
               body="Need help with a payment, match, or account? Open a ticket and we’ll take it from there."
-              imageSrc="/onboarding/secure.png"
-              imageAlt=""
               action={<RondoButton href="/help/new">New ticket</RondoButton>}
             />
           </div>

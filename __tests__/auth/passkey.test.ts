@@ -20,7 +20,7 @@ describe("formatAuthError passkey messages", () => {
   });
 
   it("keeps phone provider mapping", () => {
-    expect(formatAuthError("Unsupported phone provider")).toMatch(/Phone login isn't enabled/i);
+    expect(formatAuthError("Unsupported phone provider")).toMatch(/can't text a login code/i);
   });
 });
 

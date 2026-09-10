@@ -49,7 +49,11 @@ const playerTabs: TabDef[] = [
     href: "/my-games",
     icon: CalendarBlank,
     label: "Matches",
-    isActive: (p) => p === "/my-games" || p.startsWith("/my-games/"),
+    isActive: (p) =>
+      p === "/my-games" ||
+      p.startsWith("/my-games/") ||
+      p === "/tournaments" ||
+      p.startsWith("/tournaments/"),
   },
   {
     href: "/profile",

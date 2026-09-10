@@ -35,7 +35,11 @@ function BoundsFitter({ games }: { games: Game[] }) {
     const pts = games
       .filter((g) => g.venue_lat != null && g.venue_lng != null)
       .map((g) => [g.venue_lat!, g.venue_lng!] as [number, number]);
-    if (pts.length === 0) return;
+    map.invalidateSize();
+    if (pts.length === 0) {
+      map.setView(METRO_MANILA, 12);
+      return;
+    }
     if (pts.length === 1) { map.setView(pts[0], 14); return; }
     map.fitBounds(L.latLngBounds(pts), { padding: [40, 40], maxZoom: 15 });
   }, [games, map]);
@@ -60,7 +64,7 @@ export default function GameMap({ games }: GameMapProps) {
   );
 
   return (
-    <div className="relative h-full w-full">
+    <div className="relative h-full min-h-[60dvh] w-full">
       <MapContainer
         center={METRO_MANILA}
         zoom={12}
@@ -87,13 +91,12 @@ export default function GameMap({ games }: GameMapProps) {
         ))}
       </MapContainer>
 
-      {/* No games state */}
+      {/* Empty — keep the street map visible */}
       {pinned.length === 0 && (
-        <div className="pointer-events-none absolute inset-0 z-[1000] flex items-center justify-center">
-          <div className="rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] px-6 py-5 text-center backdrop-blur">
-            <p className="rondo-title text-[var(--ink-hi)]">No games pinned yet</p>
-            <p className="mt-1 rondo-meta text-[var(--ink-low)]">Games show here once organizers add venue addresses.</p>
-          </div>
+        <div className="pointer-events-none absolute inset-x-3 bottom-4 z-[1000]">
+          <p className="rounded-[var(--r-pill)] border border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-surface)_92%,transparent)] px-4 py-2 text-center rondo-meta text-[var(--ink-mid)] backdrop-blur">
+            No open games pinned yet
+          </p>
         </div>
       )}
 

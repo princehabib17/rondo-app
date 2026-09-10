@@ -21,7 +21,7 @@ const roles: Array<{
   {
     id: "player",
     title: "Find my next game",
-    description: "See open slots, join a squad, and get back on the court.",
+    description: "See open slots, join a squad, and get back on the pitch.",
     video: "/onboarding/media/footwork.mp4",
     poster: "/onboarding/media/footwork-poster.jpg",
     mediaPosition: "object-center",

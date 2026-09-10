@@ -69,7 +69,6 @@ export default function PublicProfilePage() {
   const [playerReels, setPlayerReels] = useState<PlayerReel[]>([]);
   const [trophyRows, setTrophyRows] = useState<ProfileTournamentEntry[]>([]);
   const [awards, setAwards] = useState<TournamentAward[]>([]);
-  const [goalsScored, setGoalsScored] = useState(0);
   const [savingLocation, setSavingLocation] = useState(false);
   const [switchingRole, setSwitchingRole] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -137,7 +136,6 @@ export default function PublicProfilePage() {
         { data: tournamentRows },
         { data: membershipRows },
         { data: awardRows },
-        { data: goalRows },
       ] = await Promise.all([
         supabase.from("profiles").select(profileSelect).eq("id", id).single(),
         supabase.from("game_players").select("id", { count: "exact", head: true }).eq("user_id", id),
@@ -181,7 +179,6 @@ export default function PublicProfilePage() {
           .eq("user_id", id)
           .order("created_at", { ascending: false })
           .limit(24),
-        supabase.from("tournament_goals").select("goals").eq("scorer_id", id),
       ]);
 
       const loadedProfile = profileData as unknown as Profile;
@@ -213,11 +210,6 @@ export default function PublicProfilePage() {
       }
       setTrophyRows(mergedTrophyRows);
       setAwards((awardRows as TournamentAward[] | null) ?? []);
-      const goalTotal = ((goalRows as { goals: number }[] | null) ?? []).reduce(
-        (sum, row) => sum + (row.goals ?? 0),
-        0
-      );
-      setGoalsScored(goalTotal);
 
       // "Matches played" undercounted badly without this: it only ever
       // counted pickup games, so a tournament champion could show "0 matches
@@ -306,7 +298,6 @@ export default function PublicProfilePage() {
   const upcomingMatches = recentMatches
     .filter((entry) => entry.game && new Date(entry.game.date_time) >= new Date())
     .slice(0, 3);
-  const cupWins = awards.filter((a) => a.kind === "champion").length;
   const metaLine = [profile.position, profile.nationality || profile.preferred_areas]
     .filter(Boolean)
     .join(" · ");
@@ -393,11 +384,9 @@ export default function PublicProfilePage() {
           </div>
         </div>
 
-        {!isOrganizer && (
-          <section className="grid grid-cols-2 gap-3">
-            <StatTile label="Goals" value={goalsScored} size="lg" className="col-span-2" />
-            <StatTile label="Cups" value={cupWins} size="sm" />
-            <StatTile label="Apps" value={gamesPlayed} size="sm" />
+        {!isOrganizer && gamesPlayed > 0 && (
+          <section className="grid grid-cols-1 gap-3">
+            <StatTile label="Games played" value={gamesPlayed} size="lg" />
           </section>
         )}
 

@@ -172,7 +172,7 @@ export default function TournamentsPage() {
               title={filter === "all" ? "No tournaments here yet" : "Nothing in this lane"}
               body={
                 filter === "all"
-                  ? "Start one, fill the bracket, and give the city something to chase."
+                  ? "Nothing listed yet. Open matches nearby show up on the feed."
                   : "Switch filters or find games happening nearby."
               }
               action={

@@ -1,9 +1,11 @@
 import { AppShell } from "@/components/layout/AppShell";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { SupabaseConfigMissing } from "@/components/system/SupabaseConfigMissing";
+import { withAuthTimeoutOr } from "@/lib/auth/auth-timeout";
+import { ensurePublishedCity } from "@/lib/seed/ensure-published-city";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
-export default function PlayerLayout({ children }: { children: React.ReactNode }) {
+export default async function PlayerLayout({ children }: { children: React.ReactNode }) {
   if (!isSupabaseConfigured()) {
     return (
       <div className="relative mx-auto min-h-[100dvh] max-w-lg rondo-page">
@@ -11,6 +13,8 @@ export default function PlayerLayout({ children }: { children: React.ReactNode }
       </div>
     );
   }
+
+  await withAuthTimeoutOr(ensurePublishedCity(), { seeded: false }, 8000);
 
   return (
     <AppShell>

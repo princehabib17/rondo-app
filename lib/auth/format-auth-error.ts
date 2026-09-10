@@ -1,4 +1,5 @@
-const PHONE_PROVIDER_ERROR = /unsupported phone provider/i;
+const PHONE_PROVIDER_ERROR =
+  /unsupported phone provider|phone provider|sms.*not (enabled|configured)|error sending (sms|otp)|otp.*disabled/i;
 const PASSKEY_DISABLED = /passkey_disabled|passkeys? (are )?disabled|not enabled/i;
 const PASSKEY_CHALLENGE_EXPIRED = /webauthn_challenge_expired|challenge.?expired/i;
 const PASSKEY_UNSUPPORTED = /does not support webauthn|webauthn is not supported/i;
@@ -25,13 +26,13 @@ export function formatAuthError(message: string): string {
     return "Finish creating your account before adding a passkey.";
   }
   if (SUPABASE_UNREACHABLE.test(message)) {
-    return "Auth service is unreachable right now. Check that the Supabase project is live and the app URL keys are up to date.";
+    return "Can't reach login right now. Try again, or create an account.";
   }
   if (/invalid api key|invalid jwt/i.test(message)) {
-    return "Auth keys don't match this Supabase project. Update NEXT_PUBLIC_SUPABASE_URL and the anon key in Vercel, then redeploy.";
+    return "Can't reach login right now. Try Google, Facebook, email, or create an account.";
   }
   if (PHONE_PROVIDER_ERROR.test(message)) {
-    return "Phone login isn't enabled yet. Use Google, Facebook, email, or browse as guest.";
+    return "We can't text a login code yet. Use Google, Facebook, email, or continue as guest.";
   }
   return message;
 }

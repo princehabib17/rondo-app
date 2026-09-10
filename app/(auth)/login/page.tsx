@@ -12,7 +12,7 @@ import { PasskeySignInButton } from "@/components/auth/PasskeySignInButton";
 import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
 import { isLikelyPhoneNumber, normalizePhoneNumber, PHONE_PLACEHOLDER } from "@/lib/auth/phone";
 import { formatAuthError } from "@/lib/auth/format-auth-error";
-import { AUTH_TIMEOUT_MS, AUTH_UNREACHABLE_MESSAGE, withAuthTimeout } from "@/lib/auth/auth-timeout";
+import { AUTH_UNREACHABLE_MESSAGE, withAuthTimeout } from "@/lib/auth/auth-timeout";
 import { getUserWithTimeout } from "@/lib/auth/get-user-with-timeout";
 import {
   getOnboardingPath,
@@ -131,52 +131,8 @@ export default function LoginPage() {
     }
 
     if (otpError) {
-      const fallback = await fetch("/api/auth/phone", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: normalizedPhone }),
-        signal: AbortSignal.timeout(AUTH_TIMEOUT_MS),
-      }).catch(() => null);
-      const fallbackJson = fallback ? await fallback.json().catch(() => ({})) : {};
-      if (!fallback?.ok || !fallbackJson.email || !fallbackJson.password) {
-        setSending(false);
-        setError(formatAuthError((fallbackJson.error as string | undefined) ?? otpError.message));
-        return;
-      }
-
-      try {
-        const { error: signInError } = await withAuthTimeout(
-          supabase.auth.signInWithPassword({
-            email: fallbackJson.email as string,
-            password: fallbackJson.password as string,
-          })
-        );
-        setSending(false);
-        if (signInError) {
-          setError(formatAuthError(signInError.message));
-          return;
-        }
-      } catch (authError) {
-        setSending(false);
-        setError(
-          formatAuthError(authError instanceof Error ? authError.message : AUTH_UNREACHABLE_MESSAGE)
-        );
-        return;
-      }
-
-      const next = safeNext(new URLSearchParams(window.location.search).get("next"));
-      const { data: authData } = await supabase.auth.getUser();
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", authData.user?.id ?? "")
-        .single();
-      router.replace(
-        profile?.role
-          ? getPostOnboardingDestination(next, profile.role)
-          : getOnboardingPath(next)
-      );
-      router.refresh();
+      setSending(false);
+      setError(formatAuthError(otpError.message));
       return;
     }
 
@@ -226,7 +182,7 @@ export default function LoginPage() {
         </div>
         <div className="relative flex justify-center">
           <span className="bg-[var(--bg-page,#0a0a0a)] px-3 text-xs text-[var(--ink-low)]">
-            Or continue with
+            Or use phone or email
           </span>
         </div>
       </div>

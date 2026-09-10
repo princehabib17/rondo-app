@@ -11,7 +11,7 @@ import { RondoBrand } from "@/components/brand/RondoBrand";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
 import { formatAuthError } from "@/lib/auth/format-auth-error";
-import { AUTH_TIMEOUT_MS, AUTH_UNREACHABLE_MESSAGE, withAuthTimeout } from "@/lib/auth/auth-timeout";
+import { AUTH_UNREACHABLE_MESSAGE, withAuthTimeout } from "@/lib/auth/auth-timeout";
 import { getUserWithTimeout } from "@/lib/auth/get-user-with-timeout";
 import { isLikelyPhoneNumber, normalizePhoneNumber, PHONE_PLACEHOLDER } from "@/lib/auth/phone";
 
@@ -79,42 +79,8 @@ export default function SignupPage() {
     }
 
     if (otpError) {
-      const fallback = await fetch("/api/auth/phone", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: normalizedPhone, fullName: fullName.trim() }),
-        signal: AbortSignal.timeout(AUTH_TIMEOUT_MS),
-      }).catch(() => null);
-      const fallbackJson = fallback ? await fallback.json().catch(() => ({})) : {};
-      if (!fallback?.ok || !fallbackJson.email || !fallbackJson.password) {
-        setSending(false);
-        setError(formatAuthError((fallbackJson.error as string | undefined) ?? otpError.message));
-        return;
-      }
-
-      try {
-        const { error: signInError } = await withAuthTimeout(
-          supabase.auth.signInWithPassword({
-            email: fallbackJson.email as string,
-            password: fallbackJson.password as string,
-          })
-        );
-        setSending(false);
-        if (signInError) {
-          setError(formatAuthError(signInError.message));
-          return;
-        }
-      } catch (authError) {
-        setSending(false);
-        setError(
-          formatAuthError(authError instanceof Error ? authError.message : AUTH_UNREACHABLE_MESSAGE)
-        );
-        return;
-      }
-
-      const next = signupDestination(new URLSearchParams(window.location.search).get("next"));
-      router.replace(next);
-      router.refresh();
+      setSending(false);
+      setError(formatAuthError(otpError.message));
       return;
     }
 
