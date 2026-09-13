@@ -22,7 +22,7 @@ export function ErrorScreen({
   return (
     <div className="relative mx-auto flex min-h-[100dvh] max-w-lg flex-col items-center justify-center px-6 py-12 text-center rondo-page">
       <p className="rondo-label text-[var(--ink-low)]">{eyebrow}</p>
-      <h1 className="mt-3 rondo-title text-[var(--ink-hi)]">{title}</h1>
+      <h1 className="mt-3 rondo-title normal-case text-[var(--ink-hi)]">{title}</h1>
       <p className="mt-3 max-w-sm rondo-body text-[var(--ink-mid)]">{body}</p>
       {digest ? (
         <p className="mt-3 rondo-meta text-[var(--ink-low)]">Reference {digest}</p>

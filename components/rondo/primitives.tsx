@@ -251,7 +251,7 @@ export function EmptyState({
           <SoccerBall size={24} weight="duotone" aria-hidden />
         </div>
       )}
-      <h3 className="rondo-title text-[var(--ink-hi)]">{title}</h3>
+      <h3 className="rondo-title normal-case text-[var(--ink-hi)]">{title}</h3>
       <p className="mt-2 max-w-xs rondo-meta text-[var(--ink-low)]">{body}</p>
       {action && <div className="mt-4 w-full max-w-xs">{action}</div>}
     </div>

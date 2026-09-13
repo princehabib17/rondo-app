@@ -11,7 +11,7 @@ export function SupabaseConfigMissing({
   return (
     <div className="flex min-h-[100dvh] flex-col items-center justify-center px-6 py-12 text-center">
       <p className="rondo-label text-[var(--ink-low)]">Rondo</p>
-      <h1 className="mt-3 rondo-title text-[var(--ink-hi)]">{title}</h1>
+      <h1 className="mt-3 rondo-title normal-case text-[var(--ink-hi)]">{title}</h1>
       <p className="mt-3 max-w-sm rondo-body text-[var(--ink-mid)]">{body}</p>
       <Link
         href="/"
