@@ -24,9 +24,10 @@ expected_columns(table_name, column_name) as (
     ('profiles', 'last_lng'), ('profiles', 'organizer_verified'),
     ('profiles', 'preferred_areas'), ('profiles', 'game_preference'),
     ('games', 'match_type'), ('games', 'skill_level'), ('games', 'allow_pay_later'),
-    ('games', 'registration_open'), ('games', 'is_private'), ('games', 'is_managed'),
+    ('games', 'registration_open'), ('games', 'is_private'),
     ('games', 'organization_id'), ('games', 'banner_url'),
-    ('tournaments', 'organization_id'), ('tournament_teams', 'team_number')
+    ('tournaments', 'organization_id'), ('tournament_teams', 'team_number'),
+    ('tournament_teams', 'is_managed')
 ),
 expected_functions(name) as (
   values

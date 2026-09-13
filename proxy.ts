@@ -21,6 +21,8 @@ const PUBLIC_PREFIXES = [
   "/api/auth/guest",
   "/api/auth/signup",
   "/api/seed",
+  // Gated by SEED_SECRET inside the handler, like /api/seed.
+  "/api/health",
   // GET on these is intentionally public (their handlers don't require a
   // user); gating them here just meant every anonymous/guest visit to a
   // profile, reels, or scout page threw a console 401 for a request the
