@@ -54,6 +54,7 @@ export function NearbyGameRow({ game, coords = null }: NearbyGameRowProps) {
             alt=""
             width={44}
             height={44}
+            unoptimized
             className="h-full w-full object-cover"
           />
         ) : game.organizer?.avatar_url ? (
@@ -62,6 +63,7 @@ export function NearbyGameRow({ game, coords = null }: NearbyGameRowProps) {
             alt=""
             width={44}
             height={44}
+            unoptimized
             className="h-full w-full object-cover"
           />
         ) : (

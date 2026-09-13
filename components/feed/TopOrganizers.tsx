@@ -54,8 +54,8 @@ export function TopOrganizers({ organizers, loading = false }: TopOrganizersProp
                       alt=""
                       width={112}
                       height={112}
-                      quality={75}
                       sizes="56px"
+                      unoptimized
                       className="h-full w-full object-cover"
                     />
                   ) : (

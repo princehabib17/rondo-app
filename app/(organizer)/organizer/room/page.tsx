@@ -57,6 +57,8 @@ export default function OrganizerRoomPage() {
     const supabase = createClient();
     const { error } = await supabase.from("organizer_broadcasts").insert({
       organizer_id: organizerId,
+      // NOT NULL in schema; the public hub at /organizers/[id] filters on it.
+      organizer_key: organizerId,
       body: body.trim(),
     });
 
