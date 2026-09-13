@@ -40,38 +40,51 @@ Set `NEXT_PUBLIC_APP_URL` to your production URL, e.g. `https://rondo-app.vercel
 
 PayMongo webhook URL: `https://rondo-app.vercel.app/api/payments/webhook`
 
-## Fixing production auth (Supabase)
+## Database / Migrations
 
-Login, signup, and guest all fail with `fetch failed` when the project host does not resolve. Production currently points at `https://kkmokdrjoephfdopizes.supabase.co`, which is NXDOMAIN.
+The code reads ~36 tables, one RPC, and four storage buckets. If the project is
+missing any of them, screens come up empty, API routes answer
+`Could not find the table 'public.…' in the schema cache`, and actions fail.
 
-1. Open the [Supabase dashboard](https://supabase.com/dashboard) and look for project ref `kkmokdrjoephfdopizes`.
-2. If it is paused, restore it. If it was deleted, create a new project.
-3. Confirm `https://<project-ref>.supabase.co` resolves in a browser (not NXDOMAIN).
-4. Run migrations in the SQL editor: `supabase/RUN_ALL_IN_SUPABASE.sql` (safe to re-run).
-5. Authentication → Providers: enable **Anonymous** (guest), Phone, and any social providers you use. Enable Passkeys if you want Face ID / Touch ID.
-6. Copy Project URL, anon key, and service role key.
-7. Vercel → rondo-app → Settings → Environment Variables, for **Production** (and Preview):
+Two files, in this order, in Supabase → SQL Editor:
+
+1. `supabase/schema.sql` — **fresh projects only**. Base tables, triggers, avatars bucket.
+2. `supabase/RUN_ALL_IN_SUPABASE.sql` — everything else, **safe to re-run**. Covers every
+   file under `supabase/migrations/` plus organizations, reels, scout clips, and
+   tournament rooms. Re-run it after every deploy that adds a migration.
+
+Then confirm with either:
+
+- `supabase/SUPABASE_AUDIT.sql` in the SQL Editor — every row must read `OK`; or
+- `GET /api/health` with header `x-seed-secret: <SEED_SECRET>` — returns
+  `{"ok":true}` or a `missing` list naming exactly what to create.
+
+`supabase/migrations/*.sql` remain as the per-change history for `supabase db push`
+workflows; the runner file is generated from them by hand, and
+`__tests__/supabase/schema-manifest.test.ts` fails CI if code references a table the
+runner does not create.
+
+## Fixing production (Supabase + Vercel)
+
+Symptoms: every screen empty or erroring, `/api/reels` returning 500, guest sign-in
+failing in the browser while `POST /api/auth/guest` returns 200.
+
+1. Open the [Supabase dashboard](https://supabase.com/dashboard). If the project is
+   paused, restore it; if deleted, create a new one and run `supabase/schema.sql`.
+2. Run `supabase/RUN_ALL_IN_SUPABASE.sql`, then `supabase/SUPABASE_AUDIT.sql` (all `OK`).
+3. Authentication → Providers: enable **Phone** (with an SMS provider) and any social
+   providers you use. Enable **Passkeys** for Face ID / Touch ID. Guest sign-in does
+   **not** need the Anonymous provider — it uses `SUPABASE_SERVICE_ROLE_KEY` server-side.
+4. Copy Project URL, anon key, and service role key.
+5. Vercel → rondo-app → Settings → Environment Variables, for **Production** (and Preview):
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY`
    - `NEXT_PUBLIC_APP_URL=https://rondo-app.vercel.app`
-8. Redeploy Production (env changes do not apply until a new deploy).
-9. Smoke: `POST https://rondo-app.vercel.app/api/auth/guest` should not return `{"error":"fetch failed"}`. Guest from `/` should reach `/feed`.
-
-## Database / Migrations
-
-Run SQL migrations in Supabase SQL editor (or your normal migration flow), including:
-
-- `supabase/migrations/20250523000000_security_hardening.sql`
-- `supabase/migrations/20260527000100_organizer_broadcasts.sql`
-- `supabase/migrations/20260527000200_phase2_states_and_support.sql`
-- `supabase/migrations/20260527000300_wallet_notifications.sql`
-- `supabase/migrations/20260527000400_profile_onboarding_fields.sql`
-- `supabase/migrations/20260610000000_tournaments_social_feed.sql`
-- `supabase/migrations/20260610000100_tournament_perf_realtime.sql`
-- `supabase/migrations/20260610000200_admin_tickets_payment_security.sql`
-
-Or run `supabase/RUN_ALL_IN_SUPABASE.sql` as one file (safe to re-run).
+   - `SEED_SECRET` (for `/api/health` and `/api/seed`)
+6. Redeploy Production (env changes do not apply until a new deploy).
+7. Smoke: `GET /api/health` with `x-seed-secret` → `{"ok":true}`. Guest from `/` reaches
+   `/feed`; within a minute the feed shows placeholder open games.
 
 ## Main User Journeys
 
@@ -137,8 +150,8 @@ with range queries.
 
 ## Launch Checklist
 
-- Verify all migrations are applied in Supabase.
-- Verify Auth providers (including anonymous) are configured as intended.
+- Run `supabase/RUN_ALL_IN_SUPABASE.sql`, then `SUPABASE_AUDIT.sql` or `/api/health` shows no `MISSING`.
+- Verify Auth providers (Phone/SMS, social) are configured as intended.
 - Enable **Authentication → Passkeys** in the Supabase Dashboard (Relying Party ID = your bare domain, Origins = production + localhost).
 - Verify PayMongo secret + webhook secret are correct in deployment env.
 - Run `npm run build` before release.
