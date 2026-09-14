@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Calendar, Check, MapPin, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -25,7 +25,7 @@ import {
   usesWallet,
 } from "@/lib/match/rules";
 
-export default function JoinMatchPage() {
+function JoinMatchContent() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -346,5 +346,19 @@ export default function JoinMatchPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function JoinMatchPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[100dvh] flex items-center justify-center bg-[var(--bg-page)]">
+          <div className="w-2 h-2 rounded-full bg-[var(--gold)] animate-ping" />
+        </div>
+      }
+    >
+      <JoinMatchContent />
+    </Suspense>
   );
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, MessageCircle, Bookmark } from "lucide-react";
+import { EmptyState, RondoButton } from "@/components/rondo/primitives";
 import { getFlagEmoji } from "@/lib/utils/format";
 import type { ScoutShortlist } from "@/lib/supabase/types";
 
@@ -11,14 +12,20 @@ export default function ScoutShortlistPage() {
   const router = useRouter();
   const [shortlist, setShortlist] = useState<ScoutShortlist[]>([]);
   const [loading, setLoading] = useState(true);
+  const [needsAccount, setNeedsAccount] = useState(false);
 
   useEffect(() => {
     fetch("/api/scout/shortlist")
-      .then((r) => r.json())
-      .then((json) => {
+      .then(async (r) => {
+        if (r.status === 401 || r.status === 403) {
+          setNeedsAccount(true);
+          return;
+        }
+        const json = await r.json();
         setShortlist(json.shortlist ?? []);
-        setLoading(false);
-      });
+      })
+      .catch(() => setShortlist([]))
+      .finally(() => setLoading(false));
   }, []);
 
   async function remove(playerId: string) {
@@ -49,6 +56,13 @@ export default function ScoutShortlistPage() {
             <div key={i} className="h-16 bg-[var(--bg-surface)] rounded-[var(--r-md)] animate-pulse" />
           ))}
         </div>
+      ) : needsAccount ? (
+        <EmptyState
+          title="Sign in to keep a shortlist"
+          body="Shortlists are saved to your account so they follow you between devices."
+          action={<RondoButton href="/login?next=/scout/shortlist">Log in</RondoButton>}
+          className="mt-20 px-8"
+        />
       ) : shortlist.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 p-8 text-center mt-20">
           <Bookmark size={40} className="text-[var(--ink-low)]" />

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { fetchOpenGames } from "@/lib/supabase/game-queries";
@@ -9,9 +10,18 @@ import {
   fetchYourTournaments,
 } from "@/lib/feed/home-queries";
 import { FeedPageClient } from "@/components/feed/FeedPageClient";
+import { SupabaseConfigMissing } from "@/components/system/SupabaseConfigMissing";
 import { withAuthTimeoutOr } from "@/lib/auth/auth-timeout";
+import { ensurePublishedCity } from "@/lib/seed/ensure-published-city";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export default async function FeedPage() {
+  // The (player) layout renders the same shell, but the page segment still
+  // executes; without this guard createClient() throws into the error boundary.
+  if (!isSupabaseConfigured()) {
+    return <SupabaseConfigMissing />;
+  }
+
   const supabase = await createClient();
   const user = await withAuthTimeoutOr(
     supabase.auth.getUser().then((result) => result.data.user),
@@ -56,6 +66,12 @@ export default async function FeedPage() {
         )
       : Promise.resolve(0),
   ]);
+
+  // Empty city: seed a few placeholder listings after the response is sent so
+  // this render never waits on the service client. The next visit shows them.
+  if (openGames.length === 0) {
+    after(() => ensurePublishedCity());
+  }
 
   const aroundYou = await withAuthTimeoutOr(
     fetchAroundYouTournaments(

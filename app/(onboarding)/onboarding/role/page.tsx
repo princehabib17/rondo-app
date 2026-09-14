@@ -156,7 +156,7 @@ export default function RoleSelectionPage() {
               </div>
 
               <div className="absolute inset-x-0 bottom-0 p-5">
-                <h2 className="font-heading text-[1.65rem] font-black italic uppercase leading-none text-[var(--night-ink)]">
+                <h2 className="font-heading text-[1.65rem] font-black uppercase leading-none text-[var(--night-ink)]">
                   {role.title}
                 </h2>
                 <p className="mt-2 max-w-[315px] font-body text-xs font-medium leading-relaxed text-[color-mix(in_oklch,var(--night-ink)_68%,transparent)]">

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, MessageCircle } from "lucide-react";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
+import { EmptyState, RondoButton } from "@/components/rondo/primitives";
 import type { Profile } from "@/lib/supabase/types";
 
 type Conversation = {
@@ -19,11 +20,19 @@ export default function MessagesPage() {
   const router = useRouter();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [needsAccount, setNeedsAccount] = useState(false);
 
   useEffect(() => {
     fetch("/api/messages/direct")
-      .then((r) => r.json())
-      .then((json) => setConversations(json.conversations ?? []))
+      .then(async (r) => {
+        if (r.status === 401 || r.status === 403) {
+          setNeedsAccount(true);
+          return;
+        }
+        const json = await r.json();
+        setConversations(json.conversations ?? []);
+      })
+      .catch(() => setConversations([]))
       .finally(() => setLoading(false));
   }, []);
 
@@ -48,6 +57,13 @@ export default function MessagesPage() {
               <div key={i} className="h-16 rondo-shimmer rounded-[var(--r-md)]" />
             ))}
           </div>
+        ) : needsAccount ? (
+          <EmptyState
+            title="Sign in to see your messages"
+            body="Private chats are tied to your account. Log in or create one to pick up where you left off."
+            action={<RondoButton href="/login?next=/messages">Log in</RondoButton>}
+            className="py-16"
+          />
         ) : conversations.length === 0 ? (
           <div className="flex flex-col items-center text-center py-16 px-4">
             <MessageCircle size={32} className="text-[var(--ink-low)] mb-3" />

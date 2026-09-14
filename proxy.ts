@@ -19,9 +19,10 @@ const PUBLIC_ROUTES = [
 const PUBLIC_PREFIXES = [
   "/api/payments/webhook",
   "/api/auth/guest",
-  "/api/auth/phone",
   "/api/auth/signup",
   "/api/seed",
+  // Gated by SEED_SECRET inside the handler, like /api/seed.
+  "/api/health",
   // GET on these is intentionally public (their handlers don't require a
   // user); gating them here just meant every anonymous/guest visit to a
   // profile, reels, or scout page threw a console 401 for a request the
@@ -37,14 +38,17 @@ const PUBLIC_BROWSE_PREFIXES = [
   "/community",
 ];
 
-/** Public routes that do not need a Supabase session lookup (faster dev loads). */
+/**
+ * Public routes that do not need a Supabase session lookup. Keep browse
+ * surfaces (/feed, /community) OUT of this list: the session cookie is only
+ * refreshed here, and Server Components cannot write cookies, so skipping the
+ * most-visited page let signed-in sessions silently expire.
+ */
 const PUBLIC_SKIP_AUTH = [
   "/forgot-password",
   "/reset-password",
   "/auth/callback",
   "/onboarding",
-  "/feed",
-  "/community",
 ];
 
 const GUEST_BLOCKED_PREFIXES = [

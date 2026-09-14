@@ -116,7 +116,9 @@ export default function TournamentsPage() {
               </div>
             </div>
             <p className="max-w-[20rem] rondo-body text-[var(--ink-mid)]">
-              Join open brackets, follow live scores, and carry the win into the room.
+              {!loading && tournaments.length === 0
+                ? "Brackets, live scores, and standings land here once organizers list a tournament."
+                : "Join open brackets, follow live scores, and carry the win into the room."}
             </p>
             {!loading && tournaments.length > 0 ? (
             <div className="grid grid-cols-3 gap-2">
