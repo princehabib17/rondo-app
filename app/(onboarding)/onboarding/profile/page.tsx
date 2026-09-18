@@ -13,6 +13,13 @@ import { createClient } from "@/lib/supabase/client";
 
 const essentialsSchema = z.object({
   full_name: z.string().trim().min(2, "Tell us what to call you."),
+  username: z
+    .string()
+    .trim()
+    .transform((v) => v.toLowerCase().replace(/^@+/, ""))
+    .refine((v) => /^[a-z0-9_]{3,20}$/.test(v), {
+      message: "3–20 characters: letters, numbers, underscores.",
+    }),
   preferred_areas: z.string().trim().min(2, "Add at least one area."),
   position: z.string().optional(),
   skill_level: z.string().optional(),
@@ -41,6 +48,7 @@ export default function EssentialsSetupPage() {
     resolver: zodResolver(essentialsSchema),
     defaultValues: {
       full_name: "",
+      username: "",
       preferred_areas: "",
       position: "",
       skill_level: "",
@@ -63,7 +71,7 @@ export default function EssentialsSetupPage() {
       setUserId(data.user.id);
       const { data: profile } = await supabase
         .from("profiles")
-        .select("full_name, role, preferred_areas, position, skill_level, game_preference")
+        .select("full_name, username, role, preferred_areas, position, skill_level, game_preference")
         .eq("id", data.user.id)
         .single();
 
@@ -83,6 +91,7 @@ export default function EssentialsSetupPage() {
       setRole(resolvedRole);
       reset({
         full_name: profile?.full_name ?? data.user.user_metadata?.full_name ?? "",
+        username: profile?.username ?? data.user.user_metadata?.username ?? "",
         preferred_areas: profile?.preferred_areas ?? "",
         position: profile?.position ?? "",
         skill_level: profile?.skill_level ?? "",
@@ -113,6 +122,7 @@ export default function EssentialsSetupPage() {
       .from("profiles")
       .update({
         full_name: values.full_name.trim(),
+        username: values.username,
         preferred_areas: values.preferred_areas.trim(),
         role,
         ...(role === "player"
@@ -127,7 +137,11 @@ export default function EssentialsSetupPage() {
       .eq("id", userId);
 
     if (updateError) {
-      setPageError("We could not save your setup. Try again.");
+      const taken =
+        updateError.message.toLowerCase().includes("duplicate") ||
+        updateError.message.toLowerCase().includes("unique") ||
+        updateError.code === "23505";
+      setPageError(taken ? "That username is taken. Pick another." : "We could not save your setup. Try again.");
       return;
     }
 
@@ -181,6 +195,23 @@ export default function EssentialsSetupPage() {
               />
               {errors.full_name && (
                 <p className="rondo-meta text-red-400">{errors.full_name.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="username" className={labelClass}>
+                Username
+              </label>
+              <input
+                id="username"
+                {...register("username")}
+                autoComplete="username"
+                placeholder="juan_dc"
+                spellCheck={false}
+                className={rondoFieldClass}
+              />
+              {errors.username && (
+                <p className="rondo-meta text-red-400">{errors.username.message}</p>
               )}
             </div>
 

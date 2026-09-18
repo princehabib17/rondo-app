@@ -7,6 +7,7 @@ create extension if not exists "uuid-ossp";
 create table public.profiles (
   id uuid references auth.users(id) on delete cascade primary key,
   email text,
+  username text,
   full_name text,
   avatar_url text,
   role text not null default 'player' check (role in ('player', 'organizer')),
@@ -312,17 +313,39 @@ create policy "Organizers can manage timer" on public.timer_sessions for all usi
 -- ============================================================
 create or replace function public.handle_new_user()
 returns trigger as $$
+declare
+  meta_username text;
 begin
-  insert into public.profiles (id, email, full_name, avatar_url)
+  meta_username := lower(trim(coalesce(new.raw_user_meta_data->>'username', '')));
+  if meta_username = '' then
+    meta_username := null;
+  end if;
+
+  insert into public.profiles (id, email, full_name, avatar_url, username)
   values (
     new.id,
     new.email,
     new.raw_user_meta_data->>'full_name',
-    new.raw_user_meta_data->>'avatar_url'
+    new.raw_user_meta_data->>'avatar_url',
+    meta_username
   );
   return new;
 end;
 $$ language plpgsql security definer set search_path = public;
+
+create unique index if not exists profiles_username_lower_unique
+  on public.profiles (lower(username))
+  where username is not null;
+
+alter table public.profiles
+  drop constraint if exists profiles_username_format;
+
+alter table public.profiles
+  add constraint profiles_username_format
+  check (
+    username is null
+    or username ~ '^[a-z0-9_]{3,20}$'
+  );
 
 create trigger on_auth_user_created
   after insert on auth.users

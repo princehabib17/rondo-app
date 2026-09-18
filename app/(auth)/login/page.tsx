@@ -65,16 +65,32 @@ export default function LoginPage() {
 
     if (mode === "email") {
       if (!email.trim() || password.length < 8) {
-        setError("Enter your email and password.");
+        setError("Enter your username or email, and password.");
         return;
       }
 
       setSending(true);
       const supabase = createClient();
       try {
+        const resolveRes = await fetch("/api/auth/resolve-login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ identifier: email.trim() }),
+          signal: AbortSignal.timeout(8000),
+        });
+        const resolveJson = (await resolveRes.json().catch(() => ({}))) as {
+          email?: string;
+          error?: string;
+        };
+        if (!resolveRes.ok || !resolveJson.email) {
+          setSending(false);
+          setError(formatAuthError(resolveJson.error ?? "Invalid username/email or password."));
+          return;
+        }
+
         const { error: signInError } = await withAuthTimeout(
           supabase.auth.signInWithPassword({
-            email: email.trim(),
+            email: resolveJson.email,
             password,
           })
         );
@@ -236,15 +252,15 @@ export default function LoginPage() {
           <>
             <div className="space-y-2">
               <label htmlFor="email" className="font-body text-xs text-[var(--ink-mid)]">
-                Email
+                Username or email
               </label>
               <input
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                type="email"
-                autoComplete="email"
-                placeholder="you@email.com"
+                type="text"
+                autoComplete="username"
+                placeholder="@juan_dc or you@email.com"
                 className={rondoFieldClass}
               />
             </div>
