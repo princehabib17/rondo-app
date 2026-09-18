@@ -70,13 +70,17 @@ export default function GameMap({ games }: GameMapProps) {
         zoom={12}
         className="h-full w-full"
         zoomControl={false}
-        attributionControl={false}
+        attributionControl
       >
+        {/*
+          Carto public basemaps now watermark "API KEY REQUIRED".
+          Esri World Dark Gray needs no key for this use; keep attribution on.
+        */}
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          subdomains="abcd"
-          maxZoom={19}
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+          maxZoom={16}
           className="rondo-street-tiles"
+          attribution='Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ'
         />
         <BoundsFitter games={pinned} />
         {pinned.map((game) => (
