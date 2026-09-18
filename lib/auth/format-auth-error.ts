@@ -32,7 +32,7 @@ export function formatAuthError(message: string): string {
     return "Can't reach login right now. Try Google, Facebook, email, or create an account.";
   }
   if (PHONE_PROVIDER_ERROR.test(message)) {
-    return "We can't text a login code yet. Use Google, Facebook, email, or continue as guest.";
+    return "We can't text a login code yet. Switch to Email on this screen, or use Google / Facebook / continue as guest.";
   }
   return message;
 }

@@ -89,10 +89,11 @@ failing in the browser while `POST /api/auth/guest` returns 200.
 ## Main User Journeys
 
 - **Auth**
-  - New user: welcome -> signup -> otp -> onboarding -> feed
+  - New user: welcome -> signup (email default, or phone OTP) -> onboarding -> feed
   - Returning user: login (passkey / phone / email / social) -> feed
   - Guest: feed browsing only, gated on action routes
   - Passkeys: register from Profile → Passkeys; sign in from `/login` via Face ID, Touch ID, Windows Hello, or a security key
+  - Phone SMS needs a configured Supabase phone provider; if texts fail, signup switches to Email
 - **Player**
   - Browse feed/map -> open game -> join/reserve/pay -> confirmed -> invite/chat
   - Browse tournaments -> register a team -> follow bracket/standings

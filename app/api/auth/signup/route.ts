@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { isValidEmail, normalizeEmail } from "@/lib/auth/email";
 
 export async function POST(request: Request) {
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -13,8 +14,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  if (!email || !password || !fullName) {
+  const trimmedName = typeof fullName === "string" ? fullName.trim() : "";
+  const normalizedEmail = typeof email === "string" ? normalizeEmail(email) : "";
+
+  if (!normalizedEmail || !password || !trimmedName) {
     return NextResponse.json({ error: "email, password, and fullName are required" }, { status: 400 });
+  }
+
+  if (!isValidEmail(normalizedEmail)) {
+    return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
+  }
+
+  if (trimmedName.length < 2) {
+    return NextResponse.json({ error: "Enter your name." }, { status: 400 });
   }
 
   if (password.length < 8) {
@@ -24,10 +36,10 @@ export async function POST(request: Request) {
   const service = createServiceClient();
 
   const { data, error } = await service.auth.admin.createUser({
-    email,
+    email: normalizedEmail,
     password,
     email_confirm: true,
-    user_metadata: { full_name: fullName },
+    user_metadata: { full_name: trimmedName },
   });
 
   if (error) {
@@ -38,6 +50,14 @@ export async function POST(request: Request) {
       { error: isExisting ? "An account with this email already exists." : error.message },
       { status: isExisting ? 409 : 500 }
     );
+  }
+
+  if (data.user?.id) {
+    await service.from("profiles").upsert({
+      id: data.user.id,
+      email: normalizedEmail,
+      full_name: trimmedName,
+    });
   }
 
   return NextResponse.json({ ok: true, userId: data.user?.id });
