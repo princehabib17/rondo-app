@@ -15,6 +15,7 @@ import { AUTH_UNREACHABLE_MESSAGE, withAuthTimeout } from "@/lib/auth/auth-timeo
 import { getUserWithTimeout } from "@/lib/auth/get-user-with-timeout";
 import { isLikelyPhoneNumber, normalizePhoneNumber, PHONE_PLACEHOLDER } from "@/lib/auth/phone";
 import { signupWithEmail } from "@/lib/auth/signup-with-email";
+import { normalizeUsername, usernameValidationError } from "@/lib/auth/username";
 
 type SignupMode = "phone" | "email";
 
@@ -26,6 +27,7 @@ export default function SignupPage() {
   const router = useRouter();
   const [mode, setMode] = useState<SignupMode>("email");
   const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -62,6 +64,7 @@ export default function SignupPage() {
       const result = await signupWithEmail({
         supabase,
         fullName,
+        username,
         email,
         password,
       });
@@ -88,6 +91,11 @@ export default function SignupPage() {
       setError("Enter your name.");
       return;
     }
+    const phoneUsernameError = usernameValidationError(username);
+    if (phoneUsernameError) {
+      setError(phoneUsernameError);
+      return;
+    }
     if (!isLikelyPhoneNumber(normalizedPhone)) {
       setError("Enter a valid phone number with country code.");
       return;
@@ -101,7 +109,11 @@ export default function SignupPage() {
         supabase.auth.signInWithOtp({
           phone: normalizedPhone,
           options: {
-            data: { full_name: fullName.trim(), phone: normalizedPhone },
+            data: {
+              full_name: fullName.trim(),
+              phone: normalizedPhone,
+              username: normalizeUsername(username),
+            },
           },
         })
       );
@@ -189,6 +201,24 @@ export default function SignupPage() {
               className={`${rondoFieldClass} pl-11`}
             />
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="username" className="font-body text-xs text-[var(--ink-mid)]">
+            Username
+          </label>
+          <input
+            id="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            autoComplete="username"
+            placeholder="juan_dc"
+            spellCheck={false}
+            className={rondoFieldClass}
+          />
+          <p className="font-body text-[11px] text-[var(--ink-low)]">
+            Letters, numbers, underscores. You can sign in with this.
+          </p>
         </div>
 
         {mode === "email" ? (

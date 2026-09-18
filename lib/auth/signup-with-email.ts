@@ -1,6 +1,7 @@
 import { formatAuthError } from "@/lib/auth/format-auth-error";
 import { AUTH_UNREACHABLE_MESSAGE, withAuthTimeout } from "@/lib/auth/auth-timeout";
 import { isValidEmail, normalizeEmail } from "@/lib/auth/email";
+import { normalizeUsername, usernameValidationError } from "@/lib/auth/username";
 
 export type SignupWithEmailResult =
   | { ok: true; needsEmailConfirmation?: boolean }
@@ -30,16 +31,22 @@ type AuthClient = {
 export async function signupWithEmail(args: {
   supabase: AuthClient;
   fullName: string;
+  username: string;
   email: string;
   password: string;
   fetchImpl?: typeof fetch;
 }): Promise<SignupWithEmailResult> {
   const trimmedName = args.fullName.trim();
+  const username = normalizeUsername(args.username);
   const trimmedEmail = normalizeEmail(args.email);
   const fetchFn = args.fetchImpl ?? fetch;
 
   if (trimmedName.length < 2) {
     return { ok: false, error: "Enter your name." };
+  }
+  const usernameError = usernameValidationError(username);
+  if (usernameError) {
+    return { ok: false, error: usernameError };
   }
   if (!isValidEmail(trimmedEmail)) {
     return { ok: false, error: "Enter a valid email address." };
@@ -59,7 +66,7 @@ export async function signupWithEmail(args: {
       args.supabase.auth.signUp({
         email: trimmedEmail,
         password: args.password,
-        options: { data: { full_name: trimmedName } },
+        options: { data: { full_name: trimmedName, username } },
       })
     );
     signUpError = result.error;
@@ -87,6 +94,7 @@ export async function signupWithEmail(args: {
         email: trimmedEmail,
         password: args.password,
         fullName: trimmedName,
+        username,
       }),
       signal: AbortSignal.timeout(12_000),
     });

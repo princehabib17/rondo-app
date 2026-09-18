@@ -20,6 +20,7 @@ const PUBLIC_PREFIXES = [
   "/api/payments/webhook",
   "/api/auth/guest",
   "/api/auth/signup",
+  "/api/auth/resolve-login",
   "/api/seed",
   // Gated by SEED_SECRET inside the handler, like /api/seed.
   "/api/health",

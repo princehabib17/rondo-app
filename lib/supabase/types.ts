@@ -24,6 +24,7 @@ export interface Profile {
   id: string;
   email: string | null;
   phone?: string | null;
+  username?: string | null;
   full_name: string | null;
   avatar_url: string | null;
   role: UserRole;

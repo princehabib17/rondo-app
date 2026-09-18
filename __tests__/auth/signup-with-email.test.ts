@@ -21,6 +21,7 @@ describe("signupWithEmail", () => {
     const result = await signupWithEmail({
       supabase: { auth: { signUp, signInWithPassword: vi.fn() } },
       fullName: "A",
+      username: "ab",
       email: "bad",
       password: "short",
     });
@@ -40,6 +41,7 @@ describe("signupWithEmail", () => {
         },
       },
       fullName: "Juan dela Cruz",
+      username: "juan_dc",
       email: "juan@email.com",
       password: "password123",
       fetchImpl: vi.fn(),
@@ -65,6 +67,7 @@ describe("signupWithEmail", () => {
         },
       },
       fullName: "Juan dela Cruz",
+      username: "juan_dc",
       email: "juan@email.com",
       password: "password123",
       fetchImpl,
@@ -94,6 +97,7 @@ describe("signupWithEmail", () => {
         },
       },
       fullName: "Juan dela Cruz",
+      username: "juan_dc",
       email: "juan@email.com",
       password: "password123",
       fetchImpl,
