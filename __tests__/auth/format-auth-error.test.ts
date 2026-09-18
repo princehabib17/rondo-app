@@ -10,7 +10,7 @@ describe("formatAuthError", () => {
   });
 
   it("keeps passkey and phone provider guidance", () => {
-    expect(formatAuthError("Unsupported phone provider")).toMatch(/can't text a login code/i);
+    expect(formatAuthError("Unsupported phone provider")).toMatch(/switch to email/i);
     expect(formatAuthError("passkey_disabled")).toMatch(/Passkeys aren't enabled/i);
     expect(formatAuthError("Invalid API key")).toMatch(/Can't reach login/i);
   });
