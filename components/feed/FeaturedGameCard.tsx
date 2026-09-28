@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { CalendarBlank, MapPin, SoccerBall, Users } from "@phosphor-icons/react";
@@ -9,6 +10,7 @@ import type { Game } from "@/lib/supabase/types";
 import { getOrganizerInitials } from "@/lib/feed/organizers";
 import { GameBadges } from "@/components/feed/GameBadges";
 import { bouncy } from "@/components/motion/springs";
+import { gameCoverSrc, pitchPhotoForVenue } from "@/lib/venues/pitch-photos";
 
 interface FeaturedGameCardProps {
   game: Game;
@@ -32,6 +34,9 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
   const playerCount = game.game_players?.length ?? 0;
   const spotsLeft = Math.max(0, game.max_players - playerCount);
   const organizerName = game.organization?.name ?? game.organizer?.full_name ?? "Organizer";
+  const [coverFailed, setCoverFailed] = useState(false);
+  const cover = coverFailed ? null : gameCoverSrc(game);
+  const pitch = pitchPhotoForVenue(game.venue_name);
 
   return (
     <section className="px-4 pt-6">
@@ -50,8 +55,13 @@ export function FeaturedGameCard({ game }: FeaturedGameCardProps) {
         className="overflow-hidden rounded-[var(--r-lg)] border border-[var(--stroke)] bg-[var(--bg-surface)]"
       >
         <div className="relative h-56">
-          {game.banner_url ? (
-            <img src={game.banner_url} alt="" className="h-full w-full object-cover saturate-90" />
+          {cover ? (
+            <img
+              src={cover}
+              alt={pitch && cover === pitch.src ? pitch.alt : ""}
+              className="h-full w-full object-cover saturate-90"
+              onError={() => setCoverFailed(true)}
+            />
           ) : (
             <Image
               src="/feed/hero-night-court.png"

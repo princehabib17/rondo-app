@@ -16,6 +16,8 @@ import {
   spotsLeft,
 } from "@/lib/match/rules";
 import type { Game, GamePlayer } from "@/lib/supabase/types";
+import { PitchView } from "@/components/venue/PitchView";
+import { gameCoverSrc, pitchPhotoForVenue } from "@/lib/venues/pitch-photos";
 
 export default function MatchDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -104,6 +106,9 @@ export default function MatchDetailPage() {
   }
 
   const banner = getMatchStatusBanner(game);
+  const pitch = pitchPhotoForVenue(game.venue_name);
+  const cover = gameCoverSrc(game);
+  const heroIsPitch = Boolean(pitch && cover === pitch.src);
   const cta = resolveJoinCta({
     game,
     myEntry,
@@ -149,15 +154,19 @@ export default function MatchDetailPage() {
         </span>
       </header>
 
-      <div className={`relative h-48 ${game.banner_url ? "bg-[var(--bg-inset)]" : "rondo-floodlight-scene"}`}>
-        {game.banner_url && (
-          <img src={game.banner_url} alt="" className="w-full h-full object-cover" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-rondo-page via-rondo-page/40 to-transparent" />
-        <span className="absolute bottom-3 left-4 font-heading text-[var(--ink-hi)] text-2xl font-black italic uppercase">
-          {game.format}
-        </span>
-      </div>
+      {heroIsPitch && pitch ? (
+        <PitchView photo={pitch} format={game.format} />
+      ) : (
+        <div className={`relative h-48 ${cover ? "bg-[var(--bg-inset)]" : "rondo-floodlight-scene"}`}>
+          {cover && (
+            <img src={cover} alt="" className="w-full h-full object-cover" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-rondo-page via-rondo-page/40 to-transparent" />
+          <span className="absolute bottom-3 left-4 font-heading text-[var(--ink-hi)] text-2xl font-black italic uppercase">
+            {game.format}
+          </span>
+        </div>
+      )}
 
       <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
         {banner && (
@@ -203,6 +212,8 @@ export default function MatchDetailPage() {
             </div>
           </div>
         </div>
+
+        {pitch && !heroIsPitch && <PitchView photo={pitch} />}
 
         <a
           href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(

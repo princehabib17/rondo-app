@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import type { Game } from "@/lib/supabase/types";
+import { gameCoverSrc, pitchPhotoForVenue } from "@/lib/venues/pitch-photos";
 
 type TeamWithPlayers = {
   id: string;
@@ -38,6 +39,7 @@ function JoinMatchContent() {
   const [joining, setJoining] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [coverFailed, setCoverFailed] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -196,6 +198,8 @@ function JoinMatchContent() {
             : "Choose slot";
 
   const onPrimary = claimSpot ? handleClaimSpot : waitlistOnly ? handleWaitlist : handleConfirm;
+  const cover = coverFailed ? null : gameCoverSrc(game);
+  const pitch = pitchPhotoForVenue(game.venue_name);
 
   if (teams.length === 0) {
     return (
@@ -232,9 +236,14 @@ function JoinMatchContent() {
 
       <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
         <section className="overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.04]">
-          {game.banner_url && (
+          {cover && (
             <div className="relative h-36">
-              <img src={game.banner_url} alt="" className="h-full w-full object-cover" />
+              <img
+                src={cover}
+                alt={pitch && cover === pitch.src ? pitch.alt : ""}
+                className="h-full w-full object-cover"
+                onError={() => setCoverFailed(true)}
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 to-transparent" />
             </div>
           )}
