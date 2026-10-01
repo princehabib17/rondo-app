@@ -16,6 +16,7 @@ import { getUserWithTimeout } from "@/lib/auth/get-user-with-timeout";
 import { isLikelyPhoneNumber, normalizePhoneNumber, PHONE_PLACEHOLDER } from "@/lib/auth/phone";
 import { signupWithEmail } from "@/lib/auth/signup-with-email";
 import { normalizeUsername, usernameValidationError } from "@/lib/auth/username";
+import { shouldRedirectAwayFromAuth } from "@/lib/auth/is-guest";
 
 type SignupMode = "phone" | "email";
 
@@ -40,7 +41,7 @@ export default function SignupPage() {
     const rawNext = new URLSearchParams(window.location.search).get("next");
     setNextParam(rawNext);
     getUserWithTimeout().then(({ data }) => {
-      if (!data.user || data.user.is_anonymous) return;
+      if (!shouldRedirectAwayFromAuth(data.user)) return;
       const supabase = createClient();
       supabase
         .from("profiles")
@@ -115,7 +116,8 @@ export default function SignupPage() {
               username: normalizeUsername(username),
             },
           },
-        })
+        }),
+        12_000
       );
       otpError = result.error;
     } catch (authError) {

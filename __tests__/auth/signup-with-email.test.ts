@@ -29,7 +29,64 @@ describe("signupWithEmail", () => {
     expect(signUp).not.toHaveBeenCalled();
   });
 
-  it("returns ok when client signup yields a session", async () => {
+  it("signs in through the server without waiting on a hanging browser signup", async () => {
+    const signUp = vi.fn(
+      () =>
+        new Promise<{
+          data: { user: { id: string } | null; session: unknown };
+          error: { message: string } | null;
+        }>(() => {})
+    );
+    const signInWithPassword = vi.fn(async () => ({ error: null }));
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ ok: true, userId: "u1" }),
+    })) as unknown as typeof fetch;
+
+    const result = await signupWithEmail({
+      supabase: { auth: { signUp, signInWithPassword } },
+      fullName: "Juan dela Cruz",
+      username: "juan_dc",
+      email: "juan@email.com",
+      password: "password123",
+      fetchImpl,
+    });
+
+    expect(signUp).not.toHaveBeenCalled();
+    expect(signInWithPassword).toHaveBeenCalledWith({
+      email: "juan@email.com",
+      password: "password123",
+    });
+    expect(result).toEqual({ ok: true });
+  });
+
+  it("signs in when the email already exists and the password matches", async () => {
+    const signInWithPassword = vi.fn(async () => ({ error: null }));
+    const fetchImpl = vi.fn(async () => ({
+      ok: false,
+      status: 409,
+      json: async () => ({ error: "An account with this email already exists." }),
+    })) as unknown as typeof fetch;
+
+    const result = await signupWithEmail({
+      supabase: {
+        auth: {
+          signUp: vi.fn(),
+          signInWithPassword,
+        },
+      },
+      fullName: "Juan dela Cruz",
+      username: "juan_dc",
+      email: "juan@email.com",
+      password: "password123",
+      fetchImpl,
+    });
+
+    expect(result).toEqual({ ok: true });
+  });
+
+  it("uses browser signup only when the server API is down", async () => {
     const result = await signupWithEmail({
       supabase: {
         auth: {
@@ -44,44 +101,14 @@ describe("signupWithEmail", () => {
       username: "juan_dc",
       email: "juan@email.com",
       password: "password123",
-      fetchImpl: vi.fn(),
+      fetchImpl: vi.fn(async () => {
+        throw new Error("fetch failed");
+      }) as unknown as typeof fetch,
     });
     expect(result).toEqual({ ok: true });
   });
 
-  it("falls back to /api/auth/signup and signs in", async () => {
-    const signInWithPassword = vi.fn(async () => ({ error: null }));
-    const fetchImpl = vi.fn(async () => ({
-      ok: true,
-      json: async () => ({ ok: true, userId: "u2" }),
-    })) as unknown as typeof fetch;
-
-    const result = await signupWithEmail({
-      supabase: {
-        auth: {
-          signUp: vi.fn(async () => ({
-            data: { user: { id: "u2" }, session: null },
-            error: null,
-          })),
-          signInWithPassword,
-        },
-      },
-      fullName: "Juan dela Cruz",
-      username: "juan_dc",
-      email: "juan@email.com",
-      password: "password123",
-      fetchImpl,
-    });
-
-    expect(fetchImpl).toHaveBeenCalled();
-    expect(signInWithPassword).toHaveBeenCalledWith({
-      email: "juan@email.com",
-      password: "password123",
-    });
-    expect(result).toEqual({ ok: true });
-  });
-
-  it("asks for email confirmation when no session and API unavailable", async () => {
+  it("asks for email confirmation when the server is down and signup has no session", async () => {
     const fetchImpl = vi.fn(async () => {
       throw new Error("fetch failed");
     }) as unknown as typeof fetch;

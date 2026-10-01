@@ -1,5 +1,9 @@
 import { createClient } from "@/lib/supabase/client";
-import { GUEST_SIGNIN_TIMEOUT_MS, AUTH_UNREACHABLE_MESSAGE } from "@/lib/auth/auth-timeout";
+import {
+  GUEST_SIGNIN_TIMEOUT_MS,
+  AUTH_UNREACHABLE_MESSAGE,
+  withAuthTimeout,
+} from "@/lib/auth/auth-timeout";
 import { formatAuthError } from "@/lib/auth/format-auth-error";
 
 /**
@@ -31,13 +35,18 @@ export async function signInAsGuest(): Promise<{ ok: boolean; error?: string }> 
     const accessToken = json.access_token as string | undefined;
     const refreshToken = json.refresh_token as string | undefined;
     if (accessToken && refreshToken) {
-      const supabase = createClient();
-      const { error: sessionError } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      });
-      if (sessionError) {
-        return { ok: false, error: formatAuthError(sessionError.message) };
+      try {
+        const supabase = createClient();
+        await withAuthTimeout(
+          supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          }),
+          8_000
+        );
+      } catch {
+        // The POST already set the session cookie. A hung or failed
+        // browser setSession must not trap the user on the landing screen.
       }
     }
 
