@@ -63,6 +63,33 @@ describe("signInAsGuest", () => {
     });
   });
 
+  it("still succeeds when the browser cannot store the session", async () => {
+    vi.resetModules();
+    vi.doMock("@/lib/supabase/client", () => ({
+      createClient: () => ({
+        auth: {
+          setSession: vi.fn(async () => {
+            throw new Error("Auth service is unreachable right now.");
+          }),
+        },
+      }),
+    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({
+          ok: true,
+          access_token: "access",
+          refresh_token: "refresh",
+        }),
+      }))
+    );
+
+    const { signInAsGuest } = await import("@/lib/auth/guest");
+    await expect(signInAsGuest()).resolves.toEqual({ ok: true });
+  });
+
   it("fails within the guest timeout when the server never answers", async () => {
     vi.resetModules();
     vi.doMock("@/lib/supabase/client", () => ({

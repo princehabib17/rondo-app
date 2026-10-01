@@ -18,6 +18,7 @@ import {
   getOnboardingPath,
   getPostOnboardingDestination,
 } from "@/lib/auth/destination";
+import { shouldRedirectAwayFromAuth } from "@/lib/auth/is-guest";
 
 type LoginMode = "phone" | "email";
 
@@ -33,14 +34,14 @@ export default function LoginPage() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [mode, setMode] = useState<LoginMode>("phone");
+  const [mode, setMode] = useState<LoginMode>("email");
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [nextParam, setNextParam] = useState<string | null>(null);
 
   useEffect(() => {
     getUserWithTimeout().then(({ data }) => {
-      if (!data.user || data.user.is_anonymous) return;
+      if (!shouldRedirectAwayFromAuth(data.user)) return;
       const next = safeNext(new URLSearchParams(window.location.search).get("next"));
       const supabase = createClient();
       supabase
@@ -92,7 +93,8 @@ export default function LoginPage() {
           supabase.auth.signInWithPassword({
             email: resolveJson.email,
             password,
-          })
+          }),
+          12_000
         );
         setSending(false);
 
@@ -135,7 +137,8 @@ export default function LoginPage() {
       const result = await withAuthTimeout(
         supabase.auth.signInWithOtp({
           phone: normalizedPhone,
-        })
+        }),
+        12_000
       );
       otpError = result.error;
     } catch (authError) {
@@ -167,7 +170,7 @@ export default function LoginPage() {
 
       <h1 className="rondo-hero-title text-4xl mb-2">Log in</h1>
       <p className="font-body text-[var(--ink-low)] text-sm mb-8">
-        Sign in with passkey, phone OTP, email, or social.
+        Sign in with email, passkey, phone, or social. Phone texts are not on yet.
       </p>
 
       <div className="mb-6">
@@ -206,17 +209,6 @@ export default function LoginPage() {
       <div className="mb-6 grid grid-cols-2 gap-2 rounded-[var(--r-sm)] bg-[var(--bg-inset)] p-1">
         <button
           type="button"
-          onClick={() => setMode("phone")}
-          className={`rounded-[calc(var(--r-sm)-2px)] py-2 text-sm font-semibold ${
-            mode === "phone"
-              ? "bg-[var(--bg-surface)] text-[var(--ink-hi)] shadow-[0_1px_0_color-mix(in_oklch,var(--ink-hi)_8%,transparent)]"
-              : "text-[var(--ink-mid)]"
-          }`}
-        >
-          Phone
-        </button>
-        <button
-          type="button"
           onClick={() => setMode("email")}
           className={`rounded-[calc(var(--r-sm)-2px)] py-2 text-sm font-semibold ${
             mode === "email"
@@ -225,6 +217,17 @@ export default function LoginPage() {
           }`}
         >
           Email
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("phone")}
+          className={`rounded-[calc(var(--r-sm)-2px)] py-2 text-sm font-semibold ${
+            mode === "phone"
+              ? "bg-[var(--bg-surface)] text-[var(--ink-hi)] shadow-[0_1px_0_color-mix(in_oklch,var(--ink-hi)_8%,transparent)]"
+              : "text-[var(--ink-mid)]"
+          }`}
+        >
+          Phone
         </button>
       </div>
 
