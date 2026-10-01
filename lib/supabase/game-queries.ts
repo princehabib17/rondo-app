@@ -1,5 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Game } from "@/lib/supabase/types";
+import { PUBLIC_PROFILE_SELECT } from "@/lib/supabase/profile-select";
+
+/** Match screen select. Shared so the server render and the client refresh stay in sync. */
+export const GAME_DETAIL_SELECT = `
+  *,
+  organizer:profiles!organizer_id(${PUBLIC_PROFILE_SELECT}),
+  teams(id, name, color, slot_number,
+    game_players:game_players(id, user_id, profile:profiles(id, avatar_url, nationality))
+  ),
+  game_players(id, user_id, team_id, payment_status)
+`;
 
 /** Core fields used across feed, map, and lists. */
 export const GAME_LIST_SELECT_BASE =
