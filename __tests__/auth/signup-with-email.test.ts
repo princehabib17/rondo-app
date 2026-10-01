@@ -30,7 +30,13 @@ describe("signupWithEmail", () => {
   });
 
   it("signs in through the server without waiting on a hanging browser signup", async () => {
-    const signUp = vi.fn(() => new Promise(() => {}));
+    const signUp = vi.fn(
+      () =>
+        new Promise<{
+          data: { user: { id: string } | null; session: unknown };
+          error: { message: string } | null;
+        }>(() => {})
+    );
     const signInWithPassword = vi.fn(async () => ({ error: null }));
     const fetchImpl = vi.fn(async () => ({
       ok: true,

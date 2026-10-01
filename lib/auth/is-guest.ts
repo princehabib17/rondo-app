@@ -12,6 +12,8 @@ export function isGuestUser(user: MaybeGuestUser): boolean {
  * users (`is_guest`), not anonymous, so an `is_anonymous` check bounces them
  * back to the feed before they can create or enter an account.
  */
-export function shouldRedirectAwayFromAuth(user: MaybeGuestUser): boolean {
+export function shouldRedirectAwayFromAuth(
+  user: MaybeGuestUser
+): user is NonNullable<MaybeGuestUser> {
   return Boolean(user) && !isGuestUser(user);
 }
