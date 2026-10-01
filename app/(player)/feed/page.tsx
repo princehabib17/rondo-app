@@ -23,6 +23,9 @@ export default async function FeedPage() {
   }
 
   const supabase = await createClient();
+  // Public lists start immediately so they overlap the auth round trip.
+  const openGamesPromise = withAuthTimeoutOr(fetchOpenGames(supabase, { from: 0, to: 11 }), []);
+  const aroundYouPromise = withAuthTimeoutOr(fetchAroundYouTournaments(supabase, []), []);
   const user = await withAuthTimeoutOr(
     supabase.auth.getUser().then((result) => result.data.user),
     null
@@ -49,23 +52,25 @@ export default async function FeedPage() {
     }
   }
 
-  const [nextUp, yourTournaments, openGames, recentMatches, unreadCount] = await Promise.all([
-    withAuthTimeoutOr(fetchHomeNextUp(supabase, userId), null),
-    withAuthTimeoutOr(fetchYourTournaments(supabase, userId), []),
-    withAuthTimeoutOr(fetchOpenGames(supabase, { from: 0, to: 11 }), []),
-    withAuthTimeoutOr(fetchRecentMatches(supabase, userId), []),
-    user
-      ? withAuthTimeoutOr(
-          supabase
-            .from("notifications")
-            .select("id", { count: "exact", head: true })
-            .eq("user_id", user.id)
-            .is("read_at", null)
-            .then((result) => result.count ?? 0),
-          0
-        )
-      : Promise.resolve(0),
-  ]);
+  const [nextUp, yourTournaments, openGames, recentMatches, unreadCount, aroundPrefetch] =
+    await Promise.all([
+      withAuthTimeoutOr(fetchHomeNextUp(supabase, userId), null),
+      withAuthTimeoutOr(fetchYourTournaments(supabase, userId), []),
+      openGamesPromise,
+      withAuthTimeoutOr(fetchRecentMatches(supabase, userId), []),
+      user
+        ? withAuthTimeoutOr(
+            supabase
+              .from("notifications")
+              .select("id", { count: "exact", head: true })
+              .eq("user_id", user.id)
+              .is("read_at", null)
+              .then((result) => result.count ?? 0),
+            0
+          )
+        : Promise.resolve(0),
+      aroundYouPromise,
+    ]);
 
   // Empty city: seed a few placeholder listings after the response is sent so
   // this render never waits on the service client. The next visit shows them.
@@ -73,13 +78,8 @@ export default async function FeedPage() {
     after(() => ensurePublishedCity());
   }
 
-  const aroundYou = await withAuthTimeoutOr(
-    fetchAroundYouTournaments(
-      supabase,
-      yourTournaments.map((t) => t.id)
-    ),
-    []
-  );
+  const yours = new Set(yourTournaments.map((t) => t.id));
+  const aroundYou = aroundPrefetch.filter((t) => !yours.has(t.id)).slice(0, 3);
 
   return (
     <FeedPageClient

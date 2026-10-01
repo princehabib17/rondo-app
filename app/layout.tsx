@@ -6,13 +6,17 @@ import "./globals.css";
 
 const barlowCondensed = Barlow_Condensed({
   subsets: ["latin"],
-  weight: ["600", "700", "800", "900"],
+  weight: ["700", "900"],
   variable: "--font-barlow-condensed",
+  display: "swap",
+  preload: false,
 });
 
 const manrope = Manrope({
   subsets: ["latin"],
+  weight: ["500", "600", "700"],
   variable: "--font-manrope",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
