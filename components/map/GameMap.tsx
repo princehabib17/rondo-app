@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Clock, MapPin, Users, X } from "@phosphor-icons/react";
 import type { Game } from "@/lib/supabase/types";
 import { formatGameTime, formatPrice } from "@/lib/utils/format";
+import { gameCoverSrc, pitchPhotoForVenue } from "@/lib/venues/pitch-photos";
 
 const METRO_MANILA: [number, number] = [14.5995, 120.9842];
 
@@ -62,6 +63,12 @@ export default function GameMap({ games }: GameMapProps) {
     () => pinned.find((g) => g.id === selectedId) ?? null,
     [pinned, selectedId]
   );
+  const [coverFailed, setCoverFailed] = useState(false);
+  useEffect(() => {
+    setCoverFailed(false);
+  }, [selectedId]);
+  const selectedCover = selected && !coverFailed ? gameCoverSrc(selected) : null;
+  const selectedPitch = selected ? pitchPhotoForVenue(selected.venue_name) : null;
 
   return (
     <div className="relative h-full min-h-[60dvh] w-full">
@@ -121,8 +128,13 @@ export default function GameMap({ games }: GameMapProps) {
           </button>
           <div className="grid grid-cols-[38%_1fr] gap-0 p-3 pt-1">
             <div className="relative min-h-[160px] overflow-hidden rounded-l-[var(--r-md)] bg-[var(--bg-inset)]">
-              {selected.banner_url ? (
-                <img src={selected.banner_url} alt="" className="h-full w-full object-cover" />
+              {selectedCover ? (
+                <img
+                  src={selectedCover}
+                  alt={selectedPitch && selectedCover === selectedPitch.src ? selectedPitch.alt : ""}
+                  className="h-full w-full object-cover"
+                  onError={() => setCoverFailed(true)}
+                />
               ) : (
                 <div className="h-full w-full bg-gradient-to-br from-zinc-900 to-zinc-800 flex items-center justify-center">
                   <MapPin size={28} className="text-[var(--ink-low)]" />

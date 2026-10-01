@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { CalendarBlank, MapPin, Users } from "@phosphor-icons/react";
 import { motion } from "motion/react";
@@ -7,6 +8,7 @@ import { formatGameDate, formatPrice } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
 import { Badge } from "@/components/ui/badge";
 import { bouncy } from "@/components/motion/springs";
+import { gameCoverSrc, pitchPhotoForVenue } from "@/lib/venues/pitch-photos";
 
 interface GameCardProps {
   game: Game;
@@ -17,6 +19,9 @@ export function GameCard({ game, index = 0 }: GameCardProps) {
   const playerCount = game.game_players?.length ?? 0;
   const spotsLeft = game.max_players - playerCount;
   const isFull = spotsLeft <= 0;
+  const [coverFailed, setCoverFailed] = useState(false);
+  const cover = coverFailed ? null : gameCoverSrc(game);
+  const pitch = pitchPhotoForVenue(game.venue_name);
 
   return (
     <motion.div
@@ -27,12 +32,13 @@ export function GameCard({ game, index = 0 }: GameCardProps) {
       <Link href={`/games/${game.id}`} className="block">
         <article className="group overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] transition active:scale-[0.98] hover:border-[color-mix(in_oklch,var(--gold)_25%,var(--stroke))]">
           <div className="relative h-40 overflow-hidden">
-            {game.banner_url ? (
+            {cover ? (
               <img
-                src={game.banner_url}
-                alt={game.title}
+                src={cover}
+                alt={pitch && cover === pitch.src ? pitch.alt : game.title}
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 loading="lazy"
+                onError={() => setCoverFailed(true)}
               />
             ) : (
               <div className="rondo-floodlight-scene h-full w-full" data-variant={index % 3} />
