@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CaretRight, Lifebuoy, LockSimple, SealCheck, ShieldCheck, Wallet } from "@phosphor-icons/react/dist/ssr";
 import type { Game, Profile } from "@/lib/supabase/types";
+import { FREE_DROP_OUT_HOURS } from "@/lib/match/drop-out";
 import {
   getJoinRuleLabel,
   getPaymentRuleLabel,
@@ -28,7 +29,11 @@ export function MatchRulesPanel({
             icon={<Wallet size={18} aria-hidden />}
             label="Payment"
             value={getPaymentRuleLabel(game)}
-            note={usesWallet(game) ? "Top up with GCash, Maya, or card. Refunds go back to your wallet." : undefined}
+            note={
+              usesWallet(game)
+                ? `Top up with GCash, Maya, or card. Drop out up to ${FREE_DROP_OUT_HOURS} hours before kickoff and the fee comes straight back to your wallet.`
+                : undefined
+            }
           />
         </div>
       </section>
@@ -63,7 +68,7 @@ export function MatchRulesPanel({
             <CaretRight size={16} className="shrink-0 text-[var(--ink-low)]" aria-hidden />
           </Link>
           <Link
-            href="/help/new?type=refund_request"
+            href={`/help/new?type=refund_request&game=${game.id}`}
             className="inline-flex min-h-11 items-center gap-2 rondo-meta text-[var(--ink-low)] transition-colors hover:text-[var(--ink-hi)]"
           >
             <Lifebuoy size={16} aria-hidden />

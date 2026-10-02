@@ -18,6 +18,7 @@ import { gentle } from "@/components/motion/springs";
 import { matchHeroImage } from "@/lib/venues/pitch-photos";
 import { downloadIcs } from "@/lib/calendar/ics";
 import { cn } from "@/lib/utils";
+import { DropOutPanel } from "@/components/match/DropOutPanel";
 import type { Game } from "@/lib/supabase/types";
 
 type PaymentState =
@@ -28,6 +29,8 @@ type PaymentState =
   | "pending_approval"
   | "rejected"
   | "venue"
+  | "cancelled"
+  | "not_joined"
   | "error";
 
 function ConfirmedContent() {
@@ -36,6 +39,7 @@ function ConfirmedContent() {
   const searchParams = useSearchParams();
   const [game, setGame] = useState<Game | null>(null);
   const [paymentState, setPaymentState] = useState<PaymentState>("loading");
+  const [entryStatus, setEntryStatus] = useState<string | null>(null);
   const reducedMotion = useReducedMotion();
 
   useEffect(() => {
@@ -65,7 +69,18 @@ function ConfirmedContent() {
         .maybeSingle();
 
       if (cancelled) return;
+      setEntryStatus(myEntry?.payment_status ?? null);
 
+      if (gameData?.status === "cancelled") {
+        settled = true;
+        setPaymentState("cancelled");
+        return;
+      }
+      if (!myEntry && !searchParams.get("checkout_session_id")) {
+        settled = true;
+        setPaymentState("not_joined");
+        return;
+      }
       if (myEntry?.payment_status === "reserved") {
         settled = true;
         setPaymentState("reserved");
@@ -159,6 +174,8 @@ function ConfirmedContent() {
     pending_approval: { eyebrow: "Request sent", title: "Over to the organizer.", body: "You'll get a notification the moment they approve you.", tone: "muted" },
     pending: { eyebrow: "Checking payment", title: "Still confirming.", body: "If you finished paying, give it a moment. This screen updates on its own.", tone: "muted" },
     rejected: { eyebrow: "Not this time", title: "Request declined.", body: "The organizer picked another lineup. Plenty more games on tonight.", tone: "live" },
+    cancelled: { eyebrow: "Match cancelled", title: "Called off.", body: "The organizer cancelled this one. Anything you paid is back in your wallet.", tone: "live" },
+    not_joined: { eyebrow: "No spot", title: "You're not on this one.", body: "You dropped out or never joined. If there's room, you can still grab a spot.", tone: "muted" },
     error: { eyebrow: "Something went wrong", title: "We couldn't confirm that.", body: "No money moved twice. Try the payment again, or message Help and we'll sort it.", tone: "live" },
   };
   const state = copy[paymentState];
@@ -224,8 +241,10 @@ function ConfirmedContent() {
             <RondoButton href={`/games/${id}/payment`}>Pay now</RondoButton>
           ) : paymentState === "error" ? (
             <RondoButton href={`/games/${id}/payment`}>Try the payment again</RondoButton>
-          ) : paymentState === "rejected" ? (
+          ) : paymentState === "rejected" || paymentState === "cancelled" ? (
             <RondoButton href="/feed">Find another match</RondoButton>
+          ) : paymentState === "not_joined" ? (
+            <RondoButton href={`/games/${id}`}>See the match</RondoButton>
           ) : booked ? (
             <RondoButton href={`/games/${id}/invite`}>
               <ShareNetwork size={18} weight="bold" aria-hidden />
@@ -276,6 +295,19 @@ function ConfirmedContent() {
             Back to home
           </RondoButton>
         </div>
+
+        {game && (booked || paymentState === "pending_approval") && (
+          <DropOutPanel
+            gameId={game.id}
+            kickoff={game.date_time}
+            paymentStatus={entryStatus}
+            pricePerPlayer={game.price_per_player}
+            onLeft={() => {
+              setEntryStatus(null);
+              setPaymentState("not_joined");
+            }}
+          />
+        )}
       </div>
     </div>
   );

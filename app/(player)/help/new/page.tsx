@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { pushInAppNotification } from "@/lib/notifications";
@@ -17,11 +17,24 @@ function NewHelpTicketForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialType = searchParams.get("type");
+  const gameParam = searchParams.get("game");
+  const gameId = gameParam && /^[0-9a-f-]{36}$/i.test(gameParam) ? gameParam : null;
+  const [gameTitle, setGameTitle] = useState<string | null>(null);
   const [type, setType] = useState<HelpTopic>(isTopic(initialType) ? initialType : "payment_issue");
   const [description, setDescription] = useState("");
   const [refundRequested, setRefundRequested] = useState(initialType === "refund_request");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!gameId) return;
+    createClient()
+      .from("games")
+      .select("title")
+      .eq("id", gameId)
+      .maybeSingle()
+      .then(({ data }) => setGameTitle(data?.title ?? null));
+  }, [gameId]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -38,6 +51,7 @@ function NewHelpTicketForm() {
       .from("support_tickets")
       .insert({
         user_id: userData.user.id,
+        game_id: gameId,
         type,
         description: description.trim(),
         refund_requested: refundRequested,
@@ -65,6 +79,11 @@ function NewHelpTicketForm() {
       <PageHeader title="New ticket" back fallbackHref="/help" />
 
       <div className="mx-auto max-w-lg space-y-8 px-4 py-6">
+        {gameTitle && (
+          <p className="rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] px-4 py-3 rondo-meta text-[var(--ink-mid)]">
+            About <span className="font-semibold text-[var(--ink-hi)]">{gameTitle}</span>
+          </p>
+        )}
         <section>
           <h2 className="mb-3 rondo-label text-[var(--ink-low)]">What&apos;s it about?</h2>
           <div className="flex flex-wrap gap-2">

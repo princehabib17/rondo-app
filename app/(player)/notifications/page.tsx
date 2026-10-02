@@ -12,6 +12,7 @@ import {
   Lifebuoy,
   Megaphone,
   Trophy,
+  UserMinus,
   UserPlus,
   Wallet,
   XCircle,
@@ -34,6 +35,7 @@ function NotificationIcon({ type, unread }: { type: string; unread: boolean }) {
   if (type === "game_cancelled" || type === "removed_from_game") return <XCircle {...props} />;
   if (type === "organizer_broadcast") return <Megaphone {...props} />;
   if (type === "join_requested") return <UserPlus {...props} />;
+  if (type === "player_dropped_out") return <UserMinus {...props} />;
   if (type === "approval_accepted") return <CheckCircle {...props} />;
   return <Bell {...props} />;
 }
