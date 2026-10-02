@@ -264,7 +264,7 @@ function FilterSheet({
         style={{ animation: "rondoSheetUp 280ms cubic-bezier(0.32,0.72,0,1)" }}
       >
         <div className="sticky top-0 z-10 bg-rondo-elevated/95 backdrop-blur-md flex items-center justify-between px-5 py-4 border-b border-[var(--stroke)]">
-          <h2 className="font-heading text-[var(--ink-hi)] font-black italic text-lg uppercase">Filters</h2>
+          <h2 className="font-heading text-[var(--ink-hi)] font-black text-lg uppercase">Filters</h2>
           <button
             type="button"
             onClick={onClose}

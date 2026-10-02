@@ -154,7 +154,7 @@ function PaymentForm() {
         <div className="flex items-center gap-2 rounded-[var(--r-md)] border border-[color-mix(in_oklch,var(--gold)_28%,var(--stroke))] bg-[color-mix(in_oklch,var(--gold)_8%,var(--bg-surface))] px-3 py-2.5">
           <ShieldCheck size={18} className="shrink-0 text-[var(--gold)]" aria-hidden />
           <p className="rondo-meta text-[var(--ink-mid)]">
-            Encrypted checkout. Match fees settle in your wallet — never pay organizers in-app.
+            Encrypted checkout. Match fees settle from your wallet. You never pay organizers directly.
           </p>
         </div>
 

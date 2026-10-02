@@ -206,7 +206,7 @@ export default function AdminTicketDetailPage() {
                 className={cn(
                   "rounded-[var(--r-md)] border p-3 space-y-1",
                   entry.is_internal
-                    ? "border-amber-400/30 bg-amber-400/5"
+                    ? "border-[var(--gold)]/30 bg-[var(--gold)]/5"
                     : "border-[var(--stroke)] bg-[var(--bg-surface)]"
                 )}
               >
@@ -215,7 +215,7 @@ export default function AdminTicketDetailPage() {
                     {entry.author?.full_name ?? "Staff"}
                   </p>
                   {entry.is_internal && (
-                    <span className="inline-flex items-center gap-1 text-amber-300 text-[10px] font-bold uppercase tracking-wide">
+                    <span className="inline-flex items-center gap-1 text-[var(--gold)] text-[10px] font-bold uppercase tracking-wide">
                       <Lock size={10} />
                       Internal
                     </span>
@@ -244,7 +244,7 @@ export default function AdminTicketDetailPage() {
                 className={cn(
                   "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors",
                   isInternal
-                    ? "border-amber-400/60 bg-amber-400/15 text-amber-300"
+                    ? "border-[var(--gold)]/60 bg-[var(--gold)]/15 text-[var(--gold)]"
                     : "border-[var(--stroke)] text-[var(--ink-low)]"
                 )}
               >

@@ -31,7 +31,7 @@ export default function CreateHubPage() {
         {/* Create Match card */}
         <Link
           href="/organizer/create/match"
-          className="group block overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.035] transition-all hover:border-[var(--gold)]/40 active:scale-[0.99]"
+          className="group block overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] transition-all hover:border-[var(--gold)]/40 active:scale-[0.99]"
         >
           <div className="relative h-36 overflow-hidden bg-[radial-gradient(circle_at_18%_28%,rgba(233,255,58,0.22),transparent_48%),linear-gradient(135deg,#161606,#050505)]">
             <div className="absolute inset-0 flex items-center px-5">
@@ -46,11 +46,11 @@ export default function CreateHubPage() {
           </div>
           <div className="px-5 py-4 flex items-center justify-between gap-3">
             <div>
-              <p className="font-heading text-xl font-black uppercase italic text-[var(--ink-hi)] leading-tight">
+              <p className="font-heading text-xl font-black uppercase text-[var(--ink-hi)] leading-tight">
                 Create Match
               </p>
               <p className="text-sm text-[var(--ink-low)] mt-0.5">
-                Cover, venue, teams, payment — all in one flow.
+                Cover, venue, teams, and payment in one flow.
               </p>
             </div>
             <span className="text-[var(--gold)] text-2xl font-black leading-none shrink-0">→</span>
@@ -60,7 +60,7 @@ export default function CreateHubPage() {
         {/* Build Tournament card */}
         <Link
           href="/organizer/tournaments/create"
-          className="group block overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.035] transition-all hover:border-[var(--gold)]/40 active:scale-[0.99]"
+          className="group block overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] transition-all hover:border-[var(--gold)]/40 active:scale-[0.99]"
         >
           <div className="relative h-36 overflow-hidden bg-[radial-gradient(circle_at_82%_22%,rgba(245,197,24,0.16),transparent_46%),linear-gradient(135deg,#111,#060606)]">
             <div className="absolute inset-0 flex items-center px-5">
@@ -75,7 +75,7 @@ export default function CreateHubPage() {
           </div>
           <div className="px-5 py-4 flex items-center justify-between gap-3">
             <div>
-              <p className="font-heading text-xl font-black uppercase italic text-[var(--ink-hi)] leading-tight">
+              <p className="font-heading text-xl font-black uppercase text-[var(--ink-hi)] leading-tight">
                 Build Tournament
               </p>
               <p className="text-sm text-[var(--ink-low)] mt-0.5">
@@ -89,7 +89,7 @@ export default function CreateHubPage() {
         {/* Organization card */}
         <Link
           href="/organizer/organizations"
-          className="group block overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.035] transition-all hover:border-[var(--stroke)] active:scale-[0.99]"
+          className="group block overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] transition-all hover:border-[var(--stroke)] active:scale-[0.99]"
         >
           <div className="relative h-36 overflow-hidden bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.07),transparent_55%),linear-gradient(135deg,#101010,#050505)]">
             <div className="absolute inset-0 flex items-center px-5">
@@ -104,7 +104,7 @@ export default function CreateHubPage() {
           </div>
           <div className="px-5 py-4 flex items-center justify-between gap-3">
             <div>
-              <p className="font-heading text-xl font-black uppercase italic text-[var(--ink-hi)] leading-tight">
+              <p className="font-heading text-xl font-black uppercase text-[var(--ink-hi)] leading-tight">
                 Organization
               </p>
               <p className="text-sm text-[var(--ink-low)] mt-0.5">

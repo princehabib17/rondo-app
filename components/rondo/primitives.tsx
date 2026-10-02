@@ -237,10 +237,10 @@ export function EmptyState({
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-col items-center justify-center py-5 text-center", className)}>
+    <div className={cn("flex flex-col items-center justify-center py-8 text-center", className)}>
       {imageSrc ? (
-        <div className="relative mb-5 h-36 w-full max-w-xs overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)]">
-          <Image src={imageSrc} alt={imageAlt} fill className="object-cover object-center" sizes="320px" />
+        <div className="relative mb-6 aspect-[16/10] w-full max-w-sm overflow-hidden rounded-[var(--r-lg)] border border-[var(--stroke)]">
+          <Image src={imageSrc} alt={imageAlt} fill className="object-cover object-center" sizes="384px" />
           <div
             aria-hidden
             className="absolute inset-0 bg-[linear-gradient(180deg,transparent_40%,color-mix(in_oklch,var(--bg-page)_75%,transparent)_100%)]"

@@ -66,7 +66,7 @@ export default function ScoutShortlistPage() {
       ) : shortlist.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 p-8 text-center mt-20">
           <Bookmark size={40} className="text-[var(--ink-low)]" />
-          <p className="font-heading text-[var(--ink-hi)] font-black italic text-xl uppercase">Empty shortlist</p>
+          <p className="font-heading text-[var(--ink-hi)] font-black text-xl uppercase">Empty shortlist</p>
           <p className="text-[var(--ink-low)] text-sm">
             Save players from the reels feed to build your scouting list.
           </p>

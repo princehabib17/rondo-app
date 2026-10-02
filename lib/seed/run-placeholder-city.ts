@@ -21,7 +21,7 @@ export type PlaceholderCityResult = {
   results: string[];
 };
 
-async function ensureOrganizerProfile(
+export async function ensureOrganizerProfile(
   service: ReturnType<typeof createServiceClient>,
   seed: OrganizerSeed
 ): Promise<string> {

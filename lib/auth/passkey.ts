@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import { formatAuthError } from "@/lib/auth/format-auth-error";
+import { PASSKEYS_OFF_MESSAGE, formatAuthError, isPasskeyEndpointMissing } from "@/lib/auth/format-auth-error";
 
 export type PasskeyInfo = {
   id: string;
@@ -27,7 +27,9 @@ function isUserCancelled(message: string): boolean {
 }
 
 function toErrorMessage(error: { message?: string } | null | undefined): string {
-  return formatAuthError(error?.message ?? "Passkey request failed.");
+  const message = error?.message ?? "Passkey request failed.";
+  if (isPasskeyEndpointMissing(message)) return PASSKEYS_OFF_MESSAGE;
+  return formatAuthError(message);
 }
 
 /**

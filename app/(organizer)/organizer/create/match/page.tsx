@@ -88,7 +88,7 @@ async function searchAddress(query: string): Promise<NominatimResult[]> {
 const fieldClass =
   "h-12 w-full max-w-full min-w-0 rounded-[var(--r-sm)] border border-transparent bg-[var(--bg-inset)] px-4 text-[var(--ink-hi)] rondo-body placeholder:text-[var(--ink-low)] focus:outline-none focus:border-[var(--gold)] focus:ring-2 focus:ring-[color-mix(in_oklch,var(--gold)_16%,transparent)]";
 const labelClass = "text-[var(--ink-low)] text-xs uppercase tracking-wider font-semibold";
-const errorClass = "text-red-400 text-xs mt-1 flex items-center gap-1";
+const errorClass = "text-[var(--live)] text-xs mt-1 flex items-center gap-1";
 
 // ─── component ────────────────────────────────────────────────────────────────
 
@@ -363,7 +363,7 @@ export default function CreateMatchPage() {
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-rondo-yellow">
               Step 1 of 5
             </p>
-            <h2 className="mt-1 font-heading text-2xl font-black uppercase italic leading-none text-[var(--ink-hi)]">
+            <h2 className="mt-1 font-heading text-2xl font-black uppercase leading-none text-[var(--ink-hi)]">
               Start with the match page players will see.
             </h2>
             <p className="mt-2 text-sm leading-5 text-[var(--ink-mid)]">
@@ -377,18 +377,18 @@ export default function CreateMatchPage() {
           {coverPreview ? (
             <div className="relative w-full aspect-video">
               <img src={coverPreview} alt="Cover" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-night)]/60 to-transparent" />
               <button
                 type="button"
                 onClick={clearCover}
-                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 flex items-center justify-center text-[var(--ink-hi)]"
+                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-[var(--bg-night)]/60 flex items-center justify-center text-[var(--ink-hi)]"
               >
                 <X size={14} />
               </button>
               <button
                 type="button"
                 onClick={() => coverInputRef.current?.click()}
-                className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-black/60 text-[var(--ink-mid)] text-xs font-semibold px-3 py-1.5 rounded-full"
+                className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-[var(--bg-night)]/60 text-[var(--ink-mid)] text-xs font-semibold px-3 py-1.5 rounded-full"
               >
                 <ImagePlus size={13} /> Change
               </button>
@@ -414,14 +414,14 @@ export default function CreateMatchPage() {
                 ))}
               </div>
               <div className="flex items-center gap-3 w-40">
-                <div className="flex-1 h-px bg-white/10" />
+                <div className="flex-1 h-px bg-[var(--stroke)]" />
                 <span className="text-[var(--ink-low)] text-[10px] uppercase tracking-wider font-semibold">or</span>
-                <div className="flex-1 h-px bg-white/10" />
+                <div className="flex-1 h-px bg-[var(--stroke)]" />
               </div>
               <button
                 type="button"
                 onClick={() => coverInputRef.current?.click()}
-                className="flex items-center gap-2 bg-[var(--bg-inset)] border border-[var(--stroke)] text-[var(--ink-mid)] text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-[var(--bg-surface)] transition-colors"
+                className="flex items-center gap-2 bg-[var(--bg-inset)] border border-[var(--stroke)] text-[var(--ink-mid)] text-xs font-semibold px-4 py-2.5 rounded-[var(--r-sm)] hover:bg-[var(--bg-surface)] transition-colors"
               >
                 <ImagePlus size={15} />
                 Upload cover photo
@@ -472,7 +472,7 @@ export default function CreateMatchPage() {
             />
             {errors.title && (
               <p className={errorClass}>
-                <span className="w-3 h-3 rounded-full bg-red-400 shrink-0 inline-block" />
+                <span className="w-3 h-3 rounded-full bg-[var(--live)] shrink-0 inline-block" />
                 {errors.title.message}
               </p>
             )}
@@ -494,7 +494,7 @@ export default function CreateMatchPage() {
               />
               {errors.venue_name && (
                 <p className={errorClass}>
-                  <span className="w-3 h-3 rounded-full bg-red-400 shrink-0 inline-block" />
+                  <span className="w-3 h-3 rounded-full bg-[var(--live)] shrink-0 inline-block" />
                   {errors.venue_name.message}
                 </p>
               )}
@@ -515,13 +515,13 @@ export default function CreateMatchPage() {
                   {addressLoading ? (
                     <Loader2 size={14} className="text-[var(--ink-low)] animate-spin" />
                   ) : coords ? (
-                    <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-[var(--ok)]" />
                   ) : null}
                 </div>
 
                 {/* suggestions dropdown */}
                 {showSuggestions && suggestions.length > 0 && (
-                  <div className="absolute left-0 right-0 top-full mt-1 z-[100] bg-[#1a1a1a] border border-[var(--stroke)] rounded-xl overflow-hidden shadow-2xl">
+                  <div className="absolute left-0 right-0 top-full mt-1 z-[100] bg-[#1a1a1a] border border-[var(--stroke)] rounded-[var(--r-sm)] overflow-hidden shadow-2xl">
                     {suggestions.map((s, i) => {
                       const parts = s.display_name.split(",");
                       const primary = parts.slice(0, 2).join(",").trim();
@@ -530,7 +530,7 @@ export default function CreateMatchPage() {
                         <button
                           key={i}
                           type="button"
-                          className="w-full text-left px-4 py-3 hover:bg-[var(--bg-inset)] flex items-start gap-3 border-b border-white/[0.06] last:border-0"
+                          className="w-full text-left px-4 py-3 hover:bg-[var(--bg-inset)] flex items-start gap-3 border-b border-[var(--stroke)] last:border-0"
                           onMouseDown={() => selectSuggestion(s)}
                         >
                           <MapPin size={14} className="text-rondo-accent shrink-0 mt-0.5" />
@@ -548,18 +548,18 @@ export default function CreateMatchPage() {
 
                 {/* no results hint */}
                 {!addressLoading && addressInput.length >= 3 && suggestions.length === 0 && !showSuggestions && (
-                  <p className="text-[var(--ink-low)] text-xs mt-1">No suggestions — try a more specific address.</p>
+                  <p className="text-[var(--ink-low)] text-xs mt-1">No matches. Try a more specific address.</p>
                 )}
               </div>
               {errors.venue_address && (
                 <p className={errorClass}>
-                  <span className="w-3 h-3 rounded-full bg-red-400 shrink-0 inline-block" />
+                  <span className="w-3 h-3 rounded-full bg-[var(--live)] shrink-0 inline-block" />
                   {errors.venue_address.message}
                 </p>
               )}
               {coords && (
-                <p className="text-green-400 text-xs flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
+                <p className="text-[var(--ok)] text-xs flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--ok)] inline-block" />
                   Location pinned
                 </p>
               )}
@@ -587,7 +587,7 @@ export default function CreateMatchPage() {
                 <button
                   type="button"
                   onClick={() => setShowDatePicker(true)}
-                  className="w-full rounded-xl bg-white/[0.04] border border-[var(--stroke)] py-3 text-center text-[var(--ink-hi)] font-semibold text-base"
+                  className="w-full rounded-[var(--r-sm)] bg-[var(--bg-surface)] border border-[var(--stroke)] py-3 text-center text-[var(--ink-hi)] font-semibold text-base"
                 >
                   {pickedDate
                     ? fnsFormat(pickedDate, "EEEE, MMMM d, yyyy")
@@ -607,7 +607,7 @@ export default function CreateMatchPage() {
               <input type="hidden" {...register("game_date")} />
               {errors.game_date && !pickedDate && (
                 <p className={errorClass}>
-                  <span className="w-3 h-3 rounded-full bg-red-400 shrink-0 inline-block" />
+                  <span className="w-3 h-3 rounded-full bg-[var(--live)] shrink-0 inline-block" />
                   {errors.game_date.message}
                 </p>
               )}
@@ -630,7 +630,7 @@ export default function CreateMatchPage() {
                 <button
                   type="button"
                   onClick={() => setShowTimePicker(true)}
-                  className="w-full rounded-xl bg-white/[0.04] border border-[var(--stroke)] py-3 text-center text-[var(--ink-hi)] font-semibold text-lg"
+                  className="w-full rounded-[var(--r-sm)] bg-[var(--bg-surface)] border border-[var(--stroke)] py-3 text-center text-[var(--ink-hi)] font-semibold text-lg"
                 >
                   {formatTime12h(gameTime)}
                 </button>
@@ -656,7 +656,7 @@ export default function CreateMatchPage() {
                     key={f}
                     type="button"
                     onClick={() => setValue("format", f)}
-                    className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                    className={`px-4 py-2 rounded-[var(--r-sm)] text-sm font-bold transition-all ${
                       format === f
                         ? "bg-rondo-yellow text-rondo-black"
                         : "bg-[var(--bg-inset)] text-[var(--ink-low)] border border-[var(--stroke)]"
@@ -677,7 +677,7 @@ export default function CreateMatchPage() {
                     key={n}
                     type="button"
                     onClick={() => setValue("num_teams", n)}
-                    className={`w-11 h-11 rounded-xl text-sm font-bold transition-all ${
+                    className={`w-11 h-11 rounded-[var(--r-sm)] text-sm font-bold transition-all ${
                       numTeams === n
                         ? "bg-rondo-yellow text-rondo-black"
                         : "bg-[var(--bg-inset)] text-[var(--ink-low)] border border-[var(--stroke)]"
@@ -690,7 +690,7 @@ export default function CreateMatchPage() {
             </div>
 
             {/* Auto max players */}
-            <div className="rounded-xl bg-white/[0.03] border border-white/[0.08] px-4 py-3 flex items-center justify-between">
+            <div className="rounded-[var(--r-sm)] bg-[var(--bg-surface)] border border-[var(--stroke)] px-4 py-3 flex items-center justify-between">
               <span className="text-[var(--ink-low)] text-xs uppercase tracking-wider font-semibold">Max Players</span>
               <div className="text-right">
                 <span className="text-rondo-yellow font-black text-xl">{maxPlayers}</span>
@@ -707,10 +707,10 @@ export default function CreateMatchPage() {
                 {teamConfigs.slice(0, numTeams).map((team, i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-3 bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-2"
+                    className="flex items-center gap-3 bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-sm)] px-3 py-2"
                   >
                     <div
-                      className="w-5 h-5 rounded-full shrink-0 border-2 border-white/20"
+                      className="w-5 h-5 rounded-full shrink-0 border-2 border-[var(--stroke)]"
                       style={{ backgroundColor: team.color }}
                     />
                     <span className="text-[var(--ink-hi)] text-sm font-semibold flex-1">
@@ -782,7 +782,7 @@ export default function CreateMatchPage() {
 
           {/* ── Options ── */}
           <div className="space-y-2">
-            <label className="flex items-start gap-3 rounded-xl border border-[var(--stroke)] bg-[var(--bg-inset)] p-3.5 cursor-pointer">
+            <label className="flex items-start gap-3 rounded-[var(--r-sm)] border border-[var(--stroke)] bg-[var(--bg-inset)] p-3.5 cursor-pointer">
               <input
                 type="checkbox"
                 {...register("allow_pay_later")}
@@ -795,14 +795,14 @@ export default function CreateMatchPage() {
                 </span>
               </span>
             </label>
-            <label className="flex items-start gap-3 rounded-xl border border-[var(--stroke)] bg-[var(--bg-inset)] p-3.5 cursor-pointer">
+            <label className="flex items-start gap-3 rounded-[var(--r-sm)] border border-[var(--stroke)] bg-[var(--bg-inset)] p-3.5 cursor-pointer">
               <input
                 type="checkbox"
                 {...register("is_private")}
                 className="mt-0.5 h-4 w-4 accent-[#E9FF3A]"
               />
               <span className="text-sm text-[var(--ink-mid)] leading-snug">
-                Private match — approval required
+                Private match. You approve every player.
                 <span className="block text-xs text-[var(--ink-low)] mt-0.5">
                   Players request to join; you choose who gets in.
                 </span>
@@ -824,20 +824,20 @@ export default function CreateMatchPage() {
 
           {/* Submit error */}
           {submitError && (
-            <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 flex items-start gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0 mt-1.5" />
-              <p className="text-red-300 text-sm">{submitError}</p>
+            <div className="rounded-[var(--r-sm)] border border-[var(--live)]/30 bg-[var(--live)]/10 px-4 py-3 flex items-start gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--live)] shrink-0 mt-1.5" />
+              <p className="text-[var(--live)] text-sm">{submitError}</p>
             </div>
           )}
 
           {/* Show field errors summary on submit if any */}
           {Object.keys(errors).length > 0 && (
-            <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3">
-              <p className="text-red-300 text-sm font-semibold mb-1">Please fix the following:</p>
+            <div className="rounded-[var(--r-sm)] border border-[var(--live)]/30 bg-[var(--live)]/10 px-4 py-3">
+              <p className="text-[var(--live)] text-sm font-semibold mb-1">Please fix the following:</p>
               <ul className="space-y-0.5">
                 {Object.entries(errors).map(([key, err]) => (
-                  <li key={key} className="text-red-300/80 text-xs flex items-center gap-1.5">
-                    <span className="w-1 h-1 rounded-full bg-red-400 shrink-0" />
+                  <li key={key} className="text-[var(--live)]/80 text-xs flex items-center gap-1.5">
+                    <span className="w-1 h-1 rounded-full bg-[var(--live)] shrink-0" />
                     {(err as { message?: string }).message}
                   </li>
                 ))}
@@ -848,7 +848,7 @@ export default function CreateMatchPage() {
           <button
             type="submit"
             disabled={isSubmitting || !organizationsReady}
-            className="w-full bg-rondo-yellow text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-xl active:scale-[0.98] transition-all min-h-[52px] disabled:opacity-50"
+            className="w-full bg-rondo-yellow text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-[var(--r-sm)] active:scale-[0.98] transition-all min-h-[52px] disabled:opacity-50"
           >
             {isSubmitting ? "Creating…" : "Create Match"}
           </button>

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ScanFace, Trash2 } from "lucide-react";
+import { PASSKEYS_OFF_MESSAGE } from "@/lib/auth/format-auth-error";
 import {
   deletePasskey,
   isPasskeySupported,
@@ -29,11 +30,18 @@ export function PasskeyManager() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [unavailable, setUnavailable] = useState(false);
 
   const refresh = useCallback(async () => {
     const result = await listPasskeys();
     if (!result.ok) {
-      setError(result.error);
+      // The project hasn't enabled passkeys: say so once, calmly, and hide the controls.
+      if (result.error === PASSKEYS_OFF_MESSAGE) {
+        setUnavailable(true);
+        setError(null);
+      } else {
+        setError(result.error);
+      }
       setPasskeys([]);
       return;
     }
@@ -85,6 +93,20 @@ export function PasskeyManager() {
     await refresh();
   }
 
+  if (unavailable) {
+    return (
+      <div className="flex items-start gap-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-4">
+        <ScanFace size={18} className="mt-0.5 shrink-0 text-[var(--ink-low)]" aria-hidden />
+        <div className="space-y-1">
+          <p className="rondo-body font-bold text-[var(--ink-hi)]">Passkeys</p>
+          <p className="rondo-meta text-[var(--ink-low)]">
+            Face ID and Touch ID sign-in is coming to Rondo. Email, phone, and social login work today.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (!supported) {
     return (
       <div className="rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-4 space-y-1">
@@ -106,7 +128,7 @@ export function PasskeyManager() {
         <div className="flex-1 min-w-0">
           <p className="text-sm text-[var(--ink-hi)] font-medium">Passkeys</p>
           <p className="text-xs text-[var(--ink-low)] leading-snug mt-0.5">
-            Sign in with Face ID, Touch ID, Windows Hello, or a security key — no password needed.
+            Sign in with Face ID, Touch ID, Windows Hello, or a security key. No password needed.
           </p>
         </div>
       </div>
@@ -136,7 +158,7 @@ export function PasskeyManager() {
                 onClick={() => handleDelete(pk.id)}
                 disabled={busy}
                 aria-label={`Remove ${pk.friendly_name?.trim() || "passkey"}`}
-                className="shrink-0 p-2 rounded-[var(--r-sm)] text-[var(--ink-low)] hover:text-[var(--live)] hover:bg-red-500/10 transition disabled:opacity-50"
+                className="shrink-0 p-2 rounded-[var(--r-sm)] text-[var(--ink-low)] hover:text-[var(--live)] hover:bg-[var(--live)]/10 transition disabled:opacity-50"
               >
                 <Trash2 size={16} />
               </button>

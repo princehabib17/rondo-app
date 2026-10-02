@@ -83,7 +83,7 @@ export default function PlayerTimerPage() {
           >
             {soundEnabled ? "Sound On" : "Sound Off"}
           </button>
-          <div className={`w-2 h-2 rounded-full ${timer?.status === "running" ? "bg-green-600 animate-pulse" : "bg-rondo-black/30"}`} />
+          <div className={`w-2 h-2 rounded-full ${timer?.status === "running" ? "bg-[var(--ok)] animate-pulse" : "bg-rondo-black/30"}`} />
           <span className="text-rondo-black/60 text-xs font-semibold capitalize">{timer?.status ?? "waiting"}</span>
         </div>
       </header>

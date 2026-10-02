@@ -169,7 +169,7 @@ export default function RoleSelectionPage() {
       </div>
 
       {error && (
-        <p className="mt-4 text-center font-body text-sm text-red-400" role="alert">
+        <p className="mt-4 text-center font-body text-sm text-[var(--live)]" role="alert">
           {error}
         </p>
       )}

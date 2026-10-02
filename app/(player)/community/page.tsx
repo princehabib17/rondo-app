@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { MapPin, UsersThree } from "@phosphor-icons/react";
+import { MapPin } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { getUserWithTimeout } from "@/lib/auth/get-user-with-timeout";
 import { withAuthTimeout } from "@/lib/auth/auth-timeout";
@@ -13,6 +13,8 @@ import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import { PostCard } from "@/components/social/PostCard";
 import { PostComposer } from "@/components/social/PostComposer";
 import { EmptyState, RondoButton } from "@/components/rondo/primitives";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { SegmentedTabs } from "@/components/rondo/SegmentedTabs";
 import { formatPlayerDistance, sortProfilesByDistance, type NearbyPlayer } from "@/lib/location/nearby";
 import type { Coords } from "@/lib/feed/filters";
 import { cn } from "@/lib/utils";
@@ -237,37 +239,18 @@ export default function CommunityPage() {
   }, [currentUserId]);
 
   return (
-    <div className="min-h-[100dvh] rondo-page pb-24">
-      <header className="sticky top-0 z-40 border-b border-[var(--stroke)] rondo-glass-nav px-4 py-3">
-        <div className="mx-auto flex max-w-lg items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5">
-            <UsersThree size={20} weight="duotone" className="text-[var(--gold)]" aria-hidden />
-            <h1 className="rondo-title text-[var(--ink-hi)]">Community</h1>
-          </div>
-          <div className="flex gap-1.5 rounded-[var(--r-pill)] border border-[var(--stroke)] bg-[var(--bg-inset)] p-1">
-            {(
-              [
-                { value: "feed", label: "Feed" },
-                { value: "players", label: "Players" },
-              ] as const
-            ).map(({ value, label }) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setTab(value)}
-                className={cn(
-                  "rounded-[var(--r-pill)] px-3 py-1.5 text-sm font-semibold transition-colors",
-                  tab === value
-                    ? "bg-[var(--bg-surface)] text-[var(--ink-hi)]"
-                    : "text-[var(--ink-low)]"
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </header>
+    <div className="min-h-[100dvh] rondo-page">
+      <PageHeader title="Community">
+        <SegmentedTabs
+          layoutId="community-tabs"
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: "feed", label: "Feed" },
+            { value: "players", label: "Players" },
+          ]}
+        />
+      </PageHeader>
 
       <div className="mx-auto max-w-lg space-y-6 py-5">
         {tab === "feed" ? (

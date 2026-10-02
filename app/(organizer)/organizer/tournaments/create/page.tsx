@@ -453,10 +453,10 @@ export default function CreateTournamentPage() {
     { label: "Format", value: format === "single_elimination" ? "Knockout cup" : "League table", step: 1 },
     { label: "Field", value: `${maxTeams} teams · ${teamSize}-a-side`, step: 1 },
     { label: "Entry fee", value: entryFee > 0 ? `₱${entryFee} per team` : "Free entry", step: 2 },
-    { label: "Venue", value: values.venue_name?.trim() || "—", step: 3 },
+    { label: "Venue", value: values.venue_name?.trim() || "Not set", step: 3 },
     {
       label: "Kickoff",
-      value: pickedDate ? `${fnsFormat(pickedDate, "EEE, MMM d")} · ${formatTime12h(startTime)}` : "—",
+      value: pickedDate ? `${fnsFormat(pickedDate, "EEE, MMM d")} · ${formatTime12h(startTime)}` : "Not set",
       step: 3,
     },
   ];
@@ -895,10 +895,9 @@ export default function CreateTournamentPage() {
         </div>
 
         {/* ── Fixed action bar in the thumb zone ── */}
-        {/* bottom-24 (not bottom-16): the floating BottomNav pill sits at
-            bottom-6 with a 60px height, i.e. it occupies 24-84px from the
-            viewport edge — bottom-16 (64px) would render this bar underneath it. */}
-        <div className="fixed bottom-24 left-0 right-0 z-30 mx-auto max-w-lg px-4 pb-2">
+        {/* Pushed screen: the tab bar steps aside, so this bar owns the bottom edge. */}
+        <div className="fixed inset-x-0 bottom-0 z-30 rondo-sticky-action pb-[env(safe-area-inset-bottom)]">
+        <div className="mx-auto max-w-lg px-4 py-3">
           {isReview ? (
             <button
               type="submit"
@@ -920,6 +919,7 @@ export default function CreateTournamentPage() {
               </span>
             </button>
           )}
+        </div>
         </div>
       </form>
 

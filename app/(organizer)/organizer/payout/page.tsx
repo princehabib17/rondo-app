@@ -18,10 +18,10 @@ interface PayoutHistoryEntry {
 }
 
 const payoutStatusStyle: Record<PayoutHistoryEntry["status"], string> = {
-  pending: "bg-amber-400/15 text-amber-300",
-  approved: "bg-sky-400/15 text-sky-300",
-  paid: "bg-emerald-400/15 text-emerald-300",
-  rejected: "bg-red-400/15 text-[var(--live)]",
+  pending: "bg-[var(--gold)]/15 text-[var(--gold)]",
+  approved: "bg-[var(--bg-inset)] text-[var(--ink-hi)]",
+  paid: "bg-[var(--ok)]/15 text-[var(--ok)]",
+  rejected: "bg-[var(--live)]/15 text-[var(--live)]",
 };
 
 const inputClass =
@@ -107,7 +107,7 @@ export default function PayoutPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={bouncy}
         >
-          <h1 className="font-heading text-4xl font-black uppercase italic leading-none text-[var(--ink-hi)]">
+          <h1 className="font-heading text-4xl font-black uppercase leading-none text-[var(--ink-hi)]">
             Request Payout
           </h1>
           <p className="mt-2 font-body text-sm text-[var(--ink-low)]">
@@ -165,14 +165,14 @@ export default function PayoutPage() {
             transition={{ ...bouncy, delay: 0.1 }}
             className="space-y-3"
           >
-            <h2 className="font-heading text-lg font-black uppercase italic text-[var(--ink-hi)]">
+            <h2 className="font-heading text-lg font-black uppercase text-[var(--ink-hi)]">
               Recent Requests
             </h2>
             <div className="space-y-2">
               {payoutHistory.map((entry) => (
                 <div
                   key={entry.id}
-                  className="flex items-center justify-between gap-2 rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.03] p-4 font-body text-xs"
+                  className="flex items-center justify-between gap-2 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-4 font-body text-xs"
                 >
                   <div className="min-w-0">
                     <p className="font-black text-[var(--ink-hi)]">{formatPrice(entry.amount)}</p>

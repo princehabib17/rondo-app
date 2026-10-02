@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, MessageCircle } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { formatRelativeTime } from "@/lib/utils/format";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import { EmptyState, RondoButton } from "@/components/rondo/primitives";
 import type { Profile } from "@/lib/supabase/types";
@@ -17,7 +17,6 @@ type Conversation = {
 };
 
 export default function MessagesPage() {
-  const router = useRouter();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [needsAccount, setNeedsAccount] = useState(false);
@@ -37,20 +36,10 @@ export default function MessagesPage() {
   }, []);
 
   return (
-    <div className="min-h-[100dvh] rondo-page pb-20">
-      <header className="sticky top-0 rondo-glass-nav border-b border-[var(--stroke)] z-40 px-4 py-3 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--ink-hi)]"
-          aria-label="Back"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <h1 className="font-heading text-[var(--ink-hi)] font-black italic text-base uppercase">Messages</h1>
-      </header>
+    <div className="min-h-[100dvh] rondo-page">
+      <PageHeader title="Messages" back fallbackHref="/profile" />
 
-      <div className="px-4 py-4 max-w-lg mx-auto">
+      <div className="mx-auto max-w-lg px-4 py-6">
         {loading ? (
           <div className="space-y-3">
             {[0, 1, 2].map((i) => (
@@ -65,20 +54,19 @@ export default function MessagesPage() {
             className="py-16"
           />
         ) : conversations.length === 0 ? (
-          <div className="flex flex-col items-center text-center py-16 px-4">
-            <MessageCircle size={32} className="text-[var(--ink-low)] mb-3" />
-            <p className="text-[var(--ink-hi)] font-semibold">No conversations yet</p>
-            <p className="text-[var(--ink-low)] text-sm mt-1 max-w-[260px]">
-              Message a player from their profile to start a private chat.
-            </p>
-          </div>
+          <EmptyState
+            title="No conversations yet"
+            body="Open a player's profile and tap the chat icon to start a private conversation."
+            action={<RondoButton href="/community" variant="secondary">Find players</RondoButton>}
+            className="py-16"
+          />
         ) : (
-          <div className="divide-y divide-white/5">
+          <div className="divide-y divide-[var(--stroke)] overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)]">
             {conversations.map((c) => (
               <Link
                 key={c.peerId}
                 href={`/messages/${c.peerId}`}
-                className="flex items-center gap-3 py-3 active:opacity-80"
+                className="flex min-h-16 items-center gap-3 px-4 py-3 transition-colors active:bg-[var(--bg-inset)]"
               >
                 {c.peer ? (
                   <PlayerAvatar
@@ -92,17 +80,17 @@ export default function MessagesPage() {
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-[var(--ink-hi)] text-sm font-semibold truncate">
+                    <p className="truncate rondo-body font-bold text-[var(--ink-hi)]">
                       {c.peer?.full_name ?? "Player"}
                     </p>
-                    <span className="text-[var(--ink-low)] text-[10px] shrink-0">
-                      {new Date(c.lastAt).toLocaleDateString()}
+                    <span className="shrink-0 rondo-meta text-[var(--ink-low)]">
+                      {formatRelativeTime(c.lastAt).replace("about ", "")}
                     </span>
                   </div>
-                  <p className="text-[var(--ink-low)] text-xs truncate mt-0.5">{c.lastBody}</p>
+                  <p className="mt-0.5 truncate rondo-meta text-[var(--ink-low)]">{c.lastBody}</p>
                 </div>
                 {c.unread > 0 && (
-                  <span className="bg-[var(--gold)] text-[var(--gold-ink)] text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                  <span className="grid h-5 min-w-5 shrink-0 place-items-center rounded-[var(--r-pill)] bg-[var(--gold)] px-1.5 text-[0.6875rem] font-bold tabular-nums text-[var(--gold-ink)]">
                     {c.unread}
                   </span>
                 )}

@@ -55,7 +55,7 @@ export async function POST(request: Request) {
       .eq("game_id", gameId);
 
     if (count !== null && count >= game.max_players) {
-      return NextResponse.json({ error: "No spots left — someone else got it" }, { status: 409 });
+      return NextResponse.json({ error: "Someone else took that spot. You're still on the waitlist." }, { status: 409 });
     }
 
     const chosenTeam = teamId ?? wl.team_id;

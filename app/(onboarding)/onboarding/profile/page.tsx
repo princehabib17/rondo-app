@@ -194,7 +194,7 @@ export default function EssentialsSetupPage() {
                 className={rondoFieldClass}
               />
               {errors.full_name && (
-                <p className="rondo-meta text-red-400">{errors.full_name.message}</p>
+                <p className="rondo-meta text-[var(--live)]">{errors.full_name.message}</p>
               )}
             </div>
 
@@ -211,7 +211,7 @@ export default function EssentialsSetupPage() {
                 className={rondoFieldClass}
               />
               {errors.username && (
-                <p className="rondo-meta text-red-400">{errors.username.message}</p>
+                <p className="rondo-meta text-[var(--live)]">{errors.username.message}</p>
               )}
             </div>
 
@@ -226,7 +226,7 @@ export default function EssentialsSetupPage() {
                 className={rondoFieldClass}
               />
               {errors.preferred_areas && (
-                <p className="rondo-meta text-red-400">{errors.preferred_areas.message}</p>
+                <p className="rondo-meta text-[var(--live)]">{errors.preferred_areas.message}</p>
               )}
             </div>
 
@@ -242,7 +242,7 @@ export default function EssentialsSetupPage() {
                   <option value="both">Football and futsal</option>
                 </select>
                 {errors.game_preference && (
-                  <p className="rondo-meta text-red-400">{errors.game_preference.message}</p>
+                  <p className="rondo-meta text-[var(--live)]">{errors.game_preference.message}</p>
                 )}
               </div>
             ) : (
@@ -259,7 +259,7 @@ export default function EssentialsSetupPage() {
                     <option value="forward">Forward</option>
                     <option value="any">Anywhere</option>
                   </select>
-                  {errors.position && <p className="rondo-meta text-red-400">{errors.position.message}</p>}
+                  {errors.position && <p className="rondo-meta text-[var(--live)]">{errors.position.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="skill_level" className={labelClass}>
@@ -273,7 +273,7 @@ export default function EssentialsSetupPage() {
                     <option value="pro">Pro</option>
                   </select>
                   {errors.skill_level && (
-                    <p className="rondo-meta text-red-400">{errors.skill_level.message}</p>
+                    <p className="rondo-meta text-[var(--live)]">{errors.skill_level.message}</p>
                   )}
                 </div>
               </div>
@@ -281,7 +281,7 @@ export default function EssentialsSetupPage() {
           </div>
 
           {pageError && (
-            <p className="mt-4 text-center font-body text-sm text-red-400" role="alert">
+            <p className="mt-4 text-center font-body text-sm text-[var(--live)]" role="alert">
               {pageError}
             </p>
           )}

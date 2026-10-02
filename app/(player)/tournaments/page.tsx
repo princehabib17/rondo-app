@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { Fire, Shield, Trophy, Users } from "@phosphor-icons/react";
 import { motion, useReducedMotion } from "motion/react";
 import { createClient } from "@/lib/supabase/client";
 import { withAuthTimeout } from "@/lib/auth/auth-timeout";
@@ -13,8 +11,9 @@ import { fetchTournamentLiveSummaries } from "@/lib/tournament/liveSummary";
 import type { LiveSummary } from "@/lib/tournament/bracket";
 import { gentle } from "@/components/motion/springs";
 import { cn } from "@/lib/utils";
-import { EmptyState } from "@/components/rondo/primitives";
-import { RondoBrand } from "@/components/brand/RondoBrand";
+import { EmptyState, RondoButton } from "@/components/rondo/primitives";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { MatchesSwitcher } from "@/components/layout/MatchesSwitcher";
 
 const FILTERS: { value: TournamentStatus | "all"; label: string }[] = [
   { value: "all", label: "All" },
@@ -91,56 +90,24 @@ export default function TournamentsPage() {
   const liveCount = countFor("active");
 
   return (
-    <div className="min-h-[100dvh] rondo-page pb-24">
-      <header className="sticky top-0 z-40 border-b border-[var(--stroke)] rondo-glass-nav px-4 py-3">
-        <div className="mx-auto flex h-12 max-w-lg items-center gap-3">
-          <RondoBrand kind="mark" surface="auto" className="size-8" />
-          <h1 className="font-heading text-xl font-bold tracking-tight text-[var(--ink-hi)]">
-            Tournaments
-          </h1>
-        </div>
-      </header>
+    <div className="min-h-[100dvh] rondo-page">
+      <PageHeader title="Matches">
+        <MatchesSwitcher />
+      </PageHeader>
 
       <div className="mx-auto max-w-lg space-y-6 px-4 py-6">
-        <section className="relative overflow-hidden rounded-[var(--r-lg)] border border-[var(--stroke)] rondo-floodlight-scene rondo-floodlight-scene--gold p-5">
-          <div className="absolute inset-0 rondo-map-shell opacity-20 mix-blend-screen" />
-          <div className="relative space-y-5">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="mt-0 max-w-[15rem] font-heading text-[3.25rem] font-black uppercase leading-[0.82] tracking-[-0.035em] text-[var(--ink-hi)]">
-                  Run the table
-                </h2>
-              </div>
-              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full border border-[color-mix(in_oklch,var(--gold)_32%,var(--stroke))] bg-[var(--gold-dim)]">
-                <Trophy size={28} weight="duotone" className="text-[var(--gold)]" aria-hidden />
-              </div>
-            </div>
-            <p className="max-w-[20rem] rondo-body text-[var(--ink-mid)]">
-              {!loading && tournaments.length === 0
-                ? "Brackets, live scores, and standings land here once organizers list a tournament."
-                : "Join open brackets, follow live scores, and carry the win into the room."}
-            </p>
-            {!loading && tournaments.length > 0 ? (
-            <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-[var(--r-md)] border border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_64%,transparent)] p-3">
-                <Fire size={18} weight="duotone" className="mb-3 text-[var(--gold)]" aria-hidden />
-                <p className="rondo-title text-[var(--ink-hi)]">{liveCount}</p>
-                <p className="rondo-meta text-[var(--ink-low)]">Live</p>
-              </div>
-              <div className="rounded-[var(--r-md)] border border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_64%,transparent)] p-3">
-                <Users size={18} weight="duotone" className="mb-3 text-[var(--gold)]" aria-hidden />
-                <p className="rondo-title text-[var(--ink-hi)]">{openCount}</p>
-                <p className="rondo-meta text-[var(--ink-low)]">Open</p>
-              </div>
-              <div className="rounded-[var(--r-md)] border border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_64%,transparent)] p-3">
-                <Shield size={18} weight="duotone" className="mb-3 text-[var(--gold)]" aria-hidden />
-                <p className="rondo-title text-[var(--ink-hi)]">{tournaments.length}</p>
-                <p className="rondo-meta text-[var(--ink-low)]">Total</p>
-              </div>
-            </div>
-            ) : null}
-          </div>
-        </section>
+        {!loading && liveCount + openCount > 0 && (
+          <p className="flex items-center gap-2 rondo-meta text-[var(--ink-mid)]">
+            {liveCount > 0 && (
+              <span className="inline-flex items-center gap-2 font-bold text-[var(--ink-hi)]">
+                <span className="rondo-live-dot" aria-hidden />
+                {liveCount} live now
+              </span>
+            )}
+            {liveCount > 0 && openCount > 0 && <span aria-hidden>·</span>}
+            {openCount > 0 && <span>{openCount} taking teams</span>}
+          </p>
+        )}
 
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
           {FILTERS.map(({ value, label }) => {
@@ -169,21 +136,17 @@ export default function TournamentsPage() {
             ))}
           </div>
         ) : visible.length === 0 ? (
-          <div className="overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] rondo-floodlight-scene">
-            <EmptyState
-              title={filter === "all" ? "No tournaments here yet" : "Nothing in this lane"}
-              body={
-                filter === "all"
-                  ? "Nothing listed yet. Open matches nearby show up on the feed."
-                  : "Switch filters or find games happening nearby."
-              }
-              action={
-                <Link href="/feed" className="rondo-btn rondo-btn-primary">
-                Explore matches
-              </Link>
-              }
-            />
-          </div>
+          <EmptyState
+            imageSrc="/scenes/center-spot.jpg"
+            title={filter === "all" ? "No tournaments yet" : "Nothing in this lane"}
+            body={
+              filter === "all"
+                ? "When organizers open a bracket near you, it shows up here. Pickup matches run every night."
+                : "Try another filter, or play a pickup match while you wait."
+            }
+            action={<RondoButton href="/feed">Find a pickup match</RondoButton>}
+            className="py-8"
+          />
         ) : (
           <div className="space-y-3">
             {visible.map((tournament, index) => (

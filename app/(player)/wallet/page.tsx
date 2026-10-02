@@ -190,7 +190,7 @@ function WalletContent() {
           </div>
           <p className="font-heading text-[var(--ink-hi)] font-black text-4xl">{formatPrice(balanceCentavos)}</p>
           <p className="font-body text-[var(--ink-low)] text-xs mt-2">
-            Top up with PayMongo, then pay match fees from here — one balance, no paying the organizer directly in the app.
+            Top up with PayMongo, then pay match fees from here. One balance, and you never send money to an organizer directly.
           </p>
         </div>
 
@@ -202,22 +202,22 @@ function WalletContent() {
         )}
 
         {topupBanner === "failed" && error && (
-          <div className="bg-red-950/40 border border-red-800/50 rounded-[var(--r-md)] p-4 space-y-2">
-            <p className="text-red-200 font-semibold text-sm">Top-up not completed</p>
-            <p className="text-red-200/80 text-xs">{error}</p>
+          <div className="bg-[var(--live)]/10 border border-[var(--live)]/40 rounded-[var(--r-md)] p-4 space-y-2">
+            <p className="text-[var(--live)] font-semibold text-sm">Top-up not completed</p>
+            <p className="text-[var(--live)]/80 text-xs">{error}</p>
           </div>
         )}
 
         {message && (
-          <div className="bg-green-950/40 border border-green-800/50 rounded-[var(--r-md)] p-4 space-y-1">
+          <div className="bg-[var(--ok)]/10 border border-[var(--ok)]/40 rounded-[var(--r-md)] p-4 space-y-1">
             <p className="text-[var(--ok)] text-sm font-semibold">{message}</p>
             {topupReference && (
-              <p className="text-green-200/70 text-xs font-mono break-all">Ref: {topupReference}</p>
+              <p className="text-[var(--ok)]/70 text-xs font-mono break-all">Ref: {topupReference}</p>
             )}
           </div>
         )}
         {error && !topupBanner && (
-          <p className="text-[var(--live)] text-sm text-center bg-red-950/30 border border-red-800/40 rounded-[var(--r-md)] py-3 px-4">
+          <p className="text-[var(--live)] text-sm text-center bg-[var(--live)]/10 border border-[var(--live)]/40 rounded-[var(--r-md)] py-3 px-4">
             {error}
           </p>
         )}
@@ -270,9 +270,9 @@ function WalletContent() {
           </div>
 
           {payoutSuccess && (
-            <div className="bg-green-950/40 border border-green-800/50 rounded-[var(--r-md)] p-4 mb-3">
+            <div className="bg-[var(--ok)]/10 border border-[var(--ok)]/40 rounded-[var(--r-md)] p-4 mb-3">
               <p className="text-[var(--ok)] text-sm font-semibold">Payout request submitted</p>
-              <p className="text-green-200/70 text-xs mt-0.5">We&apos;ll process it within 3–5 business days.</p>
+              <p className="text-[var(--ok)]/70 text-xs mt-0.5">We&apos;ll process it within 3–5 business days.</p>
             </div>
           )}
 

@@ -44,10 +44,11 @@ const SEED_USERS = [
   },
 ];
 
+/** 6 PM Manila (UTC+8, no DST) `days` from now, whatever the server's timezone. */
 function daysFromNow(days: number): string {
   const d = new Date();
-  d.setDate(d.getDate() + days);
-  d.setHours(18, 0, 0, 0);
+  d.setUTCDate(d.getUTCDate() + days);
+  d.setUTCHours(18 - 8, 0, 0, 0);
   return d.toISOString();
 }
 
@@ -147,7 +148,7 @@ export async function POST(request: Request) {
   // ── 3. Create games ────────────────────────────────────────────────
   const GAMES = [
     {
-      title: "BGC Pickup — 5v5 Football",
+      title: "BGC Pickup 5v5",
       description: "Casual 5-aside at McKinley Hill Turf. All skill levels welcome. Bring water.",
       venue_name: "McKinley Hill Turf",
       venue_address: "McKinley Hill, BGC, Taguig City",

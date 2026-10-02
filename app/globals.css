@@ -252,6 +252,7 @@
 
 @utility font-heading {
   font-family: var(--font-heading);
+  font-style: normal;
 }
 
 @utility font-body {
@@ -711,8 +712,10 @@
 .rondo-live-dot {
   position: relative;
   display: inline-flex;
+  flex-shrink: 0;
   width: 6px;
   height: 6px;
+  margin-inline: 2px;
   border-radius: var(--r-pill);
   background: var(--live);
 }
@@ -720,7 +723,7 @@
 .rondo-live-dot::after {
   content: "";
   position: absolute;
-  inset: -4px;
+  inset: -3px;
   border-radius: var(--r-pill);
   border: 1.5px solid var(--live);
   animation: rondo-live-ping 1.6s ease-out infinite;
@@ -743,4 +746,25 @@
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   border-top: 1px solid var(--stroke);
+}
+
+/* ========================================
+   SCREEN HEADER LAW
+   Unlayered on purpose: these win over per-page utility classes, so every
+   sticky screen header reads the same (Barlow 20/24, upright, uppercase)
+   no matter how the page spelled its <h1>.
+   ======================================== */
+header.rondo-glass-nav {
+  min-height: 3.5rem;
+}
+
+header.rondo-glass-nav h1 {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  line-height: 1.5rem;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--ink-hi);
 }

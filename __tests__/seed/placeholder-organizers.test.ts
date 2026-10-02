@@ -36,8 +36,8 @@ describe("placeholder organizer seed", () => {
     expect(thursdayGames).toHaveLength(2);
     expect(thursdayGames.map((game) => game.title)).toEqual(
       expect.arrayContaining([
-        "Open Play — Thursday Night (Chill Side)",
-        "Open Play — Thursday Night (Competitive Side)",
+        "Open Play · Thursday Night (Chill Side)",
+        "Open Play · Thursday Night (Competitive Side)",
       ])
     );
   });

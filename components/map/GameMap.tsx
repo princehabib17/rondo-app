@@ -136,7 +136,7 @@ export default function GameMap({ games }: GameMapProps) {
                   onError={() => setCoverFailed(true)}
                 />
               ) : (
-                <div className="h-full w-full bg-gradient-to-br from-zinc-900 to-zinc-800 flex items-center justify-center">
+                <div className="h-full w-full bg-gradient-to-br from-[var(--bg-surface)] to-[var(--bg-inset)] flex items-center justify-center">
                   <MapPin size={28} className="text-[var(--ink-low)]" />
                 </div>
               )}

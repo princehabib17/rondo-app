@@ -94,7 +94,7 @@ export default function DirectMessageThreadPage() {
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 max-w-lg mx-auto w-full">
         {messages.length === 0 && (
-          <p className="text-center text-[var(--ink-low)] text-sm py-8">Say hello — this is a private 1:1 chat.</p>
+          <p className="text-center text-[var(--ink-low)] text-sm py-8">Say hello. Only the two of you can see this chat.</p>
         )}
         {messages.map((m) => {
           const mine = m.sender_id === currentUserId;
@@ -115,7 +115,7 @@ export default function DirectMessageThreadPage() {
 
       <form
         onSubmit={handleSend}
-        className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto px-4 pb-6 pt-3 rondo-glass-nav z-30 flex gap-2"
+        className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] rondo-sticky-action z-30 flex gap-2"
       >
         <input
           value={body}

@@ -229,13 +229,13 @@ function JoinMatchContent() {
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="font-heading text-[var(--ink-hi)] font-black italic text-sm uppercase">
+        <h1 className="font-heading text-[var(--ink-hi)] font-black text-sm uppercase">
           {claimSpot ? "Claim spot" : waitlistOnly ? "Waitlist" : "Choose slot"}
         </h1>
       </header>
 
       <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
-        <section className="overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.04]">
+        <section className="overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)]">
           {cover && (
             <div className="relative h-36">
               <img
@@ -244,7 +244,7 @@ function JoinMatchContent() {
                 className="h-full w-full object-cover"
                 onError={() => setCoverFailed(true)}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-night)]/85 to-transparent" />
             </div>
           )}
           <div className="space-y-3 p-4">
@@ -252,7 +252,7 @@ function JoinMatchContent() {
               <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gold)]">
                 Team selection
               </p>
-              <h2 className="mt-1 font-heading text-2xl font-black uppercase italic leading-none text-[var(--ink-hi)]">
+              <h2 className="mt-1 font-heading text-2xl font-black uppercase leading-none text-[var(--ink-hi)]">
                 {game.title}
               </h2>
             </div>
@@ -331,10 +331,9 @@ function JoinMatchContent() {
         {error && <p className="text-[var(--live)] text-sm text-center">{error}</p>}
       </div>
 
-      {/* bottom-24 (not bottom-16): the floating BottomNav pill sits at
-          bottom-6 with a 60px height, occupying 24-84px from the viewport
-          edge — bottom-16 (64px) rendered this bar underneath it. */}
-      <div className="fixed bottom-24 left-0 right-0 max-w-lg mx-auto px-4 pb-6 pt-3 rondo-glass-nav z-30 space-y-2">
+      {/* Pushed screen: the tab bar steps aside, so this bar owns the bottom edge. */}
+      <div className="fixed inset-x-0 bottom-0 z-30 rondo-sticky-action pb-[env(safe-area-inset-bottom)]">
+      <div className="mx-auto max-w-lg space-y-2 px-4 py-3">
         <button
           type="button"
           onClick={onPrimary}
@@ -353,6 +352,7 @@ function JoinMatchContent() {
             {leaving ? "Leaving…" : "Leave waitlist"}
           </button>
         )}
+      </div>
       </div>
     </div>
   );

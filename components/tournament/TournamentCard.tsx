@@ -5,16 +5,17 @@ import { CalendarBlank, Crown, MapPin, SoccerBall, Trophy, Users } from "@phosph
 import { cn } from "@/lib/utils";
 import type { Tournament, TournamentStatus } from "@/lib/supabase/types";
 import type { LiveSummary } from "@/lib/tournament/bracket";
-import { formatGameDate, formatPrice } from "@/lib/utils/format";
+import { format } from "date-fns";
+import { formatPrice } from "@/lib/utils/format";
 
 /** Shared status → copy/tone map, reused by TournamentHero. */
 export const TOURNAMENT_STATUS_META: Record<
   TournamentStatus,
   { label: string; tone: "open" | "live" | "done" | "off" }
 > = {
-  registration: { label: "Open for teams", tone: "open" },
+  registration: { label: "Open", tone: "open" },
   active: { label: "Live", tone: "live" },
-  completed: { label: "Final", tone: "done" },
+  completed: { label: "Completed", tone: "done" },
   cancelled: { label: "Cancelled", tone: "off" },
 };
 
@@ -48,7 +49,7 @@ function StatusRibbon({ status }: { status: TournamentStatus }) {
   return (
     <span
       className={cn(
-        "inline-flex h-8 items-center gap-1 rounded-[var(--r-pill)] border px-3 rondo-label",
+        "inline-flex h-7 items-center gap-2 rounded-[var(--r-pill)] border px-3 rondo-label",
         statusToneClasses(meta.tone)
       )}
     >
@@ -75,6 +76,10 @@ function variantFor(tournament: Tournament): NonNullable<TournamentCardProps["va
   return "upcoming";
 }
 
+function kickoffShort(iso: string): string {
+  return format(new Date(iso), "EEE, MMM d · h:mm a");
+}
+
 export function TournamentCard({
   tournament,
   href,
@@ -87,116 +92,123 @@ export function TournamentCard({
   const full = teamCount >= tournament.max_teams;
   const spotsLeft = Math.max(0, tournament.max_teams - teamCount);
   const isLive = variant === "live";
+  const isOpen = variant === "open";
   const isCompleted = variant === "completed";
 
   return (
     <Link
       href={href}
       className={cn(
-        "block overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] transition-[border-color,transform,opacity] duration-200 active:scale-[0.98]",
-        "hover:border-[color-mix(in_oklch,var(--gold)_45%,var(--stroke))]",
-        isCompleted && "opacity-70"
+        "group block overflow-hidden rounded-[var(--r-md)] border bg-[var(--bg-surface)] transition-[border-color,transform] duration-200 active:scale-[0.98]",
+        isLive
+          ? "border-[color-mix(in_oklch,var(--live)_40%,var(--stroke))]"
+          : "border-[var(--stroke)] hover:border-[color-mix(in_oklch,var(--gold)_45%,var(--stroke))]"
       )}
     >
       <div
-        className={cn("relative overflow-hidden rondo-floodlight-scene", isLive ? "h-36" : "h-28")}
+        className={cn(
+          "relative flex flex-col justify-between overflow-hidden p-4 rondo-floodlight-scene",
+          isLive ? "min-h-40" : "min-h-32",
+          isCompleted && "rondo-floodlight-scene--gold"
+        )}
         data-variant={sceneVariant(tournament.id)}
       >
         {isLive ? (
           <SoccerBall
-            size={96}
+            size={112}
             weight="duotone"
             aria-hidden
-            className="pointer-events-none absolute -bottom-6 -right-5 text-[color-mix(in_oklch,var(--gold)_12%,transparent)]"
+            className="pointer-events-none absolute -bottom-8 -right-6 text-[color-mix(in_oklch,var(--ink-hi)_7%,transparent)]"
           />
         ) : (
           <Trophy
-            size={76}
+            size={96}
             weight="duotone"
             aria-hidden
-            className="pointer-events-none absolute -bottom-4 -right-4 text-[color-mix(in_oklch,var(--ink-hi)_7%,transparent)]"
+            className={cn(
+              "pointer-events-none absolute -bottom-6 -right-5",
+              isCompleted
+                ? "text-[color-mix(in_oklch,var(--gold)_22%,transparent)]"
+                : "text-[color-mix(in_oklch,var(--ink-hi)_7%,transparent)]"
+            )}
           />
         )}
 
-        <div className="absolute left-3 top-3 flex items-center gap-2">
-          <span className="inline-flex h-8 items-center rounded-[var(--r-pill)] border border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_65%,transparent)] px-3 rondo-label text-[var(--ink-mid)] backdrop-blur-sm">
+        <div className="relative flex items-start justify-between gap-2">
+          <span className="inline-flex h-7 items-center rounded-[var(--r-pill)] border border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_65%,transparent)] px-3 rondo-label text-[var(--ink-mid)] backdrop-blur-sm">
             {FORMAT_LABEL[tournament.format]}
+            <span className="mx-1.5 text-[var(--ink-low)]" aria-hidden>·</span>
+            {tournament.team_size}-a-side
           </span>
-          {isCompleted && <Crown size={16} weight="fill" className="text-[var(--gold)]" aria-hidden />}
-        </div>
-
-        <div className="absolute right-3 top-3">
           <StatusRibbon status={tournament.status} />
         </div>
 
-        {isLive && liveSummary && (
-          <div className="absolute inset-x-3 bottom-12">
-            <p className="rondo-label text-[var(--live)]">Now playing</p>
-            <p className="mt-1 truncate font-heading text-[2.5rem] font-bold leading-none text-[var(--ink-hi)]">
-              {liveSummary.roundLabel}
-            </p>
-          </div>
-        )}
-
-        {tournament.entry_fee > 0 && (
-          <span className="absolute bottom-3 right-3 rounded-[var(--r-pill)] bg-[var(--gold)] px-3 py-1 font-heading text-sm font-bold text-[var(--gold-ink)]">
-            {formatPrice(tournament.entry_fee)}
-          </span>
-        )}
-
-        <h3
-          className={cn(
-            "absolute left-3 truncate font-heading font-bold uppercase leading-none text-[var(--ink-hi)]",
-            isLive ? "bottom-3 right-24 text-2xl" : "bottom-3 right-20 text-xl"
+        <div className="relative mt-6 pr-16">
+          {isLive && liveSummary && (
+            <p className="mb-1 rondo-label text-[var(--live)]">{liveSummary.roundLabel} · Now playing</p>
           )}
-        >
-          {tournament.name}
-        </h3>
+          {isCompleted && champion && (
+            <p className="mb-1 flex items-center gap-1 rondo-label text-[var(--gold)]">
+              <Crown size={12} weight="fill" aria-hidden />
+              {champion.name}
+            </p>
+          )}
+          <h3
+            className={cn(
+              "line-clamp-2 font-heading font-bold uppercase leading-[0.95] text-[var(--ink-hi)]",
+              isLive ? "text-[2rem]" : "text-[1.625rem]"
+            )}
+          >
+            {tournament.name}
+          </h3>
+        </div>
       </div>
 
-      <div className="space-y-3 p-4">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rondo-meta text-[var(--ink-low)]">
-          <span className="flex min-w-0 items-center gap-1">
-            <CalendarBlank size={16} className="shrink-0 text-[var(--gold)]" aria-hidden />
-            <span className="truncate">{formatGameDate(tournament.starts_at)}</span>
+      <div className="space-y-3 px-4 py-3">
+        <div className="flex items-center justify-between gap-3 rondo-meta text-[var(--ink-low)]">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <CalendarBlank size={15} className="shrink-0" aria-hidden />
+            <span className="truncate">{kickoffShort(tournament.starts_at)}</span>
           </span>
           {tournament.venue_name && (
-            <span className="flex min-w-0 items-center gap-1">
-              <MapPin size={16} className="shrink-0 text-[var(--gold)]" aria-hidden />
+            <span className="flex min-w-0 shrink items-center gap-1.5">
+              <MapPin size={15} className="shrink-0" aria-hidden />
               <span className="truncate">{tournament.venue_name}</span>
             </span>
           )}
         </div>
 
-        <div className={cn("items-center gap-3", variant === "open" ? "grid grid-cols-[1fr_auto]" : "flex justify-end")}>
-          {/* The fill bar reads as "registration filling up" — only true while
-              registration is actually open. Live/completed just state the count. */}
-          {variant === "open" && (
+        {isOpen ? (
+          <div className="space-y-2">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="rondo-meta font-bold text-[var(--ink-hi)]">
+                {full ? "Bracket full" : `${spotsLeft} of ${tournament.max_teams} spots left`}
+              </span>
+              <span className="font-heading text-base font-bold tabular-nums text-[var(--gold)]">
+                {tournament.entry_fee > 0 ? `${formatPrice(tournament.entry_fee)} / team` : "Free entry"}
+              </span>
+            </div>
             <div className="h-1.5 overflow-hidden rounded-[var(--r-pill)] bg-[var(--bg-inset)]">
               <div
-                className={cn("h-full rounded-[var(--r-pill)] transition-[width]", full ? "bg-[var(--ink-low)]" : "bg-[var(--gold)]")}
+                className={cn("h-full rounded-[var(--r-pill)]", full ? "bg-[var(--ink-low)]" : "bg-[var(--gold)]")}
                 style={{ width: `${capacity}%` }}
               />
             </div>
-          )}
-          <span className="flex shrink-0 items-center gap-1 rondo-meta font-bold text-[var(--ink-mid)]">
-            <Users size={16} className="text-[var(--ink-low)]" aria-hidden />
-            {variant === "open" ? `${spotsLeft} spots left` : `${teamCount}/${tournament.max_teams} teams`}
-          </span>
-        </div>
-
-        {isCompleted && (
-          <p className="rondo-meta text-[var(--ink-hi)]">
-            {champion ? (
-              <>
-                <Trophy size={14} weight="fill" className="mr-1 inline-block text-[var(--gold)]" aria-hidden />
-                <span className="font-bold">{champion.name}</span>
-                {champion.detail && <span className="text-[var(--ink-low)]"> · {champion.detail}</span>}
-              </>
-            ) : (
-              <span className="text-[var(--ink-low)]">Final score locked.</span>
-            )}
-          </p>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between gap-3 rondo-meta">
+            <span className="flex items-center gap-1.5 text-[var(--ink-mid)]">
+              <Users size={15} className="text-[var(--ink-low)]" aria-hidden />
+              {teamCount} teams
+            </span>
+            {isCompleted ? (
+              <span className="truncate text-[var(--ink-low)]">
+                {champion?.detail ?? "Final result locked"}
+              </span>
+            ) : isLive ? (
+              <span className="font-bold text-[var(--ink-hi)]">Follow live</span>
+            ) : null}
+          </div>
         )}
       </div>
     </Link>
@@ -207,7 +219,7 @@ export function TournamentCard({
 export function TournamentCardSkeleton() {
   return (
     <div className="overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)]">
-      <div className="h-28 rondo-shimmer" />
+      <div className="h-32 rondo-shimmer" />
       <div className="space-y-3 p-4">
         <div className="flex gap-3">
           <div className="h-3 w-24 rounded-[var(--r-pill)] rondo-shimmer" />

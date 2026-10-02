@@ -170,7 +170,7 @@ export default function LegacyChatRedirectPage() {
   return (
     <div className="min-h-[100dvh] flex flex-col max-w-lg mx-auto">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-zinc-950/85 backdrop-blur-md border-b border-[var(--stroke)] px-4 py-3 flex items-center gap-3 shrink-0">
+      <header className="sticky top-0 z-40 rondo-glass-nav border-b border-[var(--stroke)] px-4 py-3 flex items-center gap-3 shrink-0">
         <button
           onClick={() => router.back()}
           className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--ink-hi)] hover:text-[var(--gold)] transition-colors cursor-pointer active:scale-[0.95]"
@@ -184,15 +184,15 @@ export default function LegacyChatRedirectPage() {
         </div>
         {isConnected ? (
           <div className="flex items-center gap-1.5 bg-[var(--gold)]/10 border border-[var(--gold)]/20 rounded-full px-3 py-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--ok)] animate-pulse" />
             <span className="text-[var(--gold)] text-xs font-semibold">Live</span>
           </div>
         ) : (
           <button
             onClick={() => setRetryKey((k) => k + 1)}
-            className="flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 rounded-full px-3 py-1 active:scale-[0.96] transition-transform"
+            className="flex items-center gap-1.5 bg-[var(--live)]/10 border border-[var(--live)]/20 rounded-full px-3 py-1 active:scale-[0.96] transition-transform"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--live)] animate-pulse" />
             <span className="text-[var(--live)] text-xs font-semibold">Retry</span>
           </button>
         )}
@@ -249,7 +249,7 @@ export default function LegacyChatRedirectPage() {
                         "px-3.5 py-2 text-sm leading-relaxed break-words",
                         isOwn
                           ? "bg-[var(--gold)] text-rondo-black font-medium rounded-[var(--r-md)] rounded-br-sm"
-                          : "bg-zinc-800 text-[var(--ink-hi)] rounded-[var(--r-md)] rounded-bl-sm",
+                          : "bg-[var(--bg-inset)] text-[var(--ink-hi)] rounded-[var(--r-md)] rounded-bl-sm",
                         mi === 0 && isOwn && "rounded-tr-2xl",
                         mi === 0 && !isOwn && "rounded-tl-2xl"
                       )}
@@ -271,7 +271,7 @@ export default function LegacyChatRedirectPage() {
       </div>
 
       {/* Input bar — sits above bottom nav */}
-      <div className="sticky bottom-16 left-0 right-0 bg-zinc-950/90 backdrop-blur-md border-t border-[var(--stroke)] px-4 py-3 flex items-end gap-3 shrink-0">
+      <div className="sticky bottom-0 left-0 right-0 rondo-sticky-action border-t border-[var(--stroke)] px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex items-end gap-3 shrink-0">
         <textarea
           ref={inputRef}
           value={input}
@@ -279,7 +279,7 @@ export default function LegacyChatRedirectPage() {
           onKeyDown={handleKeyDown}
           rows={1}
           placeholder="Say something..."
-          className="flex-1 resize-none bg-zinc-800 border border-[var(--stroke)] rounded-[var(--r-md)] px-4 py-3 text-[var(--ink-hi)] text-sm placeholder:text-[var(--ink-low)] focus:outline-none focus:border-[var(--gold)]/40 transition-colors max-h-24 leading-relaxed min-h-[44px]"
+          className="flex-1 resize-none bg-[var(--bg-inset)] border border-[var(--stroke)] rounded-[var(--r-md)] px-4 py-3 text-[var(--ink-hi)] text-sm placeholder:text-[var(--ink-low)] focus:outline-none focus:border-[var(--gold)]/40 transition-colors max-h-24 leading-relaxed min-h-[44px]"
           style={{ fieldSizing: "content" } as React.CSSProperties}
         />
         <button

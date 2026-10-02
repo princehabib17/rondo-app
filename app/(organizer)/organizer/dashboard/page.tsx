@@ -28,11 +28,11 @@ interface OrgGame {
 }
 
 const statusColor: Record<string, string> = {
-  open: "text-emerald-300 bg-emerald-400/10",
+  open: "text-[var(--ok)] bg-[var(--ok)]/10",
   full: "text-[var(--gold)] bg-[var(--gold)]/10",
-  in_progress: "text-sky-300 bg-sky-400/10",
+  in_progress: "text-[var(--ink-hi)] bg-[var(--bg-inset)]",
   completed: "text-[var(--ink-low)] bg-[var(--bg-inset)]",
-  cancelled: "text-[var(--live)] bg-red-400/10",
+  cancelled: "text-[var(--live)] bg-[var(--live)]/10",
 };
 
 function getGreeting() {
@@ -164,12 +164,12 @@ export default function OrganizerDashboardPage() {
           transition={bouncy}
         >
           <p className="font-body text-sm text-[var(--ink-low)]">{getGreeting()}</p>
-          <h1 className="font-heading text-[3.25rem] font-black uppercase italic leading-none text-[var(--ink-hi)]">
+          <h1 className="font-heading text-[3.25rem] font-black uppercase leading-none text-[var(--ink-hi)]">
             {loading ? "..." : firstName || "Organizer"}
           </h1>
           <div className="mt-4 flex items-baseline gap-3">
-            <span className="font-heading text-4xl font-black italic text-[var(--gold)]">
-              {loading ? "—" : formatPrice(totalEarnings)}
+            <span className="font-heading text-4xl font-black text-[var(--gold)]">
+              {loading ? "₱0" : formatPrice(totalEarnings)}
             </span>
             <span className="font-body text-sm text-[var(--ink-low)]">
               {loading ? "" : `earned · ${games.length} game${games.length !== 1 ? "s" : ""}`}
@@ -225,7 +225,7 @@ export default function OrganizerDashboardPage() {
             </p>
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <h2 className="font-heading text-xl font-black uppercase italic leading-none text-[var(--ink-hi)]">
+                <h2 className="font-heading text-xl font-black uppercase leading-none text-[var(--ink-hi)]">
                   {nextGame.title}
                 </h2>
                 <p className="mt-1 font-body text-xs text-[var(--ink-low)]">
@@ -250,7 +250,7 @@ export default function OrganizerDashboardPage() {
               <p className="font-body text-[10px] font-black uppercase tracking-[0.22em] text-[var(--ink-low)]">
                 Event inventory
               </p>
-              <h2 className="font-heading text-2xl font-black uppercase italic leading-none text-[var(--ink-hi)]">
+              <h2 className="font-heading text-2xl font-black uppercase leading-none text-[var(--ink-hi)]">
                 Your Games
               </h2>
             </div>
@@ -267,7 +267,7 @@ export default function OrganizerDashboardPage() {
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
-                  className="h-52 animate-pulse rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.03]"
+                  className="h-52 animate-pulse rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)]"
                 />
               ))}
             </div>
@@ -276,13 +276,13 @@ export default function OrganizerDashboardPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={bouncy}
-              className="rounded-[var(--r-md)] border border-dashed border-[var(--stroke)] bg-white/[0.02] px-5 py-16 text-center"
+              className="rounded-[var(--r-md)] border border-dashed border-[var(--stroke)] bg-[var(--bg-surface)] px-5 py-16 text-center"
             >
-              <p className="font-heading text-2xl font-black uppercase italic text-[var(--ink-hi)]">
+              <p className="font-heading text-2xl font-black uppercase text-[var(--ink-hi)]">
                 No games yet
               </p>
               <p className="mx-auto mt-2 max-w-[22ch] font-body text-sm text-[var(--ink-low)]">
-                Start with a match page — cover image, venue, teams, and price.
+                Start with a match page: cover image, venue, teams, and price.
               </p>
               <Link
                 href="/organizer/create/match"
@@ -304,7 +304,7 @@ export default function OrganizerDashboardPage() {
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ ...bouncy, delay: 0.08 + i * 0.04 }}
-                    className="overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.03] transition hover:border-[var(--gold)]/25"
+                    className="overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] transition hover:border-[var(--gold)]/25"
                   >
                     {/* Image — dominant, full width */}
                     <div className="relative h-44">
@@ -319,7 +319,7 @@ export default function OrganizerDashboardPage() {
                           className={`h-full w-full bg-gradient-to-br ${gameGradient(game.id)}`}
                         />
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-night)]/90 via-[var(--bg-night)]/20 to-transparent" />
 
                       {/* Cover upload */}
                       <label
@@ -354,7 +354,7 @@ export default function OrganizerDashboardPage() {
 
                       {/* Title + meta overlaid at bottom */}
                       <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <h3 className="font-heading text-xl font-black uppercase italic leading-none text-[var(--ink-hi)]">
+                        <h3 className="font-heading text-xl font-black uppercase leading-none text-[var(--ink-hi)]">
                           {game.title}
                         </h3>
                         <p className="mt-1 font-body text-xs text-[var(--ink-low)]">
@@ -382,7 +382,7 @@ export default function OrganizerDashboardPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="font-heading text-base font-black italic text-[var(--gold)]">
+                        <span className="font-heading text-base font-black text-[var(--gold)]">
                           {formatPrice(game.price_per_player)}
                         </span>
                         <Link

@@ -16,7 +16,7 @@ export async function notifyWaitlistSpotOpen(gameId: string, gameTitle: string) 
     user_id: r.user_id,
     type: "waitlist_spot_open",
     title: "Spot opened up",
-    body: `A spot opened for ${gameTitle}. Open the app — first to accept gets in.`,
+    body: `A spot opened for ${gameTitle}. First to accept gets in.`,
     link: `/games/${gameId}/join?claim=1`,
   }));
 

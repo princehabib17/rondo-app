@@ -209,7 +209,7 @@ export default function ManageGamePage() {
               <span className="text-[var(--ink-hi)] text-sm font-semibold">Reopen Game</span>
             </button>
           ) : confirmCancel ? (
-            <div className="col-span-2 bg-[var(--bg-surface)] border border-red-500/40 rounded-[var(--r-md)] p-4 space-y-3">
+            <div className="col-span-2 bg-[var(--bg-surface)] border border-[var(--live)]/40 rounded-[var(--r-md)] p-4 space-y-3">
               <p className="text-[var(--ink-hi)] text-sm font-bold">Cancel this game?</p>
               <p className="text-[var(--ink-low)] text-xs">All players will lose their reserved spots.</p>
               <div className="flex gap-2">
@@ -339,7 +339,7 @@ export default function ManageGamePage() {
               <h2 className="text-[var(--ink-hi)] font-bold text-base">Waitlist ({waitlist.length})</h2>
             </div>
             <p className="text-[var(--ink-low)] text-xs">
-              No order — notify all when a spot opens, or add someone manually below.
+              No order. Notify everyone when a spot opens, or add someone below.
             </p>
             <div className="bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] divide-y divide-border">
               {waitlist.map((row) => (

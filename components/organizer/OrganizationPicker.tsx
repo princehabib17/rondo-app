@@ -132,7 +132,7 @@ export function OrganizationPicker({ value, onChange, onReady }: OrganizationPic
 
   return (
     <>
-      <div className="space-y-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.025] p-4">
+      <div className="space-y-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-4">
         <div className="flex items-center gap-2">
           <Building2 size={17} className="text-[var(--gold)]" />
           <div>
@@ -166,7 +166,7 @@ export function OrganizationPicker({ value, onChange, onReady }: OrganizationPic
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="relative w-14 h-14 rounded-full border-2 border-dashed border-[var(--stroke)] bg-white/[0.03] flex items-center justify-center overflow-hidden shrink-0 hover:border-[var(--gold)]/50 transition-colors"
+              className="relative w-14 h-14 rounded-full border-2 border-dashed border-[var(--stroke)] bg-[var(--bg-surface)] flex items-center justify-center overflow-hidden shrink-0 hover:border-[var(--gold)]/50 transition-colors"
             >
               {logoPreview ? (
                 <img src={logoPreview} alt="Logo preview" className="w-full h-full object-cover" />

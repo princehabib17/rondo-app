@@ -127,7 +127,7 @@ export default function OrganizerRoomPage() {
           </button>
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <Radio size={18} className="text-[var(--gold)] shrink-0" />
-            <h1 className="font-heading text-[var(--ink-hi)] font-black italic text-lg uppercase truncate">
+            <h1 className="font-heading text-[var(--ink-hi)] font-black text-lg uppercase truncate">
               My Room
             </h1>
           </div>
@@ -168,7 +168,7 @@ export default function OrganizerRoomPage() {
         {/* Feed */}
         <div className="flex items-center gap-2 mb-3">
           <Radio size={14} className="text-[var(--gold)]" />
-          <h2 className="font-heading text-[var(--ink-hi)] font-black italic text-sm uppercase">
+          <h2 className="font-heading text-[var(--ink-hi)] font-black text-sm uppercase">
             Past Broadcasts
           </h2>
         </div>

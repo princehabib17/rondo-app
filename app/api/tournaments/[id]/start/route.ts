@@ -94,7 +94,7 @@ export async function POST(
         user_id: team.captain_id,
         type: "tournament_started",
         title: "Tournament started",
-        body: `${tournament.name} is underway — check your fixtures`,
+        body: `${tournament.name} is underway. Check your fixtures.`,
         link: `/tournaments/${tournamentId}`,
       }))
     );

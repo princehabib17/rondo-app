@@ -1,14 +1,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Calendar, ChevronRight, MapPin, Megaphone, Timer, Users } from "lucide-react";
+import { format } from "date-fns";
+import {
+  ArrowUpRight,
+  CalendarBlank,
+  CaretRight,
+  CheckCircle,
+  MapPin,
+  Megaphone,
+  ShareNetwork,
+  Timer,
+} from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { MatchTeamsRoster } from "@/components/match/MatchTeamsRoster";
 import { MatchRulesPanel } from "@/components/match/MatchRulesPanel";
-import { formatGameDate, formatPrice } from "@/lib/utils/format";
+import { formatPrice } from "@/lib/utils/format";
+import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { EmptyState, RondoButton } from "@/components/rondo/primitives";
+import { GameBadges } from "@/components/feed/GameBadges";
 import { PUBLIC_PROFILE_SELECT } from "@/lib/supabase/profile-select";
 import {
   getMatchStatusBanner,
@@ -16,12 +30,10 @@ import {
   spotsLeft,
 } from "@/lib/match/rules";
 import type { Game, GamePlayer } from "@/lib/supabase/types";
-import { PitchView } from "@/components/venue/PitchView";
-import { gameCoverSrc, pitchPhotoForVenue } from "@/lib/venues/pitch-photos";
+import { matchHeroImage } from "@/lib/venues/pitch-photos";
 
 export default function MatchDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
   const [game, setGame] = useState<Game | null>(null);
   const [gamesHosted, setGamesHosted] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -87,11 +99,11 @@ export default function MatchDetailPage() {
   if (loading) {
     return (
       <div className="min-h-[100dvh] rondo-page">
-        <div className="h-52 rondo-shimmer" />
-        <div className="p-4 space-y-4 max-w-lg mx-auto">
-          <div className="h-6 w-2/3 rondo-shimmer rounded" />
-          <div className="h-24 rondo-shimmer rounded-[var(--r-md)]" />
-          <div className="h-40 rondo-shimmer rounded-[var(--r-md)]" />
+        <div className="aspect-[16/11] w-full rondo-shimmer" />
+        <div className="mx-auto max-w-lg space-y-4 p-4">
+          <div className="h-16 rounded-[var(--r-md)] rondo-shimmer" />
+          <div className="h-32 rounded-[var(--r-md)] rondo-shimmer" />
+          <div className="h-40 rounded-[var(--r-md)] rondo-shimmer" />
         </div>
       </div>
     );
@@ -99,16 +111,21 @@ export default function MatchDetailPage() {
 
   if (!game) {
     return (
-      <div className="min-h-[100dvh] rondo-page flex items-center justify-center">
-        <p className="text-[var(--ink-low)]">Match not found</p>
+      <div className="min-h-[100dvh] rondo-page">
+        <PageHeader title="Match" back fallbackHref="/feed" />
+        <div className="mx-auto max-w-lg px-4 py-12">
+          <EmptyState
+            title="Match not found"
+            body="It may have been cancelled or the link is old. Plenty more are on tonight."
+            action={<RondoButton href="/feed">Find a match</RondoButton>}
+          />
+        </div>
       </div>
     );
   }
 
   const banner = getMatchStatusBanner(game);
-  const pitch = pitchPhotoForVenue(game.venue_name);
-  const cover = gameCoverSrc(game);
-  const heroIsPitch = Boolean(pitch && cover === pitch.src);
+  const hero = matchHeroImage(game);
   const cta = resolveJoinCta({
     game,
     myEntry,
@@ -117,7 +134,12 @@ export default function MatchDetailPage() {
     onWaitlist,
   });
   const left = spotsLeft(game);
+  const filled = game.max_players - left;
   const spotOpenForWaitlist = onWaitlist && !myEntry && left > 0;
+  const kickoff = new Date(game.date_time);
+  const mapsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+    [game.venue_name, game.venue_address].filter(Boolean).join(", ")
+  )}`;
 
   async function leaveWaitlist() {
     setLeavingWaitlist(true);
@@ -129,142 +151,128 @@ export default function MatchDetailPage() {
       }
       setOnWaitlist(false);
     } catch {
-      // silent — user can retry
+      // silent: user can retry
     } finally {
       setLeavingWaitlist(false);
     }
   }
 
   return (
-    <div className="min-h-[100dvh] rondo-page pb-40">
-      <header className="sticky top-0 z-40 rondo-glass-nav border-b border-[var(--stroke)] px-4 py-3 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="w-10 h-10 flex items-center justify-center text-[var(--ink-hi)] hover:bg-[var(--bg-inset)] rounded-[var(--r-sm)] transition-colors active:scale-[0.95]"
-          aria-label="Go back"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <h1 className="font-heading text-[var(--ink-hi)] font-black italic text-base uppercase flex-1 truncate">
-          {game.title}
-        </h1>
-        <span className="font-heading text-[var(--gold)] font-black text-sm shrink-0">
-          {game.price_per_player === 0 ? "Free" : formatPrice(game.price_per_player)}
-        </span>
-      </header>
+    <div className="min-h-[100dvh] rondo-page">
+      <PageHeader
+        title={game.title}
+        back
+        fallbackHref="/feed"
+        trailing={
+          currentUserId && !isGuest ? (
+            <Link
+              href={`/games/${game.id}/invite`}
+              aria-label="Invite friends"
+              className="grid size-11 place-items-center rounded-[var(--r-pill)] text-[var(--ink-hi)] hover:bg-[var(--bg-inset)]"
+            >
+              <ShareNetwork size={20} weight="bold" aria-hidden />
+            </Link>
+          ) : null
+        }
+      />
 
-      {heroIsPitch && pitch ? (
-        <PitchView photo={pitch} format={game.format} />
-      ) : (
-        <div className={`relative h-48 ${cover ? "bg-[var(--bg-inset)]" : "rondo-floodlight-scene"}`}>
-          {cover && (
-            <img src={cover} alt="" className="w-full h-full object-cover" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-rondo-page via-rondo-page/40 to-transparent" />
-          <span className="absolute bottom-3 left-4 font-heading text-[var(--ink-hi)] text-2xl font-black italic uppercase">
-            {game.format}
-          </span>
+      <section className="relative isolate">
+        <div className="relative aspect-[16/11] w-full overflow-hidden bg-[var(--bg-inset)]">
+          <img src={hero.src} alt={hero.alt} className="h-full w-full object-cover" />
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-[linear-gradient(180deg,transparent_30%,color-mix(in_oklch,var(--bg-page)_70%,transparent)_70%,var(--bg-page)_100%)]"
+          />
         </div>
-      )}
+        <div className="relative -mt-24 px-4">
+          <div className="mx-auto max-w-lg">
+            <GameBadges game={game} showStatus />
+            <h2 className="mt-3 font-heading text-[2rem] font-bold uppercase leading-[0.95] tracking-[0.01em] text-[var(--ink-hi)] [text-wrap:balance]">
+              {game.title}
+            </h2>
+            <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rondo-meta text-[var(--ink-mid)]">
+              <span className="inline-flex items-center gap-1.5">
+                <CalendarBlank size={15} className="text-[var(--ink-low)]" aria-hidden />
+                {format(kickoff, "EEEE, MMM d")}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin size={15} className="text-[var(--ink-low)]" aria-hidden />
+                {game.venue_name}
+              </span>
+            </p>
+          </div>
+        </div>
+      </section>
 
-      <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
+      <div className="mx-auto max-w-lg space-y-6 px-4 py-6">
+        <dl className="grid grid-cols-3 divide-x divide-[var(--stroke)] overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)]">
+          <div className="px-3 py-3">
+            <dt className="rondo-label text-[var(--ink-low)]">Kickoff</dt>
+            <dd className="mt-1 font-heading text-xl font-bold leading-6 tabular-nums text-[var(--ink-hi)]">
+              {format(kickoff, "h:mm a")}
+            </dd>
+          </div>
+          <div className="px-3 py-3">
+            <dt className="rondo-label text-[var(--ink-low)]">Spots</dt>
+            <dd className="mt-1 font-heading text-xl font-bold leading-6 tabular-nums text-[var(--ink-hi)]">
+              {left > 0 ? `${left} left` : "Full"}
+            </dd>
+          </div>
+          <div className="px-3 py-3">
+            <dt className="rondo-label text-[var(--ink-low)]">Per player</dt>
+            <dd className="mt-1 font-heading text-xl font-bold leading-6 tabular-nums text-[var(--gold)]">
+              {game.price_per_player === 0 ? "Free" : formatPrice(game.price_per_player)}
+            </dd>
+          </div>
+        </dl>
+
+        <div>
+          <div className="h-1.5 overflow-hidden rounded-[var(--r-pill)] bg-[var(--bg-inset)]">
+            <div
+              className="h-full rounded-[var(--r-pill)] bg-[var(--ink-hi)]"
+              style={{ width: `${Math.min(100, Math.round((filled / Math.max(game.max_players, 1)) * 100))}%` }}
+            />
+          </div>
+          <p className="mt-2 rondo-meta text-[var(--ink-low)]">
+            {filled} of {game.max_players} players in
+          </p>
+        </div>
+
         {banner && (
           <div
-            className={`rounded-[var(--r-md)] px-4 py-3 text-sm font-medium border ${
+            className={cn(
+              "rounded-[var(--r-md)] border px-4 py-3 rondo-body",
               banner.tone === "error"
-                ? "bg-red-950/40 border-red-800/50 text-red-200"
-                : "bg-amber-950/30 border-amber-700/40 text-amber-100"
-            }`}
+                ? "border-[color-mix(in_oklch,var(--live)_40%,transparent)] bg-[color-mix(in_oklch,var(--live)_10%,transparent)] text-[var(--live)]"
+                : "border-[var(--stroke)] bg-[var(--bg-surface)] text-[var(--ink-mid)]"
+            )}
           >
             {banner.text}
           </div>
         )}
 
-        <MatchRulesPanel game={game} organizer={game.organizer} gamesHosted={gamesHosted} />
-
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <Calendar size={16} className="text-[var(--gold)] shrink-0" />
-            <div>
-              <p className="text-[var(--ink-low)] text-[10px] uppercase">When</p>
-              <p className="text-[var(--ink-hi)] text-sm font-semibold">{formatGameDate(game.date_time)}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <MapPin size={16} className="text-[var(--gold)] shrink-0" />
-            <div>
-              <p className="text-[var(--ink-low)] text-[10px] uppercase">Where</p>
-              <p className="text-[var(--ink-hi)] text-sm font-semibold">{game.venue_name}</p>
-              <p className="text-[var(--ink-low)] text-xs">{game.venue_address}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Users size={16} className="text-[var(--gold)] shrink-0" />
-            <div>
-              <p className="text-[var(--ink-low)] text-[10px] uppercase">Spots</p>
-              <p className="text-[var(--ink-hi)] text-sm font-semibold">
-                {game.max_players - left} / {game.max_players} filled
-                {left > 0 && (
-                  <span className="text-[var(--gold)] ml-2">{left} left</span>
-                )}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {pitch && !heroIsPitch && <PitchView photo={pitch} />}
-
-        <a
-          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-            [game.venue_name, game.venue_address].filter(Boolean).join(", ")
-          )}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="rondo-surface flex items-center gap-3 p-4 active:scale-[0.98] transition-transform"
-        >
-          <MapPin size={18} className="text-[var(--gold)] shrink-0" />
-          <span className="text-[var(--ink-hi)] text-sm font-semibold flex-1">Open in Maps</span>
-          <ChevronRight size={16} className="text-[var(--ink-low)]" />
-        </a>
-
-        <MatchTeamsRoster game={game} />
-
-        <Link
-          href={`/games/${game.id}/timer`}
-          className="rondo-surface flex items-center gap-4 p-4 active:scale-[0.98] transition-transform"
-        >
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--r-md)] bg-[var(--gold)] text-rondo-black">
-            <Timer size={22} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[var(--ink-hi)] text-sm font-bold">Live match timer</p>
-            <p className="text-[var(--ink-low)] text-xs">
-              Open the round clock, current matchup, and next rotation.
-            </p>
-          </div>
-          <ChevronRight size={18} className="text-[var(--ink-low)] shrink-0" />
-        </Link>
-
         {myEntry && (
-          <div className="rondo-surface border-[var(--gold)]/30 p-4 text-center">
-            <p className="text-[var(--gold)] font-semibold text-sm">You have a spot in this match</p>
-            <p className="text-[var(--ink-low)] text-xs mt-1 capitalize">{myEntry.payment_status.replace(/_/g, " ")}</p>
+          <div className="flex items-center gap-3 rounded-[var(--r-md)] border border-[color-mix(in_oklch,var(--ok)_35%,var(--stroke))] bg-[color-mix(in_oklch,var(--ok)_8%,transparent)] p-4">
+            <CheckCircle size={22} weight="fill" className="shrink-0 text-[var(--ok)]" aria-hidden />
+            <div className="min-w-0">
+              <p className="rondo-body font-bold text-[var(--ink-hi)]">You have a spot</p>
+              <p className="rondo-meta text-[var(--ink-low)]">{describeEntry(myEntry.payment_status)}</p>
+            </div>
           </div>
         )}
 
         {onWaitlist && !myEntry && (
-          <div className="rondo-surface border-amber-500/30 p-4 space-y-3">
+          <div className="space-y-3 rounded-[var(--r-md)] border border-[color-mix(in_oklch,var(--gold)_30%,var(--stroke))] bg-[var(--gold-dim)] p-4">
             {spotOpenForWaitlist ? (
               <>
-                <p className="text-amber-100 text-sm font-semibold">A spot is open — claim it before someone else does.</p>
-                <p className="text-[var(--ink-low)] text-xs">Everyone on the waitlist was notified. First to accept wins.</p>
+                <p className="rondo-body font-bold text-[var(--gold)]">A spot just opened. Claim it before someone else does.</p>
+                <p className="rondo-meta text-[var(--ink-low)]">Everyone on the waitlist was notified. First to accept gets in.</p>
               </>
             ) : (
               <>
-                <p className="text-[var(--ink-hi)] text-sm font-semibold">You&apos;re on the waitlist</p>
-                <p className="text-[var(--ink-low)] text-xs">
-                  When a spot opens, everyone gets notified. First to accept gets in. You stay on the list until you leave.
+                <p className="rondo-body font-bold text-[var(--ink-hi)]">You&apos;re on the waitlist</p>
+                <p className="rondo-meta text-[var(--ink-low)]">
+                  When a spot opens, everyone gets notified. First to accept gets in.
                 </p>
               </>
             )}
@@ -272,46 +280,99 @@ export default function MatchDetailPage() {
               type="button"
               onClick={leaveWaitlist}
               disabled={leavingWaitlist}
-              className="text-[var(--ink-mid)] hover:text-[var(--ink-hi)] text-xs font-semibold underline underline-offset-2 disabled:opacity-50"
+              className="rondo-meta font-bold text-[var(--ink-mid)] underline underline-offset-2 hover:text-[var(--ink-hi)] disabled:opacity-50"
             >
-              {leavingWaitlist ? "Leaving…" : "Leave waitlist"}
+              {leavingWaitlist ? "Leaving..." : "Leave waitlist"}
             </button>
           </div>
         )}
+
+        <MatchRulesPanel game={game} organizer={game.organizer} gamesHosted={gamesHosted} />
+
+        <section className="space-y-3">
+          <h3 className="rondo-label text-[var(--ink-low)]">Venue</h3>
+          <a
+            href={mapsHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex min-h-16 items-center gap-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] px-4 py-3 transition-transform active:scale-[0.98]"
+          >
+            <span className="grid size-10 shrink-0 place-items-center rounded-[var(--r-pill)] bg-[var(--bg-inset)] text-[var(--ink-hi)]">
+              <MapPin size={18} aria-hidden />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate rondo-body font-bold text-[var(--ink-hi)]">{game.venue_name}</span>
+              {game.venue_address && (
+                <span className="block truncate rondo-meta text-[var(--ink-low)]">{game.venue_address}</span>
+              )}
+            </span>
+            <span className="inline-flex shrink-0 items-center gap-1 rondo-meta font-bold text-[var(--ink-mid)]">
+              Directions
+              <ArrowUpRight size={14} aria-hidden />
+            </span>
+          </a>
+        </section>
+
+        <MatchTeamsRoster game={game} />
+
+        <Link
+          href={`/games/${game.id}/timer`}
+          className="flex min-h-16 items-center gap-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] px-4 py-3 transition-transform active:scale-[0.98]"
+        >
+          <span className="grid size-10 shrink-0 place-items-center rounded-[var(--r-pill)] bg-[var(--bg-inset)] text-[var(--ink-hi)]">
+            <Timer size={18} aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block rondo-body font-bold text-[var(--ink-hi)]">Match timer</span>
+            <span className="block truncate rondo-meta text-[var(--ink-low)]">Round clock, current matchup, next rotation</span>
+          </span>
+          <CaretRight size={16} className="shrink-0 text-[var(--ink-low)]" aria-hidden />
+        </Link>
       </div>
 
-      {/* bottom-24 (not bottom-16): the floating BottomNav pill sits at
-          bottom-6 with a 60px height, occupying 24-84px from the viewport
-          edge — bottom-16 (64px) rendered this bar underneath it. */}
-      <div className="fixed bottom-24 left-0 right-0 max-w-lg mx-auto px-4 pb-2 z-30 flex gap-2">
-        <Link
-          href={`/games/${game.id}/room`}
-          className="min-w-[72px] min-h-[52px] rondo-surface flex flex-col items-center justify-center gap-0.5 text-[var(--ink-hi)] hover:text-[var(--gold)] transition-colors"
-          aria-label="Organizer room"
-        >
-          <Megaphone size={18} />
-          <span className="text-[10px] font-bold uppercase tracking-wide">Room</span>
-        </Link>
-
-        {cta.action === "disabled" ? (
-          <div className="flex-1 rondo-surface px-4 py-3 flex flex-col justify-center min-h-[52px]">
-            <p className="text-[var(--ink-hi)] font-bold text-sm">{cta.label}</p>
-            <p className="text-[var(--ink-low)] text-xs">{cta.reason}</p>
-          </div>
-        ) : cta.action === "login" || cta.action === "signup" ? (
-          <Link href={cta.href!} className="flex-1 rondo-btn rondo-btn-primary min-h-[52px] flex items-center justify-center">
-            {cta.label}
-          </Link>
-        ) : (
+      {/* Pushed screen: the tab bar steps aside, so this bar owns the bottom edge. */}
+      <div className="fixed inset-x-0 bottom-0 z-30 rondo-sticky-action pb-[env(safe-area-inset-bottom)]">
+        <div className="mx-auto flex max-w-lg gap-2 px-4 py-3">
           <Link
-            href={cta.href}
-            className="flex-1 rondo-btn rondo-btn-primary min-h-[52px] flex items-center justify-center gap-2"
+            href={`/games/${game.id}/room`}
+            className="flex min-h-12 min-w-16 flex-col items-center justify-center gap-0.5 rounded-[var(--r-md)] bg-[var(--bg-inset)] text-[var(--ink-hi)]"
+            aria-label="Organizer room"
           >
-            {cta.label}
-            <ChevronRight size={18} />
+            <Megaphone size={18} aria-hidden />
+            <span className="rondo-label text-[0.625rem] text-[var(--ink-mid)]">Room</span>
           </Link>
-        )}
+
+          {cta.action === "disabled" ? (
+            <div className="flex min-h-12 flex-1 flex-col justify-center rounded-[var(--r-md)] bg-[var(--bg-inset)] px-4 py-2">
+              <p className="rondo-body font-bold text-[var(--ink-hi)]">{cta.label}</p>
+              <p className="rondo-meta text-[var(--ink-low)]">{cta.reason}</p>
+            </div>
+          ) : (
+            <Link href={cta.href!} className="rondo-btn rondo-btn-primary flex-1">
+              {cta.label}
+              {cta.action !== "login" && cta.action !== "signup" && <CaretRight size={18} weight="bold" aria-hidden />}
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );
+}
+
+function describeEntry(status: string): string {
+  switch (status) {
+    case "paid":
+    case "approved":
+      return "Paid and confirmed. See you on the pitch.";
+    case "venue":
+      return "Pay the organizer at the venue on match day.";
+    case "pending_approval":
+      return "Waiting for the organizer to approve you.";
+    case "reserved":
+    case "pending":
+    case "pending_payment":
+      return "Reserved. Pay from your wallet to lock it in.";
+    default:
+      return status.replaceAll("_", " ");
+  }
 }

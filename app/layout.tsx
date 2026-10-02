@@ -16,7 +16,7 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "RONDO — Find Your Game",
+  title: "Rondo · Find a game tonight",
   description: "Find games near you",
   keywords: ["sports", "games", "football", "soccer", "local", "community"],
   icons: {
