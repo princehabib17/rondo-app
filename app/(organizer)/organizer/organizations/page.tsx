@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { Check, X } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { OrganizationPicker } from "@/components/organizer/OrganizationPicker";
