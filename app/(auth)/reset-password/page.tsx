@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { RondoBrand } from "@/components/brand/RondoBrand";
+import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
+import { formatAuthError } from "@/lib/auth/format-auth-error";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -32,7 +35,11 @@ export default function ResetPasswordPage() {
     setLoading(false);
 
     if (updateError) {
-      setError(updateError.message);
+      setError(
+        /session|jwt|expired|not authenticated/i.test(updateError.message)
+          ? "This reset link has expired. Request a new one from the log in screen."
+          : formatAuthError(updateError.message)
+      );
       return;
     }
 
@@ -41,51 +48,61 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2 text-center">
-        <h1 className="text-[var(--ink-hi)] font-bold text-2xl uppercase tracking-widest">Reset Password</h1>
-        <p className="text-[var(--ink-low)] text-sm">Choose a new password for your account.</p>
+    <>
+      <div className="pt-2 mb-10">
+        <RondoBrand kind="wordmark" surface="auto" className="h-9 w-36" />
       </div>
 
+      <h1 className="rondo-hero-title text-4xl mb-2">New password</h1>
+      <p className="font-body text-sm text-[var(--ink-low)] mb-8">Pick something you haven&apos;t used before.</p>
+
       {saved ? (
-        <p className="text-[var(--ok)] text-sm text-center">Password updated. Redirecting to login...</p>
+        <p className="rounded-[var(--r-md)] border border-[color-mix(in_oklch,var(--ok)_35%,var(--stroke))] bg-[color-mix(in_oklch,var(--ok)_8%,transparent)] p-4 text-sm text-[var(--ok)]" role="status">
+          Password updated. Taking you to log in.
+        </p>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
-            <label className="text-[var(--ink-low)] text-xs uppercase tracking-wider">New Password</label>
+            <label htmlFor="new-password" className="font-body text-xs text-[var(--ink-mid)]">
+              New password
+            </label>
             <input
+              id="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               type="password"
               autoComplete="new-password"
-              className="w-full bg-[var(--bg-inset)] border border-[var(--stroke)] text-[var(--ink-hi)] rounded-[var(--r-sm)] p-3 text-sm focus:border-[var(--gold)] focus:outline-none"
-              placeholder="••••••••"
+              className={rondoFieldClass}
+              placeholder="At least 8 characters"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-[var(--ink-low)] text-xs uppercase tracking-wider">Confirm Password</label>
+            <label htmlFor="confirm-password" className="font-body text-xs text-[var(--ink-mid)]">
+              Confirm password
+            </label>
             <input
+              id="confirm-password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               type="password"
               autoComplete="new-password"
-              className="w-full bg-[var(--bg-inset)] border border-[var(--stroke)] text-[var(--ink-hi)] rounded-[var(--r-sm)] p-3 text-sm focus:border-[var(--gold)] focus:outline-none"
-              placeholder="••••••••"
+              className={rondoFieldClass}
+              placeholder="Type it again"
             />
           </div>
 
-          {error && <p className="text-[var(--live)] text-sm text-center">{error}</p>}
+          {error && (
+            <p className="text-sm text-[var(--live)]" role="alert">
+              {error}
+            </p>
+          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-[var(--gold)] text-[var(--gold-ink)] font-heading font-black uppercase tracking-widest text-sm py-4 rounded-[var(--r-md)] disabled:opacity-50"
-          >
-            {loading ? "Saving..." : "Update Password"}
-          </button>
+          <RondoButton type="submit" disabled={loading}>
+            {loading ? "Saving..." : "Save new password"}
+          </RondoButton>
         </form>
       )}
-    </div>
+    </>
   );
 }

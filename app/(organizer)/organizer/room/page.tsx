@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Radio, Trash2 } from "lucide-react";
+import { Radio, Trash2 } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { createClient } from "@/lib/supabase/client";
 import { formatRelativeTime } from "@/lib/utils/format";
 
@@ -113,26 +114,8 @@ export default function OrganizerRoomPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[var(--bg-page)] pb-24">
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-[var(--bg-page)]/95 backdrop-blur-md border-b border-[var(--stroke)] px-4 py-3">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="w-10 h-10 flex items-center justify-center text-[var(--ink-hi)] hover:text-[var(--ink-hi)]"
-            aria-label="Back"
-          >
-            <ArrowLeft size={20} />
-          </button>
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <Radio size={18} className="text-[var(--gold)] shrink-0" />
-            <h1 className="font-heading text-[var(--ink-hi)] font-black text-lg uppercase truncate">
-              My Room
-            </h1>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-[100dvh] rondo-page">
+      <PageHeader title="Room" subtitle="Broadcasts to everyone who follows you" />
 
       {/* Compose section */}
       <section className="px-4 pt-5">

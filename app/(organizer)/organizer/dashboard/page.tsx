@@ -7,6 +7,8 @@ import {
   ImagePlus,
   Users,
 } from "lucide-react";
+import { Plus } from "@phosphor-icons/react";
+import { RondoBrand } from "@/components/brand/RondoBrand";
 import Link from "next/link";
 import { toast } from "sonner";
 import { motion } from "motion/react";
@@ -140,23 +142,21 @@ export default function OrganizerDashboardPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[var(--bg-page)]">
-      {/* Sticky minimal header */}
-      <header className="sticky top-0 z-40 border-b border-[var(--stroke)] bg-[var(--bg-page)]/85 px-5 py-3 backdrop-blur-xl">
-        <div className="flex items-center justify-between gap-3">
-          <p className="font-body text-[10px] font-black uppercase tracking-[0.26em] text-[var(--gold)]">
-            Organizer
-          </p>
+    <div className="min-h-[100dvh] rondo-page">
+      <header className="sticky top-0 z-40 border-b border-[var(--stroke)] rondo-glass-nav pt-[env(safe-area-inset-top)]">
+        <div className="mx-auto flex h-14 max-w-lg items-center justify-between gap-3 px-4">
+          <RondoBrand kind="wordmark" surface="auto" className="h-7 w-28" />
           <Link
-            href="/organizer/create/match"
-            className="inline-flex min-h-[36px] items-center rounded-full bg-[var(--gold)] px-4 text-[11px] font-black uppercase tracking-wider text-[var(--gold-ink)] transition active:scale-[0.97]"
+            href="/organizer/create"
+            className="inline-flex h-10 items-center gap-1.5 rounded-[var(--r-pill)] border border-[var(--stroke)] px-4 rondo-label text-[var(--ink-hi)] transition hover:bg-[var(--bg-inset)] active:scale-[0.97]"
           >
-            + Create
+            <Plus size={14} weight="bold" aria-hidden />
+            Create
           </Link>
         </div>
       </header>
 
-      <div className="space-y-8 px-5 pb-12 pt-8">
+      <div className="mx-auto max-w-lg space-y-8 px-4 pb-12 pt-8">
         {/* Personal greeting — this IS the visual anchor */}
         <motion.section
           initial={{ opacity: 0, y: 16 }}
@@ -168,7 +168,7 @@ export default function OrganizerDashboardPage() {
             {loading ? "..." : firstName || "Organizer"}
           </h1>
           <div className="mt-4 flex items-baseline gap-3">
-            <span className="font-heading text-4xl font-black text-[var(--gold)]">
+            <span className="font-heading text-4xl font-bold tabular-nums text-[var(--gold)]">
               {loading ? "₱0" : formatPrice(totalEarnings)}
             </span>
             <span className="font-body text-sm text-[var(--ink-low)]">
@@ -182,7 +182,7 @@ export default function OrganizerDashboardPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...bouncy, delay: 0.06 }}
-          className="-mx-5 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           <div className="flex w-max gap-2">
             <Link
@@ -218,9 +218,9 @@ export default function OrganizerDashboardPage() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...bouncy, delay: 0.1 }}
-            className="rounded-[var(--r-md)] border border-[var(--gold)]/20 bg-[var(--gold)]/8 p-4"
+            className="rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-4"
           >
-            <p className="mb-1 font-body text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gold)]">
+            <p className="mb-1 rondo-label text-[var(--ink-low)]">
               Next up
             </p>
             <div className="flex items-center justify-between gap-3">
@@ -256,7 +256,7 @@ export default function OrganizerDashboardPage() {
             </div>
             <Link
               href="/organizer/create/match"
-              className="font-body text-xs font-black uppercase tracking-wider text-[var(--gold)]"
+              className="inline-flex min-h-11 items-center rondo-meta font-bold text-[var(--ink-mid)] hover:text-[var(--ink-hi)]"
             >
               New Game
             </Link>

@@ -45,13 +45,13 @@ export async function fetchHomeNextUp(
 
   const { data: memberships } = await supabase
     .from("tournament_team_members")
-    .select("tournament:tournaments(*)")
+    .select("tournament:tournaments(*, tournament_teams(id, status))")
     .eq("user_id", userId)
     .limit(24);
 
   const { data: captaincies } = await supabase
     .from("tournament_teams")
-    .select("tournament:tournaments(*)")
+    .select("tournament:tournaments(*, tournament_teams(id, status))")
     .eq("captain_id", userId)
     .eq("status", "registered")
     .eq("is_managed", false)

@@ -15,7 +15,7 @@ export async function GET() {
 
     const { data: transactions } = await supabase
       .from("wallet_transactions")
-      .select("id, amount, direction, source, note, game_id, created_at")
+      .select("id, amount, direction, source, note, game_id, created_at, game:games(title)")
       .eq("user_id", userData.user.id)
       .order("created_at", { ascending: false })
       .limit(30);

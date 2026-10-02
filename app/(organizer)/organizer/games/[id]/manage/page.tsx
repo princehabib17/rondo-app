@@ -167,7 +167,7 @@ export default function ManageGamePage() {
 
   return (
     <div className="min-h-[100dvh] pb-8">
-      <header className="sticky top-0 bg-[var(--bg-page)]/90 backdrop-blur-md border-b border-[var(--stroke)] z-40 px-4 py-3 flex items-center gap-3">
+      <header className="sticky top-0 rondo-glass-nav border-b border-[var(--stroke)] z-40 px-4 py-3 flex items-center gap-3">
         <button onClick={() => router.back()} className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--ink-hi)] hover:text-[var(--gold)] cursor-pointer" aria-label="Back">
           <ArrowLeft size={20} />
         </button>
@@ -257,7 +257,7 @@ export default function ManageGamePage() {
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: team.color }} />
                 <span className="text-[var(--ink-hi)] font-bold text-sm">{team.name}</span>
-                <span className="text-[var(--ink-low)] text-xs ml-auto">{team.game_players?.length ?? 0} players</span>
+                <span className="text-[var(--ink-low)] text-xs ml-auto">{team.game_players?.length ?? 0} {(team.game_players?.length ?? 0) === 1 ? "player" : "players"}</span>
               </div>
               <div className="space-y-2">
                 {(team.game_players ?? []).map((gp) => (

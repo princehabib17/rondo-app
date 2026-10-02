@@ -174,7 +174,7 @@ export default function EssentialsSetupPage() {
           <p className="mt-3 max-w-[320px] font-body text-sm leading-relaxed text-[color-mix(in_oklch,var(--night-ink)_66%,transparent)]">
             {isOrganizer
               ? "Players will see these details when they find your games."
-              : "Three quick details make the feed more useful from your first visit."}
+              : "A few details so the feed shows games that fit. You can change them anytime."}
           </p>
         </header>
 

@@ -11,7 +11,14 @@ const providers = [
   { id: "facebook" as const },
 ];
 
-export function SocialLoginButtons({ onboarding = false }: { onboarding?: boolean }) {
+export function SocialLoginButtons({
+  onboarding = false,
+  showLabel = true,
+}: {
+  onboarding?: boolean;
+  /** Hide the "Or continue with" line when the screen already has its own divider. */
+  showLabel?: boolean;
+}) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
 
@@ -30,7 +37,7 @@ export function SocialLoginButtons({ onboarding = false }: { onboarding?: boolea
 
   return (
     <div className="space-y-3">
-      <p className="text-center text-xs text-[var(--ink-mid)]">Or continue with</p>
+      {showLabel && <p className="text-center text-xs text-[var(--ink-mid)]">Or continue with</p>}
       <div className="flex gap-4 justify-center">
         <button
           type="button"

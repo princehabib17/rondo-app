@@ -340,7 +340,7 @@ export default function CreateMatchPage() {
   return (
     <div className="rondo-page min-h-[100dvh] pb-12">
       {/* header */}
-      <header className="sticky top-0 bg-[var(--bg-page)]/90 backdrop-blur-md border-b border-[var(--stroke)] z-40 px-4 py-3 flex items-center gap-3">
+      <header className="sticky top-0 rondo-glass-nav border-b border-[var(--stroke)] z-40 px-4 py-3 flex items-center gap-3">
         <button
           onClick={() => router.back()}
           className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--ink-hi)] hover:text-rondo-yellow transition-colors"

@@ -650,10 +650,10 @@ export function ProfileScreen({ id, asTab = false }: { id: string; asTab?: boole
                   <SettingsLink href="/organizer/dashboard" icon={<CalendarBlank size={18} aria-hidden />} label="Organizer dashboard" hint="Create games, manage payouts" />
                 )}
                 <SettingsLink
-                  href={isGuest ? "/signup?next=/profile" : "/onboarding/profile"}
+                  href={isGuest ? "/signup?next=/profile" : "/profile/edit"}
                   icon={<PencilSimple size={18} aria-hidden />}
                   label={isGuest ? "Create your account" : "Edit profile"}
-                  hint={isGuest ? "Save matches, pay, and post" : "Name, photo, position, areas"}
+                  hint={isGuest ? "Save matches, pay, and post" : "Photo, bio, position, areas"}
                 />
                 <SettingsLink href="/messages" icon={<ChatCircle size={18} aria-hidden />} label="Messages" />
                 <SettingsLink href="/help" icon={<Lifebuoy size={18} aria-hidden />} label="Help and refunds" />

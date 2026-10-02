@@ -49,7 +49,13 @@ export function FeedPageClient({
     <div className="min-h-[100dvh] rondo-page pb-24">
       <FeedHeader notificationCount={notificationCount} />
       <NextUpSection nextUp={nextUp} fallbackGame={fallbackGame} />
-      <YourTournamentsSection tournaments={yourTournaments} />
+      <YourTournamentsSection
+        tournaments={
+          nextUp?.kind === "tournament"
+            ? yourTournaments.filter((t) => t.id !== nextUp.tournament.id)
+            : yourTournaments
+        }
+      />
       <AroundYouSection tournaments={aroundYou} games={openGames} />
       <RecentSection rows={recentMatches} />
     </div>
