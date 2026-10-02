@@ -160,11 +160,10 @@ export default function EditProfilePage() {
     try {
       const supabase = createClient();
       const path = `${userId}/avatar-${Date.now()}.jpg`;
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(path, blob, { contentType: "image/jpeg", upsert: true });
+      const avatars = supabase.storage.from("avatars");
+      const { error: uploadError } = await avatars.upload(path, blob, { contentType: "image/jpeg", upsert: true });
       if (uploadError) throw uploadError;
-      const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+      const { data } = avatars.getPublicUrl(path);
       const { error: profileError } = await supabase
         .from("profiles")
         .update({ avatar_url: data.publicUrl })
