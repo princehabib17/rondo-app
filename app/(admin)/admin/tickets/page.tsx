@@ -31,11 +31,11 @@ const STATUS_FILTERS = [
 ] as const;
 
 const statusStyle: Record<string, string> = {
-  open: "bg-amber-400/15 text-amber-300",
-  in_review: "bg-sky-400/15 text-sky-300",
-  refund_pending: "bg-purple-400/15 text-purple-300",
-  resolved: "bg-emerald-400/15 text-emerald-300",
-  refunded: "bg-emerald-400/15 text-emerald-300",
+  open: "bg-[var(--gold)]/15 text-[var(--gold)]",
+  in_review: "bg-[var(--bg-inset)] text-[var(--ink-hi)]",
+  refund_pending: "bg-[var(--live)]/15 text-[var(--live)]",
+  resolved: "bg-[var(--ok)]/15 text-[var(--ok)]",
+  refunded: "bg-[var(--ok)]/15 text-[var(--ok)]",
   closed: "bg-[var(--bg-inset)] text-[var(--ink-low)]",
 };
 

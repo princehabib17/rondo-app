@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Share2, Link2, Users, ChevronRight } from "lucide-react";
+import { Check, LinkSimple, ShareNetwork, UsersThree, WhatsappLogo } from "@phosphor-icons/react";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { createClient } from "@/lib/supabase/client";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import type { Profile } from "@/lib/supabase/types";
@@ -16,6 +17,7 @@ interface InviteGame {
   id: string;
   title: string;
   venue_name: string;
+  max_players?: number;
   game_players: InvitePlayer[];
 }
 
@@ -32,7 +34,7 @@ export default function InvitePage() {
       const { data } = await supabase
         .from("games")
         .select(
-          "id, title, venue_name, game_players(id, profile:profiles(id, full_name, avatar_url, nationality))"
+          "id, title, venue_name, max_players, game_players(id, profile:profiles(id, full_name, avatar_url, nationality))"
         )
         .eq("id", id)
         .single();
@@ -44,90 +46,95 @@ export default function InvitePage() {
     load();
   }, [id]);
 
+  const shareText = game
+    ? `${game.title} at ${game.venue_name}. ${spotsLeftLabel(game)} Join me on Rondo:`
+    : "Join me on Rondo:";
+  // Built on tap: window isn't available during the server render.
+  const matchUrl = () => `${window.location.origin}/games/${id}`;
+
   async function handleShare() {
-    const url = `${window.location.origin}/games/${id}`;
     if (navigator.share) {
-      await navigator.share({ title: game?.title ?? "RONDO Match", url });
-    } else {
-      await navigator.clipboard.writeText(url);
+      await navigator.share({ title: game?.title ?? "Rondo match", text: shareText, url: matchUrl() }).catch(() => {});
+      return;
+    }
+    await copyLink();
+  }
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(matchUrl());
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
     }
   }
 
   return (
-    <div className="min-h-[100dvh] pb-8">
-      <header className="sticky top-0 bg-[var(--bg-page)]/90 backdrop-blur-md border-b border-[var(--stroke)] z-40 px-4 py-3 flex items-center gap-3">
-        <button
-          onClick={() => router.back()}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--ink-hi)] hover:text-[var(--gold)] transition-colors cursor-pointer"
-          aria-label="Back"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <h1 className="text-[var(--ink-hi)] font-bold text-base">Bring Your Squad</h1>
-      </header>
+    <div className="min-h-[100dvh] rondo-page">
+      <PageHeader title="Invite your crew" back fallbackHref={`/games/${id}`} />
 
-      <div className="px-4 py-8 space-y-8 max-w-lg mx-auto text-center">
-        <div className="space-y-2">
-          <div className="w-16 h-16 rounded-full bg-[var(--gold)]/10 border border-[var(--gold)]/20 flex items-center justify-center mx-auto">
-            <Users size={28} className="text-[var(--gold)]" />
-          </div>
-          <h2 className="text-[var(--ink-hi)] font-black text-2xl tracking-tight">Bring Your Squad!</h2>
-          <p className="text-[var(--ink-low)] text-sm">
-            Share this match with your friends so they can join too
+      <div className="mx-auto max-w-lg space-y-8 px-4 py-8">
+        <section className="text-center">
+          <span className="mx-auto grid size-16 place-items-center rounded-[var(--r-pill)] bg-[var(--gold-dim)] text-[var(--gold)]">
+            <UsersThree size={30} weight="duotone" aria-hidden />
+          </span>
+          <h2 className="mt-4 rondo-display text-[var(--ink-hi)]">Bring your squad</h2>
+          <p className="mx-auto mt-2 max-w-xs rondo-body text-[var(--ink-low)]">
+            {game ? `${game.title}. ${spotsLeftLabel(game)}` : "Send the match to your group chat."}
           </p>
+        </section>
+
+        <div className="grid gap-3">
+          <button
+            type="button"
+            onClick={() =>
+              window.open(`https://wa.me/?text=${encodeURIComponent(`${shareText} ${matchUrl()}`)}`, "_blank", "noopener")
+            }
+            className="rondo-btn rondo-btn-primary"
+          >
+            <WhatsappLogo size={20} weight="fill" aria-hidden />
+            Share on WhatsApp
+          </button>
+          <div className="grid grid-cols-2 gap-3">
+            <button type="button" onClick={copyLink} className="rondo-btn rondo-btn-secondary">
+              {copied ? <Check size={18} weight="bold" aria-hidden /> : <LinkSimple size={18} weight="bold" aria-hidden />}
+              {copied ? "Copied" : "Copy link"}
+            </button>
+            <button type="button" onClick={handleShare} className="rondo-btn rondo-btn-secondary">
+              <ShareNetwork size={18} weight="bold" aria-hidden />
+              More
+            </button>
+          </div>
+          <button type="button" onClick={() => router.push(`/games/${id}`)} className="rondo-btn rondo-btn-ghost">
+            Done
+          </button>
         </div>
 
-        <button
-          onClick={handleShare}
-          className="w-full bg-[var(--gold)] text-rondo-black font-black uppercase tracking-widest text-sm py-4 rounded-[var(--r-md)] active:scale-[0.98] transition-all cursor-pointer min-h-[52px] flex items-center justify-center gap-2"
-        >
-          {copied ? (
-            <>
-              <Link2 size={18} />
-              Link Copied!
-            </>
-          ) : (
-            <>
-              <Share2 size={18} />
-              Share Match Link
-            </>
-          )}
-        </button>
-
-        <button
-          onClick={() => router.push(`/games/${id}/confirmed`)}
-          className="w-full border border-[var(--stroke)] text-[var(--ink-low)] hover:text-[var(--ink-hi)] hover:border-[var(--stroke)]/80 text-sm py-4 rounded-[var(--r-md)] active:scale-[0.98] transition-all cursor-pointer min-h-[52px] flex items-center justify-center gap-2"
-        >
-          Skip <ChevronRight size={16} />
-        </button>
-
         {players.length > 0 && (
-          <div className="text-left space-y-3">
-            <p className="text-[var(--ink-low)] text-xs uppercase tracking-wider font-semibold">
-              Already Joined ({players.length})
-            </p>
-            <div className="flex flex-wrap gap-3">
+          <section className="space-y-3">
+            <h3 className="rondo-label text-[var(--ink-low)]">Already in · {players.length}</h3>
+            <div className="flex flex-wrap gap-4">
               {players.map((gp) =>
                 gp.profile ? (
-                  <div key={gp.id} className="flex flex-col items-center gap-1">
-                    <PlayerAvatar
-                      profile={gp.profile}
-                      size="md"
-                      showFlag
-                      linkable
-                    />
-                    <span className="text-[var(--ink-low)] text-[10px] max-w-[44px] truncate text-center">
+                  <div key={gp.id} className="flex w-12 flex-col items-center gap-1">
+                    <PlayerAvatar profile={gp.profile} size="md" showFlag linkable />
+                    <span className="w-full truncate text-center rondo-meta text-[var(--ink-low)]">
                       {gp.profile.full_name?.split(" ")[0]}
                     </span>
                   </div>
                 ) : null
               )}
             </div>
-          </div>
+          </section>
         )}
       </div>
     </div>
   );
+}
+
+function spotsLeftLabel(game: InviteGame): string {
+  const left = Math.max(0, (game.max_players ?? 0) - game.game_players.length);
+  if (!game.max_players) return "";
+  return left > 0 ? `${left} ${left === 1 ? "spot" : "spots"} left.` : "It's full, but the waitlist is open.";
 }

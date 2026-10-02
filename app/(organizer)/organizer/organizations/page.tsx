@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, Building2, Check, X } from "lucide-react";
+import { Check, X } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { OrganizationPicker } from "@/components/organizer/OrganizationPicker";
 
 type OrganizationRecord = {
@@ -101,15 +101,7 @@ export default function OrganizerOrganizationsPage() {
 
   return (
     <div className="min-h-[100dvh] rondo-page pb-20">
-      <header className="sticky top-0 rondo-glass-nav border-b border-[var(--stroke)] z-40 px-4 py-3">
-        <div className="flex items-center gap-2.5 max-w-lg mx-auto">
-          <Link href="/organizer/dashboard" aria-label="Back">
-            <ArrowLeft size={18} className="text-[var(--ink-mid)]" />
-          </Link>
-          <Building2 size={18} className="text-[var(--gold)]" />
-          <h1 className="text-[var(--ink-hi)] font-black text-lg">Organizations</h1>
-        </div>
-      </header>
+      <PageHeader title="Organizations" back fallbackHref="/organizer/dashboard" />
 
       <div className="px-4 py-5 space-y-5 max-w-lg mx-auto">
         <OrganizationPicker
@@ -120,10 +112,11 @@ export default function OrganizerOrganizationsPage() {
           }}
         />
 
-        {adminMemberships.length > 0 && (
+        {adminMemberships.length > 1 && (
           <select
             value={selectedOrgId}
             onChange={(e) => setSelectedOrgId(e.target.value)}
+            aria-label="Organization to manage"
             className="w-full bg-[var(--bg-inset)] border border-[var(--stroke)] text-[var(--ink-hi)] rounded-[var(--r-sm)] p-3 text-sm"
           >
             {adminMemberships.map((membership) => (
@@ -134,12 +127,12 @@ export default function OrganizerOrganizationsPage() {
           </select>
         )}
 
-        {message && <p className="text-sm text-[var(--gold)]">{message}</p>}
+        {message && <p className="rondo-meta text-[var(--ink-mid)]">{message}</p>}
 
         <section className="rondo-surface p-4 space-y-3">
-          <h2 className="font-heading text-[var(--ink-hi)] text-sm font-black uppercase">Access requests</h2>
+          <h2 className="rondo-label text-[var(--ink-low)]">Join requests</h2>
           {pendingMembers.length === 0 ? (
-            <p className="text-[var(--ink-low)] text-sm">No pending requests.</p>
+            <p className="text-[var(--ink-low)] text-sm">Nobody is waiting to join.</p>
           ) : (
             pendingMembers.map((member) => (
               <div key={member.user_id} className="flex items-center justify-between gap-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-page)]/25 p-3">
@@ -153,7 +146,7 @@ export default function OrganizerOrganizationsPage() {
                   <button
                     type="button"
                     onClick={() => updateMember(member.user_id, "rejected")}
-                    className="grid h-9 w-9 place-items-center rounded-[var(--r-sm)] border border-[var(--stroke)] text-[var(--ink-mid)]"
+                    className="grid size-11 place-items-center rounded-[var(--r-pill)] border border-[var(--stroke)] text-[var(--ink-mid)]"
                     aria-label="Reject request"
                   >
                     <X size={16} />
@@ -161,7 +154,7 @@ export default function OrganizerOrganizationsPage() {
                   <button
                     type="button"
                     onClick={() => updateMember(member.user_id, "active")}
-                    className="grid h-9 w-9 place-items-center rounded-[var(--r-sm)] bg-[var(--gold)] text-[var(--gold-ink)]"
+                    className="grid size-11 place-items-center rounded-[var(--r-pill)] bg-[var(--ink-hi)] text-[var(--bg-page)]"
                     aria-label="Approve request"
                   >
                     <Check size={16} />
@@ -173,7 +166,7 @@ export default function OrganizerOrganizationsPage() {
         </section>
 
         <section className="rondo-surface p-4 space-y-3">
-          <h2 className="font-heading text-[var(--ink-hi)] text-sm font-black uppercase">Active members</h2>
+          <h2 className="rondo-label text-[var(--ink-low)]">Members</h2>
           {activeMembers.length === 0 ? (
             <p className="text-[var(--ink-low)] text-sm">No active members yet.</p>
           ) : (

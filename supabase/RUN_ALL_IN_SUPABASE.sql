@@ -493,9 +493,14 @@ begin
     'wallet_pay:' || p_idempotency_key
   );
 
-  v_roster_status := case when g.is_private then 'pending_approval' else 'paid' end;
+  -- A private match asks the organizer first, unless they already approved
+  -- this player (then paying simply confirms the spot).
+  v_roster_status := case
+    when g.is_private and coalesce(v_existing_status, '') not in ('approved', 'reserved') then 'pending_approval'
+    else 'paid'
+  end;
 
-  if not g.is_private then
+  if v_roster_status = 'paid' then
     insert into public.wallet_transactions (
       user_id, organizer_id, game_id, amount, direction, source, note
     ) values (
@@ -1630,6 +1635,23 @@ begin
   return new;
 end;
 $$ language plpgsql security definer set search_path = public;
+
+-- ── Copy pass: placeholder listings drop the em-dash (20261002000000) ───────
+-- Only the seeded placeholder organizers' games are touched; titles written by
+-- real organizers are their own words. Safe to re-run.
+update public.games g
+set title = regexp_replace(g.title, '\s+—\s+', ' · ', 'g')
+from public.profiles p
+where p.id = g.organizer_id
+  and p.email like '%@organizers.rondo'
+  and g.title like '%—%';
+
+update public.games g
+set description = regexp_replace(g.description, '\s+—\s+', ': ', 'g')
+from public.profiles p
+where p.id = g.organizer_id
+  and p.email like '%@organizers.rondo'
+  and g.description like '%—%';
 
 -- Ask PostgREST to reload its schema cache so new tables are queryable at once
 -- (otherwise the API keeps answering "Could not find the table ... in the

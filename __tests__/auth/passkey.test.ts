@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { formatAuthError } from "@/lib/auth/format-auth-error";
+import { formatAuthError, isPasskeyEndpointMissing } from "@/lib/auth/format-auth-error";
 import { isPasskeySupported, renamePasskey } from "@/lib/auth/passkey";
 
 describe("formatAuthError passkey messages", () => {
   it("maps passkey_disabled", () => {
-    expect(formatAuthError("passkey_disabled")).toMatch(/aren't enabled/i);
+    expect(formatAuthError("passkey_disabled")).toMatch(/aren't switched on/i);
+    expect(isPasskeyEndpointMissing("Unexpected non-whitespace character after JSON at position 4")).toBe(true);
+    expect(isPasskeyEndpointMissing("Invalid login credentials")).toBe(false);
   });
 
   it("maps challenge expiry", () => {

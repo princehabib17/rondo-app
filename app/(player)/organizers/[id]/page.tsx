@@ -187,7 +187,7 @@ export default function OrganizerHubPage() {
 
   return (
     <div className="min-h-[100dvh] bg-[var(--bg-page)] pb-8">
-      <header className="sticky top-0 z-10 bg-[var(--bg-page)]/95 backdrop-blur-md border-b border-[var(--stroke)] px-4 py-3">
+      <header className="sticky top-0 z-10 rondo-glass-nav border-b border-[var(--stroke)] px-4 py-3">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -204,7 +204,7 @@ export default function OrganizerHubPage() {
               </span>
             </div>
             <div className="min-w-0">
-              <h1 className="font-heading text-[var(--ink-hi)] font-black italic text-lg uppercase truncate">
+              <h1 className="font-heading text-[var(--ink-hi)] font-black text-lg uppercase truncate">
                 {organizer.full_name}
               </h1>
               <p className="font-body text-[var(--ink-low)] text-xs">Organizer group</p>
@@ -248,7 +248,7 @@ export default function OrganizerHubPage() {
 
         <div className="flex items-center gap-2 mb-3">
           <Megaphone size={15} className="text-[var(--gold)]" />
-          <h2 className="font-heading text-[var(--ink-hi)] font-black italic text-sm uppercase">Broadcasts</h2>
+          <h2 className="font-heading text-[var(--ink-hi)] font-black text-sm uppercase">Broadcasts</h2>
         </div>
 
         {broadcasts.length === 0 ? (
@@ -278,7 +278,7 @@ export default function OrganizerHubPage() {
       <section className="px-4 pt-6">
         <div className="flex items-center gap-2 mb-3">
           <Calendar size={15} className="text-[var(--gold)]" />
-          <h2 className="font-heading text-[var(--ink-hi)] font-black italic text-sm uppercase">
+          <h2 className="font-heading text-[var(--ink-hi)] font-black text-sm uppercase">
             Upcoming Games
           </h2>
         </div>
@@ -293,7 +293,7 @@ export default function OrganizerHubPage() {
                 href={`/games/${game.id}`}
                 className="block bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] p-4 hover:border-[var(--gold)]/30 transition-colors"
               >
-                <h3 className="font-heading text-[var(--ink-hi)] font-black italic uppercase text-base mb-2">
+                <h3 className="font-heading text-[var(--ink-hi)] font-black uppercase text-base mb-2">
                   {game.title}
                 </h3>
                 <div className="space-y-1 font-body text-[var(--ink-low)] text-xs">
@@ -316,7 +316,7 @@ export default function OrganizerHubPage() {
       <section className="px-4 pt-6 pb-8">
         <div className="flex items-center gap-2 mb-3">
           <Radio size={15} className="text-[var(--gold)]" />
-          <h2 className="font-heading text-[var(--ink-hi)] font-black italic text-sm uppercase">Room</h2>
+          <h2 className="font-heading text-[var(--ink-hi)] font-black text-sm uppercase">Room</h2>
         </div>
 
         {roomBroadcasts.length === 0 ? (

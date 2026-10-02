@@ -2,69 +2,103 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { EnvelopeSimple } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { RondoBrand } from "@/components/brand/RondoBrand";
+import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
+import { isValidEmail } from "@/lib/auth/email";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const value = email.trim();
+    if (!isValidEmail(value)) {
+      setError("Enter the email you signed up with.");
+      return;
+    }
+    setError(null);
     setLoading(true);
     const supabase = createClient();
-    await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
-    });
+    // Always show the same confirmation, so this screen can't be used to
+    // check which emails have accounts.
+    await supabase.auth
+      .resetPasswordForEmail(value, {
+        redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+      })
+      .catch(() => null);
     setLoading(false);
     setSent(true);
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-center">
-        <div className="w-16 h-16 rounded-full border-2 border-[var(--gold)] flex items-center justify-center">
-          <span className="text-[var(--gold)] font-bold text-xl">R</span>
-        </div>
-      </div>
-
-      <div className="space-y-2 text-center">
-        <h1 className="text-[var(--ink-hi)] font-bold text-2xl uppercase tracking-widest">Forgot Password</h1>
-        <p className="text-[var(--ink-low)] text-sm">Enter your email to receive a reset link</p>
+    <>
+      <div className="pt-2 mb-10">
+        <RondoBrand kind="wordmark" surface="auto" className="h-9 w-36" />
       </div>
 
       {sent ? (
-        <div className="text-center space-y-4">
-          <p className="text-[var(--gold)]">Check your inbox for the reset link.</p>
-          <Link href="/login" className="text-[var(--ink-low)] hover:text-[var(--ink-hi)] text-sm">Back to Login</Link>
+        <div className="space-y-6">
+          <span className="grid size-14 place-items-center rounded-[var(--r-pill)] bg-[var(--gold-dim)] text-[var(--gold)]">
+            <EnvelopeSimple size={28} weight="duotone" aria-hidden />
+          </span>
+          <div>
+            <h1 className="rondo-hero-title text-4xl mb-2">Check your inbox</h1>
+            <p className="font-body text-sm text-[var(--ink-low)]">
+              If <span className="font-semibold text-[var(--ink-hi)]">{email.trim()}</span> has a Rondo
+              account, a reset link is on its way. It expires in an hour.
+            </p>
+          </div>
+          <RondoButton href="/login" variant="secondary">
+            Back to log in
+          </RondoButton>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1">
-            <Label className="text-[var(--ink-low)] text-xs uppercase tracking-wider">Email</Label>
-            <Input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              type="email"
-              placeholder="your@email.com"
-              className="bg-[var(--bg-inset)] border-[var(--stroke)] text-[var(--ink-hi)]"
-            />
-          </div>
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-[var(--gold)] text-rondo-black font-bold uppercase tracking-wider hover:brightness-90"
-          >
-            {loading ? "Sending..." : "Send Reset Link"}
-          </Button>
-          <p className="text-center">
-            <Link href="/login" className="text-[var(--ink-low)] text-sm hover:text-[var(--gold)]">Back to Login</Link>
+        <>
+          <h1 className="rondo-hero-title text-4xl mb-2">Reset password</h1>
+          <p className="font-body text-sm text-[var(--ink-low)] mb-8">
+            We&apos;ll email you a link to choose a new one.
           </p>
-        </form>
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+            <div className="space-y-2">
+              <label htmlFor="reset-email" className="font-body text-xs text-[var(--ink-mid)]">
+                Email
+              </label>
+              <input
+                id="reset-email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                placeholder="you@email.com"
+                className={rondoFieldClass}
+              />
+            </div>
+            {error && (
+              <p className="text-sm text-[var(--live)]" role="alert">
+                {error}
+              </p>
+            )}
+            <RondoButton type="submit" disabled={loading}>
+              {loading ? "Sending..." : "Send reset link"}
+            </RondoButton>
+          </form>
+          <p className="mt-8 text-center text-sm text-[var(--ink-mid)]">
+            Remembered it?{" "}
+            <Link
+              href="/login"
+              className="font-semibold text-[var(--ink-hi)] underline decoration-[var(--stroke)] underline-offset-4 hover:decoration-[var(--ink-hi)]"
+            >
+              Log in
+            </Link>
+          </p>
+        </>
       )}
-    </div>
+    </>
   );
 }

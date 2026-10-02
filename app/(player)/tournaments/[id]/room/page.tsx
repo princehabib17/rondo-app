@@ -173,9 +173,8 @@ export default function TournamentRoomPage() {
         )}
       </main>
 
-      {/* bottom-6rem (not 4rem): clears the floating BottomNav pill, which
-          occupies 24-84px from the viewport edge, not just its top 64px. */}
-      <div className="fixed inset-x-0 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-30 rondo-sticky-action">
+      {/* Pushed screen: the tab bar steps aside, so this bar owns the bottom edge. */}
+      <div className="fixed inset-x-0 bottom-0 z-30 rondo-sticky-action pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto flex max-w-lg gap-2 px-4 py-3">
           <input
             value={body}

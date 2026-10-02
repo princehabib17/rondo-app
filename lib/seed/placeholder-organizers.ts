@@ -98,7 +98,7 @@ export const PLACEHOLDER_ORGANIZER_SEEDS: OrganizerSeed[] = [
         minute: 0,
         priceCentavos: 30000,
         venue: VENUES.bgcTurf,
-        title: "Open Play — Tuesday Night",
+        title: "Open Play · Tuesday Night",
         format: "7v7",
         matchType: "football",
       },
@@ -108,7 +108,7 @@ export const PLACEHOLDER_ORGANIZER_SEEDS: OrganizerSeed[] = [
         minute: 0,
         priceCentavos: 30000,
         venue: VENUES.bgcTurf,
-        title: "Open Play — Wednesday Night",
+        title: "Open Play · Wednesday Night",
         format: "7v7",
         matchType: "football",
       },
@@ -118,8 +118,8 @@ export const PLACEHOLDER_ORGANIZER_SEEDS: OrganizerSeed[] = [
         minute: 0,
         priceCentavos: 30000,
         venue: VENUES.bgcTurf,
-        title: "Open Play — Thursday Night",
-        description: "Two fields available — chill side and competitive side.",
+        title: "Open Play · Thursday Night",
+        description: "Two fields available: chill side and competitive side.",
         format: "7v7",
         matchType: "football",
         variants: [
@@ -133,7 +133,7 @@ export const PLACEHOLDER_ORGANIZER_SEEDS: OrganizerSeed[] = [
         minute: 0,
         priceCentavos: 30000,
         venue: VENUES.bgcTurf,
-        title: "Open Play — Friday Night (8–10 PM)",
+        title: "Open Play · Friday Night (8–10 PM)",
         format: "7v7",
         matchType: "football",
       },
@@ -143,7 +143,7 @@ export const PLACEHOLDER_ORGANIZER_SEEDS: OrganizerSeed[] = [
         minute: 0,
         priceCentavos: 30000,
         venue: VENUES.bgcTurf,
-        title: "Open Play — Friday Late (10 PM–12 AM)",
+        title: "Open Play · Friday Late (10 PM–12 AM)",
         format: "7v7",
         matchType: "football",
       },
@@ -153,8 +153,8 @@ export const PLACEHOLDER_ORGANIZER_SEEDS: OrganizerSeed[] = [
         minute: 0,
         priceCentavos: 25000,
         venue: VENUES.bgcTurf,
-        title: "Open Play — Saturday Late",
-        description: "Two fields available — chill side and competitive side. ₱250/player.",
+        title: "Open Play · Saturday Late",
+        description: "Two fields available: chill side and competitive side. ₱250/player.",
         format: "7v7",
         matchType: "football",
         variants: [
@@ -168,7 +168,7 @@ export const PLACEHOLDER_ORGANIZER_SEEDS: OrganizerSeed[] = [
         minute: 0,
         priceCentavos: 30000,
         venue: VENUES.bgcTurf,
-        title: "Open Play — Sunday Evening",
+        title: "Open Play · Sunday Evening",
         format: "7v7",
         matchType: "football",
       },
@@ -191,7 +191,7 @@ export const PLACEHOLDER_ORGANIZER_SEEDS: OrganizerSeed[] = [
         minute: 0,
         priceCentavos: 30000,
         venue: VENUES.moa,
-        title: "Open Play — Wednesday Night",
+        title: "Open Play · Wednesday Night",
         format: "7v7",
         matchType: "football",
       },
@@ -201,7 +201,7 @@ export const PLACEHOLDER_ORGANIZER_SEEDS: OrganizerSeed[] = [
         minute: 0,
         priceCentavos: 30000,
         venue: VENUES.moa,
-        title: "Open Play — Saturday Night",
+        title: "Open Play · Saturday Night",
         format: "7v7",
         matchType: "football",
       },
@@ -224,7 +224,7 @@ export const PLACEHOLDER_ORGANIZER_SEEDS: OrganizerSeed[] = [
         minute: 0,
         priceCentavos: 35000,
         venue: VENUES.bridgetownPasig,
-        title: "Open Play — Tuesday Night",
+        title: "Open Play · Tuesday Night",
         format: "7v7",
         matchType: "football",
       },
@@ -234,7 +234,7 @@ export const PLACEHOLDER_ORGANIZER_SEEDS: OrganizerSeed[] = [
         minute: 0,
         priceCentavos: 35000,
         venue: VENUES.bridgetownPasig,
-        title: "Open Play — Thursday Night",
+        title: "Open Play · Thursday Night",
         format: "7v7",
         matchType: "football",
       },
@@ -244,7 +244,7 @@ export const PLACEHOLDER_ORGANIZER_SEEDS: OrganizerSeed[] = [
         minute: 0,
         priceCentavos: 35000,
         venue: VENUES.bridgetownPasig,
-        title: "Open Play — Friday Night",
+        title: "Open Play · Friday Night",
         format: "7v7",
         matchType: "football",
       },
@@ -267,7 +267,7 @@ export const PLACEHOLDER_ORGANIZER_SEEDS: OrganizerSeed[] = [
         minute: 0,
         priceCentavos: 25000,
         venue: VENUES.mckinleyHills,
-        title: "Open Play — Thursday Night",
+        title: "Open Play · Thursday Night",
         format: "7v7",
         matchType: "football",
       },
@@ -290,7 +290,7 @@ export const PLACEHOLDER_ORGANIZER_SEEDS: OrganizerSeed[] = [
         minute: 0,
         priceCentavos: 30000,
         venue: VENUES.axisResidences,
-        title: "Futsal — Wednesday Night",
+        title: "Futsal · Wednesday Night",
         description: "10 PM–12:30 AM at Axis Residences Tower B.",
         format: "5v5",
         matchType: "futsal",
@@ -302,7 +302,7 @@ export const PLACEHOLDER_ORGANIZER_SEEDS: OrganizerSeed[] = [
         minute: 0,
         priceCentavos: 30000,
         venue: VENUES.axisResidences,
-        title: "Futsal — Saturday Night",
+        title: "Futsal · Saturday Night",
         description: "10 PM–12:30 AM at Axis Residences Tower B.",
         format: "5v5",
         matchType: "futsal",
@@ -314,7 +314,7 @@ export const PLACEHOLDER_ORGANIZER_SEEDS: OrganizerSeed[] = [
         minute: 0,
         priceCentavos: 40000,
         venue: VENUES.cherryTurf,
-        title: "Futsal — Sunday Early",
+        title: "Futsal · Sunday Early",
         description: "6–8 PM at Cherry Turf. ₱400/player.",
         format: "5v5",
         matchType: "futsal",
@@ -326,7 +326,7 @@ export const PLACEHOLDER_ORGANIZER_SEEDS: OrganizerSeed[] = [
         minute: 0,
         priceCentavos: 40000,
         venue: VENUES.cherryTurf,
-        title: "Futsal — Sunday Night",
+        title: "Futsal · Sunday Night",
         description: "8–10 PM at Cherry Turf. ₱400/player.",
         format: "5v5",
         matchType: "futsal",
@@ -485,11 +485,17 @@ export function buildGamesForOrganizer(
   return games.sort((a, b) => new Date(a.date_time).getTime() - new Date(b.date_time).getTime());
 }
 
-export function gameSlotKey(title: string, dateTime: string): string {
-  return `${title}::${dateTime}`;
+/** Older listings used an em-dash separator; treat both spellings as one slot. */
+function normalizeSlotTitle(title: string): string {
+  return title.replace(/\s+[\u2014\u00b7]\s+/g, " · ").trim();
 }
 
-/** Recurring listings should keep rolling — insert only slots that are not already stored. */
+export function gameSlotKey(title: string, dateTime: string): string {
+  const time = new Date(dateTime).getTime();
+  return `${normalizeSlotTitle(title)}::${Number.isNaN(time) ? dateTime : time}`;
+}
+
+/** Recurring listings should keep rolling: insert only slots that are not already stored. */
 export function gamesToInsert(
   planned: GameInsertRow[],
   existing: Array<{ title: string; date_time: string }>

@@ -39,7 +39,7 @@ export default function ScoutShortlistPage() {
 
   return (
     <div className="min-h-[100dvh] rondo-page pb-24">
-      <header className="sticky top-0 bg-[var(--bg-page)]/90 backdrop-blur-md border-b border-[var(--stroke)] z-40 px-4 py-3 flex items-center gap-3">
+      <header className="sticky top-0 rondo-glass-nav border-b border-[var(--stroke)] z-40 px-4 py-3 flex items-center gap-3">
         <button
           onClick={() => router.back()}
           className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--ink-hi)]"
@@ -66,7 +66,7 @@ export default function ScoutShortlistPage() {
       ) : shortlist.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 p-8 text-center mt-20">
           <Bookmark size={40} className="text-[var(--ink-low)]" />
-          <p className="font-heading text-[var(--ink-hi)] font-black italic text-xl uppercase">Empty shortlist</p>
+          <p className="font-heading text-[var(--ink-hi)] font-black text-xl uppercase">Empty shortlist</p>
           <p className="text-[var(--ink-low)] text-sm">
             Save players from the reels feed to build your scouting list.
           </p>

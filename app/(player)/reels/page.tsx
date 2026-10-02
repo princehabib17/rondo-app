@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/layout/PageHeader";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PlusCircle, Bookmark } from "lucide-react";
@@ -122,19 +123,22 @@ export default function ReelsPage() {
 
   if (reels.length === 0) {
     return (
-      <div className="rondo-night flex min-h-[100dvh] flex-col items-center justify-center gap-4 px-8 text-center">
-        <p className="font-heading text-[var(--ink-hi)] font-black italic text-2xl uppercase">No Clips Yet</p>
-        <p className="font-body text-[var(--ink-low)] text-sm">
-          No clips posted yet. Check back soon.
+      <div className="rondo-night flex min-h-[100dvh] flex-col">
+        <PageHeader title="Clips" back fallbackHref="/feed" />
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 text-center">
+        <p className="rondo-display text-[var(--ink-hi)]">No clips yet</p>
+        <p className="max-w-xs rondo-body text-[var(--ink-low)]">
+          Goals, saves, nutmegs. Post a clip from your last match and it shows up here.
         </p>
         {isPlayer && (
           <button
             onClick={() => setShowUpload(true)}
-            className="mt-4 bg-[var(--gold)] text-[var(--gold-ink)] font-bold px-6 py-3 rounded-[var(--r-md)]"
+            className="mt-4 rondo-btn rondo-btn-primary w-auto"
           >
-            Be the first — post a clip
+            Post the first clip
           </button>
         )}
+        </div>
       </div>
     );
   }

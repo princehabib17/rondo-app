@@ -132,8 +132,9 @@ export default function FeedMapPage() {
         {!loading && missingLocationCount > 0 && mapGames.length > 0 && (
           <div className="absolute left-4 right-4 top-4 z-20 mx-auto max-w-lg rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] px-3 py-2">
             <p className="rondo-meta text-[var(--ink-mid)]">
-              {missingLocationCount} match{missingLocationCount > 1 ? "es" : ""} in your list have no
-              map pin (venue coordinates missing).
+              {missingLocationCount === 1
+                ? "1 match isn't on the map yet because its venue has no location. It's still in the list."
+                : `${missingLocationCount} matches aren't on the map yet because their venues have no location. They're still in the list.`}
             </p>
           </div>
         )}

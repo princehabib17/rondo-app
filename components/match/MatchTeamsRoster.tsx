@@ -30,7 +30,7 @@ export function MatchTeamsRoster({ game }: { game: Game }) {
 
   return (
     <section className="space-y-3">
-      <h2 className="font-heading text-[var(--ink-hi)] font-black italic text-sm uppercase tracking-wide">
+      <h2 className="font-heading text-[var(--ink-hi)] font-black text-sm uppercase tracking-wide">
         Players joining
       </h2>
       <p className="font-body text-[var(--ink-low)] text-xs">

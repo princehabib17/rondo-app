@@ -75,7 +75,7 @@ export function ReelPlayer({
       />
 
       {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-night)]/80 via-transparent to-[var(--bg-night)]/20 pointer-events-none" />
 
       {/* Mute toggle */}
       <button
@@ -133,7 +133,7 @@ export function ReelPlayer({
               <Heart
                 size={28}
                 strokeWidth={1.75}
-                className={liked ? "fill-red-500 text-red-500" : "text-[var(--ink-hi)] drop-shadow-md"}
+                className={liked ? "fill-[var(--live)] text-[var(--live)]" : "text-[var(--ink-hi)] drop-shadow-md"}
               />
               <span className="text-[var(--ink-hi)] text-xs font-semibold drop-shadow-md">{likeCount}</span>
             </button>

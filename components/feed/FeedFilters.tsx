@@ -54,7 +54,7 @@ export function FeedFiltersBar({
   return (
     <div className="px-4 pt-3">
       {/* Always-visible control row */}
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 rondo-scroll-fade">
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -111,7 +111,7 @@ export function FeedFiltersBar({
 
       {/* Active filter chips (clearable) */}
       {chips.length > 0 && (
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-2">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-2 rondo-scroll-fade">
           {chips.map((chip) => (
             <button
               key={chip.key}
@@ -264,7 +264,7 @@ function FilterSheet({
         style={{ animation: "rondoSheetUp 280ms cubic-bezier(0.32,0.72,0,1)" }}
       >
         <div className="sticky top-0 z-10 bg-rondo-elevated/95 backdrop-blur-md flex items-center justify-between px-5 py-4 border-b border-[var(--stroke)]">
-          <h2 className="font-heading text-[var(--ink-hi)] font-black italic text-lg uppercase">Filters</h2>
+          <h2 className="font-heading text-[var(--ink-hi)] font-black text-lg uppercase">Filters</h2>
           <button
             type="button"
             onClick={onClose}

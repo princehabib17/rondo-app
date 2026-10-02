@@ -36,10 +36,12 @@ export default function SignupPage() {
   const [info, setInfo] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [nextParam, setNextParam] = useState<string | null>(null);
+  const [fromGuest, setFromGuest] = useState(false);
 
   useEffect(() => {
     const rawNext = new URLSearchParams(window.location.search).get("next");
     setNextParam(rawNext);
+    setFromGuest(new URLSearchParams(window.location.search).get("guest") === "1");
     getUserWithTimeout().then(({ data }) => {
       if (!shouldRedirectAwayFromAuth(data.user)) return;
       const supabase = createClient();
@@ -147,6 +149,11 @@ export default function SignupPage() {
         <RondoBrand kind="wordmark" surface="auto" className="h-9 w-36" fetchPriority="high" />
       </div>
 
+      {fromGuest && (
+        <p className="mb-6 rounded-[var(--r-md)] border border-[color-mix(in_oklch,var(--gold)_30%,var(--stroke))] bg-[var(--gold-dim)] px-4 py-3 font-body text-sm text-[var(--ink-hi)]">
+          Guests can browse. Booking, paying, and chatting need a free account. It takes a minute.
+        </p>
+      )}
       <h1 className="rondo-hero-title text-4xl mb-2">Join Rondo</h1>
       <p className="font-body text-[var(--ink-low)] text-sm mb-8">
         {mode === "email"

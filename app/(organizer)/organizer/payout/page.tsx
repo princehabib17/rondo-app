@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { motion } from "motion/react";
 import { bouncy } from "@/components/motion/springs";
 import { createClient } from "@/lib/supabase/client";
@@ -18,10 +17,10 @@ interface PayoutHistoryEntry {
 }
 
 const payoutStatusStyle: Record<PayoutHistoryEntry["status"], string> = {
-  pending: "bg-amber-400/15 text-amber-300",
-  approved: "bg-sky-400/15 text-sky-300",
-  paid: "bg-emerald-400/15 text-emerald-300",
-  rejected: "bg-red-400/15 text-[var(--live)]",
+  pending: "bg-[var(--gold)]/15 text-[var(--gold)]",
+  approved: "bg-[var(--bg-inset)] text-[var(--ink-hi)]",
+  paid: "bg-[var(--ok)]/15 text-[var(--ok)]",
+  rejected: "bg-[var(--live)]/15 text-[var(--live)]",
 };
 
 const inputClass =
@@ -86,32 +85,18 @@ export default function PayoutPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[var(--bg-page)]">
-      <header className="sticky top-0 z-40 border-b border-[var(--stroke)] bg-[var(--bg-page)]/85 px-5 py-3 backdrop-blur-xl">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/organizer/dashboard"
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--bg-inset)] text-[var(--ink-mid)] transition active:scale-[0.97]"
-          >
-            <ArrowLeft size={16} />
-          </Link>
-          <p className="font-body text-[10px] font-black uppercase tracking-[0.26em] text-[var(--gold)]">
-            Wallet Ops
-          </p>
-        </div>
-      </header>
+    <div className="min-h-[100dvh] rondo-page">
+      <PageHeader title="Payout" subtitle="Bank transfer by the Rondo team" back="/organizer/dashboard" />
 
-      <div className="space-y-8 px-5 pb-12 pt-8">
+      <div className="mx-auto max-w-lg space-y-8 px-4 pb-12 pt-8">
         <motion.section
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={bouncy}
         >
-          <h1 className="font-heading text-4xl font-black uppercase italic leading-none text-[var(--ink-hi)]">
-            Request Payout
-          </h1>
-          <p className="mt-2 font-body text-sm text-[var(--ink-low)]">
-            Funds are transferred within 2–3 business days.
+          <h2 className="rondo-display text-[var(--ink-hi)]">Request a payout</h2>
+          <p className="mt-2 rondo-body text-[var(--ink-low)]">
+            We send it by bank transfer within 3 to 5 business days.
           </p>
         </motion.section>
 
@@ -121,37 +106,53 @@ export default function PayoutPage() {
           transition={{ ...bouncy, delay: 0.06 }}
           className="space-y-3"
         >
+          <label htmlFor="payout-amount" className="block space-y-2">
+            <span className="rondo-label text-[var(--ink-low)]">Amount in pesos</span>
           <input
+            id="payout-amount"
             value={payoutAmount}
             onChange={(e) => setPayoutAmount(e.target.value)}
-            placeholder="Amount in PHP, e.g. 500"
+            placeholder="e.g. 500"
             type="number"
             min="1"
             className={inputClass}
           />
+          </label>
+          <label htmlFor="payout-bank" className="block space-y-2">
+            <span className="rondo-label text-[var(--ink-low)]">Bank or e-wallet</span>
           <input
+            id="payout-bank"
             value={bankName}
             onChange={(e) => setBankName(e.target.value)}
-            placeholder="Bank name"
+            placeholder="BDO, BPI, GCash, Maya"
             className={inputClass}
           />
+          </label>
+          <label htmlFor="payout-name" className="block space-y-2">
+            <span className="rondo-label text-[var(--ink-low)]">Account name</span>
           <input
+            id="payout-name"
             value={bankAccountName}
             onChange={(e) => setBankAccountName(e.target.value)}
-            placeholder="Account name"
+            placeholder="Name on the account"
             className={inputClass}
           />
+          </label>
+          <label htmlFor="payout-number" className="block space-y-2">
+            <span className="rondo-label text-[var(--ink-low)]">Account number</span>
           <input
+            id="payout-number"
             value={bankAccountNumber}
             onChange={(e) => setBankAccountNumber(e.target.value)}
-            placeholder="Account number"
+            placeholder="Digits only"
             className={inputClass}
           />
+          </label>
           <button
             onClick={submitPayoutRequest}
-            className="min-h-[52px] w-full rounded-[var(--r-md)] bg-[var(--gold)] font-body text-sm font-black uppercase tracking-wider text-[var(--gold-ink)] transition active:scale-[0.98]"
+            className="rondo-btn rondo-btn-primary"
           >
-            Submit Payout
+            Request payout
           </button>
           {payoutMessage && (
             <p className="text-center font-body text-xs text-[var(--ink-mid)]">{payoutMessage}</p>
@@ -165,14 +166,12 @@ export default function PayoutPage() {
             transition={{ ...bouncy, delay: 0.1 }}
             className="space-y-3"
           >
-            <h2 className="font-heading text-lg font-black uppercase italic text-[var(--ink-hi)]">
-              Recent Requests
-            </h2>
+            <h2 className="rondo-label text-[var(--ink-low)]">Recent requests</h2>
             <div className="space-y-2">
               {payoutHistory.map((entry) => (
                 <div
                   key={entry.id}
-                  className="flex items-center justify-between gap-2 rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.03] p-4 font-body text-xs"
+                  className="flex items-center justify-between gap-2 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-4 font-body text-xs"
                 >
                   <div className="min-w-0">
                     <p className="font-black text-[var(--ink-hi)]">{formatPrice(entry.amount)}</p>

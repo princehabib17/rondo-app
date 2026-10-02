@@ -86,6 +86,38 @@ failing in the browser while `POST /api/auth/guest` returns 200.
 7. Smoke: `GET /api/health` with `x-seed-secret` → `{"ok":true}`. Guest from `/` reaches
    `/feed`; within a minute the feed shows placeholder open games.
 
+## Behaviors worth knowing
+
+- **Times are Manila time.** `instrumentation.ts` pins server rendering to
+  `Asia/Manila` (override with `APP_TIMEZONE`). Without it, Vercel renders in UTC
+  and an 8 PM game shows as 12:00 PM until the page hydrates.
+- **Empty cities fill themselves.** The first Home visit in a city with no open
+  games seeds a few listings from the placeholder organizers. If there are no
+  tournaments at all, it also seeds two *finished* showcase competitions (a
+  knockout cup and a league) under a "Rondo Showcase" account, so the bracket,
+  standings, and champion screens always have something real to show. Nobody can
+  register for a showcase. `POST /api/seed/organizers` runs both on demand.
+- **Venue photos.** Match heroes use an uploaded cover first, then a real venue
+  photo from `lib/venues/pitch-photos.ts`, then shipped night-scene art in
+  `public/scenes/`. The BGC Turf photo the code used to point at
+  (`/venues/bgc-turf.jpg`) was never committed; drop the real file in
+  `public/venues/` and add an entry to `PITCH_PHOTOS` to use it again.
+- **Installable.** `app/manifest.ts` and `public/icons/` make Rondo an
+  add-to-home-screen app that opens on `/feed`.
+- **Navigation.** The tab bar shows only on tab roots (`lib/navigation/tab-routes.ts`);
+  every other screen gets a back button and owns the bottom edge for its action bar.
+- **Refunds are automatic where the rule is clear.** Cancelling a match refunds
+  every paid player to their wallet and takes the matching earning back from the
+  organizer; removing a paid player does the same for that player. Players can
+  drop out themselves: unpaid spots any time before kickoff, paid spots with a
+  full wallet refund up to 24 hours before (`FREE_DROP_OUT_HOURS` in
+  `lib/match/drop-out.ts`). Inside that window they're sent to Help with the match
+  attached. All of it lives in `lib/wallet/refunds.ts` and is safe to repeat.
+- **Private matches.** Approving a join request only credits the organizer if the
+  player already paid. Otherwise the player is asked to pay, and paying confirms
+  the spot without a second approval (migration
+  `20261002000100_private_match_pay_after_approval.sql`).
+
 ## Main User Journeys
 
 - **Auth**
@@ -147,6 +179,8 @@ with range queries.
 ## Current Limitations
 
 - Tournament entry fees are informational in v1 (no checkout on team registration).
+- Passkeys need Authentication → Passkeys enabled in Supabase; until then the profile
+  shows a calm "coming soon" note instead of the controls.
 - Social feed media is link-based in v1 (no direct upload).
 - Wallet payout execution is manual approval workflow (no automatic payout rail).
 

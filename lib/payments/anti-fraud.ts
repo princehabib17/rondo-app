@@ -4,7 +4,7 @@ export type PaymentAttemptKind = "wallet_topup" | "wallet_pay" | "payout_request
 
 export const PAYMENT_RATE_LIMIT = { max: 5, windowMinutes: 10 };
 export const PAYMENT_RATE_LIMIT_MESSAGE =
-  "Too many payment attempts — please wait a few minutes before trying again.";
+  "Too many payment attempts. Wait a few minutes, then try again.";
 
 /** Repeated failures inside this window look like card testing / probing. */
 const FAILURE_FLAG = { count: 3, windowMinutes: 30 };

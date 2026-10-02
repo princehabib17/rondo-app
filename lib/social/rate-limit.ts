@@ -25,4 +25,4 @@ export async function isRateLimited(
   return (count ?? 0) >= limit.max;
 }
 
-export const RATE_LIMIT_MESSAGE = "You're posting too fast — take a breather and try again in a few minutes.";
+export const RATE_LIMIT_MESSAGE = "You're posting fast. Take a breather and try again in a few minutes.";

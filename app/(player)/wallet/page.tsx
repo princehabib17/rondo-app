@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Plus, Wallet, ArrowDownToLine, Clock } from "lucide-react";
+import { Plus, Wallet, ArrowDownToLine, ArrowDownLeft, ArrowUpRight, Clock } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { describeWalletTransaction } from "@/lib/wallet/describe";
+import { cn } from "@/lib/utils";
 import { formatPrice, formatRelativeTime } from "@/lib/utils/format";
 import { TOPUP_PRESETS_CENTAVOS } from "@/lib/wallet/constants";
 import type { WalletTransaction } from "@/lib/supabase/types";
@@ -166,31 +169,24 @@ function WalletContent() {
   }
 
   return (
-    <div className="min-h-[100dvh] rondo-page pb-24">
-      <header className="sticky top-0 z-40 rondo-glass-nav border-b border-[var(--stroke)] px-4 py-3 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="w-10 h-10 flex items-center justify-center text-[var(--ink-hi)]"
-          aria-label="Back"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <div className="min-w-0 flex-1">
-          <h1 className="font-heading text-[var(--ink-hi)] font-black text-lg uppercase">Wallet</h1>
-          <p className="rondo-meta text-[var(--ink-low)]">PayMongo secured</p>
-        </div>
-      </header>
+    <div className="min-h-[100dvh] rondo-page">
+      <PageHeader title="Wallet" subtitle="Secured by PayMongo" back fallbackHref="/profile" />
 
       <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
-        <div className="rondo-surface border-[var(--gold)]/30 bg-gradient-to-br from-[var(--gold-dim)] to-transparent p-6">
-          <div className="flex items-center gap-2 mb-2">
-            <Wallet size={18} className="text-[var(--gold)]" />
-            <span className="font-body text-[var(--ink-mid)] text-xs uppercase tracking-wider">Available balance</span>
+        <div className="relative overflow-hidden rounded-[var(--r-lg)] border border-[var(--stroke)] rondo-floodlight-scene p-6">
+          <div className="flex items-center gap-2">
+            <Wallet size={16} className="text-[var(--ink-low)]" aria-hidden />
+            <span className="rondo-label text-[var(--ink-low)]">Available balance</span>
           </div>
-          <p className="font-heading text-[var(--ink-hi)] font-black text-4xl">{formatPrice(balanceCentavos)}</p>
-          <p className="font-body text-[var(--ink-low)] text-xs mt-2">
-            Top up with PayMongo, then pay match fees from here — one balance, no paying the organizer directly in the app.
+          <p
+            className={`mt-3 font-heading text-[3.5rem] font-bold leading-none tabular-nums ${balanceCentavos < 0 ? "text-[var(--live)]" : "text-[var(--ink-hi)]"}`}
+          >
+            {balanceCentavos < 0 ? `-${formatPrice(-balanceCentavos)}` : formatPrice(balanceCentavos)}
+          </p>
+          <p className="mt-3 max-w-xs rondo-meta text-[var(--ink-mid)]">
+            {balanceCentavos < 0
+              ? "Refunds for a match you cancelled came to more than your balance. Earnings from your next matches cover it first, and cash-outs open again once you're back above zero."
+              : "Top up once, then pay any match in two taps. You never send money to an organizer directly."}
           </p>
         </div>
 
@@ -202,31 +198,29 @@ function WalletContent() {
         )}
 
         {topupBanner === "failed" && error && (
-          <div className="bg-red-950/40 border border-red-800/50 rounded-[var(--r-md)] p-4 space-y-2">
-            <p className="text-red-200 font-semibold text-sm">Top-up not completed</p>
-            <p className="text-red-200/80 text-xs">{error}</p>
+          <div className="bg-[var(--live)]/10 border border-[var(--live)]/40 rounded-[var(--r-md)] p-4 space-y-2">
+            <p className="text-[var(--live)] font-semibold text-sm">Top-up not completed</p>
+            <p className="text-[var(--live)]/80 text-xs">{error}</p>
           </div>
         )}
 
         {message && (
-          <div className="bg-green-950/40 border border-green-800/50 rounded-[var(--r-md)] p-4 space-y-1">
+          <div className="bg-[var(--ok)]/10 border border-[var(--ok)]/40 rounded-[var(--r-md)] p-4 space-y-1">
             <p className="text-[var(--ok)] text-sm font-semibold">{message}</p>
             {topupReference && (
-              <p className="text-green-200/70 text-xs font-mono break-all">Ref: {topupReference}</p>
+              <p className="text-[var(--ok)]/70 text-xs font-mono break-all">Ref: {topupReference}</p>
             )}
           </div>
         )}
         {error && !topupBanner && (
-          <p className="text-[var(--live)] text-sm text-center bg-red-950/30 border border-red-800/40 rounded-[var(--r-md)] py-3 px-4">
+          <p className="text-[var(--live)] text-sm text-center bg-[var(--live)]/10 border border-[var(--live)]/40 rounded-[var(--r-md)] py-3 px-4">
             {error}
           </p>
         )}
 
         <section>
-          <h2 className="font-heading text-[var(--ink-hi)] font-black text-sm uppercase mb-3">Top up</h2>
-          <p className="font-body text-[var(--ink-low)] text-xs mb-4">
-            Add funds via GCash, Maya, or card. Money lands in your Rondo Wallet right after payment.
-          </p>
+          <h2 className="mb-1 rondo-label text-[var(--ink-low)]">Top up</h2>
+          <p className="mb-3 rondo-meta text-[var(--ink-low)]">GCash, Maya, or card. Lands in your wallet right after payment.</p>
           <div className="grid grid-cols-3 gap-2">
             {TOPUP_PRESETS_CENTAVOS.map((amount) => (
               <button
@@ -234,13 +228,13 @@ function WalletContent() {
                 type="button"
                 disabled={topingUp !== null}
                 onClick={() => handleTopUp(amount)}
-                className="bg-[var(--bg-surface)] border border-[var(--stroke)] hover:border-[var(--gold)]/50 rounded-[var(--r-md)] py-3 text-[var(--ink-hi)] font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-1"
+                className="flex min-h-12 items-center justify-center gap-1 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] font-heading text-lg font-bold tabular-nums text-[var(--ink-hi)] transition-[border-color,transform] hover:border-[color-mix(in_oklch,var(--gold)_50%,var(--stroke))] active:scale-[0.97] disabled:opacity-50"
               >
                 {topingUp === amount ? (
                   <span className="w-4 h-4 border-2 border-[var(--gold)] border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
-                    <Plus size={14} className="text-[var(--gold)]" />
+                    <Plus size={14} className="text-[var(--ink-low)]" aria-hidden />
                     {formatPrice(amount)}
                   </>
                 )}
@@ -251,28 +245,26 @@ function WalletContent() {
 
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-heading text-[var(--ink-hi)] font-black text-sm uppercase">Cash Out</h2>
+            <h2 className="rondo-label text-[var(--ink-low)]">Cash out</h2>
             {!showPayoutForm && (
               <button
                 type="button"
                 onClick={() => { setShowPayoutForm(true); setPayoutSuccess(false); setPayoutError(null); }}
-                className="flex items-center gap-1.5 text-[var(--gold)] text-xs font-bold uppercase tracking-wider"
+                className="inline-flex min-h-11 items-center gap-1.5 rondo-meta font-bold text-[var(--ink-mid)] hover:text-[var(--ink-hi)]"
               >
                 <ArrowDownToLine size={13} /> Request
               </button>
             )}
           </div>
 
-          <div className="bg-[var(--bg-page)] border border-[var(--stroke)] rounded-[var(--r-md)] p-4 mb-3 space-y-1">
-            <p className="text-[var(--ink-mid)] text-xs leading-relaxed">
-              Top-ups via GCash, Maya, and card are <span className="text-[var(--ink-hi)] font-semibold">real money</span>. Payouts are processed manually by the Rondo team and sent via bank transfer within 3–5 business days.
-            </p>
-          </div>
+          <p className="mb-3 rondo-meta text-[var(--ink-low)]">
+            Your balance is real money. The Rondo team sends payouts by bank transfer within 3 to 5 business days.
+          </p>
 
           {payoutSuccess && (
-            <div className="bg-green-950/40 border border-green-800/50 rounded-[var(--r-md)] p-4 mb-3">
+            <div className="bg-[var(--ok)]/10 border border-[var(--ok)]/40 rounded-[var(--r-md)] p-4 mb-3">
               <p className="text-[var(--ok)] text-sm font-semibold">Payout request submitted</p>
-              <p className="text-green-200/70 text-xs mt-0.5">We&apos;ll process it within 3–5 business days.</p>
+              <p className="text-[var(--ok)]/70 text-xs mt-0.5">We&apos;ll process it within 3–5 business days.</p>
             </div>
           )}
 
@@ -387,32 +379,46 @@ function WalletContent() {
         </section>
 
         <section>
-          <h2 className="font-heading text-[var(--ink-hi)] font-black text-sm uppercase mb-3">Recent activity</h2>
+          <h2 className="mb-3 rondo-label text-[var(--ink-low)]">Recent activity</h2>
           {transactions.length === 0 ? (
-            <p className="font-body text-[var(--ink-low)] text-sm">No transactions yet. Top up to join paid matches.</p>
+            <p className="rounded-[var(--r-md)] border border-dashed border-[var(--stroke)] px-4 py-5 rondo-meta text-[var(--ink-low)]">
+              No activity yet. Top up once and pay for any match in two taps.
+            </p>
           ) : (
-            <div className="space-y-2">
-              {transactions.map((tx) => (
-                <div
-                  key={tx.id}
-                  className="bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] px-4 py-3 flex items-center justify-between gap-3"
-                >
-                  <div className="min-w-0">
-                    <p className="font-body text-[var(--ink-hi)] text-sm capitalize">
-                      {tx.direction === "credit" ? "Added" : "Spent"} · {tx.source.replaceAll("_", " ")}
-                    </p>
-                    <p className="font-body text-[var(--ink-low)] text-xs">{formatRelativeTime(tx.created_at)}</p>
+            <div className="divide-y divide-[var(--stroke)] overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)]">
+              {transactions.map((tx) => {
+                const label = describeWalletTransaction(tx as WalletTransaction & { game?: { title: string } | null });
+                return (
+                  <div key={tx.id} className="flex min-h-16 items-center gap-3 px-4 py-3">
+                    <span
+                      className={cn(
+                        "grid size-9 shrink-0 place-items-center rounded-[var(--r-pill)]",
+                        tx.direction === "credit"
+                          ? "bg-[color-mix(in_oklch,var(--ok)_16%,transparent)] text-[var(--ok)]"
+                          : "bg-[var(--bg-inset)] text-[var(--ink-mid)]"
+                      )}
+                    >
+                      {tx.direction === "credit" ? <ArrowDownLeft size={16} aria-hidden /> : <ArrowUpRight size={16} aria-hidden />}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate rondo-body text-[var(--ink-hi)]">{label.title}</p>
+                      <p className="truncate rondo-meta text-[var(--ink-low)]">
+                        {label.detail ? `${label.detail} · ` : ""}
+                        {formatRelativeTime(tx.created_at)}
+                      </p>
+                    </div>
+                    <span
+                      className={cn(
+                        "shrink-0 font-heading text-base font-bold tabular-nums",
+                        tx.direction === "credit" ? "text-[var(--ok)]" : "text-[var(--ink-hi)]"
+                      )}
+                    >
+                      {tx.direction === "credit" ? "+" : "\u2212"}
+                      {formatPrice(tx.amount)}
+                    </span>
                   </div>
-                  <span
-                    className={`font-heading font-black text-sm shrink-0 ${
-                      tx.direction === "credit" ? "text-[var(--ok)]" : "text-[var(--ink-hi)]"
-                    }`}
-                  >
-                    {tx.direction === "credit" ? "+" : "−"}
-                    {formatPrice(tx.amount)}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>

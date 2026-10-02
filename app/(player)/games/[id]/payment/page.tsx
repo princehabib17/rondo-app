@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, CreditCard, Loader2, Lock, MapPin, ShieldCheck, Zap } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { isGuestUser } from "@/lib/auth/is-guest";
 import { formatPrice } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
 import { RondoButton } from "@/components/rondo/primitives";
@@ -41,13 +42,18 @@ function PaymentForm() {
       const supabase = createClient();
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) { router.push("/login"); return; }
-      if (userData.user.is_anonymous) {
+      if (isGuestUser(userData.user)) {
         router.push(`/signup?next=/games/${id}/payment`);
         return;
       }
-      const [{ data }, { data: balData }] = await Promise.all([
+      // The balance route answers plain JSON ({ balanceCentavos }), not a
+      // Supabase { data } envelope. Destructuring `data` here read every
+      // wallet as ₱0 and kept "Pay" disabled for everyone.
+      const [{ data }, balData] = await Promise.all([
         supabase.from("games").select("*").eq("id", id).single(),
-        fetch("/api/wallet/balance").then((r) => r.json()).catch(() => ({ balanceCentavos: 0 })),
+        fetch("/api/wallet/balance")
+          .then((r) => r.json() as Promise<{ balanceCentavos?: number }>)
+          .catch(() => ({ balanceCentavos: 0 })),
       ]);
       if (data) setGame(data as Game);
       if (typeof balData?.balanceCentavos === "number") setBalanceCentavos(balData.balanceCentavos);
@@ -134,7 +140,7 @@ function PaymentForm() {
 
   return (
     <div className="min-h-[100dvh] pb-8 rondo-page">
-      <header className="sticky top-0 bg-[var(--bg-page)]/95 backdrop-blur-md border-b border-[var(--stroke)] z-40 px-4 py-3 flex items-center gap-3">
+      <header className="sticky top-0 rondo-glass-nav border-b border-[var(--stroke)] z-40 px-4 py-3 flex items-center gap-3">
         <button
           type="button"
           onClick={() => router.back()}
@@ -154,7 +160,7 @@ function PaymentForm() {
         <div className="flex items-center gap-2 rounded-[var(--r-md)] border border-[color-mix(in_oklch,var(--gold)_28%,var(--stroke))] bg-[color-mix(in_oklch,var(--gold)_8%,var(--bg-surface))] px-3 py-2.5">
           <ShieldCheck size={18} className="shrink-0 text-[var(--gold)]" aria-hidden />
           <p className="rondo-meta text-[var(--ink-mid)]">
-            Encrypted checkout. Match fees settle in your wallet — never pay organizers in-app.
+            Encrypted checkout. Match fees settle from your wallet. You never pay organizers directly.
           </p>
         </div>
 

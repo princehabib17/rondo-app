@@ -1,15 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
-import { ArrowRight, MapPin, MapTrifold } from "@phosphor-icons/react";
+import { MapPin, MapTrifold } from "@phosphor-icons/react";
 import { motion } from "motion/react";
-import { formatGameTime, formatPrice } from "@/lib/utils/format";
+import { formatPrice } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
-import { getOrganizerInitials } from "@/lib/feed/organizers";
-import { GameBadges } from "@/components/feed/GameBadges";
-import { getPlayerCount, isFull, type Coords } from "@/lib/feed/filters";
-import { format } from "date-fns";
+import { gameDistanceKm, getPlayerCount, isFull, type Coords } from "@/lib/feed/filters";
+import { format, isToday, isTomorrow } from "date-fns";
+import { cn } from "@/lib/utils";
 import { bouncy } from "@/components/motion/springs";
 
 interface NearbyGameRowProps {
@@ -21,10 +19,10 @@ function PlayerProgress({ current, max }: { current: number; max: number }) {
   const pct = max > 0 ? Math.min(100, (current / max) * 100) : 0;
   const full = current >= max;
   return (
-    <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-[color-mix(in_oklch,var(--ink-hi)_8%,transparent)]">
+    <div className="h-1 w-full overflow-hidden rounded-[var(--r-pill)] bg-[var(--bg-inset)]">
       <div
-        className={`h-full rounded-full transition-[width] duration-300 ${
-          full ? "bg-[color-mix(in_oklch,var(--ink-hi)_28%,transparent)]" : pct >= 80 ? "bg-[var(--live)]" : "bg-[var(--gold)]"
+        className={`h-full rounded-[var(--r-pill)] transition-[width] duration-300 ${
+          full ? "bg-[var(--ink-low)]" : pct >= 80 ? "bg-[var(--live)]" : "bg-[var(--ink-mid)]"
         }`}
         style={{ width: `${pct}%` }}
       />
@@ -32,72 +30,49 @@ function PlayerProgress({ current, max }: { current: number; max: number }) {
   );
 }
 
-function formatShortDate(dateString: string): string {
-  return format(new Date(dateString), "EEE, MMM d");
-}
-
 export function NearbyGameRow({ game, coords = null }: NearbyGameRowProps) {
   const playerCount = getPlayerCount(game);
   const organizerName = game.organization?.name ?? game.organizer?.full_name ?? "Organizer";
   const full = isFull(game);
   const spotsLeft = game.max_players - playerCount;
+  const kickoff = new Date(game.date_time);
+  const distance = coords ? gameDistanceKm(game, coords) : null;
+  const dayLabel = isToday(kickoff) ? "Today" : isTomorrow(kickoff) ? "Tmrw" : format(kickoff, "EEE d");
 
   return (
     <Link
       href={`/games/${game.id}`}
-      className="group grid grid-cols-[3.25rem_minmax(0,1fr)_auto] items-center gap-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-surface)_84%,transparent)] p-3 transition-colors active:opacity-80"
+      className="group flex items-stretch gap-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-3 transition-[transform,border-color] duration-200 active:scale-[0.98] hover:border-[color-mix(in_oklch,var(--gold)_35%,var(--stroke))]"
     >
-      <div className="flex h-[3.25rem] w-[3.25rem] shrink-0 items-center justify-center overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-inset)]">
-        {game.organization?.logo_url ? (
-          <Image
-            src={game.organization.logo_url}
-            alt=""
-            width={44}
-            height={44}
-            unoptimized
-            className="h-full w-full object-cover"
-          />
-        ) : game.organizer?.avatar_url ? (
-          <Image
-            src={game.organizer.avatar_url}
-            alt=""
-            width={44}
-            height={44}
-            unoptimized
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <span className="font-heading text-xs font-black text-[var(--ink-hi)]">
-            {getOrganizerInitials(organizerName)}
-          </span>
-        )}
+      <div className="flex w-16 shrink-0 flex-col items-center justify-center rounded-[var(--r-sm)] bg-[var(--bg-inset)] py-2">
+        <span className="font-heading text-xl font-bold leading-none tabular-nums text-[var(--ink-hi)]">
+          {format(kickoff, "h:mm")}
+        </span>
+        <span className="mt-1 rondo-label text-[0.625rem] text-[var(--ink-low)]">
+          {format(kickoff, "a")} · {dayLabel}
+        </span>
       </div>
 
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1 py-0.5">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="truncate font-heading text-base font-black uppercase leading-tight text-[var(--ink-hi)]">
-            {game.title}
-          </h3>
-          <span className="shrink-0 font-heading text-xs font-black text-[var(--gold)]">
+          <h3 className="line-clamp-1 rondo-body font-bold text-[var(--ink-hi)]">{game.title}</h3>
+          <span className="shrink-0 font-heading text-base font-bold tabular-nums text-[var(--ink-hi)]">
             {game.price_per_player === 0 ? "Free" : formatPrice(game.price_per_player)}
           </span>
         </div>
-        <p className="mt-0.5 truncate rondo-meta text-[var(--ink-low)]">{game.venue_name}</p>
-
-        <GameBadges game={game} coords={coords} className="mt-1.5" />
-
-        <div className="mt-1.5 flex items-center justify-between">
-          <span className="rondo-meta text-[var(--ink-low)]">
-            {formatShortDate(game.date_time)} / {formatGameTime(game.date_time)}
-          </span>
-          <span className={`rondo-meta ${full ? "text-[var(--ink-low)]" : "text-[var(--ink-mid)]"}`}>
-            {full ? "Full" : `${spotsLeft} left`} / {playerCount}/{game.max_players}
+        <p className="mt-0.5 truncate rondo-meta text-[var(--ink-low)]">
+          {game.venue_name}
+          {distance != null ? ` · ${distance < 10 ? distance.toFixed(1) : Math.round(distance)} km` : ""}
+          {" · "}
+          {organizerName}
+        </p>
+        <div className="mt-2 flex items-center gap-2">
+          <PlayerProgress current={playerCount} max={game.max_players} />
+          <span className={cn("shrink-0 rondo-meta font-bold", full ? "text-[var(--ink-low)]" : "text-[var(--ink-mid)]")}>
+            {full ? "Full" : `${spotsLeft} left`}
           </span>
         </div>
-        <PlayerProgress current={playerCount} max={game.max_players} />
       </div>
-
-      <ArrowRight size={16} weight="bold" className="shrink-0 text-[var(--ink-low)] transition-colors group-hover:text-[var(--gold)]" />
     </Link>
   );
 }

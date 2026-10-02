@@ -7,6 +7,8 @@ import {
   ImagePlus,
   Users,
 } from "lucide-react";
+import { Plus } from "@phosphor-icons/react";
+import { RondoBrand } from "@/components/brand/RondoBrand";
 import Link from "next/link";
 import { toast } from "sonner";
 import { motion } from "motion/react";
@@ -28,11 +30,11 @@ interface OrgGame {
 }
 
 const statusColor: Record<string, string> = {
-  open: "text-emerald-300 bg-emerald-400/10",
+  open: "text-[var(--ok)] bg-[var(--ok)]/10",
   full: "text-[var(--gold)] bg-[var(--gold)]/10",
-  in_progress: "text-sky-300 bg-sky-400/10",
+  in_progress: "text-[var(--ink-hi)] bg-[var(--bg-inset)]",
   completed: "text-[var(--ink-low)] bg-[var(--bg-inset)]",
-  cancelled: "text-[var(--live)] bg-red-400/10",
+  cancelled: "text-[var(--live)] bg-[var(--live)]/10",
 };
 
 function getGreeting() {
@@ -140,23 +142,21 @@ export default function OrganizerDashboardPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[var(--bg-page)]">
-      {/* Sticky minimal header */}
-      <header className="sticky top-0 z-40 border-b border-[var(--stroke)] bg-[var(--bg-page)]/85 px-5 py-3 backdrop-blur-xl">
-        <div className="flex items-center justify-between gap-3">
-          <p className="font-body text-[10px] font-black uppercase tracking-[0.26em] text-[var(--gold)]">
-            Organizer
-          </p>
+    <div className="min-h-[100dvh] rondo-page">
+      <header className="sticky top-0 z-40 border-b border-[var(--stroke)] rondo-glass-nav pt-[env(safe-area-inset-top)]">
+        <div className="mx-auto flex h-14 max-w-lg items-center justify-between gap-3 px-4">
+          <RondoBrand kind="wordmark" surface="auto" className="h-7 w-28" />
           <Link
-            href="/organizer/create/match"
-            className="inline-flex min-h-[36px] items-center rounded-full bg-[var(--gold)] px-4 text-[11px] font-black uppercase tracking-wider text-[var(--gold-ink)] transition active:scale-[0.97]"
+            href="/organizer/create"
+            className="inline-flex h-10 items-center gap-1.5 rounded-[var(--r-pill)] border border-[var(--stroke)] px-4 rondo-label text-[var(--ink-hi)] transition hover:bg-[var(--bg-inset)] active:scale-[0.97]"
           >
-            + Create
+            <Plus size={14} weight="bold" aria-hidden />
+            Create
           </Link>
         </div>
       </header>
 
-      <div className="space-y-8 px-5 pb-12 pt-8">
+      <div className="mx-auto max-w-lg space-y-8 px-4 pb-12 pt-8">
         {/* Personal greeting — this IS the visual anchor */}
         <motion.section
           initial={{ opacity: 0, y: 16 }}
@@ -164,12 +164,12 @@ export default function OrganizerDashboardPage() {
           transition={bouncy}
         >
           <p className="font-body text-sm text-[var(--ink-low)]">{getGreeting()}</p>
-          <h1 className="font-heading text-[3.25rem] font-black uppercase italic leading-none text-[var(--ink-hi)]">
+          <h1 className="font-heading text-[3.25rem] font-black uppercase leading-none text-[var(--ink-hi)]">
             {loading ? "..." : firstName || "Organizer"}
           </h1>
           <div className="mt-4 flex items-baseline gap-3">
-            <span className="font-heading text-4xl font-black italic text-[var(--gold)]">
-              {loading ? "—" : formatPrice(totalEarnings)}
+            <span className="font-heading text-4xl font-bold tabular-nums text-[var(--gold)]">
+              {loading ? "₱0" : formatPrice(totalEarnings)}
             </span>
             <span className="font-body text-sm text-[var(--ink-low)]">
               {loading ? "" : `earned · ${games.length} game${games.length !== 1 ? "s" : ""}`}
@@ -182,7 +182,7 @@ export default function OrganizerDashboardPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...bouncy, delay: 0.06 }}
-          className="-mx-5 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           <div className="flex w-max gap-2">
             <Link
@@ -218,14 +218,14 @@ export default function OrganizerDashboardPage() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...bouncy, delay: 0.1 }}
-            className="rounded-[var(--r-md)] border border-[var(--gold)]/20 bg-[var(--gold)]/8 p-4"
+            className="rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-4"
           >
-            <p className="mb-1 font-body text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gold)]">
+            <p className="mb-1 rondo-label text-[var(--ink-low)]">
               Next up
             </p>
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <h2 className="font-heading text-xl font-black uppercase italic leading-none text-[var(--ink-hi)]">
+                <h2 className="font-heading text-xl font-black uppercase leading-none text-[var(--ink-hi)]">
                   {nextGame.title}
                 </h2>
                 <p className="mt-1 font-body text-xs text-[var(--ink-low)]">
@@ -250,13 +250,13 @@ export default function OrganizerDashboardPage() {
               <p className="font-body text-[10px] font-black uppercase tracking-[0.22em] text-[var(--ink-low)]">
                 Event inventory
               </p>
-              <h2 className="font-heading text-2xl font-black uppercase italic leading-none text-[var(--ink-hi)]">
+              <h2 className="font-heading text-2xl font-black uppercase leading-none text-[var(--ink-hi)]">
                 Your Games
               </h2>
             </div>
             <Link
               href="/organizer/create/match"
-              className="font-body text-xs font-black uppercase tracking-wider text-[var(--gold)]"
+              className="inline-flex min-h-11 items-center rondo-meta font-bold text-[var(--ink-mid)] hover:text-[var(--ink-hi)]"
             >
               New Game
             </Link>
@@ -267,7 +267,7 @@ export default function OrganizerDashboardPage() {
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
-                  className="h-52 animate-pulse rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.03]"
+                  className="h-52 animate-pulse rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)]"
                 />
               ))}
             </div>
@@ -276,13 +276,13 @@ export default function OrganizerDashboardPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={bouncy}
-              className="rounded-[var(--r-md)] border border-dashed border-[var(--stroke)] bg-white/[0.02] px-5 py-16 text-center"
+              className="rounded-[var(--r-md)] border border-dashed border-[var(--stroke)] bg-[var(--bg-surface)] px-5 py-16 text-center"
             >
-              <p className="font-heading text-2xl font-black uppercase italic text-[var(--ink-hi)]">
+              <p className="font-heading text-2xl font-black uppercase text-[var(--ink-hi)]">
                 No games yet
               </p>
               <p className="mx-auto mt-2 max-w-[22ch] font-body text-sm text-[var(--ink-low)]">
-                Start with a match page — cover image, venue, teams, and price.
+                Start with a match page: cover image, venue, teams, and price.
               </p>
               <Link
                 href="/organizer/create/match"
@@ -304,7 +304,7 @@ export default function OrganizerDashboardPage() {
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ ...bouncy, delay: 0.08 + i * 0.04 }}
-                    className="overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.03] transition hover:border-[var(--gold)]/25"
+                    className="overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] transition hover:border-[var(--gold)]/25"
                   >
                     {/* Image — dominant, full width */}
                     <div className="relative h-44">
@@ -319,7 +319,7 @@ export default function OrganizerDashboardPage() {
                           className={`h-full w-full bg-gradient-to-br ${gameGradient(game.id)}`}
                         />
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-night)]/90 via-[var(--bg-night)]/20 to-transparent" />
 
                       {/* Cover upload */}
                       <label
@@ -354,7 +354,7 @@ export default function OrganizerDashboardPage() {
 
                       {/* Title + meta overlaid at bottom */}
                       <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <h3 className="font-heading text-xl font-black uppercase italic leading-none text-[var(--ink-hi)]">
+                        <h3 className="font-heading text-xl font-black uppercase leading-none text-[var(--ink-hi)]">
                           {game.title}
                         </h3>
                         <p className="mt-1 font-body text-xs text-[var(--ink-low)]">
@@ -382,7 +382,7 @@ export default function OrganizerDashboardPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="font-heading text-base font-black italic text-[var(--gold)]">
+                        <span className="font-heading text-base font-black text-[var(--gold)]">
                           {formatPrice(game.price_per_player)}
                         </span>
                         <Link

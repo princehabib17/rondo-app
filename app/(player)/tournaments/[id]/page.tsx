@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Crown, Lock, Shield, SoccerBall, Trophy, UserPlus, X } from "@phosphor-icons/react";
+import { useParams } from "next/navigation";
+import { Crown, Lock, Shield, SoccerBall, Trophy, UserPlus, X } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
@@ -19,6 +19,7 @@ import type {
 import { BracketView } from "@/components/tournament/BracketView";
 import { StandingsTable } from "@/components/tournament/StandingsTable";
 import { TournamentHero } from "@/components/tournament/TournamentHero";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { TopScorers } from "@/components/tournament/TopScorers";
 import { EmptyState, MatchCell, StatTile } from "@/components/rondo/primitives";
 
@@ -108,7 +109,7 @@ function RosterSheet({
         <div className="mx-auto mt-2 h-1 w-8 rounded-[var(--r-pill)] bg-[var(--gold)]" />
         <div className="flex items-center justify-between gap-3 border-b border-[var(--stroke)] px-5 py-4">
           <div className="min-w-0">
-            <p className="rondo-label text-[var(--gold)]">Team {team.team_number ?? "—"}</p>
+            <p className="rondo-label text-[var(--gold)]">Team {team.team_number ?? "–"}</p>
             <h2 className="truncate rondo-title text-[var(--ink-hi)]">{team.name}</h2>
           </div>
           <button
@@ -214,7 +215,6 @@ function RosterSheet({
 
 export default function TournamentDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [teams, setTeams] = useState<TournamentTeam[]>([]);
   const [members, setMembers] = useState<TournamentTeamMember[]>([]);
@@ -387,20 +387,13 @@ export default function TournamentDetailPage() {
   const showActionCard = tournament.status !== "cancelled";
 
   return (
-    <div className="min-h-[100dvh] rondo-page pb-44">
-      <header className="sticky top-0 z-40 border-b border-[var(--stroke)] rondo-glass-nav px-4 py-3">
-        <div className="mx-auto flex h-12 max-w-lg items-center gap-3">
-          <button type="button" onClick={() => router.back()} aria-label="Back" className="grid min-h-11 min-w-11 place-items-center rounded-[var(--r-pill)] text-[var(--ink-mid)]">
-            <ArrowLeft size={20} />
-          </button>
-          <h1 className="truncate rondo-title text-[var(--ink-hi)]">{tournament.name}</h1>
-        </div>
-      </header>
+    <div className="min-h-[100dvh] rondo-page pb-24">
+      <PageHeader title={tournament.name} back fallbackHref="/tournaments" />
 
       <TournamentHero tournament={tournament} teamCount={teams.length} matches={matches} />
 
-      <nav className="sticky top-[73px] z-20 border-b border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_92%,transparent)] px-4 py-2 backdrop-blur-md">
-        <div className="mx-auto flex max-w-lg gap-2 overflow-x-auto [scrollbar-width:none]">
+      <nav className="sticky top-[calc(3.5rem+1px+env(safe-area-inset-top))] z-20 border-b border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_92%,transparent)] px-4 py-2 backdrop-blur-md">
+        <div className="mx-auto flex max-w-lg gap-2 overflow-x-auto [scrollbar-width:none] rondo-scroll-fade">
           {navItems.map((item) => (
             <a key={item.id} href={`#${item.id}`} className="rondo-chip shrink-0" data-active={activeSection === item.id}>
               {item.label}
@@ -425,7 +418,7 @@ export default function TournamentDetailPage() {
           >
             <Trophy size={32} weight="duotone" className="mx-auto mb-2 text-[var(--gold)]" />
             <p className="rondo-label text-[var(--gold)]">Champion</p>
-            <p className="mt-1 font-heading text-4xl font-bold uppercase text-[var(--ink-hi)]">{champion.name}</p>
+            <p className="mt-2 font-heading text-4xl font-bold uppercase leading-[0.95] text-[var(--ink-hi)] [text-wrap:balance]">{champion.name}</p>
             <p className="mt-2 rondo-meta text-[var(--ink-mid)]">{champion.detail}</p>
           </section>
         )}
@@ -518,7 +511,7 @@ export default function TournamentDetailPage() {
                       }`}
                     >
                       <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--r-pill)] bg-[var(--bg-inset)] font-heading text-sm font-bold tabular-nums text-[var(--gold)]">
-                        {team.team_number ?? "—"}
+                        {team.team_number ?? "–"}
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate rondo-meta font-bold text-[var(--ink-hi)]">{team.name}</span>
@@ -555,10 +548,9 @@ export default function TournamentDetailPage() {
         />
       )}
 
-      {/* bottom-6rem (not 4rem): clears the floating BottomNav pill, which
-          occupies 24-84px from the viewport edge, not just its top 64px. */}
+      {/* Pushed screen: the tab bar steps aside, so this bar owns the bottom edge. */}
       {showActionCard && (
-        <div className="fixed inset-x-0 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-30 rondo-sticky-action">
+        <div className="fixed inset-x-0 bottom-0 z-30 rondo-sticky-action pb-[env(safe-area-inset-bottom)]">
           <div className="mx-auto max-w-lg px-4 py-3">
             {tournament.status !== "registration" ? (
               <div className="flex min-h-[44px] items-center gap-2 text-sm text-[var(--ink-low)]">
@@ -567,7 +559,7 @@ export default function TournamentDetailPage() {
                 {tournament.status === "completed" && "Tournament completed."}
               </div>
             ) : alreadyRegistered ? (
-              <div className="flex min-h-[44px] items-center gap-2 text-sm font-semibold text-emerald-300">
+              <div className="flex min-h-[44px] items-center gap-2 text-sm font-semibold text-[var(--ok)]">
                 <Shield size={14} className="shrink-0" />
                 Your team is in. See you on matchday.
               </div>

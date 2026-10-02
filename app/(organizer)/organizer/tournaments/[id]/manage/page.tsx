@@ -344,7 +344,13 @@ function ScoreSheet({
             </p>
           )}
 
-          {knockoutDrawBlocked && (
+          {knockoutDrawBlocked && homeScore + awayScore === 0 && (
+            <p className="rondo-meta text-center text-[var(--ink-low)]">
+              Knockout games need a winner. Settle draws on penalties and enter the winning side one up.
+            </p>
+          )}
+
+          {knockoutDrawBlocked && homeScore + awayScore > 0 && (
             <p className="rondo-meta text-center text-[var(--live)] bg-[color-mix(in_oklch,var(--live)_10%,transparent)] border border-[var(--live)] rounded-[var(--r-sm)] px-3 py-2">
               Knockout matches cannot end in a draw. Adjust one score to save.
             </p>
@@ -723,7 +729,7 @@ export default function ManageTournamentPage() {
                         className="flex min-h-14 items-center gap-2 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] px-3 py-3"
                       >
                         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--r-pill)] bg-[var(--bg-inset)] font-heading text-sm font-bold tabular-nums text-[var(--gold)]">
-                          {team.team_number ?? "—"}
+                          {team.team_number ?? "–"}
                         </span>
                         <span className="min-w-0">
                           <span className="block truncate rondo-meta font-bold text-[var(--ink-hi)]">{team.name}</span>

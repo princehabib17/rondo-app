@@ -170,41 +170,8 @@ export default function LoginPage() {
 
       <h1 className="rondo-hero-title text-4xl mb-2">Log in</h1>
       <p className="font-body text-[var(--ink-low)] text-sm mb-8">
-        Sign in with email, passkey, phone, or social. Phone texts are not on yet.
+        Welcome back. Your matches are waiting.
       </p>
-
-      <div className="mb-6">
-        <PasskeySignInButton
-          disabled={sending}
-          onError={setError}
-          onSuccess={async (userId) => {
-            const next = safeNext(new URLSearchParams(window.location.search).get("next"));
-            const supabase = createClient();
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("role")
-              .eq("id", userId)
-              .single();
-            router.replace(
-              profile?.role
-                ? getPostOnboardingDestination(next, profile.role)
-                : getOnboardingPath(next)
-            );
-            router.refresh();
-          }}
-        />
-      </div>
-
-      <div className="relative mb-6">
-        <div className="absolute inset-0 flex items-center" aria-hidden>
-          <div className="w-full border-t border-[var(--stroke)]" />
-        </div>
-        <div className="relative flex justify-center">
-          <span className="bg-[var(--bg-page,#0a0a0a)] px-3 text-xs text-[var(--ink-low)]">
-            Or use phone or email
-          </span>
-        </div>
-      </div>
 
       <div className="mb-6 grid grid-cols-2 gap-2 rounded-[var(--r-sm)] bg-[var(--bg-inset)] p-1">
         <button
@@ -280,6 +247,14 @@ export default function LoginPage() {
                 placeholder="Your password"
                 className={rondoFieldClass}
               />
+              <div className="flex justify-end">
+                <Link
+                  href="/forgot-password"
+                  className="inline-flex min-h-11 items-center font-body text-xs font-semibold text-[var(--ink-mid)] hover:text-[var(--ink-hi)]"
+                >
+                  Forgot password?
+                </Link>
+              </div>
             </div>
           </>
         )}
@@ -304,11 +279,39 @@ export default function LoginPage() {
           Create account
         </Link>
       </p>
-      <GuestScoutLinks />
-
-      <div className="mt-10">
-        <SocialLoginButtons />
+      <div className="relative my-8">
+        <div className="absolute inset-0 flex items-center" aria-hidden>
+          <div className="w-full border-t border-[var(--stroke)]" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="bg-[var(--bg-page)] px-3 text-xs text-[var(--ink-low)]">Or</span>
+        </div>
       </div>
+
+      <div className="space-y-4">
+        <PasskeySignInButton
+          disabled={sending}
+          onError={setError}
+          onSuccess={async (userId) => {
+            const next = safeNext(new URLSearchParams(window.location.search).get("next"));
+            const supabase = createClient();
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("role")
+              .eq("id", userId)
+              .single();
+            router.replace(
+              profile?.role
+                ? getPostOnboardingDestination(next, profile.role)
+                : getOnboardingPath(next)
+            );
+            router.refresh();
+          }}
+        />
+        <SocialLoginButtons showLabel={false} />
+      </div>
+
+      <GuestScoutLinks />
     </>
   );
 }

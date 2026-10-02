@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/layout/PageHeader";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
@@ -160,7 +161,7 @@ function UploadSheet({
       <div className="w-full max-w-[430px] rounded-[1.6rem] border border-[var(--stroke)] bg-[var(--bg-page)] p-4 shadow-[0_-24px_90px_rgba(0,0,0,0.78)]">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <p className="font-heading text-2xl font-black uppercase italic text-[var(--ink-hi)]">Upload Clip</p>
+            <p className="font-heading text-2xl font-black uppercase text-[var(--ink-hi)]">Upload Clip</p>
             <p className="text-xs text-[var(--ink-low)]">Upload a clip or paste a public video link.</p>
           </div>
           <button
@@ -307,20 +308,23 @@ export default function ScoutPage() {
 
   if (!loading && clips.length === 0) {
     return (
-      <div className="rondo-night flex min-h-[100dvh] flex-col items-center justify-center gap-4 px-8 text-center text-[var(--ink-hi)]">
-        <p className="font-heading text-2xl font-black uppercase italic">No Clips Yet</p>
-        <p className="font-body text-sm text-[var(--ink-low)]">
-          Nobody&apos;s posted a scout clip yet. Check back soon.
+      <div className="rondo-night flex min-h-[100dvh] flex-col text-[var(--ink-hi)]">
+        <PageHeader title="Scout" back fallbackHref="/feed" />
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 text-center">
+        <p className="rondo-display text-[var(--ink-hi)]">No clips yet</p>
+        <p className="max-w-xs rondo-body text-[var(--ink-low)]">
+          Scouts and captains watch here for players. Post your best moment and get noticed.
         </p>
         {!guest && (
           <button
             type="button"
             onClick={() => setUploadOpen(true)}
-            className="mt-4 rounded-[var(--r-md)] bg-[var(--gold)] px-6 py-3 font-bold text-[var(--gold-ink)]"
+            className="mt-4 rondo-btn rondo-btn-primary w-auto"
           >
-            Be the first — post a clip
+            Post the first clip
           </button>
         )}
+        </div>
         <UploadSheet
           open={uploadOpen}
           onClose={() => setUploadOpen(false)}
@@ -415,7 +419,7 @@ export default function ScoutPage() {
                     )}
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <p className="truncate font-heading text-2xl font-black uppercase italic leading-none text-[var(--ink-hi)]">
+                        <p className="truncate font-heading text-2xl font-black uppercase leading-none text-[var(--ink-hi)]">
                           {clip.player?.full_name ?? "Player"}
                         </p>
                         <Check size={16} className="shrink-0 rounded-full bg-[var(--gold)] p-0.5 text-[var(--gold-ink)]" />
@@ -444,7 +448,7 @@ export default function ScoutPage() {
         })}
       </div>
 
-      <div className="fixed bottom-[5.1rem] left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-full border border-[var(--stroke)] bg-[var(--bg-page)]/50 px-3 py-2 backdrop-blur-md">
+      <div className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-full border border-[var(--stroke)] bg-[var(--bg-page)]/50 px-3 py-2 backdrop-blur-md">
         <button
           type="button"
           onClick={() => scrollToActive(-1)}

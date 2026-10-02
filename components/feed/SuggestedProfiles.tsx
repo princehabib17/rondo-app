@@ -41,7 +41,7 @@ export function SuggestedProfiles() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Users size={16} className="text-[var(--gold)]" />
-          <h2 className="font-heading text-[var(--ink-hi)] font-black italic text-sm uppercase tracking-wide">
+          <h2 className="font-heading text-[var(--ink-hi)] font-black text-sm uppercase tracking-wide">
             Suggested Players
           </h2>
         </div>

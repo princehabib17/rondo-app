@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, SoccerBall } from "@phosphor-icons/react";
 import { signInAsGuest } from "@/lib/auth/guest";
+import { createClient } from "@/lib/supabase/client";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { motion, useReducedMotion } from "motion/react";
 import { RondoButton } from "@/components/rondo/primitives";
 import { RondoBrand } from "@/components/brand/RondoBrand";
@@ -15,6 +17,23 @@ export default function HomePage() {
   const reduceMotion = useReducedMotion();
   const [guestError, setGuestError] = useState<string | null>(null);
   const [guestLoading, setGuestLoading] = useState(false);
+  const [openThisWeek, setOpenThisWeek] = useState<number | null>(null);
+
+  // Real proof on the first screen: how many games are open in the next week.
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+    const now = new Date();
+    const weekOut = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    createClient()
+      .from("games")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "open")
+      .gte("date_time", now.toISOString())
+      .lte("date_time", weekOut.toISOString())
+      .then(({ count, error }) => {
+        if (!error && count) setOpenThisWeek(count);
+      });
+  }, []);
 
   async function handleGuest() {
     setGuestError(null);
@@ -63,6 +82,18 @@ export default function HomePage() {
             Find games near you.
           </motion.h1>
 
+          <motion.div className="space-y-3" {...visible}>
+            <p className="max-w-sm rondo-body text-[color-mix(in_oklch,var(--ink-hi)_80%,transparent)]">
+              Pickup football and futsal across Metro Manila. Join in a tap, pay from your wallet, run the bracket.
+            </p>
+            {openThisWeek !== null && (
+              <p className="inline-flex items-center gap-2 rounded-[var(--r-pill)] border border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_70%,transparent)] px-3 py-1.5 rondo-meta font-bold text-[var(--ink-hi)] backdrop-blur-sm">
+                <span className="size-2 rounded-[var(--r-pill)] bg-[var(--ok)]" aria-hidden />
+                {openThisWeek} open {openThisWeek === 1 ? "game" : "games"} this week
+              </p>
+            )}
+          </motion.div>
+
           <motion.div className="space-y-2" {...visible}>
             <RondoButton href="/signup" variant="primary">
               Create account
@@ -73,7 +104,7 @@ export default function HomePage() {
             </RondoButton>
             <RondoButton onClick={handleGuest} disabled={guestLoading} variant="ghost">
               <SoccerBall size={18} weight="duotone" aria-hidden />
-              {guestLoading ? "Opening feed…" : "Continue as guest"}
+              {guestLoading ? "Opening the feed..." : "Continue as guest"}
             </RondoButton>
             {guestError && <p className="rondo-meta px-2 text-center text-[var(--live)]">{guestError}</p>}
           </motion.div>

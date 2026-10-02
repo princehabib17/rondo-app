@@ -2,12 +2,14 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Calendar, Check, MapPin, Users } from "lucide-react";
+import { Check, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import type { Game } from "@/lib/supabase/types";
-import { gameCoverSrc, pitchPhotoForVenue } from "@/lib/venues/pitch-photos";
+import { MATCH_SCENES, matchHeroImage } from "@/lib/venues/pitch-photos";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { format } from "date-fns";
 
 type TeamWithPlayers = {
   id: string;
@@ -198,8 +200,7 @@ function JoinMatchContent() {
             : "Choose slot";
 
   const onPrimary = claimSpot ? handleClaimSpot : waitlistOnly ? handleWaitlist : handleConfirm;
-  const cover = coverFailed ? null : gameCoverSrc(game);
-  const pitch = pitchPhotoForVenue(game.venue_name);
+  const hero = coverFailed ? MATCH_SCENES.football : matchHeroImage(game);
 
   if (teams.length === 0) {
     return (
@@ -219,52 +220,32 @@ function JoinMatchContent() {
   }
 
   return (
-    <div className="min-h-[100dvh] rondo-page pb-56">
-      <header className="sticky top-0 rondo-glass-nav border-b border-[var(--stroke)] z-40 px-4 py-3 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--ink-hi)]"
-          aria-label="Back"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <h1 className="font-heading text-[var(--ink-hi)] font-black italic text-sm uppercase">
-          {claimSpot ? "Claim spot" : waitlistOnly ? "Waitlist" : "Choose slot"}
-        </h1>
-      </header>
+    <div className="min-h-[100dvh] rondo-page pb-24">
+      <PageHeader
+        title={claimSpot ? "Claim your spot" : waitlistOnly ? "Join the waitlist" : "Pick your team"}
+        back
+        fallbackHref={`/games/${game.id}`}
+      />
 
       <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
-        <section className="overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-white/[0.04]">
-          {cover && (
-            <div className="relative h-36">
-              <img
-                src={cover}
-                alt={pitch && cover === pitch.src ? pitch.alt : ""}
-                className="h-full w-full object-cover"
-                onError={() => setCoverFailed(true)}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 to-transparent" />
-            </div>
-          )}
+        <section className="overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)]">
+          <div className="relative h-36">
+            <img
+              src={hero.src}
+              alt={hero.alt}
+              className="h-full w-full object-cover"
+              onError={() => setCoverFailed(true)}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-surface)] to-transparent" />
+          </div>
           <div className="space-y-3 p-4">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gold)]">
-                Team selection
+              <p className="rondo-label text-[var(--ink-low)]">
+                {format(new Date(game.date_time), "EEE, MMM d · h:mm a")} · {game.venue_name}
               </p>
-              <h2 className="mt-1 font-heading text-2xl font-black uppercase italic leading-none text-[var(--ink-hi)]">
+              <h2 className="mt-1 font-heading text-2xl font-bold uppercase leading-none text-[var(--ink-hi)]">
                 {game.title}
               </h2>
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-xs text-[var(--ink-mid)]">
-              <div className="rounded-[var(--r-md)] bg-[var(--bg-page)]/25 p-3">
-                <Calendar size={14} className="mb-1 text-[var(--gold)]" />
-                <p>{new Date(game.date_time).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</p>
-              </div>
-              <div className="rounded-[var(--r-md)] bg-[var(--bg-page)]/25 p-3">
-                <MapPin size={14} className="mb-1 text-[var(--gold)]" />
-                <p className="truncate">{game.venue_name}</p>
-              </div>
             </div>
             <p className="font-body text-sm leading-5 text-[var(--ink-mid)]">
               {waitlistOnly
@@ -331,10 +312,9 @@ function JoinMatchContent() {
         {error && <p className="text-[var(--live)] text-sm text-center">{error}</p>}
       </div>
 
-      {/* bottom-24 (not bottom-16): the floating BottomNav pill sits at
-          bottom-6 with a 60px height, occupying 24-84px from the viewport
-          edge — bottom-16 (64px) rendered this bar underneath it. */}
-      <div className="fixed bottom-24 left-0 right-0 max-w-lg mx-auto px-4 pb-6 pt-3 rondo-glass-nav z-30 space-y-2">
+      {/* Pushed screen: the tab bar steps aside, so this bar owns the bottom edge. */}
+      <div className="fixed inset-x-0 bottom-0 z-30 rondo-sticky-action pb-[env(safe-area-inset-bottom)]">
+      <div className="mx-auto max-w-lg space-y-2 px-4 py-3">
         <button
           type="button"
           onClick={onPrimary}
@@ -353,6 +333,7 @@ function JoinMatchContent() {
             {leaving ? "Leaving…" : "Leave waitlist"}
           </button>
         )}
+      </div>
       </div>
     </div>
   );

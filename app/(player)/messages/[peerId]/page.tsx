@@ -43,7 +43,8 @@ export default function DirectMessageThreadPage() {
   }, [loadThread]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    // An empty thread has nothing to scroll to; scrolling it only tucked the hint under the header.
+    if (messages.length > 0) bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages]);
 
   async function handleSend(e: React.FormEvent) {
@@ -77,7 +78,7 @@ export default function DirectMessageThreadPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] rondo-page flex flex-col pb-24">
+    <div className="min-h-[100dvh] rondo-page flex flex-col pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
       <header className="sticky top-0 rondo-glass-nav border-b border-[var(--stroke)] z-40 px-4 py-3 flex items-center gap-3">
         <button
           type="button"
@@ -94,7 +95,10 @@ export default function DirectMessageThreadPage() {
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 max-w-lg mx-auto w-full">
         {messages.length === 0 && (
-          <p className="text-center text-[var(--ink-low)] text-sm py-8">Say hello — this is a private 1:1 chat.</p>
+          <div className="flex flex-col items-center gap-2 py-16 text-center">
+            <p className="rondo-body font-bold text-[var(--ink-hi)]">Start the conversation</p>
+            <p className="max-w-[16rem] rondo-meta text-[var(--ink-low)]">Only the two of you can see this chat.</p>
+          </div>
         )}
         {messages.map((m) => {
           const mine = m.sender_id === currentUserId;
@@ -115,20 +119,21 @@ export default function DirectMessageThreadPage() {
 
       <form
         onSubmit={handleSend}
-        className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto px-4 pb-6 pt-3 rondo-glass-nav z-30 flex gap-2"
+        className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] rondo-sticky-action z-30 flex gap-2"
       >
         <input
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          placeholder="Message…"
+          placeholder="Message"
           maxLength={2000}
-          className="flex-1 bg-[var(--bg-inset)] border border-[var(--stroke)] rounded-[var(--r-md)] px-4 py-3 text-[var(--ink-hi)] text-sm placeholder:text-[var(--ink-low)] min-h-[48px]"
+          aria-label="Message"
+          className="h-12 min-w-0 flex-1 rounded-[var(--r-sm)] border border-transparent bg-[var(--bg-inset)] px-4 rondo-body text-[var(--ink-hi)] placeholder:text-[var(--ink-low)] outline-none focus:border-[var(--gold)]"
         />
         <button
           type="submit"
           disabled={!body.trim() || sending}
-          className="min-w-[48px] min-h-[48px] rondo-btn rondo-btn-primary flex items-center justify-center disabled:opacity-40"
-          aria-label="Send"
+          aria-label="Send message"
+          className="grid size-12 shrink-0 place-items-center rounded-[var(--r-pill)] bg-[var(--gold)] text-[var(--gold-ink)] disabled:opacity-40"
         >
           <Send size={18} />
         </button>

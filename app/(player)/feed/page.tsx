@@ -67,11 +67,6 @@ export default async function FeedPage() {
       : Promise.resolve(0),
   ]);
 
-  // Empty city: seed a few placeholder listings after the response is sent so
-  // this render never waits on the service client. The next visit shows them.
-  if (openGames.length === 0) {
-    after(() => ensurePublishedCity());
-  }
 
   const aroundYou = await withAuthTimeoutOr(
     fetchAroundYouTournaments(
@@ -80,6 +75,13 @@ export default async function FeedPage() {
     ),
     []
   );
+
+  // Empty city: seed a few placeholder listings (and the showcase cups) after
+  // the response is sent so this render never waits on the service client.
+  // The next visit shows them.
+  if (openGames.length === 0 || (aroundYou.length === 0 && yourTournaments.length === 0)) {
+    after(() => ensurePublishedCity());
+  }
 
   return (
     <FeedPageClient

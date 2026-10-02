@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { HelpCircle, Lock, Shield, Wallet } from "lucide-react";
+import { CaretRight, Lifebuoy, LockSimple, SealCheck, ShieldCheck, Wallet } from "@phosphor-icons/react/dist/ssr";
 import type { Game, Profile } from "@/lib/supabase/types";
-import { GameBadges } from "@/components/feed/GameBadges";
+import { FREE_DROP_OUT_HOURS } from "@/lib/match/drop-out";
 import {
-  canPayLater,
   getJoinRuleLabel,
   getPaymentRuleLabel,
   getVisibilityLabel,
@@ -20,55 +19,63 @@ export function MatchRulesPanel({
   gamesHosted: number;
 }) {
   return (
-    <div className="space-y-4">
-      <GameBadges game={game} showStatus />
-
-      <div className="rondo-surface p-4 space-y-3 text-sm">
-        <RuleRow icon={<Lock size={14} />} label="Access" value={getVisibilityLabel(game)} />
-        <RuleRow icon={<Shield size={14} />} label="Join" value={getJoinRuleLabel(game)} />
-        <RuleRow
-          icon={<Wallet size={14} />}
-          label="Payment"
-          value={getPaymentRuleLabel(game)}
-        />
-        {usesWallet(game) && (
-          <p className="text-[var(--ink-low)] text-xs leading-relaxed">
-            {canPayLater(game)
-              ? "Pay now to secure your spot, or reserve and pay later if the organizer allows it."
-              : "You must pay through your Rondo Wallet to reserve a spot."}
-          </p>
-        )}
-      </div>
+    <div className="space-y-6">
+      <section className="space-y-3">
+        <h3 className="rondo-label text-[var(--ink-low)]">How it works</h3>
+        <div className="divide-y divide-[var(--stroke)] overflow-hidden rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)]">
+          <RuleRow icon={<LockSimple size={18} aria-hidden />} label="Access" value={getVisibilityLabel(game)} />
+          <RuleRow icon={<ShieldCheck size={18} aria-hidden />} label="Joining" value={getJoinRuleLabel(game)} />
+          <RuleRow
+            icon={<Wallet size={18} aria-hidden />}
+            label="Payment"
+            value={getPaymentRuleLabel(game)}
+            note={
+              usesWallet(game)
+                ? `Top up with GCash, Maya, or card. Drop out up to ${FREE_DROP_OUT_HOURS} hours before kickoff and the fee comes straight back to your wallet.`
+                : undefined
+            }
+          />
+        </div>
+      </section>
 
       {organizer && (
-        <div className="rondo-surface p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-[var(--r-md)] bg-[var(--bg-inset)] border border-[var(--stroke)] flex items-center justify-center overflow-hidden shrink-0">
-            {organizer.avatar_url ? (
-              <img src={organizer.avatar_url} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-[var(--gold)] font-black text-sm">
-                {(organizer.full_name ?? "O").slice(0, 1)}
+        <section className="space-y-3">
+          <h3 className="rondo-label text-[var(--ink-low)]">Organizer</h3>
+          <Link
+            href={`/organizers/${organizer.id}`}
+            className="flex min-h-16 items-center gap-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] px-4 py-3 transition-transform active:scale-[0.98]"
+          >
+            <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-[var(--r-pill)] border border-[var(--stroke)] bg-[var(--bg-inset)]">
+              {organizer.avatar_url ? (
+                <img src={organizer.avatar_url} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <span className="font-heading text-lg font-bold text-[var(--ink-hi)]">
+                  {(organizer.full_name ?? "O").slice(0, 1)}
+                </span>
+              )}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-1.5">
+                <span className="truncate rondo-body font-bold text-[var(--ink-hi)]">{organizer.full_name ?? "Organizer"}</span>
+                {organizer.organizer_verified && (
+                  <SealCheck size={16} weight="fill" className="shrink-0 text-[var(--gold)]" aria-label="Verified organizer" />
+                )}
               </span>
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[var(--ink-low)] text-[10px] uppercase tracking-wider">Organizer</p>
-            <p className="text-[var(--ink-hi)] font-bold text-sm truncate">{organizer.full_name ?? "Organizer"}</p>
-            <p className="text-[var(--ink-low)] text-xs mt-0.5">
-              {gamesHosted} match{gamesHosted === 1 ? "" : "es"} hosted
-              {organizer.organizer_verified ? " · Verified" : ""}
-            </p>
-          </div>
-        </div>
+              <span className="block rondo-meta text-[var(--ink-low)]">
+                {gamesHosted} match{gamesHosted === 1 ? "" : "es"} hosted on Rondo
+              </span>
+            </span>
+            <CaretRight size={16} className="shrink-0 text-[var(--ink-low)]" aria-hidden />
+          </Link>
+          <Link
+            href={`/help/new?type=refund_request&game=${game.id}`}
+            className="inline-flex min-h-11 items-center gap-2 rondo-meta text-[var(--ink-low)] transition-colors hover:text-[var(--ink-hi)]"
+          >
+            <Lifebuoy size={16} aria-hidden />
+            Refunds and disputes go through Rondo Help
+          </Link>
+        </section>
       )}
-
-      <Link
-        href="/help"
-        className="flex items-center gap-2 text-[var(--ink-low)] hover:text-[var(--gold)] text-xs font-semibold transition-colors"
-      >
-        <HelpCircle size={14} />
-        Refunds & disputes — contact Help
-      </Link>
     </div>
   );
 }
@@ -77,17 +84,20 @@ function RuleRow({
   icon,
   label,
   value,
+  note,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
+  note?: string;
 }) {
   return (
-    <div className="flex gap-3">
-      <span className="text-[var(--gold)] shrink-0 mt-0.5">{icon}</span>
-      <div>
-        <p className="text-[var(--ink-low)] text-[10px] uppercase tracking-wider">{label}</p>
-        <p className="text-[var(--ink-hi)] text-sm font-medium">{value}</p>
+    <div className="flex gap-3 px-4 py-3">
+      <span className="mt-0.5 shrink-0 text-[var(--ink-low)]">{icon}</span>
+      <div className="min-w-0">
+        <p className="rondo-label text-[var(--ink-low)]">{label}</p>
+        <p className="mt-0.5 rondo-body text-[var(--ink-hi)]">{value}</p>
+        {note && <p className="mt-1 rondo-meta text-[var(--ink-low)]">{note}</p>}
       </div>
     </div>
   );

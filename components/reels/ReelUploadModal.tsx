@@ -70,7 +70,7 @@ export function ReelUploadModal({ userId, onClose, onUploaded }: ReelUploadModal
     <div className="fixed inset-0 z-[300] bg-[var(--bg-page)]/80 flex items-end sm:items-center justify-center p-4">
       <div className="w-full max-w-sm bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--stroke)]">
-          <h2 className="font-heading text-[var(--ink-hi)] font-black italic text-base uppercase">Post a Clip</h2>
+          <h2 className="font-heading text-[var(--ink-hi)] font-black text-base uppercase">Post a Clip</h2>
           <button onClick={onClose} className="text-[var(--ink-low)] hover:text-[var(--ink-hi)] transition-colors">
             <X size={20} />
           </button>

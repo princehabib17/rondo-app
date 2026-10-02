@@ -88,15 +88,15 @@ export function getMatchStatusBanner(game: Game): { tone: "warn" | "error" | "mu
 export function getPaymentRuleLabel(game: Game): string {
   if (game.price_per_player === 0) return "Free";
   if (usesWallet(game)) {
-    return canPayLater(game) ? "Wallet · pay now or reserve & pay later" : "Wallet · pay to reserve your spot";
+    return canPayLater(game) ? "Rondo Wallet. Pay now, or reserve and pay before kickoff." : "Rondo Wallet. Paying locks your spot.";
   }
-  return canPayLater(game) ? "Pay at venue · reserve now" : "Pay at venue on match day";
+  return canPayLater(game) ? "Reserve now, pay the organizer at the venue." : "Pay the organizer at the venue on match day.";
 }
 
 export function getJoinRuleLabel(game: Game): string {
   return requiresApproval(game)
-    ? "Request approval · organizer picks who plays"
-    : "Instant join · pay (or reserve) to hold your spot";
+    ? "Request a spot. The organizer approves each player."
+    : "Instant. Pick a team and you're on the sheet.";
 }
 
 export function getMatchTypeLabel(game: Game): string {
@@ -110,7 +110,7 @@ export function getSkillLabel(game: Game): string | null {
 }
 
 export function getVisibilityLabel(game: Game): string {
-  return game.is_private ? "Private · approval required" : "Public";
+  return game.is_private ? "Private. Invite or approval only." : "Public. Anyone on Rondo can join.";
 }
 
 export function resolveJoinCta(params: {

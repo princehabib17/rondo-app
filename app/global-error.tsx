@@ -46,7 +46,7 @@ export default function GlobalError({
   return (
     <html lang="en">
       <body style={page}>
-        <title>Rondo — something went wrong</title>
+        <title>Rondo · Something went wrong</title>
         <p style={{ margin: 0, fontSize: "0.75rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "oklch(58% 0.01 102)" }}>
           Rondo
         </p>

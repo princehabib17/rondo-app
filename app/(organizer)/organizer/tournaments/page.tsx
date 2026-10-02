@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Trophy } from "@phosphor-icons/react";
+import { Plus } from "@phosphor-icons/react";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { createClient } from "@/lib/supabase/client";
 import type { Tournament } from "@/lib/supabase/types";
 import { TournamentCard } from "@/components/tournament/TournamentCard";
@@ -57,21 +58,8 @@ export default function OrganizerTournamentsPage() {
   );
 
   return (
-    <div className="min-h-[100dvh] rondo-page pb-24">
-      <header className="sticky top-0 rondo-glass-nav border-b border-[var(--stroke)] z-40 px-4 py-3">
-        <div className="flex h-12 items-center gap-2 max-w-lg mx-auto">
-          <button
-            type="button"
-            onClick={() => router.push("/organizer/dashboard")}
-            aria-label="Back"
-            className="flex min-h-11 min-w-11 items-center justify-center rounded-[var(--r-pill)] text-[var(--ink-mid)]"
-          >
-            <ArrowLeft size={18} />
-          </button>
-          <Trophy size={20} weight="duotone" className="text-[var(--gold)]" />
-          <h1 className="rondo-title text-[var(--ink-hi)]">My tournaments</h1>
-        </div>
-      </header>
+    <div className="min-h-[100dvh] rondo-page">
+      <PageHeader title="Tournaments" />
 
       <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
         {/* Single, prominent primary action for this screen. */}

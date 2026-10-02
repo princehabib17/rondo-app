@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { runPlaceholderCity } from "@/lib/seed/run-placeholder-city";
+import { ensureOrganizerProfile, runPlaceholderCity } from "@/lib/seed/run-placeholder-city";
+import { SHOWCASE_ORGANIZER, ensureShowcaseTournaments } from "@/lib/seed/showcase-tournaments";
+import { createServiceClient } from "@/lib/supabase/service";
 import { DEFAULT_WEEKS_AHEAD } from "@/lib/seed/placeholder-organizers";
 
 export async function POST(request: Request) {
@@ -23,10 +25,14 @@ export async function POST(request: Request) {
     const body = await request.json().catch(() => ({}));
     const weeksAhead = typeof body.weeksAhead === "number" ? body.weeksAhead : DEFAULT_WEEKS_AHEAD;
     const result = await runPlaceholderCity({ weeksAhead });
+    const service = createServiceClient();
+    const showcaseOrganizerId = await ensureOrganizerProfile(service, SHOWCASE_ORGANIZER);
+    const showcaseTournaments = await ensureShowcaseTournaments(service, showcaseOrganizerId);
 
     return NextResponse.json({
       ok: true,
       ...result,
+      showcaseTournaments,
       note: "Recurring listings roll forward. Existing games are kept. Organizer logins use *@organizers.rondo with password OrganizerSeed123! (dev seed only).",
     });
   } catch (error) {

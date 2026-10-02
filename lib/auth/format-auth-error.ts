@@ -1,6 +1,8 @@
 const PHONE_PROVIDER_ERROR =
   /unsupported phone provider|phone provider|sms.*not (enabled|configured)|error sending (sms|otp)|otp.*disabled/i;
 const PASSKEY_DISABLED = /passkey_disabled|passkeys? (are )?disabled|not enabled/i;
+/** An auth server without the passkey endpoints answers with a non-JSON 404 page. */
+const PASSKEY_ENDPOINT_MISSING = /unexpected (token|non-whitespace character|end of json)|is not valid json|json\.parse|404 page not found/i;
 const PASSKEY_CHALLENGE_EXPIRED = /webauthn_challenge_expired|challenge.?expired/i;
 const PASSKEY_UNSUPPORTED = /does not support webauthn|webauthn is not supported/i;
 const PASSKEY_CANCELLED = /notallowederror|user cancelled|webauthn.*abort|passkey.*abort|request aborted/i;
@@ -9,9 +11,17 @@ const PASSKEY_ANON = /anonymous|aal2|mfa/i;
 const SUPABASE_UNREACHABLE =
   /fetch failed|failed to fetch|networkerror|enotfound|nxdomain|getaddrinfo|could not resolve|aborterror|the operation was aborted|timeouterror|auth service is unreachable|paused or misconfigured/i;
 
+/** Only meaningful for passkey calls: other auth calls can fail with non-JSON for other reasons. */
+export function isPasskeyEndpointMissing(message: string): boolean {
+  return PASSKEY_ENDPOINT_MISSING.test(message);
+}
+
+export const PASSKEYS_OFF_MESSAGE =
+  "Passkeys aren't switched on for Rondo yet. Use email, phone, or social login for now.";
+
 export function formatAuthError(message: string): string {
   if (PASSKEY_DISABLED.test(message)) {
-    return "Passkeys aren't enabled for this project yet. Use phone, email, or social login.";
+    return PASSKEYS_OFF_MESSAGE;
   }
   if (PASSKEY_CHALLENGE_EXPIRED.test(message)) {
     return "Passkey timed out. Try again and complete the biometric prompt promptly.";
