@@ -262,37 +262,46 @@ export default function ManageGamePage() {
               <div className="space-y-2">
                 {(team.game_players ?? []).map((gp) => (
                   gp.profile && (
-                    <div key={gp.id} className="flex items-center gap-3">
-                      <PlayerAvatar profile={gp.profile} size="sm" showFlag linkable={false} />
-                      <span className="text-[var(--ink-hi)] text-sm flex-1">{gp.profile.full_name}</span>
-                      {gp.payment_status === "pending_approval" && (
+                    <div key={gp.id} className="space-y-2 rounded-[var(--r-sm)] bg-[var(--bg-inset)] p-3">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <PlayerAvatar profile={gp.profile} size="sm" showFlag linkable={false} />
+                        <span className="min-w-0 flex-1 truncate rondo-body font-bold text-[var(--ink-hi)]">
+                          {gp.profile.full_name}
+                        </span>
                         <button
                           type="button"
-                          onClick={() => approvePlayer(gp.id)}
-                          className="text-xs text-[var(--gold)] font-semibold"
+                          onClick={() => removePlayer(gp.id)}
+                          aria-label={`Remove ${gp.profile.full_name ?? "player"}`}
+                          className="inline-flex min-h-11 shrink-0 items-center rondo-meta font-bold text-[var(--live)]"
                         >
-                          Approve
+                          Remove
                         </button>
-                      )}
-                      <select
-                        value={gp.payment_status}
-                        onChange={(e) => updatePlayerStatus(gp.id, e.target.value)}
-                        className="bg-[var(--bg-page)] border border-[var(--stroke)] text-[var(--ink-hi)] text-xs rounded px-2 py-1"
-                      >
-                        <option value="pending_approval">Pending approval</option>
-                        <option value="pending_payment">Pending payment</option>
-                        <option value="paid">Paid</option>
-                        <option value="reserved">Reserved</option>
-                        <option value="venue">At Venue</option>
-                        <option value="no_show">No Show</option>
-                        <option value="refund_requested">Refund Requested</option>
-                      </select>
-                      <button
-                        onClick={() => removePlayer(gp.id)}
-                        className="text-xs text-[var(--live)] hover:text-[var(--live)]"
-                      >
-                        Remove
-                      </button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={gp.payment_status}
+                          onChange={(e) => updatePlayerStatus(gp.id, e.target.value)}
+                          aria-label={`Status for ${gp.profile.full_name ?? "player"}`}
+                          className="h-10 min-w-0 flex-1 rounded-[var(--r-sm)] border border-[var(--stroke)] bg-[var(--bg-surface)] px-3 rondo-meta text-[var(--ink-hi)]"
+                        >
+                          <option value="pending_approval">Pending approval</option>
+                          <option value="pending_payment">Pending payment</option>
+                          <option value="paid">Paid</option>
+                          <option value="reserved">Reserved</option>
+                          <option value="venue">Pay at venue</option>
+                          <option value="no_show">No-show</option>
+                          <option value="refund_requested">Refund requested</option>
+                        </select>
+                        {gp.payment_status === "pending_approval" && (
+                          <button
+                            type="button"
+                            onClick={() => approvePlayer(gp.id)}
+                            className="h-10 shrink-0 rounded-[var(--r-pill)] bg-[var(--gold)] px-4 rondo-meta font-bold text-[var(--gold-ink)]"
+                          >
+                            Approve
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )
                 ))}

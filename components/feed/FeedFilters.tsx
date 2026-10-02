@@ -54,7 +54,7 @@ export function FeedFiltersBar({
   return (
     <div className="px-4 pt-3">
       {/* Always-visible control row */}
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 rondo-scroll-fade">
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -111,7 +111,7 @@ export function FeedFiltersBar({
 
       {/* Active filter chips (clearable) */}
       {chips.length > 0 && (
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-2">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-2 rondo-scroll-fade">
           {chips.map((chip) => (
             <button
               key={chip.key}

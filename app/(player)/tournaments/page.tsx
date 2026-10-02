@@ -109,7 +109,7 @@ export default function TournamentsPage() {
           </p>
         )}
 
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] rondo-scroll-fade">
           {FILTERS.map(({ value, label }) => {
             const count = countFor(value);
             return (

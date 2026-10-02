@@ -366,166 +366,170 @@
   }
 }
 
-/* ---- Rondo design system utilities ---- */
+/* ---- Rondo design system components ----
+   Layered so per-screen utilities (w-auto, flex-1, rounded-*, colors) can
+   adjust a component without !important. */
+@layer components {
 
-.rondo-page {
-  background-color: var(--bg-page);
-  background-image:
-    radial-gradient(ellipse 90% 50% at 12% -18%, color-mix(in oklch, var(--gold) 8%, transparent), transparent 42%),
-    linear-gradient(180deg, var(--bg-page) 0%, var(--bg-inset) 100%);
-}
+  .rondo-page {
+    background-color: var(--bg-page);
+    background-image:
+      radial-gradient(ellipse 90% 50% at 12% -18%, color-mix(in oklch, var(--gold) 8%, transparent), transparent 42%),
+      linear-gradient(180deg, var(--bg-page) 0%, var(--bg-inset) 100%);
+  }
 
-.rondo-surface {
-  background: var(--bg-surface);
-  border: 1px solid var(--stroke);
-  border-radius: var(--r-md);
-  box-shadow: 0 1px 3px color-mix(in oklch, var(--ink-hi) 8%, transparent);
-}
+  .rondo-surface {
+    background: var(--bg-surface);
+    border: 1px solid var(--stroke);
+    border-radius: var(--r-md);
+    box-shadow: 0 1px 3px color-mix(in oklch, var(--ink-hi) 8%, transparent);
+  }
 
-.rondo-map-shell {
-  background:
-    radial-gradient(circle at 24% 28%, color-mix(in oklch, var(--gold) 12%, transparent), transparent 9%),
-    radial-gradient(circle at 72% 38%, color-mix(in oklch, var(--gold) 10%, transparent), transparent 8%),
-    radial-gradient(circle at 54% 70%, color-mix(in oklch, var(--gold) 10%, transparent), transparent 8%),
-    linear-gradient(28deg, transparent 0 46%, color-mix(in oklch, var(--night-ink, var(--ink-hi)) 8%, transparent) 46.4% 47%, transparent 47.4% 100%),
-    linear-gradient(112deg, transparent 0 42%, color-mix(in oklch, var(--night-ink, var(--ink-hi)) 5.5%, transparent) 42.4% 43%, transparent 43.4% 100%),
-    repeating-linear-gradient(8deg, color-mix(in oklch, var(--night-ink, var(--ink-hi)) 3.5%, transparent) 0 1px, transparent 1px 18px),
-    repeating-linear-gradient(98deg, color-mix(in oklch, var(--night-ink, var(--ink-hi)) 2.8%, transparent) 0 1px, transparent 1px 22px),
-    var(--bg-night);
-}
+  .rondo-map-shell {
+    background:
+      radial-gradient(circle at 24% 28%, color-mix(in oklch, var(--gold) 12%, transparent), transparent 9%),
+      radial-gradient(circle at 72% 38%, color-mix(in oklch, var(--gold) 10%, transparent), transparent 8%),
+      radial-gradient(circle at 54% 70%, color-mix(in oklch, var(--gold) 10%, transparent), transparent 8%),
+      linear-gradient(28deg, transparent 0 46%, color-mix(in oklch, var(--night-ink, var(--ink-hi)) 8%, transparent) 46.4% 47%, transparent 47.4% 100%),
+      linear-gradient(112deg, transparent 0 42%, color-mix(in oklch, var(--night-ink, var(--ink-hi)) 5.5%, transparent) 42.4% 43%, transparent 43.4% 100%),
+      repeating-linear-gradient(8deg, color-mix(in oklch, var(--night-ink, var(--ink-hi)) 3.5%, transparent) 0 1px, transparent 1px 18px),
+      repeating-linear-gradient(98deg, color-mix(in oklch, var(--night-ink, var(--ink-hi)) 2.8%, transparent) 0 1px, transparent 1px 22px),
+      var(--bg-night);
+  }
 
-.rondo-phone-frame {
-  box-sizing: border-box;
-  width: min(100vw, 24rem);
-  max-width: 100%;
-  overflow-x: clip;
-  border: 1px solid var(--stroke);
-  border-radius: var(--r-lg);
-  background:
-    radial-gradient(circle at 25% 0%, color-mix(in oklch, var(--gold) 8%, transparent), transparent 26%),
-    var(--bg-page);
-}
+  .rondo-phone-frame {
+    box-sizing: border-box;
+    width: min(100vw, 24rem);
+    max-width: 100%;
+    overflow-x: clip;
+    border: 1px solid var(--stroke);
+    border-radius: var(--r-lg);
+    background:
+      radial-gradient(circle at 25% 0%, color-mix(in oklch, var(--gold) 8%, transparent), transparent 26%),
+      var(--bg-page);
+  }
 
-.rondo-hero-title {
-  font-family: var(--font-heading);
-  font-weight: 900;
-  font-style: normal;
-  text-transform: uppercase;
-  line-height: 0.9;
-  letter-spacing: -0.04em;
-  overflow-wrap: anywhere;
-  min-width: 0;
-  letter-spacing: 0;
-  text-wrap: balance;
-}
+  .rondo-hero-title {
+    font-family: var(--font-heading);
+    font-weight: 900;
+    font-style: normal;
+    text-transform: uppercase;
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    overflow-wrap: anywhere;
+    min-width: 0;
+    letter-spacing: 0;
+    text-wrap: balance;
+  }
 
-.rondo-kicker {
-  font-family: var(--font-body);
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-low);
-}
+  .rondo-kicker {
+    font-family: var(--font-body);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-low);
+  }
 
-.rondo-chip {
-  display: inline-flex;
-  min-height: 2rem;
-  align-items: center;
-  gap: var(--sp-cluster);
-  border-radius: var(--r-pill);
-  border: 1px solid var(--stroke);
-  background: transparent;
-  padding: 0 var(--sp-stack);
-  color: var(--ink-low);
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
+  .rondo-chip {
+    display: inline-flex;
+    min-height: 2rem;
+    align-items: center;
+    gap: var(--sp-cluster);
+    border-radius: var(--r-pill);
+    border: 1px solid var(--stroke);
+    background: transparent;
+    padding: 0 var(--sp-stack);
+    color: var(--ink-low);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
 
-.rondo-chip[data-active="true"] {
-  border-color: var(--gold);
-  background: var(--gold-dim);
-  color: var(--gold);
-}
+  .rondo-chip[data-active="true"] {
+    border-color: var(--gold);
+    background: var(--gold-dim);
+    color: var(--gold);
+  }
 
-.rondo-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sp-cluster);
-  width: 100%;
-  max-width: 100%;
-  min-height: 3rem;
-  padding: 0 var(--sp-hero);
-  font-family: var(--font-heading);
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  text-transform: none;
-  border-radius: var(--r-pill);
-  transition:
-    transform 180ms var(--ease-out-rondo),
-    opacity 180ms var(--ease-out-rondo),
-    background-color 180ms var(--ease-out-rondo),
-    border-color 180ms var(--ease-out-rondo);
-}
+  .rondo-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-cluster);
+    width: 100%;
+    max-width: 100%;
+    min-height: 3rem;
+    padding: 0 var(--sp-hero);
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    text-transform: none;
+    border-radius: var(--r-pill);
+    transition:
+      transform 180ms var(--ease-out-rondo),
+      opacity 180ms var(--ease-out-rondo),
+      background-color 180ms var(--ease-out-rondo),
+      border-color 180ms var(--ease-out-rondo);
+  }
 
-.rondo-btn:active:not(:disabled) {
-  transform: scale(0.98);
-}
+  .rondo-btn:active:not(:disabled) {
+    transform: scale(0.98);
+  }
 
-.rondo-btn:disabled {
-  opacity: 0.45;
-  pointer-events: none;
-}
+  .rondo-btn:disabled {
+    opacity: 0.45;
+    pointer-events: none;
+  }
 
-.rondo-btn-primary {
-  background: var(--gold);
-  color: var(--gold-ink);
-}
+  .rondo-btn-primary {
+    background: var(--gold);
+    color: var(--gold-ink);
+  }
 
-.rondo-btn-secondary {
-  background: var(--bg-inset);
-  color: var(--ink-hi);
-}
+  .rondo-btn-secondary {
+    background: var(--bg-inset);
+    color: var(--ink-hi);
+  }
 
-.rondo-btn-ghost {
-  background: transparent;
-  color: var(--ink-mid);
-  font-family: var(--font-body);
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  font-size: 0.9375rem;
-  min-height: 2.75rem;
-}
+  .rondo-btn-ghost {
+    background: transparent;
+    color: var(--ink-mid);
+    font-family: var(--font-body);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    font-size: 0.9375rem;
+    min-height: 2.75rem;
+  }
 
-.rondo-btn-ghost:hover {
-  color: var(--ink-hi);
-}
+  .rondo-btn-ghost:hover {
+    color: var(--ink-hi);
+  }
 
-.rondo-glass-nav {
-  background: color-mix(in oklch, var(--bg-page) 88%, transparent);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border-color: var(--stroke);
-}
+  .rondo-glass-nav {
+    background: color-mix(in oklch, var(--bg-page) 88%, transparent);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-color: var(--stroke);
+  }
 
-.rondo-nav-pill {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  flex: 1;
-  min-height: 3rem;
-  padding: 0.5rem 0.25rem;
-  border-radius: 0.75rem;
-  transition: background-color 180ms var(--ease-out-rondo), color 180ms var(--ease-out-rondo);
-}
+  .rondo-nav-pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    flex: 1;
+    min-height: 3rem;
+    padding: 0.5rem 0.25rem;
+    border-radius: 0.75rem;
+    transition: background-color 180ms var(--ease-out-rondo), color 180ms var(--ease-out-rondo);
+  }
 
-.rondo-nav-pill[data-active="true"] {
-  background: transparent;
+  .rondo-nav-pill[data-active="true"] {
+    background: transparent;
+  }
 }
 
 .rondo-shimmer {
@@ -767,4 +771,12 @@ header.rondo-glass-nav h1 {
   letter-spacing: 0.01em;
   text-transform: uppercase;
   color: var(--ink-hi);
+}
+
+/* Horizontal chip rails: fade the trailing edge so a cut-off chip reads as
+   "scroll for more" instead of a layout bug. */
+.rondo-scroll-fade {
+  -webkit-mask-image: linear-gradient(90deg, black 0, black calc(100% - 2.5rem), transparent 100%);
+  mask-image: linear-gradient(90deg, black 0, black calc(100% - 2.5rem), transparent 100%);
+  padding-right: 2rem;
 }

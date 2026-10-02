@@ -17,11 +17,25 @@ const manrope = Manrope({
 
 export const metadata: Metadata = {
   title: "Rondo · Find a game tonight",
-  description: "Find games near you",
-  keywords: ["sports", "games", "football", "soccer", "local", "community"],
+  description: "Find pickup football and futsal near you, pay in two taps, and run tournaments.",
+  keywords: ["football", "futsal", "pickup", "Manila", "tournaments", "sports", "community"],
+  applicationName: "Rondo",
+  appleWebApp: { capable: true, title: "Rondo", statusBarStyle: "black-translucent" },
+  formatDetection: { telephone: false },
+  openGraph: {
+    title: "Rondo · Find a game tonight",
+    description: "Pickup football and futsal in Metro Manila. Join in a tap, pay from your wallet, run the bracket.",
+    siteName: "Rondo",
+    images: [{ url: "/scenes/night-pitch.jpg", width: 1440, height: 810, alt: "Floodlit pitch at night" }],
+    locale: "en_PH",
+    type: "website",
+  },
   icons: {
-    icon: [{ url: "/brand/rondo-mark-on-dark.png", type: "image/png" }],
-    apple: "/brand/rondo-mark-on-dark.png",
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/brand/rondo-mark-on-dark.png", type: "image/png" },
+    ],
+    apple: "/icons/apple-touch-icon.png",
   },
 };
 
@@ -30,6 +44,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  // Lets the safe-area insets used by headers and action bars take effect.
+  viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: dark)", color: "#171512" },
     { media: "(prefers-color-scheme: light)", color: "#FAFAF7" },

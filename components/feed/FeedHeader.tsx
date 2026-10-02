@@ -11,14 +11,15 @@ export function FeedHeader({ notificationCount = 0 }: FeedHeaderProps) {
   return (
     <header className="sticky top-0 z-40 border-b border-[var(--stroke)] rondo-glass-nav pt-[env(safe-area-inset-top)]">
       <div className="mx-auto flex h-14 max-w-lg items-center justify-between px-4">
-        <RondoBrand kind="wordmark" surface="auto" className="h-8 w-32" fetchPriority="high" />
-        <div className="flex items-center gap-1.5">
+        <RondoBrand kind="wordmark" surface="auto" className="h-7 w-28 shrink-0 min-[360px]:h-8 min-[360px]:w-32" fetchPriority="high" />
+        <div className="flex min-w-0 items-center gap-1">
           <Link
             href="/scout"
-            className="inline-flex h-10 items-center gap-1.5 rounded-[var(--r-pill)] border border-[var(--stroke)] px-3 rondo-label text-[var(--ink-hi)] transition-colors duration-200 hover:bg-[var(--bg-inset)] active:scale-[0.98]"
+            aria-label="Scout clips"
+            className="inline-flex h-10 min-w-10 justify-center items-center gap-1.5 rounded-[var(--r-pill)] border border-[var(--stroke)] px-3 rondo-label text-[var(--ink-hi)] transition-colors duration-200 hover:bg-[var(--bg-inset)] active:scale-[0.98]"
           >
             <VideoCamera size={16} weight="bold" aria-hidden />
-            Scout
+            <span className="hidden min-[360px]:inline">Scout</span>
           </Link>
           <ThemeToggle />
           <Link

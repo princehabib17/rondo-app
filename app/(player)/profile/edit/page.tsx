@@ -48,6 +48,22 @@ function suggestUsername(name: string): string {
 }
 const BIO_LIMIT = 160;
 
+/** Avatars render at most 112px wide; 512px keeps them crisp on 3x screens and small on 4G. */
+async function downscale(blob: Blob, max = 512): Promise<Blob> {
+  try {
+    const bitmap = await createImageBitmap(blob);
+    const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
+    if (scale === 1) return blob;
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    return await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b ?? blob), "image/jpeg", 0.88));
+  } catch {
+    return blob;
+  }
+}
+
 type Draft = {
   full_name: string;
   username: string;
@@ -161,7 +177,8 @@ export default function EditProfilePage() {
       const supabase = createClient();
       const path = `${userId}/avatar-${Date.now()}.jpg`;
       const avatars = supabase.storage.from("avatars");
-      const { error: uploadError } = await avatars.upload(path, blob, { contentType: "image/jpeg", upsert: true });
+      const small = await downscale(blob);
+      const { error: uploadError } = await avatars.upload(path, small, { contentType: "image/jpeg", upsert: true });
       if (uploadError) throw uploadError;
       const { data } = avatars.getPublicUrl(path);
       const { error: profileError } = await supabase

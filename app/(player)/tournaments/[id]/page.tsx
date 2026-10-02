@@ -393,7 +393,7 @@ export default function TournamentDetailPage() {
       <TournamentHero tournament={tournament} teamCount={teams.length} matches={matches} />
 
       <nav className="sticky top-[calc(3.5rem+1px+env(safe-area-inset-top))] z-20 border-b border-[var(--stroke)] bg-[color-mix(in_oklch,var(--bg-page)_92%,transparent)] px-4 py-2 backdrop-blur-md">
-        <div className="mx-auto flex max-w-lg gap-2 overflow-x-auto [scrollbar-width:none]">
+        <div className="mx-auto flex max-w-lg gap-2 overflow-x-auto [scrollbar-width:none] rondo-scroll-fade">
           {navItems.map((item) => (
             <a key={item.id} href={`#${item.id}`} className="rondo-chip shrink-0" data-active={activeSection === item.id}>
               {item.label}

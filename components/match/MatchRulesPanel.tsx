@@ -2,7 +2,6 @@ import Link from "next/link";
 import { CaretRight, Lifebuoy, LockSimple, SealCheck, ShieldCheck, Wallet } from "@phosphor-icons/react/dist/ssr";
 import type { Game, Profile } from "@/lib/supabase/types";
 import {
-  canPayLater,
   getJoinRuleLabel,
   getPaymentRuleLabel,
   getVisibilityLabel,
@@ -29,13 +28,7 @@ export function MatchRulesPanel({
             icon={<Wallet size={18} aria-hidden />}
             label="Payment"
             value={getPaymentRuleLabel(game)}
-            note={
-              usesWallet(game)
-                ? canPayLater(game)
-                  ? "Pay now to lock your spot, or reserve and pay before kickoff."
-                  : "Your spot is confirmed the moment your wallet payment goes through."
-                : undefined
-            }
+            note={usesWallet(game) ? "Top up with GCash, Maya, or card. Refunds go back to your wallet." : undefined}
           />
         </div>
       </section>
