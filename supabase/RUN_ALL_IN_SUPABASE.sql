@@ -493,9 +493,14 @@ begin
     'wallet_pay:' || p_idempotency_key
   );
 
-  v_roster_status := case when g.is_private then 'pending_approval' else 'paid' end;
+  -- A private match asks the organizer first, unless they already approved
+  -- this player (then paying simply confirms the spot).
+  v_roster_status := case
+    when g.is_private and coalesce(v_existing_status, '') not in ('approved', 'reserved') then 'pending_approval'
+    else 'paid'
+  end;
 
-  if not g.is_private then
+  if v_roster_status = 'paid' then
     insert into public.wallet_transactions (
       user_id, organizer_id, game_id, amount, direction, source, note
     ) values (

@@ -13,6 +13,7 @@ export function describeWalletTransaction(tx: WalletTransactionLike): { title: s
   if (note.startsWith("paymongo_topup:")) return { title: "Wallet top-up", detail: "GCash, Maya, or card" };
   if (note.startsWith("game_earning:")) return { title: "Match earnings", detail: gameTitle };
   if (note.startsWith("wallet_pay:")) return { title: "Match fee", detail: gameTitle };
+  if (note.startsWith("refund_reversal:")) return { title: "Refunded to player", detail: gameTitle };
   if (tx.source === "refund") return { title: "Refund", detail: gameTitle };
   if (tx.source === "payout") return { title: "Cash out", detail: "Bank transfer" };
   if (tx.source === "adjustment") return { title: "Adjustment", detail: "By the Rondo team" };

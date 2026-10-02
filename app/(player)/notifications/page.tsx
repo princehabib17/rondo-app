@@ -14,6 +14,7 @@ import {
   Trophy,
   UserPlus,
   Wallet,
+  XCircle,
 } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import type { AppNotification } from "@/lib/supabase/types";
@@ -29,7 +30,8 @@ function NotificationIcon({ type, unread }: { type: string; unread: boolean }) {
   if (type.startsWith("post_liked")) return <Fire {...props} />;
   if (type.startsWith("post_")) return <ChatCircleText {...props} />;
   if (type.startsWith("waitlist") || type === "reservation_expired") return <Clock {...props} />;
-  if (type === "payment_success") return <Wallet {...props} />;
+  if (type === "payment_success" || type === "refund_issued") return <Wallet {...props} />;
+  if (type === "game_cancelled" || type === "removed_from_game") return <XCircle {...props} />;
   if (type === "organizer_broadcast") return <Megaphone {...props} />;
   if (type === "join_requested") return <UserPlus {...props} />;
   if (type === "approval_accepted") return <CheckCircle {...props} />;
