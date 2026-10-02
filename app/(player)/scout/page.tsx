@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/layout/PageHeader";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
@@ -307,20 +308,23 @@ export default function ScoutPage() {
 
   if (!loading && clips.length === 0) {
     return (
-      <div className="rondo-night flex min-h-[100dvh] flex-col items-center justify-center gap-4 px-8 text-center text-[var(--ink-hi)]">
-        <p className="font-heading text-2xl font-black uppercase">No Clips Yet</p>
-        <p className="font-body text-sm text-[var(--ink-low)]">
-          Nobody&apos;s posted a scout clip yet. Check back soon.
+      <div className="rondo-night flex min-h-[100dvh] flex-col text-[var(--ink-hi)]">
+        <PageHeader title="Scout" back fallbackHref="/feed" />
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 text-center">
+        <p className="rondo-display text-[var(--ink-hi)]">No clips yet</p>
+        <p className="max-w-xs rondo-body text-[var(--ink-low)]">
+          Scouts and captains watch here for players. Post your best moment and get noticed.
         </p>
         {!guest && (
           <button
             type="button"
             onClick={() => setUploadOpen(true)}
-            className="mt-4 rounded-[var(--r-md)] bg-[var(--gold)] px-6 py-3 font-bold text-[var(--gold-ink)]"
+            className="mt-4 rondo-btn rondo-btn-primary w-auto"
           >
-            Be the first. Post a clip.
+            Post the first clip
           </button>
         )}
+        </div>
         <UploadSheet
           open={uploadOpen}
           onClose={() => setUploadOpen(false)}

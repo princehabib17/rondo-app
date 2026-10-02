@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, ArrowUp, MessageCircle } from "lucide-react";
+import { ArrowUp, MessageCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { subscribeToMessages } from "@/lib/realtime";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
@@ -168,35 +169,29 @@ export default function LegacyChatRedirectPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] flex flex-col max-w-lg mx-auto">
-      {/* Header */}
-      <header className="sticky top-0 z-40 rondo-glass-nav border-b border-[var(--stroke)] px-4 py-3 flex items-center gap-3 shrink-0">
-        <button
-          onClick={() => router.back()}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--ink-hi)] hover:text-[var(--gold)] transition-colors cursor-pointer active:scale-[0.95]"
-          aria-label="Go back"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-[var(--ink-hi)] font-bold text-sm truncate">{gameTitle || "Game Chat"}</h1>
-          <p className="text-[var(--ink-low)] text-xs">{playerCount} players</p>
-        </div>
-        {isConnected ? (
-          <div className="flex items-center gap-1.5 bg-[var(--gold)]/10 border border-[var(--gold)]/20 rounded-full px-3 py-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--ok)] animate-pulse" />
-            <span className="text-[var(--gold)] text-xs font-semibold">Live</span>
-          </div>
-        ) : (
-          <button
-            onClick={() => setRetryKey((k) => k + 1)}
-            className="flex items-center gap-1.5 bg-[var(--live)]/10 border border-[var(--live)]/20 rounded-full px-3 py-1 active:scale-[0.96] transition-transform"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--live)] animate-pulse" />
-            <span className="text-[var(--live)] text-xs font-semibold">Retry</span>
-          </button>
-        )}
-      </header>
+    <div className="mx-auto flex h-[100dvh] max-w-lg flex-col rondo-page">
+      <PageHeader
+        title={gameTitle || "Match chat"}
+        subtitle={`${playerCount} ${playerCount === 1 ? "player" : "players"} in this chat`}
+        back
+        fallbackHref={`/games/${id}`}
+        trailing={
+          isConnected ? (
+            <span className="inline-flex items-center gap-1.5 rounded-[var(--r-pill)] bg-[color-mix(in_oklch,var(--ok)_14%,transparent)] px-3 py-1 rondo-label text-[var(--ok)]">
+              <span className="size-1.5 rounded-[var(--r-pill)] bg-[var(--ok)]" aria-hidden />
+              Live
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setRetryKey((k) => k + 1)}
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-[var(--r-pill)] px-3 rondo-label text-[var(--live)]"
+            >
+              Reconnect
+            </button>
+          )
+        }
+      />
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 pb-2" style={{ minHeight: 0 }}>
