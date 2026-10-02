@@ -27,6 +27,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format as fnsFormat } from "date-fns";
 import { createClient } from "@/lib/supabase/client";
+import { ensureOrganizationId } from "@/lib/organizers/ensure-organization";
 import { Label } from "@/components/ui/label";
 import { DrumRollPicker } from "@/components/ui/drum-roll-picker";
 import { DateDrumRollPicker } from "@/components/ui/date-drum-roll-picker";
@@ -387,10 +388,18 @@ export default function CreateTournamentPage() {
 
   async function onSubmit(input: CreateTournamentForm) {
     setError(null);
-    if (!organizationId) {
-      setError("Choose or create an organization first.");
+    const supabase = createClient();
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) {
+      router.push("/login?next=/organizer/tournaments/create");
       return;
     }
+    const org = await ensureOrganizationId(supabase, userData.user.id, organizationId);
+    if ("error" in org) {
+      setError(org.error);
+      return;
+    }
+    if (org.created) setOrganizationId(org.id);
     if (!pickedDate) {
       setError("Select a start date.");
       return;
@@ -410,7 +419,7 @@ export default function CreateTournamentPage() {
         maxTeams: input.max_teams,
         teamSize: input.team_size,
         entryFee: Math.round(input.entry_fee * 100),
-        organizationId,
+        organizationId: org.id,
       }),
     });
     const json = await res.json();

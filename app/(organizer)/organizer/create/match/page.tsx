@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format as fnsFormat } from "date-fns";
 import { createClient } from "@/lib/supabase/client";
+import { ensureOrganizationId } from "@/lib/organizers/ensure-organization";
 import { Label } from "@/components/ui/label";
 import { DrumRollPicker } from "@/components/ui/drum-roll-picker";
 import { DateDrumRollPicker } from "@/components/ui/date-drum-roll-picker";
@@ -260,10 +261,13 @@ export default function CreateMatchPage() {
     const supabase = createClient();
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) { router.push("/login"); return; }
-    if (!organizationId) {
-      setSubmitError("Choose or create an organization first.");
+    const org = await ensureOrganizationId(supabase, userData.user.id, organizationId);
+    if ("error" in org) {
+      setSubmitError(org.error);
       return;
     }
+    if (org.created) setOrganizationId(org.id);
+    const resolvedOrganizationId = org.id;
     if (!pickedDate) {
       setSubmitError("Select a date for the match.");
       return;
@@ -275,7 +279,7 @@ export default function CreateMatchPage() {
       .from("games")
       .insert({
         organizer_id: userData.user.id,
-        organization_id: organizationId,
+        organization_id: resolvedOrganizationId,
         title: data.title,
         description: data.description ?? null,
         venue_name: data.venue_name,

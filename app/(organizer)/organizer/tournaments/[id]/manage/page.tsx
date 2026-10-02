@@ -344,7 +344,13 @@ function ScoreSheet({
             </p>
           )}
 
-          {knockoutDrawBlocked && (
+          {knockoutDrawBlocked && homeScore + awayScore === 0 && (
+            <p className="rondo-meta text-center text-[var(--ink-low)]">
+              Knockout games need a winner. Settle draws on penalties and enter the winning side one up.
+            </p>
+          )}
+
+          {knockoutDrawBlocked && homeScore + awayScore > 0 && (
             <p className="rondo-meta text-center text-[var(--live)] bg-[color-mix(in_oklch,var(--live)_10%,transparent)] border border-[var(--live)] rounded-[var(--r-sm)] px-3 py-2">
               Knockout matches cannot end in a draw. Adjust one score to save.
             </p>
