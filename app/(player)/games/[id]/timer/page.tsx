@@ -65,26 +65,26 @@ export default function PlayerTimerPage() {
   }, [timer, soundEnabled, schedule, announcedRound]);
 
   return (
-    <div className="min-h-[100dvh] bg-[var(--gold)] flex flex-col">
+    <div className="min-h-[100dvh] bg-[var(--bg-page)] flex flex-col">
       {/* Header */}
       <header className="px-4 py-3 flex items-center gap-3">
         <button
           onClick={() => router.back()}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-rondo-black/60 hover:text-rondo-black transition-colors cursor-pointer active:scale-[0.98]"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--ink-mid)] hover:text-[var(--ink-hi)] transition-colors cursor-pointer active:scale-[0.98]"
           aria-label="Back"
         >
           <ArrowLeft size={20} />
         </button>
-        <span className="text-rondo-black font-black text-sm uppercase tracking-widest">Live Match</span>
+        <span className="text-[var(--ink-hi)] font-black text-sm uppercase tracking-widest">Live match</span>
         <div className="ml-auto flex items-center gap-1.5">
           <button
             onClick={toggleSound}
-            className="text-[10px] uppercase tracking-wider border border-rondo-black/30 rounded-full px-2 py-1 text-rondo-black/70"
+            className="text-[10px] uppercase tracking-wider border border-[var(--stroke)] rounded-full px-2 py-1 text-[var(--ink-mid)]"
           >
             {soundEnabled ? "Sound On" : "Sound Off"}
           </button>
-          <div className={`w-2 h-2 rounded-full ${timer?.status === "running" ? "bg-[var(--ok)] animate-pulse" : "bg-rondo-black/30"}`} />
-          <span className="text-rondo-black/60 text-xs font-semibold capitalize">{timer?.status ?? "waiting"}</span>
+          <div className={`w-2 h-2 rounded-full ${timer?.status === "running" ? "bg-[var(--ok)] animate-pulse" : "bg-[var(--ink-low)]"}`} />
+          <span className="text-[var(--ink-mid)] text-xs font-semibold capitalize">{timer?.status ?? "waiting"}</span>
         </div>
       </header>
 
@@ -102,19 +102,19 @@ export default function PlayerTimerPage() {
           <div className="flex items-center gap-4 mt-2">
             <div className="text-center">
               <div className="w-5 h-5 rounded-full mx-auto mb-1" style={{ backgroundColor: teamA.color }} />
-              <span className="text-rondo-black font-black text-lg">{teamA.name}</span>
+              <span className="text-[var(--ink-hi)] font-black text-lg">{teamA.name}</span>
             </div>
-            <span className="text-rondo-black/40 font-black text-2xl">VS</span>
+            <span className="text-[var(--ink-low)] font-black text-2xl">VS</span>
             <div className="text-center">
               <div className="w-5 h-5 rounded-full mx-auto mb-1" style={{ backgroundColor: teamB.color }} />
-              <span className="text-rondo-black font-black text-lg">{teamB.name}</span>
+              <span className="text-[var(--ink-hi)] font-black text-lg">{teamB.name}</span>
             </div>
           </div>
         )}
 
         {/* Round indicator */}
         {schedule && schedule.length > 0 && (
-          <p className="text-rondo-black/50 text-sm font-semibold">
+          <p className="text-[var(--ink-low)] text-sm font-semibold">
             Round {currentRound} of {schedule.length}
           </p>
         )}
@@ -123,11 +123,11 @@ export default function PlayerTimerPage() {
       {/* Next up */}
       {nextRound && (
         <div className="px-6 pb-8">
-          <div className="bg-rondo-black/10 rounded-[var(--r-md)] p-4">
-            <p className="text-rondo-black/60 text-xs font-semibold uppercase tracking-wider mb-2">Next Up</p>
-            <div className="flex items-center gap-2 text-rondo-black font-bold">
+          <div className="bg-[var(--bg-surface)] border border-[var(--stroke)] rounded-[var(--r-md)] p-4">
+            <p className="text-[var(--ink-mid)] text-xs font-semibold uppercase tracking-wider mb-2">Next up</p>
+            <div className="flex items-center gap-2 text-[var(--ink-hi)] font-bold">
               <span>{nextRound.team_a_name}</span>
-              <ChevronRight size={16} className="text-rondo-black/40" />
+              <ChevronRight size={16} className="text-[var(--ink-low)]" />
               <span>{nextRound.team_b_name}</span>
             </div>
           </div>

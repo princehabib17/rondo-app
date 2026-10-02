@@ -178,11 +178,15 @@ function WalletContent() {
             <Wallet size={16} className="text-[var(--ink-low)]" aria-hidden />
             <span className="rondo-label text-[var(--ink-low)]">Available balance</span>
           </div>
-          <p className="mt-3 font-heading text-[3.5rem] font-bold leading-none tabular-nums text-[var(--ink-hi)]">
-            {formatPrice(balanceCentavos)}
+          <p
+            className={`mt-3 font-heading text-[3.5rem] font-bold leading-none tabular-nums ${balanceCentavos < 0 ? "text-[var(--live)]" : "text-[var(--ink-hi)]"}`}
+          >
+            {balanceCentavos < 0 ? `-${formatPrice(-balanceCentavos)}` : formatPrice(balanceCentavos)}
           </p>
           <p className="mt-3 max-w-xs rondo-meta text-[var(--ink-mid)]">
-            Top up once, then pay any match in two taps. You never send money to an organizer directly.
+            {balanceCentavos < 0
+              ? "Refunds for a match you cancelled came to more than your balance. Earnings from your next matches cover it first, and cash-outs open again once you're back above zero."
+              : "Top up once, then pay any match in two taps. You never send money to an organizer directly."}
           </p>
         </div>
 

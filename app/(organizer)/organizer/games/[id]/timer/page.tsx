@@ -104,18 +104,18 @@ export default function OrganizerTimerPage() {
   const teamB = teams.find((t) => t.id === timer?.current_team_b_id);
 
   return (
-    <div className="min-h-[100dvh] bg-[var(--gold)] flex flex-col">
+    <div className="min-h-[100dvh] bg-[var(--bg-page)] flex flex-col">
       <header className="px-4 py-3 flex items-center gap-3">
         <button
           onClick={() => router.back()}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-rondo-black/60 hover:text-rondo-black transition-colors cursor-pointer active:scale-[0.98]"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--ink-mid)] hover:text-[var(--ink-hi)] transition-colors cursor-pointer active:scale-[0.98]"
           aria-label="Back"
         >
           <ArrowLeft size={20} />
         </button>
-        <span className="text-rondo-black font-black text-sm uppercase tracking-widest">Timer Control</span>
+        <span className="text-[var(--ink-hi)] font-black text-sm uppercase tracking-widest">Match timer</span>
         <div className="ml-auto">
-          <span className="text-rondo-black/50 text-xs font-semibold capitalize">
+          <span className="text-[var(--ink-low)] text-xs font-semibold capitalize">
             {timer?.status ?? "not started"}
           </span>
         </div>
@@ -124,12 +124,12 @@ export default function OrganizerTimerPage() {
       <div className="flex-1 flex flex-col items-center justify-center space-y-6 px-6">
         {!timer ? (
           <div className="text-center space-y-4">
-            <p className="text-rondo-black/60 text-sm">Timer not initialized</p>
+            <p className="text-[var(--ink-mid)] text-sm">Set the round clock before kickoff.</p>
             <button
               onClick={initTimer}
-              className="bg-rondo-black text-[var(--gold)] font-black uppercase tracking-widest text-sm px-8 py-4 rounded-[var(--r-md)] active:scale-[0.98] transition-all cursor-pointer min-h-[52px]"
+              className="bg-[var(--gold)] text-[var(--gold-ink)] font-black uppercase tracking-widest text-sm px-8 py-4 rounded-[var(--r-md)] active:scale-[0.98] transition-all cursor-pointer min-h-[52px]"
             >
-              Initialize Timer
+              Set up timer
             </button>
           </div>
         ) : (
@@ -145,18 +145,18 @@ export default function OrganizerTimerPage() {
               <div className="flex items-center gap-4">
                 <div className="text-center">
                   <div className="w-5 h-5 rounded-full mx-auto mb-1" style={{ backgroundColor: teamA.color }} />
-                  <span className="text-rondo-black font-black text-lg">{teamA.name}</span>
+                  <span className="text-[var(--ink-hi)] font-black text-lg">{teamA.name}</span>
                 </div>
-                <span className="text-rondo-black/40 font-black text-xl">VS</span>
+                <span className="text-[var(--ink-low)] font-black text-xl">VS</span>
                 <div className="text-center">
                   <div className="w-5 h-5 rounded-full mx-auto mb-1" style={{ backgroundColor: teamB.color }} />
-                  <span className="text-rondo-black font-black text-lg">{teamB.name}</span>
+                  <span className="text-[var(--ink-hi)] font-black text-lg">{teamB.name}</span>
                 </div>
               </div>
             )}
 
             {schedule && (
-              <p className="text-rondo-black/50 text-sm font-semibold">
+              <p className="text-[var(--ink-low)] text-sm font-semibold">
                 Round {currentRound} of {schedule.length}
               </p>
             )}
@@ -166,7 +166,7 @@ export default function OrganizerTimerPage() {
                 <button
                   onClick={handleStart}
                   disabled={actionLoading}
-                  className="bg-rondo-black text-[var(--gold)] rounded-full w-16 h-16 flex items-center justify-center active:scale-[0.95] transition-all cursor-pointer disabled:opacity-50"
+                  className="bg-[var(--gold)] text-[var(--gold-ink)] rounded-full w-16 h-16 flex items-center justify-center active:scale-[0.95] transition-all cursor-pointer disabled:opacity-50"
                   aria-label="Start"
                 >
                   <Play size={28} fill="currentColor" />
@@ -174,7 +174,7 @@ export default function OrganizerTimerPage() {
               ) : (
                 <button
                   onClick={handlePause}
-                  className="bg-rondo-black/20 text-rondo-black rounded-full w-16 h-16 flex items-center justify-center active:scale-[0.95] transition-all cursor-pointer"
+                  className="bg-[var(--bg-inset)] text-[var(--ink-hi)] border border-[var(--stroke)] rounded-full w-16 h-16 flex items-center justify-center active:scale-[0.95] transition-all cursor-pointer"
                   aria-label="Pause"
                 >
                   <Pause size={28} />
@@ -183,7 +183,7 @@ export default function OrganizerTimerPage() {
               <button
                 onClick={handleNextRound}
                 disabled={actionLoading || timer.status === "finished"}
-                className="bg-rondo-black/20 text-rondo-black rounded-full w-16 h-16 flex items-center justify-center active:scale-[0.95] transition-all cursor-pointer disabled:opacity-40"
+                className="bg-[var(--bg-inset)] text-[var(--ink-hi)] border border-[var(--stroke)] rounded-full w-16 h-16 flex items-center justify-center active:scale-[0.95] transition-all cursor-pointer disabled:opacity-40"
                 aria-label="Next round"
               >
                 <RotateCcw size={24} />
@@ -195,19 +195,19 @@ export default function OrganizerTimerPage() {
 
       {schedule && schedule.length > 0 && (
         <div className="px-4 pb-8 space-y-2 max-h-48 overflow-y-auto">
-          <p className="text-rondo-black/50 text-xs font-semibold uppercase tracking-wider">Schedule</p>
+          <p className="text-[var(--ink-low)] text-xs font-semibold uppercase tracking-wider">Schedule</p>
           {schedule.map((r) => (
             <div
               key={r.round}
               className={`flex items-center gap-2 py-2 px-3 rounded-[var(--r-sm)] text-sm ${
                 r.round === currentRound
-                  ? "bg-rondo-black/10 text-rondo-black font-bold"
-                  : "text-rondo-black/50"
+                  ? "bg-[var(--bg-surface)] text-[var(--ink-hi)] font-bold"
+                  : "text-[var(--ink-low)]"
               }`}
             >
               <span className="w-4 text-xs">{r.round}.</span>
               <span>{r.team_a_name}</span>
-              <ChevronRight size={14} className="text-rondo-black/30" />
+              <ChevronRight size={14} className="text-[var(--ink-low)]" />
               <span>{r.team_b_name}</span>
             </div>
           ))}
