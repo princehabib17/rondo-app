@@ -133,11 +133,11 @@ export function OrganizationPicker({ value, onChange, onReady }: OrganizationPic
   return (
     <>
       <div className="space-y-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-4">
-        <div className="flex items-center gap-2">
-          <Building2 size={17} className="text-[var(--gold)]" />
+        <div className="flex items-start gap-3">
+          <Building2 size={18} className="mt-0.5 shrink-0 text-[var(--ink-mid)]" />
           <div>
-            <p className="font-heading text-sm font-black uppercase text-[var(--ink-hi)]">Organizer / Organization</p>
-            <p className="text-xs text-[var(--ink-low)]">Games will show under this name.</p>
+            <p className="rondo-body font-bold text-[var(--ink-hi)]">Hosting as</p>
+            <p className="rondo-meta text-[var(--ink-low)]">Your matches show under this name.</p>
           </div>
         </div>
 
@@ -166,7 +166,7 @@ export function OrganizationPicker({ value, onChange, onReady }: OrganizationPic
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="relative w-14 h-14 rounded-full border-2 border-dashed border-[var(--stroke)] bg-[var(--bg-surface)] flex items-center justify-center overflow-hidden shrink-0 hover:border-[var(--gold)]/50 transition-colors"
+              className="relative w-14 h-14 rounded-full border-2 border-dashed border-[var(--stroke)] bg-[var(--bg-surface)] flex items-center justify-center overflow-hidden shrink-0 hover:border-[var(--ink-low)] transition-colors"
             >
               {logoPreview ? (
                 <img src={logoPreview} alt="Logo preview" className="w-full h-full object-cover" />
@@ -178,11 +178,11 @@ export function OrganizationPicker({ value, onChange, onReady }: OrganizationPic
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="text-xs text-[var(--gold)] font-semibold"
+                className="rondo-meta font-semibold text-[var(--ink-hi)]"
               >
                 {logoPreview ? "Change logo" : "Add logo (optional)"}
               </button>
-              <p className="text-xs text-[var(--ink-low)] mt-0.5">Square crop applied automatically</p>
+              <p className="rondo-meta text-[var(--ink-low)] mt-0.5">You can crop it to a square.</p>
             </div>
             <input
               ref={fileInputRef}
@@ -201,7 +201,7 @@ export function OrganizationPicker({ value, onChange, onReady }: OrganizationPic
             type="button"
             onClick={createOrganization}
             disabled={creating || newName.trim().length < 2}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--r-sm)] border border-[var(--gold)]/35 bg-[var(--gold)]/10 px-4 font-heading text-xs font-black uppercase tracking-wide text-[var(--gold)] disabled:opacity-40"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--r-pill)] border border-[var(--stroke)] px-4 text-sm font-semibold text-[var(--ink-hi)] transition-colors hover:bg-[var(--bg-inset)] disabled:opacity-40"
           >
             <Plus size={15} />
             {creating ? "Creating..." : "Save organization"}

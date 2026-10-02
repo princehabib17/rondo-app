@@ -97,8 +97,8 @@ function OtpContent() {
         />
       </div>
 
-      <div className="w-20 h-20 rounded-[var(--r-pill)] bg-[var(--gold-dim)] border border-[var(--gold)] flex items-center justify-center mx-auto">
-        <ShieldCheck size={36} weight="duotone" className="text-[var(--gold)]" />
+      <div className="w-20 h-20 rounded-[var(--r-pill)] bg-[var(--bg-inset)] border border-[var(--stroke)] flex items-center justify-center mx-auto">
+        <ShieldCheck size={36} weight="duotone" className="text-[var(--ink-hi)]" />
       </div>
 
       <div className="space-y-2">
@@ -109,14 +109,18 @@ function OtpContent() {
             <p className="rondo-body font-bold text-[var(--ink-hi)]">{phone}</p>
           </>
         ) : (
-          <>
-            <p className="rondo-meta text-[var(--ink-low)]">No phone number on this screen.</p>
-            <Link href="/signup" className="rondo-body font-bold text-[var(--gold)]">
-              Get a code first
-            </Link>
-          </>
+          <p className="rondo-meta text-[var(--ink-low)]">
+            This link is missing the number we texted. Start again from sign in.
+          </p>
         )}
       </div>
+
+      {!phone ? (
+        <Link href="/login" className="rondo-btn rondo-btn-primary">
+          Back to sign in
+        </Link>
+      ) : (
+      <>
 
       <form onSubmit={handleVerify} className="space-y-4">
         <input
@@ -131,7 +135,7 @@ function OtpContent() {
         />
 
         {error && <p className="rondo-meta text-[var(--live)]">{error}</p>}
-        {resent && <p className="rondo-meta font-bold text-[var(--gold)]">Code resent.</p>}
+        {resent && <p className="rondo-meta font-bold text-[var(--ok)]">Code resent.</p>}
 
         <button
           type="submit"
@@ -147,7 +151,7 @@ function OtpContent() {
           type="button"
           onClick={handleResend}
           disabled={cooldown > 0 || !phone}
-          className="rondo-meta font-bold text-[var(--gold)] disabled:text-[var(--ink-low)]"
+          className="rondo-meta font-bold text-[var(--ink-hi)] disabled:text-[var(--ink-low)]"
         >
           {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend code"}
         </button>
@@ -155,6 +159,8 @@ function OtpContent() {
           Use another number
         </Link>
       </div>
+      </>
+      )}
     </div>
   );
 }

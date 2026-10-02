@@ -66,7 +66,7 @@ export default function TournamentBracketPage() {
             <ArrowLeft size={20} />
           </Link>
           <div className="min-w-0 flex-1">
-            <p className="rondo-label text-[var(--gold)]">Full bracket</p>
+            <p className="rondo-label text-[var(--ink-low)]">Full bracket</p>
             <h1 className="truncate rondo-title text-[var(--ink-hi)]">
               {tournament?.name ?? "Tournament bracket"}
             </h1>
@@ -74,7 +74,7 @@ export default function TournamentBracketPage() {
           <button
             type="button"
             onClick={shareBracket}
-            className="grid min-h-11 min-w-11 place-items-center rounded-[var(--r-pill)] bg-[var(--gold)] text-[var(--gold-ink)]"
+            className="grid min-h-11 min-w-11 place-items-center rounded-[var(--r-pill)] border border-[var(--stroke)] text-[var(--ink-hi)] transition-colors hover:bg-[var(--bg-inset)]"
             aria-label="Share bracket"
           >
             <ShareNetwork size={20} weight="bold" />
