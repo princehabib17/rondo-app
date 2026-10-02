@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { isGuestUser } from "@/lib/auth/is-guest";
 import { motion, AnimatePresence } from "motion/react";
 import { snappy } from "@/components/motion/springs";
 
@@ -97,6 +98,7 @@ const organizerTabs: TabDef[] = [
 export function BottomNav() {
   const pathname = usePathname();
   const [role, setRole] = useState<UserRole>(null);
+  const [guest, setGuest] = useState(false);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
   const [visible, setVisible] = useState(true);
   const lastScrollY = useRef(0);
@@ -107,6 +109,10 @@ export function BottomNav() {
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
       if (!userId) return;
+      if (isGuestUser(userData.user)) {
+        setGuest(true);
+        return;
+      }
       const { data } = await supabase
         .from("profiles")
         .select("role")
@@ -132,7 +138,12 @@ export function BottomNav() {
   }, []);
 
   const isOrganizerRoute = pathname.startsWith("/organizer");
-  const tabs = isOrganizerRoute || role === "organizer" ? organizerTabs : playerTabs;
+  const baseTabs = isOrganizerRoute || role === "organizer" ? organizerTabs : playerTabs;
+  // Guests can browse tournaments but not hold bookings: their Matches tab
+  // opens the tournaments list instead of bouncing them to sign-up.
+  const tabs = guest
+    ? baseTabs.map((tab) => (tab.href === "/my-games" ? { ...tab, href: "/tournaments" } : tab))
+    : baseTabs;
 
   return (
     <motion.nav

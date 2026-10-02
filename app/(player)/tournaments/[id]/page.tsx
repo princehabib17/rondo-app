@@ -418,7 +418,7 @@ export default function TournamentDetailPage() {
           >
             <Trophy size={32} weight="duotone" className="mx-auto mb-2 text-[var(--gold)]" />
             <p className="rondo-label text-[var(--gold)]">Champion</p>
-            <p className="mt-1 font-heading text-4xl font-bold uppercase text-[var(--ink-hi)]">{champion.name}</p>
+            <p className="mt-2 font-heading text-4xl font-bold uppercase leading-[0.95] text-[var(--ink-hi)] [text-wrap:balance]">{champion.name}</p>
             <p className="mt-2 rondo-meta text-[var(--ink-mid)]">{champion.detail}</p>
           </section>
         )}
