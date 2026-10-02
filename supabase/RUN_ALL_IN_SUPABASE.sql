@@ -1661,3 +1661,17 @@ notify pgrst, 'reload schema';
 -- =============================================================================
 -- DONE. Run supabase/SUPABASE_AUDIT.sql — every row must read OK.
 -- =============================================================================
+
+-- 20261002000200_realtime_match_chat_timer.sql
+
+do $$
+begin
+  alter publication supabase_realtime add table public.messages;
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.timer_sessions;
+exception when duplicate_object then null;
+end $$;
