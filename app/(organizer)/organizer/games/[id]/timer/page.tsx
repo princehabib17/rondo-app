@@ -31,7 +31,17 @@ export default function OrganizerTimerPage() {
     }
     load();
     const unsubscribe = subscribeToTimer(id, setTimer);
-    return () => { unsubscribe(); };
+    // Backup for live updates: keeps every screen on the same clock even if
+    // the realtime socket drops or the table isn't being broadcast.
+    const poll = setInterval(async () => {
+      if (document.visibilityState !== "visible") return;
+      const { data } = await createClient().from("timer_sessions").select("*").eq("game_id", id).maybeSingle();
+      if (data) setTimer(data as TimerSession);
+    }, 4000);
+    return () => {
+      unsubscribe();
+      clearInterval(poll);
+    };
   }, [id]);
 
   async function initTimer() {

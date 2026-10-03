@@ -94,6 +94,20 @@ checks as (
       select 1 from pg_publication_tables
       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'tournament_messages'
     ) then 'OK' else 'MISSING' end
+
+  union all
+  select 'realtime: match chat (messages) published',
+    case when exists (
+      select 1 from pg_publication_tables
+      where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'messages'
+    ) then 'OK' else 'MISSING' end
+
+  union all
+  select 'realtime: timer_sessions published',
+    case when exists (
+      select 1 from pg_publication_tables
+      where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'timer_sessions'
+    ) then 'OK' else 'MISSING' end
 )
 select check_name, status,
   case when status = 'MISSING' then 'Run supabase/RUN_ALL_IN_SUPABASE.sql' else '' end as fix_action

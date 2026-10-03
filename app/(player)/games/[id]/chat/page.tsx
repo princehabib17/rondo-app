@@ -22,8 +22,15 @@ function MessageSkeleton({ align }: { align: "left" | "right" }) {
   );
 }
 
-/** Legacy squad chat — redirects to organizer room (read-only announcements). */
-export default function LegacyChatRedirectPage() {
+/** Add messages that aren't on screen yet, oldest first. Realtime, polling and our own sends can all deliver the same row. */
+function mergeMessages(prev: MessageWithProfile[], incoming: MessageWithProfile[]) {
+  const seen = new Set(prev.map((m) => m.id));
+  const fresh = incoming.filter((m) => !seen.has(m.id));
+  if (fresh.length === 0) return prev;
+  return [...prev, ...fresh].sort((a, b) => a.created_at.localeCompare(b.created_at));
+}
+
+export default function MatchChatPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [messages, setMessages] = useState<MessageWithProfile[]>([]);
@@ -110,7 +117,7 @@ export default function LegacyChatRedirectPage() {
           .single();
 
         const msg: MessageWithProfile = { ...rawMsg, profile: profile ?? null };
-        setMessages((prev) => [...prev, msg]);
+        setMessages((prev) => mergeMessages(prev, [msg]));
       });
       unsubscribeRef.current = unsubscribe;
       setIsConnected(true);
@@ -125,6 +132,24 @@ export default function LegacyChatRedirectPage() {
     };
   }, [id, retryKey]);
 
+  // Backup for live updates: if the project isn't broadcasting chat inserts,
+  // or the socket drops, new messages still arrive within a few seconds.
+  useEffect(() => {
+    if (loading) return;
+    const supabase = createClient();
+    const poll = setInterval(async () => {
+      if (document.visibilityState !== "visible") return;
+      const { data } = await supabase
+        .from("messages")
+        .select("*, profile:profiles!user_id(id, full_name, avatar_url, nationality)")
+        .eq("game_id", id)
+        .order("created_at", { ascending: false })
+        .limit(30);
+      if (data?.length) setMessages((prev) => mergeMessages(prev, data as MessageWithProfile[]));
+    }, 5000);
+    return () => clearInterval(poll);
+  }, [id, loading]);
+
   // Auto-scroll when messages change
   useEffect(() => {
     if (messages.length > 0) scrollToBottom();
@@ -138,13 +163,19 @@ export default function LegacyChatRedirectPage() {
     inputRef.current?.focus();
 
     const supabase = createClient();
-    const { error } = await supabase.from("messages").insert({
-      game_id: id,
-      user_id: currentUserId,
-      body,
-    });
+    const { data: sent, error } = await supabase
+      .from("messages")
+      .insert({
+        game_id: id,
+        user_id: currentUserId,
+        body,
+      })
+      .select("*, profile:profiles!user_id(id, full_name, avatar_url, nationality)")
+      .single();
     if (error) {
       setInput(body);
+    } else if (sent) {
+      setMessages((prev) => mergeMessages(prev, [sent as MessageWithProfile]));
     }
     setSending(false);
   }
