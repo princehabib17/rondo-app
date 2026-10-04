@@ -302,6 +302,7 @@ function ConfirmedContent() {
             kickoff={game.date_time}
             paymentStatus={entryStatus}
             pricePerPlayer={game.price_per_player}
+            paymentType={game.payment_type}
             onLeft={() => {
               setEntryStatus(null);
               setPaymentState("not_joined");

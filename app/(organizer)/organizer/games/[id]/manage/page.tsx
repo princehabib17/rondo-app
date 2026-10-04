@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { CurrencyCircleDollar, Megaphone, Timer } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { hasKickedOff } from "@/lib/match/drop-out";
 import { createClient } from "@/lib/supabase/client";
 import { PlayerAvatar } from "@/components/game/PlayerAvatar";
 import { formatGameDate, formatPrice } from "@/lib/utils/format";
@@ -193,6 +194,7 @@ export default function ManageGamePage() {
   if (!game) return <div className="min-h-[100dvh] flex items-center justify-center text-[var(--ink-low)]">Match not found</div>;
 
   const registrationOpen = game.registration_open !== false;
+  const kickedOff = hasKickedOff(game.date_time);
 
   return (
     <div className="min-h-[100dvh] pb-8">
@@ -281,6 +283,10 @@ export default function ManageGamePage() {
                 </button>
               </div>
             </div>
+          ) : kickedOff ? (
+            <p className="flex min-h-14 items-center px-4 rondo-meta text-[var(--ink-low)]">
+              Kicked off. The roster is final; refunds go through Help.
+            </p>
           ) : (
             <button
               type="button"
@@ -330,7 +336,7 @@ export default function ManageGamePage() {
                               Remove
                             </button>
                           </span>
-                        ) : (
+                        ) : kickedOff ? null : (
                           <button
                             type="button"
                             onClick={() => setConfirmRemoveId(gp.id)}
@@ -406,7 +412,7 @@ export default function ManageGamePage() {
                             Remove
                           </button>
                         </span>
-                      ) : (
+                      ) : kickedOff ? null : (
                         <button
                           type="button"
                           onClick={() => setConfirmRemoveId(gp.id)}

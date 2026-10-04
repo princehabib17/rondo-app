@@ -14,7 +14,7 @@ describe("buildIcsEvent", () => {
     expect(ics).toContain("DTSTART:20261002T120000Z");
     expect(ics).toContain("DTEND:20261002T140000Z");
     expect(ics).toContain("LOCATION:BGC Turf\\, Taguig");
-    expect(ics).toContain("DESCRIPTION:Bring both shirts\; dark and light");
+    expect(ics).toContain("DESCRIPTION:Bring both shirts\\; dark and light");
     expect(ics).toContain("TRIGGER:-PT2H");
     expect(ics.split("\r\n")[0]).toBe("BEGIN:VCALENDAR");
   });

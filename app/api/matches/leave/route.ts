@@ -5,7 +5,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { dropOutRule, FREE_DROP_OUT_HOURS } from "@/lib/match/drop-out";
 import { notifyWaitlistSpotOpen } from "@/lib/match/waitlist";
-import { refundMatchFee } from "@/lib/wallet/refunds";
+import { loadRefundState, refundMatchFee } from "@/lib/wallet/refunds";
 import { formatPrice } from "@/lib/utils/format";
 
 const bodySchema = z.object({
@@ -53,7 +53,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "This match was cancelled. Any fee is already back in your wallet." }, { status: 409 });
     }
 
-    const rule = dropOutRule({ kickoff: game.date_time, paymentStatus: row.payment_status });
+    const refundParams = {
+      gameId,
+      organizerId: game.organizer_id,
+      userId: user.id,
+      pricePerPlayer: game.price_per_player ?? 0,
+      paymentStatus: row.payment_status,
+      paymongoPaymentId: row.paymongo_payment_id,
+    };
+    // Paid means money actually moved for this spot, not just an "approved" status.
+    const { toPlayer } = await loadRefundState(service, refundParams);
+    const rule = dropOutRule({ kickoff: game.date_time, paid: toPlayer > 0 });
     if (rule.kind === "started" || game.status === "completed") {
       return NextResponse.json({ error: "This match has already kicked off." }, { status: 409 });
     }
@@ -67,17 +77,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const refunded =
-      rule.kind === "refund" || row.payment_status === "pending_approval"
-        ? await refundMatchFee(service, {
-            gameId,
-            organizerId: game.organizer_id,
-            userId: user.id,
-            pricePerPlayer: game.price_per_player ?? 0,
-            paymentStatus: row.payment_status,
-            paymongoPaymentId: row.paymongo_payment_id,
-          })
-        : 0;
+    const refunded = rule.kind === "refund" ? await refundMatchFee(service, refundParams) : 0;
 
     const { error: deleteError } = await service.from("game_players").delete().eq("id", row.id);
     if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 });

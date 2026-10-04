@@ -60,11 +60,15 @@ export async function POST(
       return NextResponse.json({ status: playerRow.payment_status });
     }
 
-    const { data: ledger } = await service
+    const { data: ledger, error: ledgerError } = await service
       .from("wallet_transactions")
       .select("amount, direction, source")
       .eq("user_id", playerRow.user_id)
       .eq("game_id", gameId);
+    if (ledgerError) {
+      // Never guess "unpaid": that would ask a player who already paid to pay again.
+      return NextResponse.json({ error: "Couldn't check this player's payment. Try again." }, { status: 503 });
+    }
     const paidCentavos = (ledger ?? []).reduce((sum, row) => {
       if (row.source === "payment" && row.direction === "debit") return sum + row.amount;
       if (row.source === "refund" && row.direction === "credit") return sum - row.amount;

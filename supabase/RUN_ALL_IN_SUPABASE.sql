@@ -1675,3 +1675,14 @@ begin
   alter publication supabase_realtime add table public.timer_sessions;
 exception when duplicate_object then null;
 end $$;
+
+-- 20261004000000_unique_refund_notes.sql
+
+do $$
+begin
+  create unique index if not exists wallet_transactions_refund_note_key
+    on public.wallet_transactions (note)
+    where source = 'refund' and note ~ ':[0-9]+$';
+exception when unique_violation then
+  raise notice 'wallet_transactions_refund_note_key skipped: duplicate refund notes already exist';
+end $$;
