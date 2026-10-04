@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { toast } from "sonner";
-import { dropOutRule, FREE_DROP_OUT_HOURS } from "@/lib/match/drop-out";
+import { dropOutRule, entryLooksPaid, FREE_DROP_OUT_HOURS } from "@/lib/match/drop-out";
 import { formatPrice } from "@/lib/utils/format";
 
 /** "Can't make it?" Gives the spot back, with the refund rule spelled out first. */
@@ -13,18 +13,20 @@ export function DropOutPanel({
   kickoff,
   paymentStatus,
   pricePerPlayer,
+  paymentType,
   onLeft,
 }: {
   gameId: string;
   kickoff: string;
   paymentStatus: string | null;
   pricePerPlayer: number;
+  paymentType: string | null;
   onLeft: () => void;
 }) {
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const reducedMotion = useReducedMotion();
-  const rule = dropOutRule({ kickoff, paymentStatus });
+  const rule = dropOutRule({ kickoff, paid: entryLooksPaid({ paymentStatus, pricePerPlayer, paymentType }) });
 
   if (rule.kind === "started") return null;
 

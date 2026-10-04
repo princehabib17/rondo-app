@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { refundMatchFee } from "@/lib/wallet/refunds";
+import { hasKickedOff } from "@/lib/match/drop-out";
+import { notifyWaitlistSpotOpen } from "@/lib/match/waitlist";
 import { formatPrice } from "@/lib/utils/format";
 
 const bodySchema = z.object({
@@ -31,12 +33,19 @@ export async function POST(
     const service = createServiceClient();
     const { data: game } = await service
       .from("games")
-      .select("id, organizer_id, title, price_per_player")
+      .select("id, organizer_id, title, price_per_player, date_time")
       .eq("id", gameId)
       .single();
 
     if (!game || game.organizer_id !== userData.user.id) {
       return NextResponse.json({ error: "Not allowed" }, { status: 403 });
+    }
+
+    if (hasKickedOff(game.date_time)) {
+      return NextResponse.json(
+        { error: "This match has kicked off, so the roster is final. Mark the player as a no-show instead." },
+        { status: 409 }
+      );
     }
 
     const { data: row } = await service
@@ -79,6 +88,8 @@ export async function POST(
         link: `/games/${gameId}`,
       });
     }
+
+    await notifyWaitlistSpotOpen(gameId, game.title);
 
     return NextResponse.json({ removed: true, refunded });
   } catch (e: unknown) {

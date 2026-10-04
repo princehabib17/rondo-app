@@ -12,6 +12,13 @@ describe("match imagery", () => {
     expect(pitchPhotoForVenue(null)).toBeNull();
   });
 
+  it("uses the real BGC Turf photo for that venue", () => {
+    expect(pitchPhotoForVenue("BGC Turf")?.src).toBe("/venues/bgc-turf.jpg");
+    expect(pitchPhotoForVenue("bgc turf, 5th Ave")?.src).toBe("/venues/bgc-turf.jpg");
+    expect(pitchPhotoForVenue("Cherry Turf")).toBeNull();
+    expect(matchHeroImage({ venue_name: "BGC Turf", banner_url: null }).src).toBe("/venues/bgc-turf.jpg");
+  });
+
   it("ships every matchday scene it references", () => {
     for (const scene of Object.values(MATCH_SCENES)) {
       expect(existsSync(path.join(process.cwd(), "public", scene.src))).toBe(true);

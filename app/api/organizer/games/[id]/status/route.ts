@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { isGuestUser } from "@/lib/auth/is-guest";
 import { refundMatchFee } from "@/lib/wallet/refunds";
+import { hasKickedOff } from "@/lib/match/drop-out";
 import { formatPrice } from "@/lib/utils/format";
 
 const bodySchema = z.object({
@@ -35,7 +36,7 @@ export async function POST(
     const service = createServiceClient();
     const { data: game } = await service
       .from("games")
-      .select("id, organizer_id, title, price_per_player, status")
+      .select("id, organizer_id, title, price_per_player, status, date_time")
       .eq("id", gameId)
       .single();
 
@@ -57,8 +58,11 @@ export async function POST(
       return NextResponse.json({ status: "open" });
     }
 
-    if (game.status === "completed") {
-      return NextResponse.json({ error: "This match has already been played." }, { status: 409 });
+    if (game.status === "completed" || hasKickedOff(game.date_time)) {
+      return NextResponse.json(
+        { error: "This match has already kicked off, so it can't be cancelled. Refund individual players through Help." },
+        { status: 409 }
+      );
     }
 
     const { error: statusError } = await service

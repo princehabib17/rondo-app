@@ -9,7 +9,16 @@ export interface PitchPhoto {
  * public/venues/ and add an entry here; until a venue has one, match views
  * use the generic night-scene art below instead of a broken image.
  */
-const PITCH_PHOTOS: { matches: (venueName: string) => boolean; photo: PitchPhoto }[] = [];
+const PITCH_PHOTOS: { matches: (venueName: string) => boolean; photo: PitchPhoto }[] = [
+  {
+    matches: (venueName) => /\bbgc\b/i.test(venueName) && /turf/i.test(venueName),
+    photo: {
+      src: "/venues/bgc-turf.jpg",
+      alt: "BGC Turf from above, a rooftop pitch among the Bonifacio Global City towers",
+      label: "BGC Turf",
+    },
+  },
+];
 
 export function pitchPhotoForVenue(venueName: string | null | undefined): PitchPhoto | null {
   if (!venueName) return null;

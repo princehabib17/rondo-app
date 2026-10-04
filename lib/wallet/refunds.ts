@@ -7,13 +7,20 @@ type LedgerRow = {
   note: string | null;
 };
 
-export function refundNote(gameId: string, userId: string) {
-  return `refund:${gameId}:${userId}`;
+/**
+ * Ledger notes double as idempotency keys: `seq` is the player's Nth payment
+ * for this match, and a unique index on refund notes stops two overlapping
+ * requests (a drop-out racing a cancellation, a double tap) from both paying.
+ */
+export function refundNote(gameId: string, userId: string, seq = 1) {
+  return `refund:${gameId}:${userId}:${seq}`;
 }
 
-export function earningReversalNote(gameId: string, userId: string) {
-  return `refund_reversal:${gameId}:${userId}`;
+export function earningReversalNote(gameId: string, userId: string, seq = 1) {
+  return `refund_reversal:${gameId}:${userId}:${seq}`;
 }
+
+const UNIQUE_VIOLATION = "23505";
 
 /**
  * How much of a player's match fee is still owed back to them, and how much of
@@ -56,31 +63,25 @@ export function outstandingRefund(params: {
     .filter((row) => row.direction === "credit" && row.note && earningNotes.has(row.note))
     .reduce((sum, row) => sum + row.amount, 0);
   const reversed = params.organizerLedger
-    .filter((row) => row.direction === "debit" && row.note === earningReversalNote(gameId, userId))
+    .filter((row) => row.direction === "debit" && row.note?.startsWith(`refund_reversal:${gameId}:${userId}`))
     .reduce((sum, row) => sum + row.amount, 0);
   const fromOrganizer = Math.max(0, Math.min(earned - reversed, toPlayer + alreadyRefunded));
 
   return { toPlayer, fromOrganizer };
 }
 
-/**
- * Give a player their match fee back as wallet credit and take the matching
- * earning back from the organizer. Safe to call twice: the second call finds
- * nothing outstanding. Needs the service-role client.
- */
-export async function refundMatchFee(
-  service: SupabaseClient,
-  params: {
-    gameId: string;
-    organizerId: string;
-    userId: string;
-    pricePerPlayer: number;
-    paymentStatus: string | null;
-    paymongoPaymentId: string | null;
-  }
-): Promise<number> {
-  const { gameId, organizerId, userId } = params;
+type RefundParams = {
+  gameId: string;
+  organizerId: string;
+  userId: string;
+  pricePerPlayer: number;
+  paymentStatus: string | null;
+  paymongoPaymentId: string | null;
+};
 
+/** What this player is still owed for this match, read from the ledger. Needs the service-role client. */
+export async function loadRefundState(service: SupabaseClient, params: RefundParams) {
+  const { gameId, organizerId, userId } = params;
   const [{ data: playerLedger, error: playerError }, { data: organizerLedger, error: organizerError }] =
     await Promise.all([
       service
@@ -92,25 +93,35 @@ export async function refundMatchFee(
         .from("wallet_transactions")
         .select("amount, direction, source, note")
         .eq("user_id", organizerId)
-        .eq("game_id", gameId)
-        .in("note", [
-          `game_earning:${gameId}:${userId}`,
-          `private_approval:${gameId}:${userId}`,
-          earningReversalNote(gameId, userId),
-        ]),
+        .eq("game_id", gameId),
     ]);
   if (playerError) throw new Error(playerError.message);
   if (organizerError) throw new Error(organizerError.message);
 
-  const { toPlayer, fromOrganizer } = outstandingRefund({
+  const player = (playerLedger as LedgerRow[] | null) ?? [];
+  const outstanding = outstandingRefund({
     gameId,
     userId,
     pricePerPlayer: params.pricePerPlayer,
     paymentStatus: params.paymentStatus,
     paidByCard: Boolean(params.paymongoPaymentId),
-    playerLedger: (playerLedger as LedgerRow[] | null) ?? [],
+    playerLedger: player,
     organizerLedger: userId === organizerId ? [] : ((organizerLedger as LedgerRow[] | null) ?? []),
   });
+  const payments = player.filter((row) => row.direction === "debit" && row.source === "payment").length;
+  return { ...outstanding, seq: Math.max(1, payments) };
+}
+
+/**
+ * Give a player their match fee back as wallet credit and take the matching
+ * earning back from the organizer. Safe to repeat and to race: a second call
+ * finds nothing outstanding, and an overlapping one hits the unique refund
+ * note and is skipped. Needs the service-role client.
+ */
+export async function refundMatchFee(service: SupabaseClient, params: RefundParams): Promise<number> {
+  const { gameId, organizerId, userId } = params;
+  const { toPlayer, fromOrganizer, seq } = await loadRefundState(service, params);
+  let refunded = 0;
 
   if (toPlayer > 0) {
     const { error } = await service.from("wallet_transactions").insert({
@@ -120,9 +131,10 @@ export async function refundMatchFee(
       amount: toPlayer,
       direction: "credit",
       source: "refund",
-      note: refundNote(gameId, userId),
+      note: refundNote(gameId, userId, seq),
     });
-    if (error) throw new Error(error.message);
+    if (error && error.code !== UNIQUE_VIOLATION) throw new Error(error.message);
+    if (!error) refunded = toPlayer;
   }
 
   if (fromOrganizer > 0) {
@@ -133,10 +145,10 @@ export async function refundMatchFee(
       amount: fromOrganizer,
       direction: "debit",
       source: "refund",
-      note: earningReversalNote(gameId, userId),
+      note: earningReversalNote(gameId, userId, seq),
     });
-    if (error) throw new Error(error.message);
+    if (error && error.code !== UNIQUE_VIOLATION) throw new Error(error.message);
   }
 
-  return toPlayer;
+  return refunded;
 }
