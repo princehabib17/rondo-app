@@ -99,9 +99,9 @@ failing in the browser while `POST /api/auth/guest` returns 200.
   register for a showcase. `POST /api/seed/organizers` runs both on demand.
 - **Venue photos.** Match heroes use an uploaded cover first, then a real venue
   photo from `lib/venues/pitch-photos.ts`, then shipped night-scene art in
-  `public/scenes/`. The BGC Turf photo the code used to point at
-  (`/venues/bgc-turf.jpg`) was never committed; drop the real file in
-  `public/venues/` and add an entry to `PITCH_PHOTOS` to use it again.
+  `public/scenes/`. BGC Turf has its real photo (`public/venues/bgc-turf.jpg`);
+  to add another venue, drop its photo in `public/venues/` and add an entry to
+  `PITCH_PHOTOS`.
 - **Installable.** `app/manifest.ts` and `public/icons/` make Rondo an
   add-to-home-screen app that opens on `/feed`.
 - **Navigation.** The tab bar shows only on tab roots (`lib/navigation/tab-routes.ts`);
