@@ -30,6 +30,7 @@ import { colors, font, radius, spacing } from '../../constants/theme';
 
 const DWELL_MS = 4500;
 const H_PAD = spacing.lg;
+const RAIL_WIDTH = 28;
 
 type Slide = {
   key: string;
@@ -284,7 +285,7 @@ function Rail({
 }) {
   const fillStyle = useAnimatedStyle(() => {
     const filled = index < activeIndex.value ? 1 : index === activeIndex.value ? dwell.value : 0;
-    return { width: `${filled * 100}%` };
+    return { width: filled * RAIL_WIDTH };
   });
 
   return (
@@ -366,7 +367,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   rail: {
-    width: 28,
+    width: RAIL_WIDTH,
     height: 4,
     borderRadius: radius.full,
     backgroundColor: colors.surfaceHigh,
