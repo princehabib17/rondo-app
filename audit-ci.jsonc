@@ -1,0 +1,11 @@
+{
+  "$schema": "https://github.com/IBM/audit-ci/raw/main/docs/schema.json",
+  "high": true,
+  "report-type": "important",
+  "allowlist": [
+    // braces stack-exhaustion DoS: no patched release exists (<= 3.0.3 affected).
+    // Only reached through build-time glob tooling (eslint-config-next, shadcn CLI) on repo-controlled patterns.
+    // Remove once braces ships a fix; audit-ci flags unused allowlist entries.
+    "GHSA-vfj7-8cjw-p6xm"
+  ]
+}

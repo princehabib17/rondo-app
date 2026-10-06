@@ -16,9 +16,10 @@ jobs:
           node-version: 22
           cache: npm
       # Fails the build on high/critical advisories; the full report is
-      # printed first for visibility into moderates.
+      # printed first for visibility into moderates. Unpatchable advisories
+      # are allowlisted by GHSA id in audit-ci.jsonc.
       - run: npm audit || true
-      - run: npm audit --audit-level=high
+      - run: npx --yes audit-ci@7.1.0 --config audit-ci.jsonc
 
   test:
     name: Lint, test, build
