@@ -3,6 +3,8 @@ import { AUTH_UNREACHABLE_MESSAGE, withAuthTimeout } from "@/lib/auth/auth-timeo
 import { isValidEmail, normalizeEmail } from "@/lib/auth/email";
 import { normalizeUsername, usernameValidationError } from "@/lib/auth/username";
 
+/** Username is optional at create-account; onboarding profile collects it. */
+
 export type SignupWithEmailResult =
   | { ok: true; needsEmailConfirmation?: boolean }
   | { ok: false; error: string };
@@ -36,22 +38,25 @@ const SERVER_AUTH_TIMEOUT_MS = 12_000;
 export async function signupWithEmail(args: {
   supabase: AuthClient;
   fullName: string;
-  username: string;
   email: string;
   password: string;
+  username?: string;
   fetchImpl?: typeof fetch;
 }): Promise<SignupWithEmailResult> {
   const trimmedName = args.fullName.trim();
-  const username = normalizeUsername(args.username);
   const trimmedEmail = normalizeEmail(args.email);
   const fetchFn = args.fetchImpl ?? fetch;
+  const rawUsername = args.username?.trim() ?? "";
+  const username = rawUsername ? normalizeUsername(rawUsername) : "";
 
   if (trimmedName.length < 2) {
     return { ok: false, error: "Enter your name." };
   }
-  const usernameError = usernameValidationError(username);
-  if (usernameError) {
-    return { ok: false, error: usernameError };
+  if (username) {
+    const usernameError = usernameValidationError(username);
+    if (usernameError) {
+      return { ok: false, error: usernameError };
+    }
   }
   if (!isValidEmail(trimmedEmail)) {
     return { ok: false, error: "Enter a valid email address." };
@@ -93,7 +98,7 @@ export async function signupWithEmail(args: {
         email: trimmedEmail,
         password: args.password,
         fullName: trimmedName,
-        username,
+        ...(username ? { username } : {}),
       }),
       signal: AbortSignal.timeout(SERVER_AUTH_TIMEOUT_MS),
     });
@@ -135,7 +140,12 @@ export async function signupWithEmail(args: {
       args.supabase.auth.signUp({
         email: trimmedEmail,
         password: args.password,
-        options: { data: { full_name: trimmedName, username } },
+        options: {
+          data: {
+            full_name: trimmedName,
+            ...(username ? { username } : {}),
+          },
+        },
       }),
       SERVER_AUTH_TIMEOUT_MS
     );

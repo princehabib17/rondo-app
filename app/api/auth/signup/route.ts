@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Service role key not configured" }, { status: 503 });
   }
 
-  let email: string, password: string, fullName: string, username: string;
+  let email: string, password: string, fullName: string, username: string | undefined;
   try {
     ({ email, password, fullName, username } = await request.json());
   } catch {
@@ -18,11 +18,13 @@ export async function POST(request: Request) {
   const trimmedName = typeof fullName === "string" ? fullName.trim() : "";
   const normalizedEmail = typeof email === "string" ? normalizeEmail(email) : "";
   const normalizedUsername =
-    typeof username === "string" ? normalizeUsername(username) : "";
+    typeof username === "string" && username.trim()
+      ? normalizeUsername(username)
+      : "";
 
-  if (!normalizedEmail || !password || !trimmedName || !normalizedUsername) {
+  if (!normalizedEmail || !password || !trimmedName) {
     return NextResponse.json(
-      { error: "email, password, fullName, and username are required" },
+      { error: "email, password, and fullName are required" },
       { status: 400 }
     );
   }
@@ -31,9 +33,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
   }
 
-  const usernameError = usernameValidationError(normalizedUsername);
-  if (usernameError) {
-    return NextResponse.json({ error: usernameError }, { status: 400 });
+  if (normalizedUsername) {
+    const usernameError = usernameValidationError(normalizedUsername);
+    if (usernameError) {
+      return NextResponse.json({ error: usernameError }, { status: 400 });
+    }
   }
 
   if (trimmedName.length < 2) {
@@ -46,21 +50,26 @@ export async function POST(request: Request) {
 
   const service = createServiceClient();
 
-  const { data: existingUsername } = await service
-    .from("profiles")
-    .select("id")
-    .ilike("username", normalizedUsername)
-    .maybeSingle();
+  if (normalizedUsername) {
+    const { data: existingUsername } = await service
+      .from("profiles")
+      .select("id")
+      .ilike("username", normalizedUsername)
+      .maybeSingle();
 
-  if (existingUsername) {
-    return NextResponse.json({ error: "That username is taken." }, { status: 409 });
+    if (existingUsername) {
+      return NextResponse.json({ error: "That username is taken." }, { status: 409 });
+    }
   }
 
   const { data, error } = await service.auth.admin.createUser({
     email: normalizedEmail,
     password,
     email_confirm: true,
-    user_metadata: { full_name: trimmedName, username: normalizedUsername },
+    user_metadata: {
+      full_name: trimmedName,
+      ...(normalizedUsername ? { username: normalizedUsername } : {}),
+    },
   });
 
   if (error) {
@@ -78,7 +87,7 @@ export async function POST(request: Request) {
       id: data.user.id,
       email: normalizedEmail,
       full_name: trimmedName,
-      username: normalizedUsername,
+      ...(normalizedUsername ? { username: normalizedUsername } : {}),
     });
     if (profileError) {
       const taken =
