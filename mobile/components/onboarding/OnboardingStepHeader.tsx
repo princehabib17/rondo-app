@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { colors, font, radius, spacing } from '../../constants/theme';
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 8;
 
 export function OnboardingStepHeader({
   step,

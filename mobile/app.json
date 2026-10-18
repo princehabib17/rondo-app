@@ -22,6 +22,13 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Rondo uses your photos so you can set a profile picture.",
+          "cameraPermission": "Rondo uses the camera so you can take a profile picture."
+        }
+      ],
       ["expo-splash-screen", {
         "backgroundColor": "#0A0A0A",
         "image": "./assets/splash-icon.png",

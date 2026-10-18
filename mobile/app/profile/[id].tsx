@@ -9,6 +9,8 @@ import * as Haptics from 'expo-haptics';
 import { colors, font, spacing, radius } from '../../constants/theme';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
+import { PlayerAvatar } from '../../components/ui/PlayerAvatar';
+import { getCountryName } from '../../lib/countries';
 import { useQuery } from '../../hooks/useQuery';
 import { useAuth } from '../../hooks/useAuth';
 import * as q from '../../lib/queries';
@@ -107,8 +109,8 @@ export default function PlayerProfileScreen() {
   const recentGames = gamesQuery.data ?? [];
 
   const name = profile.full_name ?? 'Unknown';
-  const username = profile.email?.split('@')[0] ?? name.toLowerCase().replace(/\s+/g, '');
-  const avatarInitial = name[0]?.toUpperCase() ?? '?';
+  const username = profile.username || (profile.email?.split('@')[0] ?? name.toLowerCase().replace(/\s+/g, ''));
+  const countryName = getCountryName(profile.nationality);
   const skillLabel = profile.skill_level ? (SKILL_LABELS[profile.skill_level] ?? profile.skill_level) : null;
   const posLabel = profile.position ? (POS_LABELS[profile.position] ?? profile.position) : null;
   const followerCount = stats.followers + (followOverride === true ? 1 : followOverride === false ? -1 : 0);
@@ -138,13 +140,18 @@ export default function PlayerProfileScreen() {
 
         <View style={styles.profileSection}>
           <View style={styles.avatarWrap}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{avatarInitial}</Text>
-            </View>
+            <PlayerAvatar
+              uri={profile.avatar_url}
+              name={name}
+              nationality={profile.nationality}
+              size={88}
+              borderColor={colors.yellow}
+              borderWidth={2.5}
+            />
           </View>
 
           <View style={styles.nameRow}>
-            <Text style={styles.name}>{profile.nationality ? `${profile.nationality} ` : ''}{name}</Text>
+            <Text style={styles.name}>{name}{countryName ? ` · ${countryName}` : ''}</Text>
           </View>
           <Text style={styles.username}>@{username}</Text>
 

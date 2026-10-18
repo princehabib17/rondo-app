@@ -243,6 +243,9 @@ alter table public.profiles
 alter table public.profiles
   add column if not exists last_lng double precision;
 
+alter table public.profiles
+  add column if not exists date_of_birth date;
+
 create table if not exists public.game_waitlist (
   id uuid default uuid_generate_v4() primary key,
   game_id uuid references public.games(id) on delete cascade not null,

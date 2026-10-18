@@ -10,6 +10,7 @@ import { useQuery, useMutation } from '../../../hooks/useQuery';
 import { useAuth } from '../../../hooks/useAuth';
 import * as q from '../../../lib/queries';
 import type { Profile } from '../../../lib/types';
+import { PlayerAvatar } from '../../../components/ui/PlayerAvatar';
 
 const { width } = Dimensions.get('window');
 
@@ -71,9 +72,12 @@ function PostCard({ post }: { post: PostItem; onChanged: () => void }) {
   return (
     <View style={styles.postCard}>
       <View style={styles.postHeader}>
-        <View style={styles.postAvatar}>
-          <Text style={styles.postAvatarText}>{initial(post.author?.full_name)}</Text>
-        </View>
+        <PlayerAvatar
+          uri={post.author?.avatar_url}
+          name={post.author?.full_name}
+          nationality={post.author?.nationality}
+          size={36}
+        />
         <View style={styles.postMeta}>
           <Text style={styles.postAuthor}>{post.author?.full_name ?? 'Unknown'}</Text>
           <Text style={styles.postTime}>{timeAgo(post.created_at)}</Text>
@@ -220,9 +224,7 @@ function PlayersTab() {
       ) : (
         players.map((p: Profile) => (
           <TouchableOpacity key={p.id} onPress={() => router.push(`/profile/${p.id}`)} style={styles.playerRow}>
-            <View style={styles.playerAvatar}>
-              <Text style={styles.playerAvatarText}>{initial(p.full_name)}</Text>
-            </View>
+            <PlayerAvatar uri={p.avatar_url} name={p.full_name} nationality={p.nationality} size={44} />
             <View style={styles.playerInfo}>
               <Text style={styles.playerName}>{p.full_name ?? 'Unknown'}</Text>
               <Text style={styles.playerMeta}>

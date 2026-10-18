@@ -30,6 +30,7 @@ export interface Profile {
   role: UserRole;
   bio: string | null;
   nationality: string | null;
+  date_of_birth?: string | null;
   position: Position | null;
   preferred_foot: PreferredFoot | null;
   skill_level?: SkillLevel | null;

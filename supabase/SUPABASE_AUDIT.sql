@@ -23,6 +23,7 @@ expected_columns(table_name, column_name) as (
     ('profiles', 'phone'), ('profiles', 'location_hidden'), ('profiles', 'last_lat'),
     ('profiles', 'last_lng'), ('profiles', 'organizer_verified'),
     ('profiles', 'preferred_areas'), ('profiles', 'game_preference'),
+    ('profiles', 'date_of_birth'),
     ('games', 'match_type'), ('games', 'skill_level'), ('games', 'allow_pay_later'),
     ('games', 'registration_open'), ('games', 'is_private'),
     ('games', 'organization_id'), ('games', 'banner_url'),
