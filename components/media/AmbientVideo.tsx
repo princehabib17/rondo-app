@@ -4,6 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
+import {
+  AMBIENT_VIDEO_DELAY_MS,
+  shouldSkipAmbientVideo,
+} from "@/lib/media/ambient-video-policy";
 
 type AmbientVideoProps = {
   src: string;
@@ -27,10 +31,25 @@ export function AmbientVideo({
   const reduceMotion = useReducedMotion();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [showVideo, setShowVideo] = useState(false);
+  const [allowVideo, setAllowVideo] = useState(false);
+
+  useEffect(() => {
+    const connection = (
+      navigator as Navigator & {
+        connection?: { saveData?: boolean; effectiveType?: string };
+      }
+    ).connection;
+    if (shouldSkipAmbientVideo(connection)) {
+      return;
+    }
+
+    const timer = setTimeout(() => setAllowVideo(true), AMBIENT_VIDEO_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !allowVideo) return;
 
     if (!active || reduceMotion) {
       video.pause();
@@ -52,7 +71,7 @@ export function AmbientVideo({
       video.removeEventListener("canplay", play);
       video.pause();
     };
-  }, [active, reduceMotion]);
+  }, [active, allowVideo, reduceMotion]);
 
   return (
     <div className={cn("absolute inset-0 overflow-hidden", className)} aria-hidden>
@@ -64,22 +83,24 @@ export function AmbientVideo({
         fetchPriority={fetchPriority}
         className={cn("object-cover object-center", mediaClassName)}
       />
-      <video
-        ref={videoRef}
-        className={cn(
-          "absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-500",
-          showVideo ? "opacity-100" : "opacity-0",
-          mediaClassName
-        )}
-        poster={poster}
-        muted
-        loop
-        playsInline
-        preload={active && !reduceMotion ? "metadata" : "none"}
-        tabIndex={-1}
-      >
-        <source src={src} type="video/mp4" />
-      </video>
+      {allowVideo && (
+        <video
+          ref={videoRef}
+          className={cn(
+            "absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-500",
+            showVideo ? "opacity-100" : "opacity-0",
+            mediaClassName
+          )}
+          poster={poster}
+          muted
+          loop
+          playsInline
+          preload="none"
+          tabIndex={-1}
+        >
+          <source src={src} type="video/mp4" />
+        </video>
+      )}
     </div>
   );
 }

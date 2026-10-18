@@ -2,6 +2,9 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase, type Session, type User } from '../lib/supabase';
 import type { Profile } from '../lib/types';
 
+/** Don't hold the splash spinner if getSession hangs. */
+const AUTH_LOADING_TIMEOUT_MS = 1200;
+
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -18,10 +21,24 @@ export function useAuth() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    const timeout = setTimeout(() => {
+      if (!cancelled) setLoading(false);
+    }, AUTH_LOADING_TIMEOUT_MS);
+
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (cancelled) return;
       setSession(session);
       setUser(session?.user ?? null);
-      await loadProfile(session?.user?.id);
+      // Anonymous visitors have no profile to fetch — paint the welcome now.
+      if (!session) {
+        clearTimeout(timeout);
+        setLoading(false);
+        return;
+      }
+      await loadProfile(session.user.id);
+      if (cancelled) return;
+      clearTimeout(timeout);
       setLoading(false);
     });
 
@@ -31,7 +48,11 @@ export function useAuth() {
       await loadProfile(session?.user?.id);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, [loadProfile]);
 
   const signOut = () => supabase.auth.signOut();
