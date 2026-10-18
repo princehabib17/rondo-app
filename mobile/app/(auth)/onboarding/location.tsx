@@ -47,7 +47,14 @@ export default function LocationScreen() {
     }
     if (result.reason === 'denied') {
       setError('Allow location access, or type an area below.');
-      await Linking.openSettings().catch(() => undefined);
+      // openSettings is native-only; calling it on web throws (not a rejected promise).
+      if (Platform.OS !== 'web' && typeof Linking.openSettings === 'function') {
+        try {
+          await Linking.openSettings();
+        } catch {
+          // Player can still type an area.
+        }
+      }
       return;
     }
     setError('Could not read your location. Type an area instead.');
