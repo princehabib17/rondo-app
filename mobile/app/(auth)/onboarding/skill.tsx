@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import * as q from '../../../lib/queries';
 import { Button } from '../../../components/ui/Button';
+import { OnboardingStepHeader } from '../../../components/onboarding/OnboardingStepHeader';
 import { colors, font, spacing, radius } from '../../../constants/theme';
 import type { SkillLevel } from '../../../lib/types';
 
@@ -58,13 +59,8 @@ export default function SkillScreen() {
         contentContainerStyle={[styles.container, { paddingTop: insets.top + spacing.xl, paddingBottom: insets.bottom + spacing.xxl }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.progressRow}>
-          {[0, 1, 2, 3].map((i) => (
-            <View key={i} style={[styles.progressDot, styles.progressDotActive]} />
-          ))}
-        </View>
+        <OnboardingStepHeader step={8} onBack={() => router.back()} />
 
-        <Text style={styles.stepLabel}>Step 4 of 4</Text>
         <Text style={styles.title}>Your play style</Text>
         <Text style={styles.subtitle}>Help us show you the right games.</Text>
 
@@ -119,11 +115,6 @@ export default function SkillScreen() {
 const styles = StyleSheet.create({
   container: { paddingHorizontal: spacing.lg },
 
-  progressRow: { flexDirection: 'row', gap: spacing.xs, marginBottom: spacing.xl },
-  progressDot: { height: 4, flex: 1, borderRadius: 99, backgroundColor: colors.surfaceElevated },
-  progressDotActive: { backgroundColor: colors.yellow },
-
-  stepLabel: { ...font.captionMed, color: colors.yellow, letterSpacing: 1, textTransform: 'uppercase', marginBottom: spacing.sm },
   title: { ...font.h1, color: colors.text, marginBottom: spacing.xs },
   subtitle: { ...font.body, color: colors.textSecondary, lineHeight: 24, marginBottom: spacing.xl },
 

@@ -34,6 +34,18 @@ export async function updateProfile(patch: Partial<Profile>): Promise<Profile> {
   return unwrap(await supabase.from('profiles').update(patch).eq('id', uid).select('*').single());
 }
 
+export async function isUsernameTaken(username: string): Promise<boolean> {
+  const uid = await getCurrentUserId();
+  let query = supabase
+    .from('profiles')
+    .select('id', { count: 'exact', head: true })
+    .ilike('username', username);
+  if (uid) query = query.neq('id', uid);
+  const { count, error } = await query;
+  if (error) throw new Error(error.message);
+  return (count ?? 0) > 0;
+}
+
 export async function getPlayerStats(userId: string) {
   const [games, followers, following] = await Promise.all([
     supabase.from('game_players').select('id', { count: 'exact', head: true }).eq('user_id', userId),
@@ -287,11 +299,11 @@ export async function registerTournamentTeam(tournamentId: string, name: string)
 }
 
 // ── Social: posts ─────────────────────────────────────────────
-export async function listPosts(): Promise<(Post & { author: Pick<Profile, 'id' | 'full_name' | 'avatar_url'> | null; like_count: number; comment_count: number; liked_by_me: boolean })[]> {
+export async function listPosts(): Promise<(Post & { author: Pick<Profile, 'id' | 'full_name' | 'avatar_url' | 'nationality'> | null; like_count: number; comment_count: number; liked_by_me: boolean })[]> {
   const uid = await getCurrentUserId();
   const posts = unwrap(
     await supabase.from('posts')
-      .select('*, author:profiles!posts_author_id_fkey(id, full_name, avatar_url), post_likes(user_id), post_comments(id)')
+      .select('*, author:profiles!posts_author_id_fkey(id, full_name, avatar_url, nationality), post_likes(user_id), post_comments(id)')
       .order('created_at', { ascending: false })
   ) as any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
   return posts.map((p) => ({

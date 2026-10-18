@@ -8,6 +8,10 @@ export default function AuthLayout() {
       <Stack.Screen name="signup" />
       <Stack.Screen name="otp" />
       <Stack.Screen name="onboarding/role" />
+      <Stack.Screen name="onboarding/username" />
+      <Stack.Screen name="onboarding/photo" />
+      <Stack.Screen name="onboarding/birthday" />
+      <Stack.Screen name="onboarding/country" />
       <Stack.Screen name="onboarding/profile" />
       <Stack.Screen name="onboarding/location" />
       <Stack.Screen name="onboarding/skill" />

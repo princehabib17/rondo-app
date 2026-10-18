@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  isReservedUsername,
   isValidUsername,
   normalizeUsername,
+  sanitizeUsernameInput,
+  usernameRuleStates,
   usernameValidationError,
 } from "@/lib/auth/username";
 
@@ -20,5 +23,14 @@ describe("username helpers", () => {
     expect(isValidUsername("ab")).toBe(false);
     expect(isValidUsername("Bad-Name")).toBe(false);
     expect(usernameValidationError("admin")).toMatch(/reserved/i);
+  });
+
+  it("sanitizes live input and scores onboarding chips", () => {
+    expect(sanitizeUsernameInput("@Prince ")).toBe("prince ");
+    expect(sanitizeUsernameInput("thisnameiswaytoolongtofit")).toBe("thisnameiswaytoolong");
+    expect(usernameRuleStates("").map((r) => r.met)).toEqual([false, false, false]);
+    expect(usernameRuleStates("prince17").every((r) => r.met)).toBe(true);
+    expect(usernameRuleStates("prince 17").find((r) => r.id === "spaces")?.met).toBe(false);
+    expect(isReservedUsername("Admin")).toBe(true);
   });
 });

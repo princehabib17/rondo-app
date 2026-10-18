@@ -37,6 +37,33 @@ export function isValidUsername(input: string): boolean {
   return true;
 }
 
+export const USERNAME_MAX_LENGTH = 20;
+
+export function sanitizeUsernameInput(input: string): string {
+  return input.replace(/^@+/, "").toLowerCase().slice(0, USERNAME_MAX_LENGTH);
+}
+
+export function isReservedUsername(input: string): boolean {
+  return RESERVED.has(normalizeUsername(input));
+}
+
+export type UsernameRuleId = "length" | "spaces" | "charset";
+
+export type UsernameRuleState = {
+  id: UsernameRuleId;
+  label: string;
+  met: boolean;
+};
+
+export function usernameRuleStates(input: string): UsernameRuleState[] {
+  const value = input.replace(/^@+/, "");
+  return [
+    { id: "length", label: "3-20 characters", met: value.length >= 3 && value.length <= USERNAME_MAX_LENGTH },
+    { id: "spaces", label: "No spaces", met: value.length > 0 && !/\s/.test(value) },
+    { id: "charset", label: "Letters and numbers", met: value.length > 0 && /^[a-z0-9_]+$/.test(value) },
+  ];
+}
+
 export function usernameValidationError(input: string): string | null {
   const username = normalizeUsername(input);
   if (username.length < 3) return "Username must be at least 3 characters.";
