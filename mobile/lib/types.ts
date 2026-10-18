@@ -19,6 +19,9 @@ export interface Profile {
   skill_level: SkillLevel | null;
   preferred_areas: string | null;
   game_preference: GamePreference | null;
+  location_hidden: boolean | null;
+  last_lat: number | null;
+  last_lng: number | null;
   created_at: string;
   updated_at: string;
 }
