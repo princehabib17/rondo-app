@@ -8,7 +8,7 @@ import {
   isOldEnough,
   toIsoDate,
   yearRange,
-} from "../../mobile/lib/date-of-birth";
+} from "@/lib/date-of-birth";
 
 describe("date of birth helpers", () => {
   it("counts days in month including leap years", () => {
