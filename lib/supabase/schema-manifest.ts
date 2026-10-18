@@ -57,6 +57,7 @@ export const EXPECTED_COLUMNS: ReadonlyArray<readonly [table: string, column: st
   ["profiles", "organizer_verified"],
   ["profiles", "preferred_areas"],
   ["profiles", "game_preference"],
+  ["profiles", "date_of_birth"],
   ["games", "match_type"],
   ["games", "skill_level"],
   ["games", "allow_pay_later"],

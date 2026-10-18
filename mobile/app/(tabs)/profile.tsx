@@ -8,6 +8,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { colors, font, spacing, radius } from '../../constants/theme';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
+import { PlayerAvatar } from '../../components/ui/PlayerAvatar';
+import { getCountryName, getFlagEmoji } from '../../lib/countries';
 import { useQuery } from '../../hooks/useQuery';
 import { useAuth } from '../../hooks/useAuth';
 import * as q from '../../lib/queries';
@@ -61,9 +63,10 @@ export default function ProfileScreen() {
     );
   }
 
-  const username = profile.email ? profile.email.split('@')[0] : (profile.full_name ?? '');
+  const username = profile.username || (profile.email ? profile.email.split('@')[0] : (profile.full_name ?? ''));
   const name = profile.full_name ?? '';
-  const avatarInitial = profile.full_name?.[0] ?? '?';
+  const flag = getFlagEmoji(profile.nationality);
+  const countryName = getCountryName(profile.nationality);
   const stats = statsQuery.data ?? { games: 0, following: 0, followers: 0 };
   const balance = walletQuery.data ?? 0;
   const reels = reelsQuery.data ?? [];
@@ -91,9 +94,14 @@ export default function ProfileScreen() {
 
         {/* Avatar + stats */}
         <View style={styles.profileRow}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{avatarInitial}</Text>
-          </View>
+          <PlayerAvatar
+            uri={profile.avatar_url}
+            name={name}
+            nationality={profile.nationality}
+            size={80}
+            borderColor={colors.yellow}
+            borderWidth={2.5}
+          />
           <View style={styles.statsRow}>
             {[
               { label: 'Games', value: stats.games },
@@ -110,7 +118,7 @@ export default function ProfileScreen() {
 
         {/* Bio */}
         <View style={styles.bio}>
-          <Text style={styles.bioName}>🇵🇭 {name}</Text>
+          <Text style={styles.bioName}>{flag ? `${flag} ` : ''}{name}{countryName ? ` · ${countryName}` : ''}</Text>
           {profile.skill_level && (
             <Badge color="yellow" style={{ alignSelf: 'flex-start', marginBottom: spacing.xs }}>{profile.skill_level}</Badge>
           )}

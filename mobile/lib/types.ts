@@ -9,16 +9,21 @@ export type GamePreference = 'football' | 'futsal' | 'both';
 export interface Profile {
   id: string;
   email: string | null;
+  username: string | null;
   full_name: string | null;
   avatar_url: string | null;
   role: Role;
   bio: string | null;
   nationality: string | null;
+  date_of_birth: string | null;
   position: Position | null;
   preferred_foot: 'left' | 'right' | 'both' | null;
   skill_level: SkillLevel | null;
   preferred_areas: string | null;
   game_preference: GamePreference | null;
+  location_hidden: boolean | null;
+  last_lat: number | null;
+  last_lng: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -235,7 +240,7 @@ export interface Organization {
 export type GameWithOrganizer = Game & { organizer: Pick<Profile, 'id' | 'full_name' | 'avatar_url'> | null };
 export type GamePlayerWithProfile = GamePlayer & { profile: Pick<Profile, 'id' | 'full_name' | 'avatar_url' | 'skill_level' | 'position'> | null };
 export type PostWithAuthor = Post & {
-  author: Pick<Profile, 'id' | 'full_name' | 'avatar_url'> | null;
+  author: Pick<Profile, 'id' | 'full_name' | 'avatar_url' | 'nationality'> | null;
   like_count: number;
   comment_count: number;
   liked_by_me: boolean;

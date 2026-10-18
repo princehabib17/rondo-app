@@ -9,7 +9,7 @@ import { isGuestUser } from "@/lib/auth/is-guest";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
 import { ImageCropModal } from "@/components/ui/image-crop-modal";
-import { NATIONALITIES } from "@/lib/utils/format";
+import { COUNTRY_OPTIONS, findCountry } from "@/lib/countries";
 import type { Position, PreferredFoot, Profile, SkillLevel } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
@@ -373,14 +373,14 @@ export default function EditProfilePage() {
               </label>
               <select
                 id="nationality"
-                value={draft.nationality}
+                value={findCountry(draft.nationality)?.code ?? ""}
                 onChange={(e) => update("nationality", e.target.value)}
                 className={rondoFieldClass}
               >
                 <option value="">Prefer not to say</option>
-                {NATIONALITIES.map((country) => (
-                  <option key={country} value={country}>
-                    {country}
+                {COUNTRY_OPTIONS.map((country) => (
+                  <option key={country.code} value={country.code}>
+                    {country.name}
                   </option>
                 ))}
               </select>

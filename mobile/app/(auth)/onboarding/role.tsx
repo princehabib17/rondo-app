@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import * as q from '../../../lib/queries';
 import { Button } from '../../../components/ui/Button';
+import { OnboardingStepHeader } from '../../../components/onboarding/OnboardingStepHeader';
 import { colors, font, spacing, radius } from '../../../constants/theme';
 
 type Role = 'player' | 'organizer';
@@ -44,7 +45,7 @@ export default function RoleScreen() {
     setError('');
     try {
       await q.updateProfile({ role: selected });
-      router.push({ pathname: '/(auth)/onboarding/profile', params: { role: selected } });
+      router.push({ pathname: '/(auth)/onboarding/username', params: { role: selected } });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.');
     } finally {
@@ -53,16 +54,10 @@ export default function RoleScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + spacing.xl, paddingBottom: insets.bottom + spacing.xl }]}>
-      {/* Progress */}
-      <View style={styles.progressRow}>
-        {[0, 1, 2, 3].map((i) => (
-          <View key={i} style={[styles.progressDot, i === 0 && styles.progressDotActive]} />
-        ))}
-      </View>
+    <View style={[styles.container, { paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.xl }]}>
+      <OnboardingStepHeader step={1} onBack={() => router.back()} />
 
       <View style={styles.content}>
-        <Text style={styles.stepLabel}>Step 1 of 4</Text>
         <Text style={styles.title}>What brings you here?</Text>
 
         <View style={styles.cards}>
@@ -99,17 +94,7 @@ export default function RoleScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg },
 
-  progressRow: { flexDirection: 'row', gap: spacing.xs, marginBottom: spacing.xl },
-  progressDot: {
-    height: 4,
-    flex: 1,
-    borderRadius: radius.full,
-    backgroundColor: colors.surfaceElevated,
-  },
-  progressDotActive: { backgroundColor: colors.yellow },
-
   content: { flex: 1 },
-  stepLabel: { ...font.captionMed, color: colors.yellow, letterSpacing: 1, textTransform: 'uppercase', marginBottom: spacing.sm },
   title: { ...font.h1, color: colors.text, marginBottom: spacing.xl },
 
   cards: { flexDirection: 'row', gap: spacing.md },
