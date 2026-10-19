@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, Wallet, ArrowDownToLine, ArrowDownLeft, ArrowUpRight, Clock } from "lucide-react";
+import { Plus, ArrowDownToLine, ArrowDownLeft, ArrowUpRight, Clock } from "lucide-react";
+import { WalletCard } from "@/components/wallet/WalletCard";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { describeWalletTransaction } from "@/lib/wallet/describe";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ interface PayoutRequest {
 function WalletContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [balanceHidden, setBalanceHidden] = useState(false);
   const [balanceCentavos, setBalanceCentavos] = useState(0);
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [payoutRequests, setPayoutRequests] = useState<PayoutRequest[]>([]);
@@ -173,21 +175,25 @@ function WalletContent() {
       <PageHeader title="Wallet" subtitle="Secured by PayMongo" back fallbackHref="/profile" />
 
       <div className="px-4 py-6 space-y-6 max-w-lg mx-auto">
-        <div className="relative overflow-hidden rounded-[var(--r-lg)] border border-[var(--stroke)] rondo-floodlight-scene p-6">
-          <div className="flex items-center gap-2">
-            <Wallet size={16} className="text-[var(--ink-low)]" aria-hidden />
-            <span className="rondo-label text-[var(--ink-low)]">Available balance</span>
-          </div>
-          <p
-            className={`mt-3 font-heading text-[3.5rem] font-bold leading-none tabular-nums ${balanceCentavos < 0 ? "text-[var(--live)]" : "text-[var(--ink-hi)]"}`}
-          >
-            {balanceCentavos < 0 ? `-${formatPrice(-balanceCentavos)}` : formatPrice(balanceCentavos)}
-          </p>
-          <p className="mt-3 max-w-xs rondo-meta text-[var(--ink-mid)]">
+        <div className="space-y-4">
+          <WalletCard balanceCentavos={balanceCentavos} hidden={balanceHidden}
+            onToggleVisibility={() => setBalanceHidden((hidden) => !hidden)} />
+          <p className="rondo-meta text-[var(--ink-mid)]">
             {balanceCentavos < 0
               ? "Refunds for a match you cancelled came to more than your balance. Earnings from your next matches cover it first, and cash-outs open again once you're back above zero."
               : "Top up once, then pay any match in two taps. You never send money to an organizer directly."}
           </p>
+          <nav aria-label="Wallet actions" className="grid grid-cols-3 gap-2">
+            <a href="#wallet-topup" className="flex min-h-20 flex-col items-center justify-center gap-2 rounded-[var(--r-md)] bg-[var(--gold)] text-[var(--gold-ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)]">
+              <Plus size={22} aria-hidden /><span className="rondo-label">Top up</span>
+            </a>
+            <a href="#wallet-payout" onClick={() => { setShowPayoutForm(true); setPayoutSuccess(false); setPayoutError(null); }} className="flex min-h-20 flex-col items-center justify-center gap-2 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] text-[var(--gold)] hover:border-[var(--gold)] focus-visible:outline-2 focus-visible:outline-[var(--gold)]">
+              <ArrowDownToLine size={22} aria-hidden /><span className="rondo-label text-[var(--ink-hi)]">Cash out</span>
+            </a>
+            <a href="#wallet-activity" className="flex min-h-20 flex-col items-center justify-center gap-2 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] text-[var(--gold)] hover:border-[var(--gold)] focus-visible:outline-2 focus-visible:outline-[var(--gold)]">
+              <Clock size={22} aria-hidden /><span className="rondo-label text-[var(--ink-hi)]">Activity</span>
+            </a>
+          </nav>
         </div>
 
         {topupBanner === "cancelled" && (
@@ -218,7 +224,7 @@ function WalletContent() {
           </p>
         )}
 
-        <section>
+        <section id="wallet-topup" className="scroll-mt-24">
           <h2 className="mb-1 rondo-label text-[var(--ink-low)]">Top up</h2>
           <p className="mb-3 rondo-meta text-[var(--ink-low)]">GCash, Maya, or card. Lands in your wallet right after payment.</p>
           <div className="grid grid-cols-3 gap-2">
@@ -243,7 +249,7 @@ function WalletContent() {
           </div>
         </section>
 
-        <section>
+        <section id="wallet-payout" className="scroll-mt-24">
           <div className="flex items-center justify-between mb-3">
             <h2 className="rondo-label text-[var(--ink-low)]">Cash out</h2>
             {!showPayoutForm && (
@@ -378,7 +384,7 @@ function WalletContent() {
           )}
         </section>
 
-        <section>
+        <section id="wallet-activity" className="scroll-mt-24">
           <h2 className="mb-3 rondo-label text-[var(--ink-low)]">Recent activity</h2>
           {transactions.length === 0 ? (
             <p className="rounded-[var(--r-md)] border border-dashed border-[var(--stroke)] px-4 py-5 rondo-meta text-[var(--ink-low)]">
