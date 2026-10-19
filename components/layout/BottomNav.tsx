@@ -163,6 +163,7 @@ export function BottomNav() {
             <Link
               key={href}
               href={href}
+              prefetch={false}
               aria-label={label}
               onClick={() => {
                 if (!active) setPendingHref(href);
