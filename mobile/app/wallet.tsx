@@ -52,6 +52,7 @@ function groupByDate(txns: WalletTransaction[]): { key: string; items: WalletTra
 export default function WalletScreen() {
   const insets = useSafeAreaInsets();
   const [loadingTopUp, setLoadingTopUp] = useState<number | null>(null);
+  const [balanceHidden, setBalanceHidden] = useState(false);
   const [showPresets, setShowPresets] = useState(false);
 
   const balanceQuery = useQuery(() => q.getWalletBalance(), []);
@@ -114,12 +115,32 @@ export default function WalletScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xxl }}>
 
-        {/* Cash App-style balance hero: huge centered balance + two buttons */}
+        {/* Wallet pass inspired by the black-and-gold Rondo card. */}
         <View style={styles.balanceHero}>
-          <LinearGradient colors={['#1A1400', '#0A0A0A']} style={StyleSheet.absoluteFill} />
-          <Text style={styles.balanceLabel}>Available Balance</Text>
-          <Text style={styles.balanceAmount}>₱{(balance / 100).toLocaleString()}</Text>
-          <Text style={styles.balanceSub}>Rondo Wallet</Text>
+          <View style={styles.walletCard}>
+            <LinearGradient colors={[cardColors.highlight, cardColors.background]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+            <View pointerEvents="none" style={styles.cardStripe} />
+            <View style={styles.cardTop}>
+              <Text style={styles.cardBrand}>RONDO</Text>
+              <Text style={styles.cardMark} accessibilityElementsHidden>↗</Text>
+            </View>
+            <View style={styles.cardBalanceRow}>
+              <Text style={styles.balanceLabel}>Available balance</Text>
+              <TouchableOpacity onPress={() => setBalanceHidden((hidden) => !hidden)}
+                accessibilityRole="button" accessibilityLabel={balanceHidden ? 'Show balance' : 'Hide balance'}
+                style={styles.visibilityButton}>
+                <Text style={styles.visibilityText}>{balanceHidden ? 'Show' : 'Hide'}</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={[styles.balanceAmount, balance < 0 && { color: cardColors.negative }]} adjustsFontSizeToFit numberOfLines={1}
+              accessibilityLabel={balanceHidden ? 'Balance hidden' : undefined}>
+              {balanceHidden ? '••••••' : `₱${(balance / 100).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+            </Text>
+            <View style={styles.cardBottom}>
+              <Text style={styles.balanceSub}>RONDO WALLET</Text>
+              <Text style={styles.cardEmbossed} accessibilityElementsHidden>RONDO</Text>
+            </View>
+          </View>
 
           {/* Two action buttons */}
           <View style={styles.actionRow}>
@@ -207,24 +228,39 @@ export default function WalletScreen() {
   );
 }
 
+const cardColors = {
+  background: '#101110', highlight: '#292B27', edge: '#47493E',
+  muted: '#B7B8AC', stripe: '#FFFFFF08', negative: '#FF9696',
+};
+
 const styles = StyleSheet.create({
+  walletCard: { width: '100%', minHeight: 232, borderRadius: 22, padding: spacing.lg, overflow: 'hidden', borderWidth: 1, borderColor: cardColors.edge, borderRightColor: colors.yellow },
+  cardStripe: { position: 'absolute', right: -70, top: -40, width: 160, height: 400, transform: [{ rotate: '32deg' }], backgroundColor: cardColors.stripe, borderLeftWidth: 1, borderColor: cardColors.edge },
+  cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
+  cardBrand: { ...font.h3, fontWeight: '900', letterSpacing: 4, color: colors.yellow },
+  cardMark: { fontSize: 32, fontWeight: '800', color: colors.yellow },
+  cardBalanceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
+  visibilityButton: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center', marginVertical: -8 },
+  visibilityText: { ...font.captionMed, color: colors.yellow },
+  cardBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.lg },
+  cardEmbossed: { ...font.h3, fontWeight: '900', letterSpacing: 3, color: cardColors.muted },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.lg },
   errorText: { ...font.body, color: colors.error, textAlign: 'center' },
   retryBtn: { backgroundColor: colors.yellowDim, borderRadius: radius.full, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
   retryText: { ...font.bodySmMed, color: colors.yellow },
 
-  /* Cash App-style balance hero */
+  /* Wallet card and compact actions */
   balanceHero: {
     overflow: 'hidden',
-    paddingTop: spacing.xxl,
+    paddingTop: spacing.md,
     paddingBottom: spacing.xl,
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
     gap: spacing.xs,
   },
-  balanceLabel: { ...font.label, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.8 },
-  balanceAmount: { fontSize: 56, fontWeight: '800', color: colors.yellow, letterSpacing: -2 },
-  balanceSub: { ...font.caption, color: colors.textFaint, marginBottom: spacing.lg },
+  balanceLabel: { ...font.captionMed, color: cardColors.muted, textTransform: 'uppercase', letterSpacing: 0.8 },
+  balanceAmount: { fontSize: 44, fontWeight: '800', color: colors.white, letterSpacing: -1, marginTop: spacing.sm },
+  balanceSub: { ...font.captionMed, color: cardColors.muted, letterSpacing: 1 },
 
   actionRow: { flexDirection: 'row', gap: spacing.md, width: '100%', marginTop: spacing.sm },
   actionBtn: {
