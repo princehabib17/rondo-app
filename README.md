@@ -121,12 +121,13 @@ failing in the browser while `POST /api/auth/guest` returns 200.
 ## Main User Journeys
 
 - **Auth**
-  - New user: welcome -> signup (email + username default, or phone OTP) -> onboarding -> feed
-  - Returning user: login (passkey / phone / email-or-username / social) -> feed
+  - New user: welcome → signup (phone primary → `/otp`) → onboarding (role → profile/username) → feed
+  - Email signup is the working fallback while SMS is off; username is set in onboarding, not at signup
+  - Returning user: login (passkey / phone / email-or-username / social) → feed
   - Guest: feed browsing only, gated on action routes
   - Passkeys: register from Profile → Passkeys; sign in from `/login` via Face ID, Touch ID, Windows Hello, or a security key
-  - Phone SMS needs a configured Supabase phone provider; if texts fail, signup switches to Email
-  - Usernames are unique on `profiles.username`; password login resolves `@handle` → email server-side
+  - Phone SMS needs a configured Supabase phone provider; if texts fail, signup switches to Email honestly
+  - Usernames are unique on `profiles.username`; password login can resolve `@handle` → email
 - **Player**
   - Browse feed/map -> open game -> join/reserve/pay -> confirmed -> invite/chat
   - Browse tournaments -> register a team -> follow bracket/standings

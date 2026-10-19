@@ -15,7 +15,6 @@ import { AUTH_UNREACHABLE_MESSAGE, withAuthTimeout } from "@/lib/auth/auth-timeo
 import { getUserWithTimeout } from "@/lib/auth/get-user-with-timeout";
 import { isLikelyPhoneNumber, normalizePhoneNumber, PHONE_PLACEHOLDER } from "@/lib/auth/phone";
 import { signupWithEmail } from "@/lib/auth/signup-with-email";
-import { normalizeUsername, usernameValidationError } from "@/lib/auth/username";
 import { shouldRedirectAwayFromAuth } from "@/lib/auth/is-guest";
 
 type SignupMode = "phone" | "email";
@@ -24,11 +23,15 @@ function signupDestination(raw: string | null): string {
   return getOnboardingPath(raw);
 }
 
+/**
+ * Product flow: welcome → signup (phone primary) → /otp → onboarding → feed.
+ * Email is the working fallback while SMS is off. Username is collected in
+ * onboarding profile — not here — to keep first create-account light.
+ */
 export default function SignupPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<SignupMode>("email");
+  const [mode, setMode] = useState<SignupMode>("phone");
   const [fullName, setFullName] = useState("");
-  const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -48,7 +51,7 @@ export default function SignupPage() {
       supabase
         .from("profiles")
         .select("role")
-        .eq("id", data.user.id)
+        .eq("id", data.user!.id)
         .single()
         .then(({ data: profile }) => {
           router.replace(profile?.role ? getRoleHome(profile.role) : signupDestination(rawNext));
@@ -67,7 +70,6 @@ export default function SignupPage() {
       const result = await signupWithEmail({
         supabase,
         fullName,
-        username,
         email,
         password,
       });
@@ -94,11 +96,6 @@ export default function SignupPage() {
       setError("Enter your name.");
       return;
     }
-    const phoneUsernameError = usernameValidationError(username);
-    if (phoneUsernameError) {
-      setError(phoneUsernameError);
-      return;
-    }
     if (!isLikelyPhoneNumber(normalizedPhone)) {
       setError("Enter a valid phone number with country code.");
       return;
@@ -115,7 +112,6 @@ export default function SignupPage() {
             data: {
               full_name: fullName.trim(),
               phone: normalizedPhone,
-              username: normalizeUsername(username),
             },
           },
         }),
@@ -156,27 +152,12 @@ export default function SignupPage() {
       )}
       <h1 className="rondo-hero-title text-4xl mb-2">Join Rondo</h1>
       <p className="font-body text-[var(--ink-low)] text-sm mb-8">
-        {mode === "email"
-          ? "Create your account with email and password."
-          : "Create your account with your phone number. No password."}
+        {mode === "phone"
+          ? "Create your account with your phone number. No password."
+          : "Or create an account with email and password."}
       </p>
 
       <div className="mb-6 grid grid-cols-2 gap-2 rounded-[var(--r-sm)] bg-[var(--bg-inset)] p-1">
-        <button
-          type="button"
-          onClick={() => {
-            setMode("email");
-            setError(null);
-            setInfo(null);
-          }}
-          className={`rounded-[calc(var(--r-sm)-2px)] py-2 text-sm font-semibold ${
-            mode === "email"
-              ? "bg-[var(--bg-surface)] text-[var(--ink-hi)] shadow-[0_1px_0_color-mix(in_oklch,var(--ink-hi)_8%,transparent)]"
-              : "text-[var(--ink-mid)]"
-          }`}
-        >
-          Email
-        </button>
         <button
           type="button"
           onClick={() => {
@@ -191,6 +172,21 @@ export default function SignupPage() {
           }`}
         >
           Phone
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setMode("email");
+            setError(null);
+            setInfo(null);
+          }}
+          className={`rounded-[calc(var(--r-sm)-2px)] py-2 text-sm font-semibold ${
+            mode === "email"
+              ? "bg-[var(--bg-surface)] text-[var(--ink-hi)] shadow-[0_1px_0_color-mix(in_oklch,var(--ink-hi)_8%,transparent)]"
+              : "text-[var(--ink-mid)]"
+          }`}
+        >
+          Email
         </button>
       </div>
 
@@ -212,25 +208,26 @@ export default function SignupPage() {
           </div>
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor="username" className="font-body text-xs text-[var(--ink-mid)]">
-            Username
-          </label>
-          <input
-            id="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            autoComplete="username"
-            placeholder="juan_dc"
-            spellCheck={false}
-            className={rondoFieldClass}
-          />
-          <p className="font-body text-[11px] text-[var(--ink-low)]">
-            Letters, numbers, underscores. You can sign in with this.
-          </p>
-        </div>
-
-        {mode === "email" ? (
+        {mode === "phone" ? (
+          <div className="space-y-2">
+            <label htmlFor="phone" className="font-body text-xs text-[var(--ink-mid)]">
+              Phone number
+            </label>
+            <div className="relative">
+              <Phone size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ink-low)]" />
+              <input
+                id="phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder={PHONE_PLACEHOLDER}
+                className={`${rondoFieldClass} pl-11`}
+              />
+            </div>
+          </div>
+        ) : (
           <>
             <div className="space-y-2">
               <label htmlFor="email" className="font-body text-xs text-[var(--ink-mid)]">
@@ -261,25 +258,6 @@ export default function SignupPage() {
               />
             </div>
           </>
-        ) : (
-          <div className="space-y-2">
-            <label htmlFor="phone" className="font-body text-xs text-[var(--ink-mid)]">
-              Phone number
-            </label>
-            <div className="relative">
-              <Phone size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ink-low)]" />
-              <input
-                id="phone"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                type="tel"
-                inputMode="tel"
-                autoComplete="tel"
-                placeholder={PHONE_PLACEHOLDER}
-                className={`${rondoFieldClass} pl-11`}
-              />
-            </div>
-          </div>
         )}
 
         {error && (
@@ -295,12 +273,12 @@ export default function SignupPage() {
 
         <RondoButton type="submit" variant="primary" disabled={sending} className="mt-2">
           {sending
-            ? mode === "email"
-              ? "Creating account..."
-              : "Sending code..."
-            : mode === "email"
-              ? "Create account"
-              : "Get code"}
+            ? mode === "phone"
+              ? "Sending code..."
+              : "Creating account..."
+            : mode === "phone"
+              ? "Get code"
+              : "Create account"}
         </RondoButton>
       </form>
 
