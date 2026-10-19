@@ -14,10 +14,13 @@ const providers = [
 export function SocialLoginButtons({
   onboarding = false,
   showLabel = true,
+  redirectTo,
 }: {
   onboarding?: boolean;
   /** Hide the "Or continue with" line when the screen already has its own divider. */
   showLabel?: boolean;
+  /** Explicit post-OAuth path (e.g. /onboarding/finish after the join draft). */
+  redirectTo?: string;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
@@ -26,7 +29,7 @@ export function SocialLoginButtons({
     setError(null);
     setLoading(provider);
     const currentNext = new URLSearchParams(window.location.search).get("next");
-    const intended = getSafeRedirectPath(currentNext, "/feed");
+    const intended = getSafeRedirectPath(redirectTo ?? currentNext, "/feed");
     const next = onboarding ? getOnboardingPath(currentNext ? intended : null) : intended;
     const result = await signInWithOAuthProvider(provider, next);
     if (!result.ok && result.error) {

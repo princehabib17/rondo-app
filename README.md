@@ -121,7 +121,8 @@ failing in the browser while `POST /api/auth/guest` returns 200.
 ## Main User Journeys
 
 - **Auth**
-  - New user: welcome -> signup (email + username default, or phone OTP) -> onboarding -> feed
+  - New user: Get Started → slides → username → photo → birthdate → location → notifications → create account → feed
+  - Draft profile stays in the browser until the final create-account step
   - Returning user: login (passkey / phone / email-or-username / social) -> feed
   - Guest: feed browsing only, gated on action routes
   - Passkeys: register from Profile → Passkeys; sign in from `/login` via Face ID, Touch ID, Windows Hello, or a security key

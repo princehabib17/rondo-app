@@ -1,17 +1,18 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { colors, font, radius, spacing } from '../../constants/theme';
-
-const TOTAL_STEPS = 8;
+import { JOIN_TOTAL_STEPS } from '../../lib/onboarding-draft';
 
 export function OnboardingStepHeader({
   step,
+  totalSteps = JOIN_TOTAL_STEPS,
   onBack,
 }: {
   step: number;
+  totalSteps?: number;
   onBack: () => void;
 }) {
-  const fill = Math.min(1, Math.max(0, step / TOTAL_STEPS));
+  const fill = Math.min(1, Math.max(0, step / totalSteps));
 
   return (
     <View style={styles.row}>
@@ -28,8 +29,8 @@ export function OnboardingStepHeader({
         style={styles.track}
         accessible
         accessibilityRole="progressbar"
-        accessibilityValue={{ min: 0, max: TOTAL_STEPS, now: step }}
-        accessibilityLabel={`Step ${step} of ${TOTAL_STEPS}`}
+        accessibilityValue={{ min: 0, max: totalSteps, now: step }}
+        accessibilityLabel={`Step ${step} of ${totalSteps}`}
       >
         <View style={[styles.fill, { width: `${fill * 100}%` }]} />
       </View>

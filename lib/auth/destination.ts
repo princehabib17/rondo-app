@@ -7,6 +7,7 @@ export function getRoleHome(role: RondoRole): string {
 }
 
 export function getOnboardingPath(rawReturnTo: string | null): string {
+  // Pre-auth join: slides → username → photo → birthdate → location → notifications → account
   if (!rawReturnTo) return "/onboarding/slides";
   const returnTo = getSafeRedirectPath(rawReturnTo, "/feed");
   if (returnTo.startsWith("/onboarding")) return returnTo;

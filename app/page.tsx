@@ -95,8 +95,8 @@ export default function HomePage() {
           </motion.div>
 
           <motion.div className="space-y-2" {...visible}>
-            <RondoButton href="/signup" variant="primary">
-              Create account
+            <RondoButton href="/onboarding/slides" variant="primary">
+              Get Started
               <ArrowRight size={18} weight="bold" aria-hidden />
             </RondoButton>
             <RondoButton href="/login" variant="secondary" className="!min-h-11">

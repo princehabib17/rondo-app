@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { OnboardingStepHeader } from '../../components/onboarding/OnboardingStepHeader';
 import { colors, font, spacing, radius } from '../../constants/theme';
+import {
+  applyOnboardingDraft,
+  JOIN_TOTAL_STEPS,
+  readOnboardingDraft,
+} from '../../lib/onboarding-draft';
 
 const COUNTRY_CODE = '+63'; // Philippines default
 
@@ -23,10 +29,20 @@ function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
+async function finishJoin(userId: string) {
+  try {
+    await applyOnboardingDraft(userId);
+  } catch {
+    // Profile patch is best-effort; account already exists.
+  }
+  router.replace('/(tabs)/feed');
+}
+
 export default function SignupScreen() {
   const insets = useSafeAreaInsets();
   const [mode, setMode] = useState<SignupMode>('email');
   const [fullName, setFullName] = useState('');
+  const [draftUsername, setDraftUsername] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -34,8 +50,18 @@ export default function SignupScreen() {
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
 
+  useEffect(() => {
+    void readOnboardingDraft().then((d) => {
+      if (d.username) {
+        setDraftUsername(d.username);
+        setFullName((current) => current || d.username);
+      }
+    });
+  }, []);
+
   const handlePhoneContinue = async () => {
-    if (fullName.trim().length < 2) {
+    const name = fullName.trim() || draftUsername;
+    if (name.length < 2) {
       setError('Enter your name');
       return;
     }
@@ -49,7 +75,7 @@ export default function SignupScreen() {
     const fullPhone = `${COUNTRY_CODE}${phone.replace(/^0/, '')}`;
     const { error: otpError } = await supabase.auth.signInWithOtp({
       phone: fullPhone,
-      options: { data: { full_name: fullName.trim(), phone: fullPhone } },
+      options: { data: { full_name: name, phone: fullPhone } },
     });
     setLoading(false);
     if (otpError) {
@@ -61,7 +87,7 @@ export default function SignupScreen() {
   };
 
   const handleEmailContinue = async () => {
-    const trimmedName = fullName.trim();
+    const trimmedName = (fullName.trim() || draftUsername).trim();
     const trimmedEmail = email.trim().toLowerCase();
     if (trimmedName.length < 2) {
       setError('Enter your name');
@@ -82,12 +108,12 @@ export default function SignupScreen() {
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: trimmedEmail,
       password,
-      options: { data: { full_name: trimmedName } },
+      options: { data: { full_name: trimmedName, username: draftUsername || undefined } },
     });
 
-    if (!signUpError && data.session) {
+    if (!signUpError && data.session && data.user) {
+      await finishJoin(data.user.id);
       setLoading(false);
-      router.replace('/(auth)/onboarding/role');
       return;
     }
 
@@ -97,16 +123,17 @@ export default function SignupScreen() {
       return;
     }
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const { data: signedIn, error: signInError } = await supabase.auth.signInWithPassword({
       email: trimmedEmail,
       password,
     });
-    setLoading(false);
     if (signInError) {
+      setLoading(false);
       setError(signUpError?.message ?? signInError.message);
       return;
     }
-    router.replace('/(tabs)/feed');
+    if (signedIn.user) await finishJoin(signedIn.user.id);
+    setLoading(false);
   };
 
   const handleContinue = () => {
@@ -137,17 +164,20 @@ export default function SignupScreen() {
         ]}
         keyboardShouldPersistTaps="handled"
       >
-        <TouchableOpacity onPress={() => router.back()} style={styles.back}>
-          <Text style={styles.backArrow}>←</Text>
-        </TouchableOpacity>
+        <OnboardingStepHeader
+          step={6}
+          totalSteps={JOIN_TOTAL_STEPS}
+          onBack={() => router.back()}
+        />
 
         <View style={styles.heading}>
-          <Text style={styles.title}>Join Rondo</Text>
-          <Text style={styles.subtitle}>
-            {mode === 'email'
-              ? 'Create your account with email and password.'
-              : 'Connect with games and players near you.'}
-          </Text>
+          <Text style={styles.title}>Create your account</Text>
+          <Text style={styles.subtitle}>Save your profile and start playing.</Text>
+          {draftUsername ? (
+            <Text style={styles.draftChip}>
+              Signing up as <Text style={styles.draftChipStrong}>@{draftUsername}</Text>
+            </Text>
+          ) : null}
         </View>
 
         <View style={styles.socialGroup}>
@@ -290,6 +320,17 @@ const styles = StyleSheet.create({
   heading: { marginBottom: spacing.xl },
   title: { ...font.h1, color: colors.text, marginBottom: spacing.sm },
   subtitle: { ...font.body, color: colors.textSecondary, lineHeight: 24 },
+  draftChip: {
+    ...font.body,
+    color: colors.textSecondary,
+    marginTop: spacing.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceHigh,
+    overflow: 'hidden',
+  },
+  draftChipStrong: { ...font.bodyMed, color: colors.text },
 
   socialGroup: { gap: spacing.sm, marginBottom: spacing.lg },
   socialBtn: {

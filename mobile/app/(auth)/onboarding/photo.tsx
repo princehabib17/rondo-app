@@ -12,6 +12,7 @@ import { colors, font, spacing, radius } from '../../../constants/theme';
 import { useAuth } from '../../../hooks/useAuth';
 import * as q from '../../../lib/queries';
 import { supabase } from '../../../lib/supabase';
+import { writeOnboardingDraft } from '../../../lib/onboarding-draft';
 
 const CROP: ImagePicker.ImagePickerOptions = {
   mediaTypes: ['images'],
@@ -97,7 +98,9 @@ export default function PhotoScreen() {
     setSaving(true);
     setSaveError('');
     try {
-      if (photo && photo !== profile?.avatar_url) {
+      await writeOnboardingDraft({ photoUri: photo });
+      // Already signed in: upload now. Pre-auth: keep URI in draft until signup.
+      if (user?.id && photo && photo !== profile?.avatar_url) {
         const avatarUrl = await uploadAvatar(photo);
         if (avatarUrl) await q.updateProfile({ avatar_url: avatarUrl });
       }
@@ -111,7 +114,7 @@ export default function PhotoScreen() {
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.md }]}>
-      <OnboardingStepHeader step={3} onBack={() => router.back()} />
+      <OnboardingStepHeader step={2} onBack={() => router.back()} />
 
       <Text style={styles.title} accessibilityRole="header">
         Choose your profile picture

@@ -8,6 +8,7 @@ import { DateWheelFrame, WheelColumn } from '../../../components/onboarding/Date
 import { colors, font, spacing } from '../../../constants/theme';
 import { useAuth } from '../../../hooks/useAuth';
 import * as q from '../../../lib/queries';
+import { writeOnboardingDraft } from '../../../lib/onboarding-draft';
 import {
   MONTHS,
   defaultBirthParts,
@@ -55,23 +56,26 @@ export default function BirthdayScreen() {
     });
   };
 
-  const handleContinue = async () => {
-    if (!valid) {
+  const handleContinue = async (skip = false) => {
+    if (!skip && !valid) {
       setError('You must be at least 13 to join Rondo.');
       return;
     }
     setSaving(true);
     setError('');
     try {
-      const date_of_birth = toIsoDate(parts);
-      await q.updateProfile({ date_of_birth });
+      const date_of_birth = skip ? null : toIsoDate(parts);
+      await writeOnboardingDraft({ birthdate: date_of_birth });
+      if (profile?.id && date_of_birth) {
+        await q.updateProfile({ date_of_birth });
+      }
       router.push({
-        pathname: '/(auth)/onboarding/country',
+        pathname: '/(auth)/onboarding/location',
         params: {
           role: params.role ?? '',
           username: params.username ?? '',
           photo: params.photo ?? '',
-          dob: date_of_birth,
+          dob: date_of_birth ?? '',
         },
       });
     } catch (e) {
@@ -83,7 +87,7 @@ export default function BirthdayScreen() {
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.md }]}>
-      <OnboardingStepHeader step={4} onBack={() => router.back()} />
+      <OnboardingStepHeader step={3} onBack={() => router.back()} />
 
       <Text style={styles.title} accessibilityRole="header">
         When were you born?
@@ -119,7 +123,22 @@ export default function BirthdayScreen() {
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       <View style={styles.footer}>
-        <Button onPress={handleContinue} disabled={!valid || saving} loading={saving} size="lg" style={styles.next}>
+        <Button
+          onPress={() => void handleContinue(true)}
+          disabled={saving}
+          size="lg"
+          variant="secondary"
+          style={styles.next}
+        >
+          Skip this step (optional)
+        </Button>
+        <Button
+          onPress={() => void handleContinue(false)}
+          disabled={!valid || saving}
+          loading={saving}
+          size="lg"
+          style={styles.next}
+        >
           Next
         </Button>
       </View>
@@ -133,6 +152,6 @@ const styles = StyleSheet.create({
   subtitle: { ...font.body, color: colors.textSecondary, lineHeight: 24 },
   wheelWrap: { flex: 1, justifyContent: 'center' },
   error: { ...font.caption, color: colors.error, textAlign: 'center', marginBottom: spacing.md },
-  footer: { justifyContent: 'flex-end' },
+  footer: { justifyContent: 'flex-end', gap: spacing.md },
   next: { width: '100%', borderRadius: 9999 },
 });
