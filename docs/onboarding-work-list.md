@@ -2,33 +2,29 @@
 
 Ordered backlog so we can ship one item at a time. **Intended user flow** is listed first; **build order** follows what we agreed to tackle first.
 
-## Current baseline (mobile)
+## Current baseline
 
 | Area | Today |
 | --- | --- |
-| First screen | `welcome` — static image + Get Started / Sign in / Guest |
-| Auth | `signup` → optional `otp` → `onboarding/role` |
-| Onboarding | role → profile (name/username/photo) → location → skill |
-| Progress | 4 yellow segment bars on role/profile/location/skill only |
+| First screen | `welcome` carousel (mobile) / landing Get Started (web) |
+| Join flow | slides → username → photo → birthdate → location → notifications → **create account** |
+| Progress | Shared progress bar on every join step |
+| Post-auth extras | role / skill / country still available for incomplete profiles |
 | Account | Sign out on profile; **no** delete-account or switch-account |
-| Splash / loading | Spinner on `index`; no branded loading animation, no video |
-| Missing fields | gender/sex, birth date (ruler), notification permission screen, dedicated crop UX beyond system editor |
+| Splash / loading | Spinner on mobile `index`; no branded loading animation |
 
 ---
 
 ## Intended user flow (screens)
 
-1. **Splash / first screen** — branded loading + video
-2. **Intro slides** — Find your level → Find players near you → Win tournaments
-3. **Create account**
-4. **Gender / sex**
-5. **Level**
-6. **Username**
-7. **Profile photo** (with crop)
-8. **Birth date** (iOS-style ruler / drum picker)
-9. **Enable location**
-10. **Enable notifications**
-11. Done → main app
+1. **Intro slides** — Meet your level / nearby / host & organize
+2. **Username**
+3. **Profile photo** (with crop)
+4. **Birth date** (iOS-style ruler / drum picker)
+5. **Enable location**
+6. **Enable notifications**
+7. **Create account** (email / phone / social)
+8. Done → main app
 
 Shared chrome on every onboarding step after splash: **progress bar** showing how far through the flow they are.
 

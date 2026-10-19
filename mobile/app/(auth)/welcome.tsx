@@ -162,7 +162,7 @@ export default function WelcomeScreen() {
         </View>
 
         <Button
-          onPress={() => router.push('/(auth)/signup')}
+          onPress={() => router.push('/(auth)/onboarding/username')}
           size="lg"
           style={styles.primaryBtn}
         >

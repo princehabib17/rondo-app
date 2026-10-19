@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { supabase } from '../../lib/supabase';
 import * as q from '../../lib/queries';
+import { applyOnboardingDraft } from '../../lib/onboarding-draft';
 import { colors, font, spacing, radius } from '../../constants/theme';
 
 const CODE_LENGTH = 6;
@@ -73,17 +74,24 @@ export default function OTPScreen() {
       return;
     }
     try {
-      const profile = await q.getMyProfile();
-      setLoading(false);
-      if (!profile?.full_name) {
-        router.replace('/(auth)/onboarding/role');
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user?.id) {
+        await applyOnboardingDraft(user.id);
       } else {
-        router.replace('/(tabs)/feed');
+        const profile = await q.getMyProfile();
+        if (!profile?.role) {
+          setLoading(false);
+          router.replace('/(auth)/onboarding/role');
+          return;
+        }
       }
-    } catch {
-      // If profile lookup fails, fall back to onboarding.
       setLoading(false);
-      router.replace('/(auth)/onboarding/role');
+      router.replace('/(tabs)/feed');
+    } catch {
+      setLoading(false);
+      router.replace('/(tabs)/feed');
     }
   };
 

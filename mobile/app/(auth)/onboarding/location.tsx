@@ -11,6 +11,7 @@ import { GoldMapPin } from '../../../components/onboarding/GoldMapPin';
 import { colors, font, spacing, radius } from '../../../constants/theme';
 import { useAuth } from '../../../hooks/useAuth';
 import * as q from '../../../lib/queries';
+import { writeOnboardingDraft } from '../../../lib/onboarding-draft';
 import { requestDeviceLocation } from '../../../lib/device-location';
 
 type Gps = { lat: number; lng: number };
@@ -61,22 +62,26 @@ export default function LocationScreen() {
   };
 
   const handleNext = async () => {
-    if (!ready) {
-      setError('Enable location or type an area near you.');
-      return;
-    }
     setSaving(true);
     setError('');
     try {
-      const patch: Parameters<typeof q.updateProfile>[0] = {};
-      if (gps) {
-        patch.last_lat = gps.lat;
-        patch.last_lng = gps.lng;
-        patch.location_hidden = false;
+      await writeOnboardingDraft({
+        locationEnabled: !!gps,
+        lastLat: gps?.lat ?? null,
+        lastLng: gps?.lng ?? null,
+        preferredAreas: area.trim(),
+      });
+      if (profile?.id && ready) {
+        const patch: Parameters<typeof q.updateProfile>[0] = {};
+        if (gps) {
+          patch.last_lat = gps.lat;
+          patch.last_lng = gps.lng;
+          patch.location_hidden = false;
+        }
+        if (area.trim()) patch.preferred_areas = area.trim();
+        if (Object.keys(patch).length) await q.updateProfile(patch);
       }
-      if (area.trim()) patch.preferred_areas = area.trim();
-      if (Object.keys(patch).length) await q.updateProfile(patch);
-      router.push({ pathname: '/(auth)/onboarding/skill', params });
+      router.push({ pathname: '/(auth)/onboarding/notifications', params });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save your location. Try again.');
     } finally {
@@ -93,7 +98,7 @@ export default function LocationScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={[styles.screen, { paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.md }]}>
-        <OnboardingStepHeader step={7} onBack={() => router.back()} />
+        <OnboardingStepHeader step={4} onBack={() => router.back()} />
 
         <Text style={styles.title} accessibilityRole="header">
           Enable location
@@ -149,7 +154,7 @@ export default function LocationScreen() {
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
         <View style={styles.footer}>
-          <Button onPress={handleNext} disabled={!ready || saving} loading={saving} size="lg" style={styles.next}>
+          <Button onPress={handleNext} disabled={saving} loading={saving} size="lg" style={styles.next}>
             Next
           </Button>
         </View>

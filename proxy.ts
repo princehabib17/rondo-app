@@ -22,6 +22,7 @@ const PUBLIC_PREFIXES = [
   "/api/auth/guest",
   "/api/auth/signup",
   "/api/auth/resolve-login",
+  "/api/auth/username-available",
   "/api/seed",
   // Gated by SEED_SECRET inside the handler, like /api/seed.
   "/api/health",

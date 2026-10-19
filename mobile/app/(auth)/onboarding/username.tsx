@@ -15,6 +15,7 @@ import { OnboardingStepHeader } from '../../../components/onboarding/OnboardingS
 import { colors, font, spacing, radius } from '../../../constants/theme';
 import * as q from '../../../lib/queries';
 import { useAuth } from '../../../hooks/useAuth';
+import { writeOnboardingDraft } from '../../../lib/onboarding-draft';
 import {
   USERNAME_MAX_LENGTH,
   isReservedUsername,
@@ -99,18 +100,25 @@ export default function UsernameScreen() {
     setSaveError('');
     try {
       const username = normalizeUsername(value);
-      await q.updateProfile({ username });
-      router.push({ pathname: '/(auth)/onboarding/photo', params: { role, username } });
-    } catch (e) {
-      const message = e instanceof Error ? e.message : '';
-      const taken =
-        message.toLowerCase().includes('duplicate') ||
-        message.toLowerCase().includes('unique');
-      if (taken) {
-        setAvailability('taken');
-      } else {
-        setSaveError('Could not save that username. Try again.');
+      await writeOnboardingDraft({ username });
+      // If already signed in (returning mid-flow), persist immediately.
+      if (profile?.id) {
+        try {
+          await q.updateProfile({ username });
+        } catch (e) {
+          const message = e instanceof Error ? e.message : '';
+          const taken =
+            message.toLowerCase().includes('duplicate') ||
+            message.toLowerCase().includes('unique');
+          if (taken) {
+            setAvailability('taken');
+            return;
+          }
+        }
       }
+      router.push({ pathname: '/(auth)/onboarding/photo', params: { role, username } });
+    } catch {
+      setSaveError('Could not save that username. Try again.');
     } finally {
       setSaving(false);
     }
@@ -140,7 +148,7 @@ export default function UsernameScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={[styles.screen, { paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.md }]}>
-        <OnboardingStepHeader step={2} onBack={() => router.back()} />
+        <OnboardingStepHeader step={1} onBack={() => router.back()} />
 
         <Text style={styles.title} accessibilityRole="header">
           Choose your username

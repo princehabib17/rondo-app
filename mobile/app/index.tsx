@@ -11,6 +11,9 @@ export default function IndexRoute() {
     if (loading) return;
     if (!session) {
       router.replace('/(auth)/welcome');
+    } else if (!profile?.username) {
+      // Signed in but join draft never finished — resume at username.
+      router.replace('/(auth)/onboarding/username');
     } else if (!profile?.role) {
       router.replace('/(auth)/onboarding/role');
     } else if (profile.role === 'organizer') {

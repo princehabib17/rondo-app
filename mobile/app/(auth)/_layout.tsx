@@ -14,6 +14,7 @@ export default function AuthLayout() {
       <Stack.Screen name="onboarding/country" />
       <Stack.Screen name="onboarding/profile" />
       <Stack.Screen name="onboarding/location" />
+      <Stack.Screen name="onboarding/notifications" />
       <Stack.Screen name="onboarding/skill" />
     </Stack>
   );
