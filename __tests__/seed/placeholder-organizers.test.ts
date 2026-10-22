@@ -96,6 +96,26 @@ describe("placeholder organizer seed", () => {
     expect(PLACEHOLDER_ORGANIZER_SEEDS.some((seed) => seed.slug === "football-amigos")).toBe(false);
   });
 
+  it("creates Football Manila BGC Turf weekly open play", () => {
+    const fm = PLACEHOLDER_ORGANIZER_SEEDS.find((seed) => seed.slug === "football-manila");
+    expect(fm).toBeDefined();
+    expect(fm!.schedules).toHaveLength(7);
+
+    const games = buildGamesForOrganizer(
+      "org-user",
+      "org-id",
+      fm!,
+      1,
+      new Date("2026-06-22T00:00:00+08:00")
+    );
+
+    expect(games.some((game) => game.title === "Open Play · Monday Late" && game.date_time.includes("T22:00:00"))).toBe(
+      true
+    );
+    expect(games.some((game) => game.title.includes("11-a-side") && game.format === "11v11")).toBe(true);
+    expect(games.every((game) => game.venue_name === "BGC Turf")).toBe(true);
+  });
+
   it("keeps rolling listings instead of dropping past slots", () => {
     const urban = PLACEHOLDER_ORGANIZER_SEEDS.find((seed) => seed.slug === "urban")!;
     const planned = buildGamesForOrganizer(

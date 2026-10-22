@@ -13,6 +13,7 @@ export const PLACEHOLDER_ORGANIZERS: OrganizerGroup[] = [
   { id: "gaudutuaxis", full_name: "GAUDUTUAXIS FC", avatar_url: "/organizers/gaudutuaxis.png", verified: true },
   { id: "east-football-united", full_name: "East Football United", avatar_url: "/organizers/east-football-united.png", verified: true },
   { id: "sparta", full_name: "SPARTA", avatar_url: "/organizers/sparta.png", verified: true },
+  { id: "football-manila", full_name: "Football Manila", avatar_url: "/organizers/football-manila.png", verified: true },
   { id: "elitepro", full_name: "ElitePro", avatar_url: "/organizers/elitepro.png", verified: true },
   { id: "futsal-mnl", full_name: "Futsal MNL", avatar_url: "/organizers/futsal-mnl.png", verified: true },
 ];
