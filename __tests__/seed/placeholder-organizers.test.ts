@@ -88,9 +88,11 @@ describe("placeholder organizer seed", () => {
         (game) =>
           game.title === "Open Play · Sunday Afternoon" &&
           game.date_time.includes("T14:30:00") &&
-          game.venue_name === "SPARTA Philippines"
+          game.venue_name === "SPARTA Philippines" &&
+          game.price_per_player === 35000
       )
     ).toBe(true);
+    expect(games.every((game) => game.price_per_player === 35000)).toBe(true);
     expect(PLACEHOLDER_ORGANIZER_SEEDS.some((seed) => seed.slug === "football-amigos")).toBe(false);
   });
 
