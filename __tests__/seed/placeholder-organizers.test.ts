@@ -42,6 +42,30 @@ describe("placeholder organizer seed", () => {
     );
   });
 
+  it("creates GAUDUTUAXIS FC Sunday open play at MOA", () => {
+    const gaudutu = PLACEHOLDER_ORGANIZER_SEEDS.find((seed) => seed.slug === "gaudutuaxis");
+    expect(gaudutu).toBeDefined();
+    expect(gaudutu!.organizationName).toBe("GAUDUTUAXIS FC");
+    expect(gaudutu!.avatar_url).toBe("/organizers/gaudutuaxis.png");
+
+    const games = buildGamesForOrganizer(
+      "org-user",
+      "org-id",
+      gaudutu!,
+      1,
+      new Date("2026-06-27T00:00:00+08:00") // Friday
+    );
+
+    expect(games).toHaveLength(1);
+    expect(games[0]).toMatchObject({
+      title: "Open Play · Sunday (8–10 PM)",
+      venue_name: "MOA Football Pitch",
+      price_per_player: 30000,
+      date_time: "2026-06-28T20:00:00+08:00",
+      banner_url: "/organizers/gaudutuaxis.png",
+    });
+  });
+
   it("creates Football Amigos futsal sessions", () => {
     const amigos = PLACEHOLDER_ORGANIZER_SEEDS.find((seed) => seed.slug === "football-amigos");
     expect(amigos).toBeDefined();

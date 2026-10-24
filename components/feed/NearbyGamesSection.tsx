@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { MapPin, MapTrifold } from "@phosphor-icons/react";
 import { motion } from "motion/react";
 import { formatPrice } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
 import { gameDistanceKm, getPlayerCount, isFull, type Coords } from "@/lib/feed/filters";
+import { getOrganizerInitials } from "@/lib/feed/organizers";
 import { format, isToday, isTomorrow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { bouncy } from "@/components/motion/springs";
@@ -33,38 +35,56 @@ function PlayerProgress({ current, max }: { current: number; max: number }) {
 export function NearbyGameRow({ game, coords = null }: NearbyGameRowProps) {
   const playerCount = getPlayerCount(game);
   const organizerName = game.organization?.name ?? game.organizer?.full_name ?? "Organizer";
+  const crestUrl =
+    game.organization?.logo_url ?? game.banner_url ?? game.organizer?.avatar_url ?? null;
   const full = isFull(game);
   const spotsLeft = game.max_players - playerCount;
   const kickoff = new Date(game.date_time);
   const distance = coords ? gameDistanceKm(game, coords) : null;
-  const dayLabel = isToday(kickoff) ? "Today" : isTomorrow(kickoff) ? "Tmrw" : format(kickoff, "EEE d");
+  const dayLabel = isToday(kickoff) ? "Today" : isTomorrow(kickoff) ? "Tomorrow" : format(kickoff, "EEEE");
+  const timeLabel = format(kickoff, "h:mm a");
 
   return (
     <Link
       href={`/games/${game.id}`}
       className="group flex items-stretch gap-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] p-3 transition-[transform,border-color] duration-200 active:scale-[0.98] hover:border-[color-mix(in_oklch,var(--gold)_35%,var(--stroke))]"
     >
-      <div className="flex w-16 shrink-0 flex-col items-center justify-center rounded-[var(--r-sm)] bg-[var(--bg-inset)] py-2">
-        <span className="font-heading text-xl font-bold leading-none tabular-nums text-[var(--ink-hi)]">
-          {format(kickoff, "h:mm")}
-        </span>
-        <span className="mt-1 rondo-label text-[0.625rem] text-[var(--ink-low)]">
-          {format(kickoff, "a")} · {dayLabel}
-        </span>
+      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-[var(--r-sm)] border border-[var(--stroke)] bg-[var(--bg-inset)]">
+        {crestUrl ? (
+          <Image
+            src={crestUrl}
+            alt=""
+            fill
+            unoptimized
+            sizes="64px"
+            className="object-cover"
+          />
+        ) : (
+          <span className="flex h-full w-full items-center justify-center font-heading text-sm font-black text-[var(--gold)]">
+            {getOrganizerInitials(organizerName)}
+          </span>
+        )}
       </div>
 
       <div className="min-w-0 flex-1 py-0.5">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="line-clamp-1 rondo-body font-bold text-[var(--ink-hi)]">{game.title}</h3>
+          <div className="min-w-0">
+            <p className="truncate rondo-meta font-bold uppercase tracking-wide text-[var(--gold)]">
+              {organizerName}
+            </p>
+            <h3 className="mt-0.5 line-clamp-1 rondo-body font-bold text-[var(--ink-hi)]">{game.title}</h3>
+          </div>
           <span className="shrink-0 font-heading text-base font-bold tabular-nums text-[var(--ink-hi)]">
             {game.price_per_player === 0 ? "Free" : formatPrice(game.price_per_player)}
           </span>
         </div>
-        <p className="mt-0.5 truncate rondo-meta text-[var(--ink-low)]">
+        <p className="mt-1 truncate rondo-meta text-[var(--ink-low)]">
           {game.venue_name}
-          {distance != null ? ` · ${distance < 10 ? distance.toFixed(1) : Math.round(distance)} km` : ""}
           {" · "}
-          {organizerName}
+          {dayLabel}
+          {" · "}
+          {timeLabel}
+          {distance != null ? ` · ${distance < 10 ? distance.toFixed(1) : Math.round(distance)} km` : ""}
         </p>
         <div className="mt-2 flex items-center gap-2">
           <PlayerProgress current={playerCount} max={game.max_players} />
