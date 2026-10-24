@@ -118,7 +118,8 @@ export async function fetchYourTournaments(
 /** Open or live tournaments around the product surface (city-agnostic for v1). */
 export async function fetchAroundYouTournaments(
   supabase: SupabaseClient,
-  excludeIds: string[] = []
+  excludeIds: string[] = [],
+  take = 3
 ): Promise<Tournament[]> {
   const { data } = await supabase
     .from("tournaments")
@@ -129,7 +130,7 @@ export async function fetchAroundYouTournaments(
 
   const rows = (data as Tournament[]) ?? [];
   const exclude = new Set(excludeIds);
-  return rows.filter((t) => !exclude.has(t.id)).slice(0, 3);
+  return rows.filter((t) => !exclude.has(t.id)).slice(0, take);
 }
 
 /** Last completed pickup matches the player joined. */

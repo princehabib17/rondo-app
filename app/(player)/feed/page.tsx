@@ -25,7 +25,7 @@ export default async function FeedPage() {
   const supabase = await createClient();
   // Public lists start immediately so they overlap the auth round trip.
   const openGamesPromise = withAuthTimeoutOr(fetchOpenGames(supabase, { from: 0, to: 11 }), []);
-  const aroundYouPromise = withAuthTimeoutOr(fetchAroundYouTournaments(supabase, []), []);
+  const aroundYouPromise = withAuthTimeoutOr(fetchAroundYouTournaments(supabase, [], 8), []);
   const user = await withAuthTimeoutOr(
     supabase.auth.getUser().then((result) => result.data.user),
     null
