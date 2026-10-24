@@ -66,22 +66,54 @@ describe("placeholder organizer seed", () => {
     });
   });
 
-  it("creates Football Amigos futsal sessions", () => {
-    const amigos = PLACEHOLDER_ORGANIZER_SEEDS.find((seed) => seed.slug === "football-amigos");
-    expect(amigos).toBeDefined();
+  it("creates SPARTA Tuesday/Thursday/Saturday nights and Sunday afternoon", () => {
+    const sparta = PLACEHOLDER_ORGANIZER_SEEDS.find((seed) => seed.slug === "sparta");
+    expect(sparta).toBeDefined();
 
     const games = buildGamesForOrganizer(
       "org-user",
       "org-id",
-      amigos!,
+      sparta!,
       1,
-      new Date("2026-06-27T00:00:00+08:00")
+      new Date("2026-06-22T00:00:00+08:00") // Monday in Manila
     );
 
-    expect(games.some((game) => game.match_type === "futsal" && game.venue_name === "Axis Residences Tower B")).toBe(
+    expect(games.some((game) => game.title === "Open Play · Tuesday Night" && game.date_time.includes("T20:30:00"))).toBe(
       true
     );
-    expect(games.some((game) => game.venue_name === "Cherry Turf" && game.price_per_player === 40000)).toBe(true);
+    expect(games.some((game) => game.title === "Open Play · Thursday Night")).toBe(true);
+    expect(games.some((game) => game.title === "Open Play · Saturday Night")).toBe(true);
+    expect(
+      games.some(
+        (game) =>
+          game.title === "Open Play · Sunday Afternoon" &&
+          game.date_time.includes("T14:30:00") &&
+          game.venue_name === "SPARTA Philippines" &&
+          game.price_per_player === 35000
+      )
+    ).toBe(true);
+    expect(games.every((game) => game.price_per_player === 35000)).toBe(true);
+    expect(PLACEHOLDER_ORGANIZER_SEEDS.some((seed) => seed.slug === "football-amigos")).toBe(false);
+  });
+
+  it("creates Football Manila BGC Turf weekly open play", () => {
+    const fm = PLACEHOLDER_ORGANIZER_SEEDS.find((seed) => seed.slug === "football-manila");
+    expect(fm).toBeDefined();
+    expect(fm!.schedules).toHaveLength(7);
+
+    const games = buildGamesForOrganizer(
+      "org-user",
+      "org-id",
+      fm!,
+      1,
+      new Date("2026-06-22T00:00:00+08:00")
+    );
+
+    expect(games.some((game) => game.title === "Open Play · Monday Late" && game.date_time.includes("T22:00:00"))).toBe(
+      true
+    );
+    expect(games.some((game) => game.title.includes("11-a-side") && game.format === "11v11")).toBe(true);
+    expect(games.every((game) => game.venue_name === "BGC Turf")).toBe(true);
   });
 
   it("keeps rolling listings instead of dropping past slots", () => {
