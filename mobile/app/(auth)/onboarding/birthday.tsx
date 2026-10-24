@@ -56,17 +56,17 @@ export default function BirthdayScreen() {
     });
   };
 
-  const handleContinue = async (skip = false) => {
-    if (!skip && !valid) {
+  const handleContinue = async () => {
+    if (!valid) {
       setError('You must be at least 13 to join Rondo.');
       return;
     }
     setSaving(true);
     setError('');
     try {
-      const date_of_birth = skip ? null : toIsoDate(parts);
+      const date_of_birth = toIsoDate(parts);
       await writeOnboardingDraft({ birthdate: date_of_birth });
-      if (profile?.id && date_of_birth) {
+      if (profile?.id) {
         await q.updateProfile({ date_of_birth });
       }
       router.push({
@@ -75,7 +75,7 @@ export default function BirthdayScreen() {
           role: params.role ?? '',
           username: params.username ?? '',
           photo: params.photo ?? '',
-          dob: date_of_birth ?? '',
+          dob: date_of_birth,
         },
       });
     } catch (e) {
@@ -124,16 +124,7 @@ export default function BirthdayScreen() {
 
       <View style={styles.footer}>
         <Button
-          onPress={() => void handleContinue(true)}
-          disabled={saving}
-          size="lg"
-          variant="secondary"
-          style={styles.next}
-        >
-          Skip this step (optional)
-        </Button>
-        <Button
-          onPress={() => void handleContinue(false)}
+          onPress={() => void handleContinue()}
           disabled={!valid || saving}
           loading={saving}
           size="lg"

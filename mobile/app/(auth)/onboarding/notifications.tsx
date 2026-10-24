@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import { Image } from 'expo-image';
 import { Button } from '../../../components/ui/Button';
 import { OnboardingStepHeader } from '../../../components/onboarding/OnboardingStepHeader';
 import { colors, font, spacing, radius } from '../../../constants/theme';
@@ -11,6 +12,10 @@ import {
   readOnboardingDraft,
   writeOnboardingDraft,
 } from '../../../lib/onboarding-draft';
+
+/* eslint-disable @typescript-eslint/no-require-imports */
+const BELL = require('../../../assets/onboarding/gold-bell.png');
+/* eslint-enable @typescript-eslint/no-require-imports */
 
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
@@ -67,7 +72,12 @@ export default function NotificationsScreen() {
 
       <View style={styles.hero}>
         <View style={styles.iconCircle}>
-          <Text style={styles.iconGlyph}>🔔</Text>
+          <Image
+            source={BELL}
+            style={{ width: 150, height: 150 }}
+            contentFit="contain"
+            accessibilityLabel="Notification bell"
+          />
         </View>
       </View>
 
@@ -123,14 +133,15 @@ const styles = StyleSheet.create({
   },
   hero: { alignItems: 'center', paddingVertical: spacing.xxl },
   iconCircle: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    backgroundColor: colors.surfaceHigh,
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: 'rgba(240, 216, 90, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(240, 216, 90, 0.18)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconGlyph: { fontSize: 72 },
   banner: {
     flexDirection: 'row',
     alignItems: 'flex-start',

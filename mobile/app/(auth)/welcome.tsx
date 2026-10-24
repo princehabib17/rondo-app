@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,15 +9,12 @@ import {
   type NativeSyntheticEvent,
 } from 'react-native';
 import Animated, {
-  Easing,
   Extrapolation,
-  cancelAnimation,
   interpolate,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
-  withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
 import { Image } from 'expo-image';
@@ -28,7 +25,6 @@ import * as Haptics from 'expo-haptics';
 import { Button } from '../../components/ui/Button';
 import { colors, font, radius, spacing } from '../../constants/theme';
 
-const DWELL_MS = 4500;
 const H_PAD = spacing.lg;
 const RAIL_WIDTH = 28;
 
@@ -76,11 +72,9 @@ export default function WelcomeScreen() {
   const reduceMotion = useReducedMotion();
   const scrollRef = useRef<Animated.ScrollView>(null);
   const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
+  const isLast = index === SLIDES.length - 1;
 
   const scrollX = useSharedValue(0);
-  const activeIndex = useSharedValue(0);
-  const dwell = useSharedValue(0);
 
   const cardWidth = width - H_PAD * 2;
   const cardHeight = Math.min(cardWidth * 1.02, height * 0.46);
@@ -89,39 +83,37 @@ export default function WelcomeScreen() {
     scrollX.value = e.contentOffset.x;
   });
 
-  useEffect(() => {
-    activeIndex.value = index;
-    cancelAnimation(dwell);
-    dwell.value = 0;
-    if (reduceMotion || paused) {
-      dwell.value = reduceMotion ? 1 : 0;
-      return;
-    }
-    dwell.value = withTiming(1, { duration: DWELL_MS, easing: Easing.linear });
-    if (index >= SLIDES.length - 1) return;
-    const t = setTimeout(() => {
-      const next = index + 1;
-      scrollRef.current?.scrollTo({ x: next * width, animated: true });
-      setIndex(next);
-    }, DWELL_MS);
-    return () => clearTimeout(t);
-  }, [index, paused, reduceMotion, width, activeIndex, dwell]);
+  const goTo = (next: number) => {
+    const clamped = Math.max(0, Math.min(SLIDES.length - 1, next));
+    if (clamped === index) return;
+    Haptics.selectionAsync();
+    scrollRef.current?.scrollTo({ x: clamped * width, animated: !reduceMotion });
+    setIndex(clamped);
+  };
 
-  const handleDragStart = () => setPaused(true);
+  const start = () => router.push('/(auth)/onboarding/username');
 
   const handleMomentumEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const next = Math.round(e.nativeEvent.contentOffset.x / width);
     if (next !== index) Haptics.selectionAsync();
     setIndex(next);
-    setPaused(false);
   };
 
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
+        <View style={styles.headerSide} />
         <Text style={styles.wordmark} accessibilityRole="header">
           rondo<Text style={styles.wordmarkDot}>.</Text>
         </Text>
+        <TouchableOpacity
+          onPress={start}
+          style={styles.headerSide}
+          accessibilityRole="button"
+          accessibilityLabel="Skip intro"
+        >
+          <Text style={styles.skip}>Skip</Text>
+        </TouchableOpacity>
       </View>
 
       <Animated.ScrollView
@@ -132,7 +124,6 @@ export default function WelcomeScreen() {
         showsHorizontalScrollIndicator={false}
         onScroll={onScroll}
         scrollEventThrottle={16}
-        onScrollBeginDrag={handleDragStart}
         onMomentumScrollEnd={handleMomentumEnd}
         style={styles.pager}
       >
@@ -157,17 +148,28 @@ export default function WelcomeScreen() {
           accessibilityLabel={`Slide ${index + 1} of ${SLIDES.length}`}
         >
           {SLIDES.map((s, i) => (
-            <Rail key={s.key} index={i} activeIndex={activeIndex} dwell={dwell} />
+            <Rail key={s.key} index={i} scrollX={scrollX} width={width} onPress={() => goTo(i)} />
           ))}
         </View>
 
-        <Button
-          onPress={() => router.push('/(auth)/onboarding/username')}
-          size="lg"
-          style={styles.primaryBtn}
-        >
-          Get Started
-        </Button>
+        <View style={styles.navRow}>
+          <TouchableOpacity
+            onPress={() => goTo(index - 1)}
+            disabled={index === 0}
+            style={[styles.backBtn, index === 0 && styles.backBtnDisabled]}
+            accessibilityRole="button"
+            accessibilityLabel="Previous slide"
+          >
+            <Text style={styles.backArrow}>←</Text>
+          </TouchableOpacity>
+          <Button
+            onPress={isLast ? start : () => goTo(index + 1)}
+            size="lg"
+            style={styles.primaryBtn}
+          >
+            {isLast ? 'Get Started' : 'Next'}
+          </Button>
+        </View>
 
         <TouchableOpacity onPress={() => router.push('/(auth)/signup')} style={styles.linkRow}>
           <Text style={styles.signInText}>
@@ -274,31 +276,55 @@ function SlidePage({
   );
 }
 
+/** Dot that stretches into a gold bar as its slide scrolls into place. */
 function Rail({
   index,
-  activeIndex,
-  dwell,
+  scrollX,
+  width,
+  onPress,
 }: {
   index: number;
-  activeIndex: SharedValue<number>;
-  dwell: SharedValue<number>;
+  scrollX: SharedValue<number>;
+  width: number;
+  onPress: () => void;
 }) {
-  const fillStyle = useAnimatedStyle(() => {
-    const filled = index < activeIndex.value ? 1 : index === activeIndex.value ? dwell.value : 0;
-    return { width: filled * RAIL_WIDTH };
+  const style = useAnimatedStyle(() => {
+    const t = interpolate(
+      scrollX.value,
+      [(index - 1) * width, index * width, (index + 1) * width],
+      [0, 1, 0],
+      Extrapolation.CLAMP
+    );
+    return {
+      width: 8 + t * (RAIL_WIDTH - 8),
+      opacity: 0.35 + t * 0.65,
+    };
   });
 
   return (
-    <View style={styles.rail}>
-      <Animated.View style={[styles.railFill, fillStyle]} />
-    </View>
+    <TouchableOpacity
+      onPress={onPress}
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel={`Go to slide ${index + 1}`}
+    >
+      <Animated.View style={[styles.rail, style]} />
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
 
-  header: { alignItems: 'center', paddingBottom: spacing.lg },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: H_PAD,
+    paddingBottom: spacing.lg,
+  },
+  headerSide: { width: 56, alignItems: 'flex-end' },
+  skip: { ...font.bodyMed, color: colors.textSecondary },
   wordmark: { fontSize: 44, fontWeight: '900', color: colors.text, letterSpacing: -1.5 },
   wordmarkDot: { color: colors.yellow },
 
@@ -367,15 +393,25 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   rail: {
-    width: RAIL_WIDTH,
-    height: 4,
+    height: 8,
     borderRadius: radius.full,
-    backgroundColor: colors.surfaceHigh,
-    overflow: 'hidden',
+    backgroundColor: colors.yellow,
   },
-  railFill: { height: '100%', backgroundColor: colors.yellow, borderRadius: radius.full },
 
-  primaryBtn: { width: '100%', borderRadius: radius.full },
+  navRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  backBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  backBtnDisabled: { opacity: 0.3 },
+  backArrow: { fontSize: 22, color: colors.text, fontWeight: '700' },
+  primaryBtn: { flex: 1, borderRadius: radius.full },
 
   linkRow: { alignItems: 'center', paddingVertical: spacing.xs },
   signInText: { ...font.bodySm, color: colors.textMuted },
