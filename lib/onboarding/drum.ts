@@ -1,4 +1,4 @@
-export const DRUM_ROW_HEIGHT = 46;
+export const DRUM_ROW_HEIGHT = 56;
 export const DRUM_VISIBLE_ROWS = 7;
 export const DRUM_HEIGHT = DRUM_ROW_HEIGHT * DRUM_VISIBLE_ROWS;
 
@@ -17,8 +17,8 @@ export function drumRowStyle(distance: number): { rotateX: number; opacity: numb
   const d = Math.max(-3.5, Math.min(3.5, distance));
   const abs = Math.abs(d);
   return {
-    rotateX: -d * 21,
-    opacity: Math.max(0.12, 1 - abs * 0.26),
-    scale: Math.max(0.78, 1 - abs * 0.06),
+    rotateX: -d * 24,
+    opacity: Math.max(0.12, 1 - abs * 0.24),
+    scale: Math.max(0.8, 1 - abs * 0.05),
   };
 }

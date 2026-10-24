@@ -23,10 +23,7 @@ const PAD = ((DRUM_VISIBLE_ROWS - 1) / 2) * DRUM_ROW_HEIGHT;
 
 export function DrumPicker({ columns }: { columns: DrumColumn[] }) {
   return (
-    <div
-      className="relative w-full select-none"
-      style={{ height: DRUM_HEIGHT, perspective: "900px" }}
-    >
+    <div className="relative -mx-2 select-none" style={{ height: DRUM_HEIGHT }}>
       {/* Selection band */}
       <div
         aria-hidden
@@ -65,7 +62,8 @@ function DrumWheel({ column }: { column: DrumColumn }) {
     rowRefs.current.forEach((row, i) => {
       if (!row) return;
       const { rotateX, opacity, scale } = drumRowStyle(i - center);
-      row.style.transform = `rotateX(${rotateX}deg) scale(${scale})`;
+      // Perspective lives on each row: overflow scrolling flattens a shared 3D context.
+      row.style.transform = `perspective(520px) rotateX(${rotateX}deg) scale(${scale})`;
       row.style.opacity = String(opacity);
     });
   }, []);
@@ -143,7 +141,6 @@ function DrumWheel({ column }: { column: DrumColumn }) {
         "relative h-full flex-1 snap-y snap-mandatory overflow-y-scroll overscroll-contain rounded-[14px] [scrollbar-width:none] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklch,var(--gold)_45%,transparent)] [&::-webkit-scrollbar]:hidden",
         className
       )}
-      style={{ transformStyle: "preserve-3d" }}
     >
       <div style={{ height: PAD }} aria-hidden />
       {items.map((item, i) => (
@@ -157,7 +154,7 @@ function DrumWheel({ column }: { column: DrumColumn }) {
           aria-selected={i === selectedIndex}
           onClick={() => scrollToIndex(i)}
           className={cn(
-            "flex snap-center items-center justify-center font-body text-[1.4rem] tabular-nums tracking-tight will-change-transform",
+            "flex snap-center items-center justify-center font-body text-[1.7rem] tabular-nums tracking-tight will-change-transform",
             i === selectedIndex ? "font-bold text-[var(--ink-hi)]" : "font-medium text-[var(--ink-mid)]"
           )}
           style={{ height: DRUM_ROW_HEIGHT, backfaceVisibility: "hidden" }}
