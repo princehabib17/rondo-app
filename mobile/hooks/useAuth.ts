@@ -2,9 +2,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase, type Session, type User } from '../lib/supabase';
 import type { Profile } from '../lib/types';
 
-/** Don't hold the splash spinner if getSession hangs. */
-const AUTH_LOADING_TIMEOUT_MS = 1200;
-
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -22,24 +19,20 @@ export function useAuth() {
 
   useEffect(() => {
     let cancelled = false;
-    const timeout = setTimeout(() => {
-      if (!cancelled) setLoading(false);
-    }, AUTH_LOADING_TIMEOUT_MS);
 
+    // Index routes on session + profile the moment loading flips, so never
+    // flip it while either is still unknown — a timeout here sends signed-in
+    // users to Welcome/onboarding on slow connections.
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (cancelled) return;
       setSession(session);
       setUser(session?.user ?? null);
-      // Anonymous visitors have no profile to fetch — paint the welcome now.
       if (!session) {
-        clearTimeout(timeout);
         setLoading(false);
         return;
       }
       await loadProfile(session.user.id);
-      if (cancelled) return;
-      clearTimeout(timeout);
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
@@ -50,7 +43,6 @@ export function useAuth() {
 
     return () => {
       cancelled = true;
-      clearTimeout(timeout);
       subscription.unsubscribe();
     };
   }, [loadProfile]);
