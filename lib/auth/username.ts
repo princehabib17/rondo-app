@@ -64,6 +64,33 @@ export function usernameRuleStates(input: string): UsernameRuleState[] {
   ];
 }
 
+/** Football-flavoured alternatives for a taken name, all valid and within 20 chars. */
+export function suggestUsernames(input: string, count = 6): string[] {
+  const base = normalizeUsername(input).replace(/[^a-z0-9_]/g, "").slice(0, 16);
+  if (base.length < 2) return [];
+  const year = new Date().getFullYear() % 100;
+  const candidates = [
+    `${base}${10}`,
+    `${base}_${7}`,
+    `${base}${year}`,
+    `${base}fc`,
+    `${base}_9`,
+    `the${base}`,
+    `${base}_${11}`,
+    `${base}${23}`,
+  ];
+  const seen = new Set<string>([base]);
+  const out: string[] = [];
+  for (const c of candidates) {
+    const name = c.slice(0, USERNAME_MAX_LENGTH);
+    if (seen.has(name) || !isValidUsername(name)) continue;
+    seen.add(name);
+    out.push(name);
+    if (out.length === count) break;
+  }
+  return out;
+}
+
 export function usernameValidationError(input: string): string | null {
   const username = normalizeUsername(input);
   if (username.length < 3) return "Username must be at least 3 characters.";

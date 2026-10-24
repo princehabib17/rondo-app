@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, CheckCircle } from "@phosphor-icons/react";
 import { JoinShell } from "@/components/onboarding/JoinShell";
+import { PermissionHero } from "@/components/onboarding/PermissionHero";
 import { RondoButton } from "@/components/rondo/primitives";
 import {
   joinBackPath,
@@ -26,7 +26,7 @@ export default function OnboardingNotificationsPage() {
     setAsking(true);
     setError(null);
     if (typeof Notification === "undefined") {
-      setError("Notifications are not available in this browser.");
+      setError("This browser can't send notifications. You can turn them on in the app later.");
       setAsking(false);
       return;
     }
@@ -35,9 +35,9 @@ export default function OnboardingNotificationsPage() {
       const ok = result === "granted";
       writeOnboardingDraft({ notificationsEnabled: ok });
       setEnabled(ok);
-      if (!ok) setError("Notifications were not enabled. You can turn them on later.");
+      if (!ok) setError("Notifications were blocked. You can turn them on later in settings.");
     } catch {
-      setError("Could not request notification permission.");
+      setError("Could not ask for notification permission.");
     } finally {
       setAsking(false);
     }
@@ -48,47 +48,32 @@ export default function OnboardingNotificationsPage() {
       step="notifications"
       backHref={joinBackPath("notifications")}
       title="Enable notifications"
-      subtitle="We'll send you notifications about games you've joined, messages from other players, and more."
+      subtitle="Know when a spot opens, your game is about to start, or a teammate messages you."
       footer={
         <div className="space-y-3">
           {!enabled && (
-            <RondoButton
-              type="button"
-              variant="secondary"
-              disabled={asking}
-              onClick={enableNotifications}
-            >
+            <RondoButton type="button" variant="primary" disabled={asking} onClick={enableNotifications}>
               {asking ? "Asking…" : "Enable notifications"}
             </RondoButton>
           )}
           <RondoButton
             type="button"
-            variant="primary"
+            variant={enabled ? "primary" : "ghost"}
             onClick={() => router.push(joinNextPath("notifications"))}
           >
-            Next
+            {enabled ? "Next" : "Not now"}
           </RondoButton>
         </div>
       }
     >
-      <div className="flex flex-col items-center gap-8 pt-6">
-        <div className="flex h-44 w-44 items-center justify-center rounded-full bg-[var(--bg-inset)]">
-          <Bell size={88} weight="fill" className="text-[var(--ink-hi)]" />
-        </div>
-
-        {enabled ? (
-          <div className="flex w-full items-start gap-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] px-4 py-3">
-            <CheckCircle size={28} weight="fill" className="shrink-0 text-[var(--ok)]" />
-            <div>
-              <p className="font-body text-sm font-bold text-[var(--ink-hi)]">Notifications Enabled</p>
-              <p className="font-body text-xs text-[var(--ink-mid)]">
-                You will receive game invites, chat updates, and important match alerts.
-              </p>
-            </div>
-          </div>
-        ) : null}
-        {error && <p className="text-center text-sm text-[var(--live)]">{error}</p>}
-      </div>
+      <PermissionHero
+        src="/onboarding/gold-bell.png"
+        alt="Gold notification bell"
+        enabled={enabled}
+        enabledTitle="Notifications enabled"
+        enabledBody="You'll get game invites, chat updates and match alerts."
+      />
+      {error && <p className="mt-4 text-center font-body text-sm text-[var(--live)]">{error}</p>}
     </JoinShell>
   );
 }
