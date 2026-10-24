@@ -5,6 +5,8 @@ export type OnboardingDraft = {
   locationEnabled: boolean;
   lastLat: number | null;
   lastLng: number | null;
+  /** Typed area when the player prefers not to share GPS. */
+  area: string;
   notificationsEnabled: boolean;
 };
 
@@ -17,6 +19,7 @@ export const EMPTY_DRAFT: OnboardingDraft = {
   locationEnabled: false,
   lastLat: null,
   lastLng: null,
+  area: "",
   notificationsEnabled: false,
 };
 

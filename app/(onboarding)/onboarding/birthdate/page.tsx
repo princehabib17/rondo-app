@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { JoinShell } from "@/components/onboarding/JoinShell";
+import { DrumPicker } from "@/components/onboarding/DrumPicker";
 import { RondoButton } from "@/components/rondo/primitives";
 import {
   joinBackPath,
@@ -10,59 +11,57 @@ import {
   readOnboardingDraft,
   writeOnboardingDraft,
 } from "@/lib/onboarding/draft";
-
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-function daysInMonth(year: number, monthIndex: number) {
-  return new Date(year, monthIndex + 1, 0).getDate();
-}
+import {
+  MONTHS,
+  clampBirthParts,
+  daysInMonth,
+  defaultBirthParts,
+  fromIsoDate,
+  isOldEnough,
+  toIsoDate,
+  yearRange,
+  type BirthParts,
+} from "@/lib/date-of-birth";
 
 export default function OnboardingBirthdatePage() {
   const router = useRouter();
-  const now = new Date();
-  const [month, setMonth] = useState(now.getMonth());
-  const [day, setDay] = useState(Math.min(now.getDate(), 28));
-  const [year, setYear] = useState(2000);
+  const [parts, setParts] = useState<BirthParts>(() => defaultBirthParts());
+  const { min, max } = useMemo(() => yearRange(), []);
 
   useEffect(() => {
     const existing = readOnboardingDraft().birthdate;
-    if (!existing) return;
-    const d = new Date(`${existing}T12:00:00`);
-    if (Number.isNaN(d.getTime())) return;
-    setMonth(d.getMonth());
-    setDay(d.getDate());
-    setYear(d.getFullYear());
+    const parsed = existing ? fromIsoDate(existing) : null;
+    if (parsed) setParts(clampBirthParts(parsed));
   }, []);
 
-  const maxDay = daysInMonth(year, month);
-  const safeDay = Math.min(day, maxDay);
   const years = useMemo(() => {
-    const out: number[] = [];
-    for (let y = now.getFullYear() - 13; y >= 1950; y--) out.push(y);
+    const out: string[] = [];
+    for (let y = min; y <= max; y++) out.push(String(y));
     return out;
-  }, [now]);
+  }, [min, max]);
+  const days = useMemo(
+    () => Array.from({ length: daysInMonth(parts.year, parts.month) }, (_, i) => String(i + 1)),
+    [parts.year, parts.month]
+  );
 
-  function saveAndNext(skip: boolean) {
-    if (skip) {
-      writeOnboardingDraft({ birthdate: null });
-    } else {
-      const mm = String(month + 1).padStart(2, "0");
-      const dd = String(safeDay).padStart(2, "0");
-      writeOnboardingDraft({ birthdate: `${year}-${mm}-${dd}` });
-    }
+  const update = useCallback((patch: Partial<BirthParts>) => {
+    setParts((prev) => clampBirthParts({ ...prev, ...patch }));
+  }, []);
+  const onMonth = useCallback((i: number) => update({ month: i }), [update]);
+  const onDay = useCallback((i: number) => update({ day: i + 1 }), [update]);
+  const onYear = useCallback((i: number) => update({ year: min + i }), [update, min]);
+
+  const age = useMemo(() => {
+    const now = new Date();
+    let a = now.getFullYear() - parts.year;
+    if (now.getMonth() < parts.month || (now.getMonth() === parts.month && now.getDate() < parts.day)) a--;
+    return a;
+  }, [parts]);
+  const oldEnough = isOldEnough(parts);
+
+  function saveAndNext() {
+    if (!oldEnough) return;
+    writeOnboardingDraft({ birthdate: toIsoDate(parts) });
     router.push(joinNextPath("birthdate"));
   }
 
@@ -71,65 +70,44 @@ export default function OnboardingBirthdatePage() {
       step="birthdate"
       backHref={joinBackPath("birthdate")}
       title="When were you born?"
-      subtitle="Your age will be visible in your profile."
+      subtitle="Your age shows on your profile so games match the right age group."
       footer={
-        <div className="space-y-3">
-          <button
-            type="button"
-            onClick={() => saveAndNext(true)}
-            className="w-full py-2 text-center font-body text-sm font-semibold text-[var(--ink-mid)]"
-          >
-            Skip this step (optional)
-          </button>
-          <RondoButton type="button" variant="primary" onClick={() => saveAndNext(false)}>
-            Next
-          </RondoButton>
-        </div>
+        <RondoButton type="button" variant="primary" disabled={!oldEnough} onClick={saveAndNext}>
+          Next
+        </RondoButton>
       }
     >
-      <div className="grid grid-cols-3 gap-2 rounded-[var(--r-md)] bg-[var(--bg-inset)] p-3">
-        <label className="space-y-1">
-          <span className="sr-only">Month</span>
-          <select
-            value={month}
-            onChange={(e) => setMonth(Number(e.target.value))}
-            className="h-12 w-full rounded-[var(--r-sm)] border-0 bg-[var(--bg-surface)] px-2 font-body text-sm font-semibold text-[var(--ink-hi)]"
-          >
-            {MONTHS.map((name, i) => (
-              <option key={name} value={i}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="space-y-1">
-          <span className="sr-only">Day</span>
-          <select
-            value={safeDay}
-            onChange={(e) => setDay(Number(e.target.value))}
-            className="h-12 w-full rounded-[var(--r-sm)] border-0 bg-[var(--bg-surface)] px-2 font-body text-sm font-semibold text-[var(--ink-hi)]"
-          >
-            {Array.from({ length: maxDay }, (_, i) => i + 1).map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="space-y-1">
-          <span className="sr-only">Year</span>
-          <select
-            value={year}
-            onChange={(e) => setYear(Number(e.target.value))}
-            className="h-12 w-full rounded-[var(--r-sm)] border-0 bg-[var(--bg-surface)] px-2 font-body text-sm font-semibold text-[var(--ink-hi)]"
-          >
-            {years.map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
-        </label>
+      <div className="flex flex-1 flex-col justify-center gap-6">
+        <DrumPicker
+          columns={[
+            {
+              id: "month",
+              label: "Month",
+              items: MONTHS,
+              selectedIndex: parts.month,
+              onChange: onMonth,
+              className: "flex-[1.6]",
+            },
+            { id: "day", label: "Day", items: days, selectedIndex: parts.day - 1, onChange: onDay },
+            {
+              id: "year",
+              label: "Year",
+              items: years,
+              selectedIndex: parts.year - min,
+              onChange: onYear,
+              className: "flex-[1.2]",
+            },
+          ]}
+        />
+        <p className="text-center font-body text-sm text-[var(--ink-mid)]" aria-live="polite">
+          {oldEnough ? (
+            <>
+              You&apos;re <span className="font-bold text-[var(--gold)]">{age}</span>
+            </>
+          ) : (
+            <span className="text-[var(--live)]">You need to be 13 or older to join.</span>
+          )}
+        </p>
       </div>
     </JoinShell>
   );

@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle, MapPin } from "@phosphor-icons/react";
 import { JoinShell } from "@/components/onboarding/JoinShell";
-import { RondoButton } from "@/components/rondo/primitives";
+import { PermissionHero } from "@/components/onboarding/PermissionHero";
+import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
 import {
   joinBackPath,
   joinNextPath,
@@ -15,18 +15,29 @@ import {
 export default function OnboardingLocationPage() {
   const router = useRouter();
   const [enabled, setEnabled] = useState(false);
+  const [area, setArea] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
 
   useEffect(() => {
-    setEnabled(readOnboardingDraft().locationEnabled);
+    const draft = readOnboardingDraft();
+    setEnabled(draft.locationEnabled);
+    setArea(draft.area);
   }, []);
 
-  async function enableLocation() {
+  const ready = enabled || area.trim().length >= 2;
+
+  function next() {
+    if (!ready) return;
+    writeOnboardingDraft({ area: area.trim() });
+    router.push(joinNextPath("location"));
+  }
+
+  function enableLocation() {
     setAsking(true);
     setError(null);
     if (!navigator.geolocation) {
-      setError("Location is not available on this device.");
+      setError("Location isn't available on this device. Type your area below.");
       setAsking(false);
       return;
     }
@@ -41,7 +52,7 @@ export default function OnboardingLocationPage() {
         setAsking(false);
       },
       () => {
-        setError("Location permission was denied. You can still continue.");
+        setError("Location was blocked. Turn it on in your browser settings, or type your area below.");
         writeOnboardingDraft({ locationEnabled: false, lastLat: null, lastLng: null });
         setEnabled(false);
         setAsking(false);
@@ -55,7 +66,7 @@ export default function OnboardingLocationPage() {
       step="location"
       backHref={joinBackPath("location")}
       title="Enable location"
-      subtitle="We need your location to show you games nearby. You can enable location services or continue and set it later."
+      subtitle="We use it to show games and pitches near you. Your exact spot is never shown to other players."
       footer={
         <div className="space-y-3">
           {!enabled && (
@@ -63,34 +74,33 @@ export default function OnboardingLocationPage() {
               {asking ? "Asking…" : "Enable location"}
             </RondoButton>
           )}
-          <RondoButton
-            type="button"
-            variant="primary"
-            onClick={() => router.push(joinNextPath("location"))}
-          >
+          <RondoButton type="button" variant="primary" disabled={!ready} onClick={next}>
             Next
           </RondoButton>
         </div>
       }
     >
-      <div className="flex flex-col items-center gap-8 pt-6">
-        <div className="flex h-44 w-44 items-center justify-center rounded-full bg-[var(--bg-inset)]">
-          <MapPin size={88} weight="fill" className="text-[var(--gold)]" />
-        </div>
-
-        {enabled ? (
-          <div className="flex w-full items-start gap-3 rounded-[var(--r-md)] border border-[var(--stroke)] bg-[var(--bg-surface)] px-4 py-3">
-            <CheckCircle size={28} weight="fill" className="shrink-0 text-[var(--ok)]" />
-            <div>
-              <p className="font-body text-sm font-bold text-[var(--ink-hi)]">Location enabled!</p>
-              <p className="font-body text-xs text-[var(--ink-mid)]">
-                We can show nearby games and clubs.
-              </p>
-            </div>
-          </div>
-        ) : null}
-        {error && <p className="text-center text-sm text-[var(--live)]">{error}</p>}
-      </div>
+      <PermissionHero
+        src="/onboarding/gold-pin.png"
+        alt="Gold map pin"
+        enabled={enabled}
+        enabledTitle="Location enabled"
+        enabledBody="You'll see games and pitches closest to you first."
+      />
+      {!enabled && (
+        <label className="mt-2 block">
+          <span className="sr-only">Area near you</span>
+          <input
+            value={area}
+            onChange={(e) => setArea(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && next()}
+            placeholder="Or type your area, e.g. BGC"
+            maxLength={60}
+            className={rondoFieldClass}
+          />
+        </label>
+      )}
+      {error && <p className="mt-3 text-center font-body text-sm text-[var(--live)]">{error}</p>}
     </JoinShell>
   );
 }

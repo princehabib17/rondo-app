@@ -41,6 +41,7 @@ export async function applyOnboardingDraft(
     patch.last_lng = draft.lastLng;
     patch.location_hidden = false;
   }
+  if (draft.area.trim()) patch.preferred_areas = draft.area.trim();
 
   await supabase.from("profiles").update(patch).eq("id", userId);
   clearOnboardingDraft();

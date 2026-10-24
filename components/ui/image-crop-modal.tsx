@@ -42,11 +42,19 @@ export interface ImageCropModalProps {
   src: string;
   aspect: number;
   label?: string;
+  cropShape?: "rect" | "round";
   onDone: (blob: Blob) => void;
   onCancel: () => void;
 }
 
-export function ImageCropModal({ src, aspect, label, onDone, onCancel }: ImageCropModalProps) {
+export function ImageCropModal({
+  src,
+  aspect,
+  label,
+  cropShape = "rect",
+  onDone,
+  onCancel,
+}: ImageCropModalProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
@@ -99,6 +107,8 @@ export function ImageCropModal({ src, aspect, label, onDone, onCancel }: ImageCr
           crop={crop}
           zoom={zoom}
           aspect={aspect}
+          cropShape={cropShape}
+          showGrid={cropShape === "rect"}
           onCropChange={setCrop}
           onZoomChange={setZoom}
           onCropComplete={onCropComplete}
