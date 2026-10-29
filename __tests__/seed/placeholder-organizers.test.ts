@@ -59,7 +59,7 @@ describe("placeholder organizer seed", () => {
     expect(games).toHaveLength(1);
     expect(games[0]).toMatchObject({
       title: "Open Play · Sunday (8–10 PM)",
-      venue_name: "MOA Football Pitch",
+      venue_name: "MOA Sky Pitch",
       price_per_player: 30000,
       date_time: "2026-06-28T20:00:00+08:00",
       banner_url: "/organizers/gaudutuaxis.png",

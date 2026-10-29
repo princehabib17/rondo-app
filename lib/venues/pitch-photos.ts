@@ -18,6 +18,15 @@ const PITCH_PHOTOS: { matches: (venueName: string) => boolean; photo: PitchPhoto
       label: "BGC Turf",
     },
   },
+  {
+    // MOA Sky Pitch — default cover when the organizer didn't upload a field photo.
+    matches: (venueName) => /\bmoa\b/i.test(venueName) || /mall of asia/i.test(venueName),
+    photo: {
+      src: "/venues/moa-sky-pitch.jpg",
+      alt: "MOA Sky Pitch at night, floodlit rooftop turf beside Adidas at Mall of Asia",
+      label: "MOA Sky Pitch",
+    },
+  },
 ];
 
 export function pitchPhotoForVenue(venueName: string | null | undefined): PitchPhoto | null {

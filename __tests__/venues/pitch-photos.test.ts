@@ -5,7 +5,7 @@ import path from "node:path";
 
 describe("match imagery", () => {
   it("never points at a venue photo that is not shipped", () => {
-    for (const venue of ["BGC Turf", "Cherry Turf", "MOA Football Pitch"]) {
+    for (const venue of ["BGC Turf", "Cherry Turf", "MOA Football Pitch", "MOA Sky Pitch"]) {
       const photo = pitchPhotoForVenue(venue);
       if (photo) expect(existsSync(path.join(process.cwd(), "public", photo.src))).toBe(true);
     }
@@ -17,6 +17,21 @@ describe("match imagery", () => {
     expect(pitchPhotoForVenue("bgc turf, 5th Ave")?.src).toBe("/venues/bgc-turf.jpg");
     expect(pitchPhotoForVenue("Cherry Turf")).toBeNull();
     expect(matchHeroImage({ venue_name: "BGC Turf", banner_url: null }).src).toBe("/venues/bgc-turf.jpg");
+  });
+
+  it("uses MOA Sky Pitch as the default cover for MOA venues without an uploaded field photo", () => {
+    expect(pitchPhotoForVenue("MOA Sky Pitch")?.src).toBe("/venues/moa-sky-pitch.jpg");
+    expect(pitchPhotoForVenue("MOA Football Pitch")?.src).toBe("/venues/moa-sky-pitch.jpg");
+    expect(pitchPhotoForVenue("Mall of Asia Complex")?.src).toBe("/venues/moa-sky-pitch.jpg");
+    expect(matchHeroImage({ venue_name: "MOA Football Pitch", banner_url: null }).src).toBe(
+      "/venues/moa-sky-pitch.jpg"
+    );
+    expect(
+      matchHeroImage({
+        venue_name: "MOA Sky Pitch",
+        banner_url: "https://cdn.example/custom-moa-cover.jpg",
+      }).src
+    ).toBe("https://cdn.example/custom-moa-cover.jpg");
   });
 
   it("ships every matchday scene it references", () => {
