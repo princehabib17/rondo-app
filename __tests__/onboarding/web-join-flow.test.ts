@@ -56,6 +56,15 @@ describe("web join flow rules", () => {
     expect(src).not.toMatch(/skip/i);
   });
 
+  it("gender sits after birthdate and requires a choice before next", () => {
+    const draft = read("lib/onboarding/draft.ts");
+    expect(draft).toMatch(/id:\s*"birthdate"[\s\S]*id:\s*"gender"[\s\S]*id:\s*"location"/);
+    const src = read("app/(onboarding)/onboarding/gender/page.tsx");
+    expect(src).toContain("What's your gender?");
+    expect(src).toContain("disabled={!selected}");
+    expect(src).not.toMatch(/skip/i);
+  });
+
   it("photo crops before saving and location/notifications use the gold assets", () => {
     expect(read("app/(onboarding)/onboarding/photo/page.tsx")).toContain('cropShape="round"');
     expect(read("app/(onboarding)/onboarding/location/page.tsx")).toContain("/onboarding/gold-pin.png");

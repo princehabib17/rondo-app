@@ -1,7 +1,10 @@
+import type { Gender } from "@/lib/gender";
+
 export type OnboardingDraft = {
   username: string;
   avatarDataUrl: string | null;
   birthdate: string | null; // YYYY-MM-DD
+  gender: Gender | null;
   locationEnabled: boolean;
   lastLat: number | null;
   lastLng: number | null;
@@ -16,6 +19,7 @@ export const EMPTY_DRAFT: OnboardingDraft = {
   username: "",
   avatarDataUrl: null,
   birthdate: null,
+  gender: null,
   locationEnabled: false,
   lastLat: null,
   lastLng: null,
@@ -49,6 +53,7 @@ export const JOIN_STEPS = [
   { id: "username", path: "/onboarding/username", label: "Username" },
   { id: "photo", path: "/onboarding/photo", label: "Photo" },
   { id: "birthdate", path: "/onboarding/birthdate", label: "Birthdate" },
+  { id: "gender", path: "/onboarding/gender", label: "Gender" },
   { id: "location", path: "/onboarding/location", label: "Location" },
   { id: "notifications", path: "/onboarding/notifications", label: "Notifications" },
   { id: "account", path: "/onboarding/account", label: "Account" },

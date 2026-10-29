@@ -35,6 +35,7 @@ export async function applyOnboardingDraft(
   };
   if (draft.username) patch.username = draft.username;
   if (draft.birthdate) patch.date_of_birth = draft.birthdate;
+  if (draft.gender) patch.gender = draft.gender;
   if (avatarUrl) patch.avatar_url = avatarUrl;
   if (draft.locationEnabled && draft.lastLat != null && draft.lastLng != null) {
     patch.last_lat = draft.lastLat;

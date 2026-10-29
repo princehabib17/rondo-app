@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
 import * as q from './queries';
+import type { Gender } from './gender';
 
 const KEY = 'rondo.onboarding.draft.v1';
 
@@ -8,6 +9,7 @@ export type OnboardingDraft = {
   username: string;
   photoUri: string | null;
   birthdate: string | null; // YYYY-MM-DD
+  gender: Gender | null;
   locationEnabled: boolean;
   lastLat: number | null;
   lastLng: number | null;
@@ -19,6 +21,7 @@ export const EMPTY_DRAFT: OnboardingDraft = {
   username: '',
   photoUri: null,
   birthdate: null,
+  gender: null,
   locationEnabled: false,
   lastLat: null,
   lastLng: null,
@@ -31,9 +34,10 @@ export const JOIN_STEPS = [
   { id: 'username', path: '/(auth)/onboarding/username', step: 1 },
   { id: 'photo', path: '/(auth)/onboarding/photo', step: 2 },
   { id: 'birthday', path: '/(auth)/onboarding/birthday', step: 3 },
-  { id: 'location', path: '/(auth)/onboarding/location', step: 4 },
-  { id: 'notifications', path: '/(auth)/onboarding/notifications', step: 5 },
-  { id: 'signup', path: '/(auth)/signup', step: 6 },
+  { id: 'gender', path: '/(auth)/onboarding/gender', step: 4 },
+  { id: 'location', path: '/(auth)/onboarding/location', step: 5 },
+  { id: 'notifications', path: '/(auth)/onboarding/notifications', step: 6 },
+  { id: 'signup', path: '/(auth)/signup', step: 7 },
 ] as const;
 
 export const JOIN_TOTAL_STEPS = JOIN_STEPS.length;
@@ -83,6 +87,7 @@ export async function applyOnboardingDraft(userId: string) {
   };
   if (draft.username) patch.username = draft.username;
   if (draft.birthdate) patch.date_of_birth = draft.birthdate;
+  if (draft.gender) patch.gender = draft.gender;
   if (draft.preferredAreas.trim()) patch.preferred_areas = draft.preferredAreas.trim();
   if (draft.locationEnabled && draft.lastLat != null && draft.lastLng != null) {
     patch.last_lat = draft.lastLat;
