@@ -98,7 +98,7 @@ export default function LocationScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={[styles.screen, { paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.md }]}>
-        <OnboardingStepHeader step={4} onBack={() => router.back()} />
+        <OnboardingStepHeader step={5} onBack={() => router.back()} />
 
         <Text style={styles.title} accessibilityRole="header">
           Enable location

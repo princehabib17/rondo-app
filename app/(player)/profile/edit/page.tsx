@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
 import { ImageCropModal } from "@/components/ui/image-crop-modal";
 import { COUNTRY_OPTIONS, findCountry } from "@/lib/countries";
+import { GENDER_OPTIONS, type Gender } from "@/lib/gender";
 import type { Position, PreferredFoot, Profile, SkillLevel } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
@@ -70,6 +71,7 @@ type Draft = {
   bio: string;
   preferred_areas: string;
   nationality: string;
+  gender: Gender | "";
   position: Position | "";
   skill_level: SkillLevel | "";
   preferred_foot: PreferredFoot | "";
@@ -141,6 +143,7 @@ export default function EditProfilePage() {
         bio: profile?.bio ?? "",
         preferred_areas: profile?.preferred_areas ?? "",
         nationality: profile?.nationality ?? "",
+        gender: profile?.gender ?? "",
         position: profile?.position ?? "",
         skill_level: profile?.skill_level ?? "",
         preferred_foot: profile?.preferred_foot ?? "",
@@ -221,6 +224,7 @@ export default function EditProfilePage() {
         bio: draft.bio.trim() || null,
         preferred_areas: draft.preferred_areas.trim() || null,
         nationality: draft.nationality || null,
+        gender: draft.gender || null,
         ...(isOrganizer
           ? {}
           : {
@@ -381,6 +385,25 @@ export default function EditProfilePage() {
                 {COUNTRY_OPTIONS.map((country) => (
                   <option key={country.code} value={country.code}>
                     {country.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="gender" className="rondo-label text-[var(--ink-low)]">
+                Gender
+              </label>
+              <select
+                id="gender"
+                value={draft.gender}
+                onChange={(e) => update("gender", e.target.value as Gender | "")}
+                className={rondoFieldClass}
+              >
+                <option value="">Prefer not to say</option>
+                {GENDER_OPTIONS.filter((option) => option.value !== "prefer_not_to_say").map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
                   </option>
                 ))}
               </select>

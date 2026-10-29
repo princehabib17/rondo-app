@@ -70,7 +70,7 @@ export default function BirthdayScreen() {
         await q.updateProfile({ date_of_birth });
       }
       router.push({
-        pathname: '/(auth)/onboarding/location',
+        pathname: '/(auth)/onboarding/gender',
         params: {
           role: params.role ?? '',
           username: params.username ?? '',

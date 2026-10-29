@@ -246,6 +246,10 @@ alter table public.profiles
 alter table public.profiles
   add column if not exists date_of_birth date;
 
+alter table public.profiles
+  add column if not exists gender text
+  check (gender is null or gender in ('male', 'female', 'other', 'prefer_not_to_say'));
+
 create table if not exists public.game_waitlist (
   id uuid default uuid_generate_v4() primary key,
   game_id uuid references public.games(id) on delete cascade not null,

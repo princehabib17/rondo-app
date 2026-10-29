@@ -60,7 +60,7 @@ export default function NotificationsScreen() {
         { paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.md },
       ]}
     >
-      <OnboardingStepHeader step={5} totalSteps={JOIN_TOTAL_STEPS} onBack={() => router.back()} />
+      <OnboardingStepHeader step={6} totalSteps={JOIN_TOTAL_STEPS} onBack={() => router.back()} />
 
       <Text style={styles.title} accessibilityRole="header">
         Enable notifications

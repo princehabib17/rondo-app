@@ -7,6 +7,9 @@ let inflight: Promise<{ seeded: boolean }> | null = null;
 // this on every visit to a city with no open brackets nearby.
 let showcaseChecked = false;
 
+/** Below this, the Metro Manila catalog looks thin — roll every organizer forward. */
+const THIN_CITY_OPEN_GAMES = 20;
+
 async function countOpenGames(): Promise<number> {
   const service = createServiceClient();
   const { count, error } = await service
@@ -38,12 +41,18 @@ async function seedIfEmpty(): Promise<{ seeded: boolean }> {
 
   let seeded = false;
   try {
-    if ((await countOpenGames()) === 0) {
+    const open = await countOpenGames();
+    if (open === 0) {
+      // First visitor of a blank city: a few Urban listings so the feed isn't empty.
       await runPlaceholderCity({
         weeksAhead: 2,
         organizerLimit: 1,
         maxGames: 4,
       });
+      seeded = true;
+    } else if (open < THIN_CITY_OPEN_GAMES) {
+      // Catalog exists but is thin (e.g. only Urban) — fill every seeded organizer.
+      await runPlaceholderCity({ weeksAhead: 4 });
       seeded = true;
     }
   } catch {
@@ -64,7 +73,7 @@ async function seedIfEmpty(): Promise<{ seeded: boolean }> {
   return { seeded };
 }
 
-/** First visitor of an empty city gets a few real Metro Manila listings and the showcase cups. */
+/** First visitor of an empty/thin city gets Metro Manila listings and the showcase cups. */
 export function ensurePublishedCity(): Promise<{ seeded: boolean }> {
   if (!inflight) {
     inflight = seedIfEmpty().finally(() => {

@@ -31,6 +31,7 @@ export interface Profile {
   bio: string | null;
   nationality: string | null;
   date_of_birth?: string | null;
+  gender?: "male" | "female" | "other" | "prefer_not_to_say" | null;
   position: Position | null;
   preferred_foot: PreferredFoot | null;
   skill_level?: SkillLevel | null;
