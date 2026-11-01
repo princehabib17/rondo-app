@@ -5,7 +5,7 @@ import path from "node:path";
 
 describe("match imagery", () => {
   it("never points at a venue photo that is not shipped", () => {
-    for (const venue of ["BGC Turf", "Cherry Turf", "MOA Football Pitch", "MOA Sky Pitch"]) {
+    for (const venue of ["BGC Turf", "Cherry Turf", "MOA Football Pitch", "MOA Sky Pitch", "Bridgetown"]) {
       const photo = pitchPhotoForVenue(venue);
       if (photo) expect(existsSync(path.join(process.cwd(), "public", photo.src))).toBe(true);
     }
@@ -32,6 +32,18 @@ describe("match imagery", () => {
         banner_url: "https://cdn.example/custom-moa-cover.jpg",
       }).src
     ).toBe("https://cdn.example/custom-moa-cover.jpg");
+  });
+
+  it("uses Bridgetown as the default cover for Bridgetown venues without an uploaded field photo", () => {
+    expect(pitchPhotoForVenue("Bridgetown")?.src).toBe("/venues/bridgetown.jpg");
+    expect(pitchPhotoForVenue("Bridgetowne, Pasig")?.src).toBe("/venues/bridgetown.jpg");
+    expect(matchHeroImage({ venue_name: "Bridgetown", banner_url: null }).src).toBe("/venues/bridgetown.jpg");
+    expect(
+      matchHeroImage({
+        venue_name: "Bridgetown",
+        banner_url: "https://cdn.example/custom-bridgetown.jpg",
+      }).src
+    ).toBe("https://cdn.example/custom-bridgetown.jpg");
   });
 
   it("ships every matchday scene it references", () => {

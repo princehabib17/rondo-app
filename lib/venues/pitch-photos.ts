@@ -27,6 +27,15 @@ const PITCH_PHOTOS: { matches: (venueName: string) => boolean; photo: PitchPhoto
       label: "MOA Sky Pitch",
     },
   },
+  {
+    // Bridgetown / Bridgetowne Pasig — default cover when no field photo was uploaded.
+    matches: (venueName) => /bridgetown/i.test(venueName),
+    photo: {
+      src: "/venues/bridgetown.jpg",
+      alt: "Bridgetown pitch in Pasig with the city skyline and silver statue beyond the fence",
+      label: "Bridgetown",
+    },
+  },
 ];
 
 export function pitchPhotoForVenue(venueName: string | null | undefined): PitchPhoto | null {
