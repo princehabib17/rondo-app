@@ -18,6 +18,24 @@ const PITCH_PHOTOS: { matches: (venueName: string) => boolean; photo: PitchPhoto
       label: "BGC Turf",
     },
   },
+  {
+    // MOA Sky Pitch — default cover when the organizer didn't upload a field photo.
+    matches: (venueName) => /\bmoa\b/i.test(venueName) || /mall of asia/i.test(venueName),
+    photo: {
+      src: "/venues/moa-sky-pitch.jpg",
+      alt: "MOA Sky Pitch at night, floodlit rooftop turf beside Adidas at Mall of Asia",
+      label: "MOA Sky Pitch",
+    },
+  },
+  {
+    // Bridgetown / Bridgetowne Pasig — default cover when no field photo was uploaded.
+    matches: (venueName) => /bridgetown/i.test(venueName),
+    photo: {
+      src: "/venues/bridgetown.jpg",
+      alt: "Bridgetown pitch in Pasig with the city skyline and silver statue beyond the fence",
+      label: "Bridgetown",
+    },
+  },
 ];
 
 export function pitchPhotoForVenue(venueName: string | null | undefined): PitchPhoto | null {
