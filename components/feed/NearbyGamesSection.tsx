@@ -8,7 +8,7 @@ import { formatPrice } from "@/lib/utils/format";
 import type { Game } from "@/lib/supabase/types";
 import { gameDistanceKm, getPlayerCount, isFull, type Coords } from "@/lib/feed/filters";
 import { getOrganizerInitials } from "@/lib/feed/organizers";
-import { format, isToday, isTomorrow } from "date-fns";
+import { venueDay, venueTime } from "@/lib/match/venue-time";
 import { cn } from "@/lib/utils";
 import { bouncy } from "@/components/motion/springs";
 
@@ -41,8 +41,8 @@ export function NearbyGameRow({ game, coords = null }: NearbyGameRowProps) {
   const spotsLeft = game.max_players - playerCount;
   const kickoff = new Date(game.date_time);
   const distance = coords ? gameDistanceKm(game, coords) : null;
-  const dayLabel = isToday(kickoff) ? "Today" : isTomorrow(kickoff) ? "Tomorrow" : format(kickoff, "EEEE");
-  const timeLabel = format(kickoff, "h:mm a");
+  const dayLabel = venueDay(kickoff);
+  const timeLabel = venueTime(kickoff) + " PHT";
 
   return (
     <Link

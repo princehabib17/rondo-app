@@ -44,6 +44,7 @@ export async function applyOnboardingDraft(
   }
   if (draft.area.trim()) patch.preferred_areas = draft.area.trim();
 
-  await supabase.from("profiles").update(patch).eq("id", userId);
+  const { data, error } = await supabase.from("profiles").update(patch).eq("id", userId).select("id").single();
+  if (error || !data) throw new Error("Could not save profile.");
   clearOnboardingDraft();
 }
