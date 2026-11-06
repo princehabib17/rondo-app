@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getJoinDestination, clearJoinDestination } from "@/lib/onboarding/intent";
 import { JoinShell } from "@/components/onboarding/JoinShell";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 import { RondoButton, rondoFieldClass } from "@/components/rondo/primitives";
@@ -50,13 +51,19 @@ export default function OnboardingAccountPage() {
       setError("Check your email to confirm, then log in.");
       return;
     }
-    const { data } = await supabase.auth.getUser();
-    if (data.user?.id) {
+    try {
+      const { data } = await supabase.auth.getUser();
+      if (!data.user?.id) throw new Error("Please log in to finish creating your profile.");
       await applyOnboardingDraft(data.user.id, draft);
+      const destination = getJoinDestination();
+      clearJoinDestination();
+      router.replace(destination);
+      router.refresh();
+    } catch {
+      setError("Your account was created, but your profile could not be saved. Please try again.");
+    } finally {
+      setSending(false);
     }
-    setSending(false);
-    router.replace("/feed");
-    router.refresh();
   }
 
   return (

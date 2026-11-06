@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getJoinDestination, clearJoinDestination } from "@/lib/onboarding/intent";
 import { createClient } from "@/lib/supabase/client";
 import { applyOnboardingDraft } from "@/lib/onboarding/apply-draft";
 import { readOnboardingDraft } from "@/lib/onboarding/draft";
@@ -31,15 +32,13 @@ export default function OnboardingFinishPage() {
       try {
         await applyOnboardingDraft(data.user.id, draft);
         if (cancelled) return;
-        router.replace("/feed");
+        const destination = getJoinDestination();
+        clearJoinDestination();
+        router.replace(destination);
         router.refresh();
       } catch {
         if (cancelled) return;
-        setMessage("Could not save your profile. Taking you to the feed…");
-        window.setTimeout(() => {
-          router.replace("/feed");
-          router.refresh();
-        }, 1200);
+        setMessage("Could not save your profile. Please reload to try again. Your details have been kept.");
       }
     }
 

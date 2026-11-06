@@ -516,7 +516,7 @@ export default function TournamentDetailPage() {
                       <span className="min-w-0 flex-1">
                         <span className="block truncate rondo-meta font-bold text-[var(--ink-hi)]">{team.name}</span>
                         <span className="block rondo-meta text-[var(--ink-low)]">
-                          {rosterCount > 0 ? `${rosterCount} on roster` : "Tap to join"}
+                          {rosterCount > 0 ? `${rosterCount} on roster` : ["registration", "active"].includes(tournament.status) ? "Tap to join" : "View roster"}
                         </span>
                       </span>
                       {team.id === myTeamId && (
@@ -529,7 +529,7 @@ export default function TournamentDetailPage() {
                 })}
               </div>
               <p className="rondo-meta text-[var(--ink-low)]">
-                Tap a team to see the roster or add yourself to it.
+                {["registration", "active"].includes(tournament.status) ? "Tap a team to see the roster or add yourself to it." : "Tap a team to view its roster."}
               </p>
             </>
           )}

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { format } from "date-fns";
+import { venueDate, venueTime } from "@/lib/match/venue-time";
 import {
   ArrowUpRight,
   CalendarBlank,
@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { EmptyState, RondoButton } from "@/components/rondo/primitives";
 import { GameBadges } from "@/components/feed/GameBadges";
-import { PUBLIC_PROFILE_SELECT } from "@/lib/supabase/profile-select";
+import { PROFILE_SUMMARY_SELECT } from "@/lib/supabase/profile-select";
 import {
   getMatchStatusBanner,
   resolveJoinCta,
@@ -37,6 +37,7 @@ export default function MatchDetailPage() {
   const [game, setGame] = useState<Game | null>(null);
   const [gamesHosted, setGamesHosted] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [myEntry, setMyEntry] = useState<GamePlayer | null>(null);
   const [onWaitlist, setOnWaitlist] = useState(false);
   const [leavingWaitlist, setLeavingWaitlist] = useState(false);
@@ -45,17 +46,22 @@ export default function MatchDetailPage() {
 
   useEffect(() => {
     async function load() {
+      setLoading(true);
+      setLoadError(false);
+      setGame(null);
+      setMyEntry(null);
+      setOnWaitlist(false);
       const supabase = createClient();
       const { data: userData } = await supabase.auth.getUser();
       setCurrentUserId(userData.user?.id ?? null);
       setIsGuest(isGuestUser(userData.user));
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("games")
         .select(
           `
           *,
-          organizer:profiles!organizer_id(${PUBLIC_PROFILE_SELECT}),
+          organizer:profiles!organizer_id(${PROFILE_SUMMARY_SELECT}),
           teams(id, name, color, slot_number,
             game_players:game_players(id, user_id, profile:profiles(id, avatar_url, nationality))
           ),
@@ -63,7 +69,12 @@ export default function MatchDetailPage() {
         `
         )
         .eq("id", id)
-        .single();
+        .maybeSingle();
+      if (error) {
+        setLoadError(true);
+        setLoading(false);
+        return;
+      }
 
       if (data) {
         const g = data as Game;
@@ -93,7 +104,10 @@ export default function MatchDetailPage() {
       }
       setLoading(false);
     }
-    load();
+    void load().catch(() => {
+      setLoadError(true);
+      setLoading(false);
+    });
   }, [id]);
 
   if (loading) {
@@ -109,15 +123,15 @@ export default function MatchDetailPage() {
     );
   }
 
-  if (!game) {
+  if (loadError || !game) {
     return (
       <div className="min-h-[100dvh] rondo-page">
         <PageHeader title="Match" back fallbackHref="/feed" />
         <div className="mx-auto max-w-lg px-4 py-12">
           <EmptyState
-            title="Match not found"
-            body="It may have been cancelled or the link is old. Plenty more are on tonight."
-            action={<RondoButton href="/feed">Find a match</RondoButton>}
+            title={loadError ? "Could not load this match" : "Match not found"}
+            body={loadError ? "Please try again. The match service may be temporarily unavailable." : "This match is no longer available. Browse other games to find a match."}
+            action={loadError ? <RondoButton onClick={() => window.location.reload()}>Try again</RondoButton> : <RondoButton href="/feed">Find a match</RondoButton>}
           />
         </div>
       </div>
@@ -193,7 +207,7 @@ export default function MatchDetailPage() {
             <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rondo-meta text-[var(--ink-mid)]">
               <span className="inline-flex items-center gap-1.5">
                 <CalendarBlank size={15} className="text-[var(--ink-low)]" aria-hidden />
-                {format(kickoff, "EEEE, MMM d")}
+                {venueDate(kickoff)}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <MapPin size={15} className="text-[var(--ink-low)]" aria-hidden />
@@ -209,7 +223,7 @@ export default function MatchDetailPage() {
           <div className="px-3 py-3">
             <dt className="rondo-label text-[var(--ink-low)]">Kickoff</dt>
             <dd className="mt-1 font-heading text-xl font-bold leading-6 tabular-nums text-[var(--ink-hi)]">
-              {format(kickoff, "h:mm a")}
+              {venueTime(kickoff) + " PHT"}
             </dd>
           </div>
           <div className="px-3 py-3">

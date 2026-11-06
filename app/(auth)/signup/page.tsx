@@ -1,6 +1,15 @@
-import { redirect } from "next/navigation";
+"use client";
 
-/** Legacy /signup entry — join flow starts at slides now. */
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { rememberJoinDestination } from "@/lib/onboarding/intent";
+
+/** Legacy signup entry: retain the requested action through the join flow. */
 export default function SignupRedirectPage() {
-  redirect("/onboarding/slides");
+  const router = useRouter();
+  useEffect(() => {
+    rememberJoinDestination(new URLSearchParams(window.location.search).get("next"));
+    router.replace("/onboarding/slides");
+  }, [router]);
+  return <p role="status">Opening signup…</p>;
 }

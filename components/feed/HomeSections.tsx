@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { venueDay, venueDate, venueTime } from "@/lib/match/venue-time";
 import Image from "next/image";
 import { ArrowRight, MapPin, Trophy } from "@phosphor-icons/react";
 import { matchHeroImage } from "@/lib/venues/pitch-photos";
@@ -36,10 +37,7 @@ function SectionHeader({
 }
 
 function dayLabel(dateString: string): string {
-  const d = new Date(dateString);
-  if (isToday(d)) return "Today";
-  if (isTomorrow(d)) return "Tomorrow";
-  return format(d, "EEE, MMM d");
+  return venueDay(dateString);
 }
 
 function kickoffLabel(dateString: string): string {
@@ -111,8 +109,8 @@ function NextUpGameCard({ game, personal }: { game: Game; personal: boolean }) {
         </div>
         <div className="absolute inset-x-0 bottom-0 p-4">
           <p className="font-heading text-[2.75rem] font-bold leading-none tabular-nums text-[var(--night-ink)]">
-            {format(kickoff, "h:mm")}
-            <span className="ml-1 text-xl">{format(kickoff, "a")}</span>
+            {venueTime(kickoff)}
+            <span className="ml-1 text-sm">PHT</span>
           </p>
           <h3 className="mt-2 line-clamp-2 font-heading text-xl font-bold uppercase leading-tight text-[var(--night-ink)]">
             {game.title}
@@ -129,7 +127,7 @@ function NextUpGameCard({ game, personal }: { game: Game; personal: boolean }) {
             {game.price_per_player === 0 ? "Free" : formatPrice(game.price_per_player)}
           </p>
           <p className="mt-1 rondo-meta text-[var(--ink-low)]">
-            {spotsLeft > 0 ? `${spotsLeft} of ${game.max_players} spots left` : "Full · join the waitlist"}
+            {spotsLeft > 0 ? `${spotsLeft} spots available` : "Full · join the waitlist"}
           </p>
         </div>
         <RondoButton href={`/games/${game.id}`} className="w-auto shrink-0">
@@ -301,7 +299,7 @@ export function RecentSection({ rows }: { rows: RecentMatchRow[] }) {
             <div className="min-w-0 flex-1">
               <p className="truncate rondo-body font-bold text-[var(--ink-hi)]">{row.game.title}</p>
               <p className="truncate rondo-meta text-[var(--ink-low)]">
-                {format(new Date(row.game.date_time), "MMM d")} · {row.game.venue_name}
+                {venueDate(row.game.date_time)} · {row.game.venue_name}
               </p>
             </div>
             <span className="shrink-0 font-heading text-sm font-bold tabular-nums text-[var(--gold)]">
